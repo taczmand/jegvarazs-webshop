@@ -17,8 +17,10 @@ jobs:
         with:
           host: ${{ secrets.SFTP_HOST }}
           port: 22
-          user: ${{ secrets.SFTP_USERNAME }}
-          pass: ${{ secrets.SFTP_PASSWORD }}
+          username: ${{ secrets.SFTP_USERNAME }}
+          password: ${{ secrets.SFTP_PASSWORD }}
           localDir: './'
           remoteDir: '/projects/jegvarazs/laravel'
           args: '-R'  # Rekurzív feltöltés
+          exclude: ".git,.DS_Store,**/node_modules" # Optional. exclude patterns (glob) like .gitignore, use ',' to split, Default to ''.
+
