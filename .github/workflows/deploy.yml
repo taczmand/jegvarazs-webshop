@@ -13,7 +13,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Upload via SFTP
-        uses: pressidium/lftp-action@v1
+        uses: wangyucode/sftp-deploy@v1.2.7
         with:
           host: ${{ secrets.SFTP_HOST }}
           port: 22
