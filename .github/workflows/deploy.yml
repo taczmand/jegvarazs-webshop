@@ -32,17 +32,8 @@ jobs:
           password: ${{ secrets.SFTP_PASSWORD }}
           localDir: './'
           remoteDir: '/var/www/html/projects/jegvarazs/laravel'
-          exclude: >
-            .git,
-            .github,
-            .env,
-            **/node_modules,
-            public,
-            .DS_Store,
-            tests,
-            storage/*.key,
-            storage/logs/*,
-            **/vendor
+          exclude: ".git,.DS_Store,**/node_modules,public,tests,storage/*.key,storage/logs/*,vendor"
+
 
       - name: Upload public folder separately
         uses: wangyucode/sftp-upload-action@v2.0.4
@@ -53,5 +44,4 @@ jobs:
           password: ${{ secrets.SFTP_PASSWORD }}
           localDir: './public'
           remoteDir: '/var/www/html/projects/jegvarazs/public_html'
-          exclude: >
-            .DS_Store
+          exclude: ".DS_Store"
