@@ -36,13 +36,13 @@ jobs:
             .git,
             .github,
             .env,
-            node_modules,
+            **/node_modules,
             public,
             .DS_Store,
             tests,
             storage/*.key,
             storage/logs/*,
-            vendor/bin/*
+            **/vendor
 
       - name: Upload public folder separately
         uses: wangyucode/sftp-upload-action@v2.0.4
