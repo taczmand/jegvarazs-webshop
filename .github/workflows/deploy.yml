@@ -20,6 +20,6 @@ jobs:
           username: ${{ secrets.SFTP_USERNAME }}
           password: ${{ secrets.SFTP_PASSWORD }}
           localDir: './'
-          remoteDir: '/projects/jegvarazs/laravel'
+          remoteDir: '/var/www/html/projects/jegvarazs/laravel'
           exclude: ".git,.DS_Store,**/node_modules" # Optional. exclude patterns (glob) like .gitignore, use ',' to split, Default to ''.
 
