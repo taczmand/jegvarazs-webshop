@@ -42,7 +42,7 @@ jobs:
             tests,
             storage/*.key,
             storage/logs/*,
-            vendor
+            vendor/bin/*
 
       - name: Upload public folder separately
         uses: wangyucode/sftp-upload-action@v2.0.4
