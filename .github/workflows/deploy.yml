@@ -8,11 +8,22 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Upload via SFTP
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, xml, ctype, json, bcmath
+          tools: composer
+
+      - name: Install Composer dependencies
+        run: composer install --no-dev --optimize-autoloader
+
+      - name: Upload Laravel (excluding public)
         uses: wangyucode/sftp-upload-action@v2.0.4
         with:
           host: ${{ secrets.SFTP_HOST }}
@@ -21,5 +32,26 @@ jobs:
           password: ${{ secrets.SFTP_PASSWORD }}
           localDir: './'
           remoteDir: '/var/www/html/projects/jegvarazs/laravel'
-          exclude: ".git,.DS_Store,**/node_modules" # Optional. exclude patterns (glob) like .gitignore, use ',' to split, Default to ''.
+          exclude: >
+            .git,
+            .github,
+            .env,
+            node_modules,
+            public,
+            .DS_Store,
+            tests,
+            storage/*.key,
+            storage/logs/*,
+            vendor/bin/*
 
+      - name: Upload public folder separately
+        uses: wangyucode/sftp-upload-action@v2.0.4
+        with:
+          host: ${{ secrets.SFTP_HOST }}
+          port: 22
+          username: ${{ secrets.SFTP_USERNAME }}
+          password: ${{ secrets.SFTP_PASSWORD }}
+          localDir: './public'
+          remoteDir: '/var/www/html/public_html'
+          exclude: >
+            .DS_Store
