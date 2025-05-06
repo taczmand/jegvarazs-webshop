@@ -1,8 +1,8 @@
-<div class="hero__item set-bg" data-setbg="img/hero/banner.jpg">
+<div class="hero__item set-bg" data-setbg="{{ asset('storage/irvin-zheng-dIK8N8WyyTw-unsplash.jpg') }}">
     <div class="hero__text">
-        <span>FRUIT FRESH</span>
-        <h2>Vegetable <br />100% Organic</h2>
-        <p>Free Pickup and Delivery Available</p>
-        <a href="#" class="primary-btn">SHOP NOW</a>
+        <span>Jégvarázsbolt.hu</span>
+        <h2>Klímaberendezések és<br />hőszivattyúk webáruháza</h2>
+        <p>Ingyenes kiszállítás</p>
+        <a href="#" class="primary-btn">Vásárlás</a>
     </div>
 </div>

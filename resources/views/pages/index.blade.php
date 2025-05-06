@@ -4,7 +4,6 @@
     @include('partials.hero', ['showHeroItem' => true])
 @endsection
 
-
 @section('content')
-Index page content
+    @include('partials.categories')
 @endsection
