@@ -23,6 +23,17 @@ jobs:
       - name: Install Composer dependencies
         run: composer install --no-dev --optimize-autoloader
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install Node.js dependencies
+        run: npm ci
+
+      - name: Build frontend assets
+        run: npm run build
+
       - name: Upload Laravel (excluding public)
         uses: wangyucode/sftp-upload-action@v2.0.4
         with:
@@ -34,8 +45,7 @@ jobs:
           remoteDir: '/var/www/html/projects/jegvarazs/laravel'
           exclude: ".git,.DS_Store,**/node_modules,public,tests,storage/*.key,storage/logs/*,vendor"
 
-
-      - name: Upload public folder separately
+      - name: Upload public folder separately (including build)
         uses: wangyucode/sftp-upload-action@v2.0.4
         with:
           host: ${{ secrets.SFTP_HOST }}
