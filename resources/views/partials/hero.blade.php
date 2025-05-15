@@ -1,5 +1,5 @@
 <!-- Hero Section Begin -->
-<section class="hero {{ $extraClass ?? '' }}">
+<section class="hero {{ $extra_class ?? '' }}">
     <div class="container">
         <div class="row">
             <div class="col-lg-3">

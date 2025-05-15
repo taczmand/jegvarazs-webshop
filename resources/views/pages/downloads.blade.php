@@ -10,8 +10,9 @@
         'page_title' => 'Rólunk',
         'nav' => [
             ['title' => 'Főoldal', 'url' => route('index')],
-            ['title' => 'Rólunk', 'url' => route('about')]
+            ['title' => 'Letöltések', 'url' => route('downloads')]
         ],
     ]
     ])
+    Fejlesztés alatt...
 @endsection

@@ -1,11 +1,9 @@
-/*  ---------------------------------------------------
-    Template Name: Ogani
-    Description:  Ogani eCommerce  HTML Template
-    Author: Colorlib
-    Author URI: https://colorlib.com
-    Version: 1.0
-    Created: Colorlib
----------------------------------------------------------  */
+import '../js/jquery.nice-select.min.js';
+import '../js/jquery-ui.min.js';
+import '../js/jquery.slicknav.js';
+import '../js/mixitup.min.js';
+import '../js/owl.carousel.min.js';
+
 
 'use strict';
 
@@ -222,3 +220,4 @@
     });
 
 })(jQuery);
+

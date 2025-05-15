@@ -10,8 +10,9 @@
         'page_title' => 'Rólunk',
         'nav' => [
             ['title' => 'Főoldal', 'url' => route('index')],
-            ['title' => 'Rólunk', 'url' => route('about')]
+            ['title' => 'Időpontfoglalás', 'url' => route('appointment')]
         ],
     ]
     ])
+    Fejlesztés alatt...
 @endsection

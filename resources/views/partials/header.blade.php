@@ -45,18 +45,9 @@
             <div class="col-lg-6">
                 <nav class="header__menu">
                     <ul>
-                        <li class="active"><a href="./index.html">Főoldal</a></li>
-                        <li><a href="./shop-grid.html">Shop</a></li>
-                        <li><a href="#">Pages</a>
-                            <ul class="header__menu__dropdown">
-                                <li><a href="./shop-details.html">Shop Details</a></li>
-                                <li><a href="./shoping-cart.html">Shoping Cart</a></li>
-                                <li><a href="./checkout.html">Check Out</a></li>
-                                <li><a href="./blog-details.html">Blog Details</a></li>
-                            </ul>
-                        </li>
-                        <li><a href="./blog.html">Blog</a></li>
-                        <li><a href="./contact.html">Contact</a></li>
+                        <li class="{{ Route::currentRouteName() === 'downloads' ? 'active' : '' }}"><a href="/letoltesek">Letöltések</a></li>
+                        <li class="{{ Route::currentRouteName() === 'appointments' ? 'active' : '' }}"><a href="/idopontfoglalas">Időpontfoglalás</a></li>
+                        <li class="{{ Route::currentRouteName() === 'contact' ? 'active' : '' }}"><a href="/kapcsolat">Kapcsolat</a></li>
                     </ul>
                 </nav>
             </div>
