@@ -1,5 +1,5 @@
 <!-- Breadcrumb Section Begin -->
-<section class="breadcrumb-section set-bg" data-setbg="{{ asset('storage/william-christen-o4xVOHa3FXw-unsplash.jpg') }}">
+<section class="breadcrumb-section set-bg" data-setbg="{{ asset('static_media/william-christen-o4xVOHa3FXw-unsplash.jpg') }}">
     <div class="container">
         <div class="row">
             <div class="col-lg-12 text-center">

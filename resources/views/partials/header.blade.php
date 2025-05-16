@@ -39,7 +39,7 @@
         <div class="row">
             <div class="col-lg-3">
                 <div class="header__logo">
-                    <a href="./index.html"><img src="{{ asset('storage/logo.jpg') }}" alt=""></a>
+                    <a href="./index.html"><img src="{{ asset('static_media/logo.jpg') }}" alt=""></a>
                 </div>
             </div>
             <div class="col-lg-6">

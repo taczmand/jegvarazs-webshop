@@ -5,24 +5,19 @@ use Illuminate\Http\Request;
 
 define('LARAVEL_START', microtime(true));
 
-// Meghatározzuk az elérési útvonalat a Laravel rendszerhez
-$env = $_ENV['APP_ENV'] ?? getenv('APP_ENV') ?? 'production';
+// Detect Laravel root
+$laravelPath = is_dir(__DIR__.'/../laravel') ? __DIR__.'/../laravel' : __DIR__.'/..';
 
-// Ha production, akkor a Laravel külön mappában van (pl. public_html mellett: ../laravel/)
-$laravelBase = $env === 'local'
-    ? __DIR__ . '/../'          // Lokális fejlesztés (minden egyben van)
-    : __DIR__ . '/../laravel/'; // Éles környezet (külön mappában a Laravel core)
-
-// Maintenance mód ellenőrzése
-if (file_exists($maintenance = $laravelBase . 'storage/framework/maintenance.php')) {
+// Maintenance mode check
+if (file_exists($maintenance = $laravelPath.'/storage/framework/maintenance.php')) {
     require $maintenance;
 }
 
-// Composer autoloader betöltése
-require $laravelBase . 'vendor/autoload.php';
+// Autoloader
+require $laravelPath.'/vendor/autoload.php';
 
-// Laravel bootstrappelése és a kérés kezelése
-/** @var Application $app */
-$app = require_once $laravelBase . 'bootstrap/app.php';
+// Bootstrap app
+$app = require_once $laravelPath.'/bootstrap/app.php';
 
+// Handle the request
 $app->handleRequest(Request::capture());

@@ -1,4 +1,4 @@
-<div class="hero__item set-bg" data-setbg="{{ asset('storage/irvin-zheng-dIK8N8WyyTw-unsplash.jpg') }}">
+<div class="hero__item set-bg" data-setbg="{{ asset('static_media/irvin-zheng-dIK8N8WyyTw-unsplash.jpg') }}">
     <div class="hero__text">
         <span>Jégvarázsbolt.hu</span>
         <h2>Klímaberendezések és<br />hőszivattyúk webáruháza</h2>
