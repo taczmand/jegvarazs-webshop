@@ -5,16 +5,24 @@ use Illuminate\Http\Request;
 
 define('LARAVEL_START', microtime(true));
 
-// Determine if the application is in maintenance mode...
-if (file_exists($maintenance = __DIR__.'/../storage/framework/maintenance.php')) {
+// Meghatározzuk az elérési útvonalat a Laravel rendszerhez
+$env = $_ENV['APP_ENV'] ?? getenv('APP_ENV') ?? 'production';
+
+// Ha production, akkor a Laravel külön mappában van (pl. public_html mellett: ../laravel/)
+$laravelBase = $env === 'local'
+    ? __DIR__ . '/../'          // Lokális fejlesztés (minden egyben van)
+    : __DIR__ . '/../laravel/'; // Éles környezet (külön mappában a Laravel core)
+
+// Maintenance mód ellenőrzése
+if (file_exists($maintenance = $laravelBase . 'storage/framework/maintenance.php')) {
     require $maintenance;
 }
 
-// Register the Composer autoloader...
-require __DIR__.'/../vendor/autoload.php';
+// Composer autoloader betöltése
+require $laravelBase . 'vendor/autoload.php';
 
-// Bootstrap Laravel and handle the request...
+// Laravel bootstrappelése és a kérés kezelése
 /** @var Application $app */
-$app = require_once __DIR__.'/../bootstrap/app.php';
+$app = require_once $laravelBase . 'bootstrap/app.php';
 
 $app->handleRequest(Request::capture());
