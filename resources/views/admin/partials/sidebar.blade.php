@@ -3,7 +3,7 @@
 
     <!-- Sidebar - Brand -->
     <a class="sidebar-brand d-flex align-items-center justify-content-center" href="index.html">
-        <img class="img-fluid" src="{{ asset('storage/logo.jpg') }}" alt="">
+        <img class="img-fluid" src="{{ asset('static_media/logo.jpg') }}" alt="">
     </a>
 
     <!-- Divider -->
