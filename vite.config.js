@@ -1,8 +1,10 @@
 import { defineConfig } from 'vite';
 import laravel from 'laravel-vite-plugin';
 
+
+
 export default defineConfig({
-    base: '/projects/jegvarazs/public_html/',
+    base: '/projects/jegvarazs/public_html/build/',
     plugins: [
         laravel({
             input: [
