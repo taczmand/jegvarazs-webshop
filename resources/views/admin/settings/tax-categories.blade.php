@@ -1,44 +1,55 @@
 @extends('layouts.admin')
 
 @section('content')
-    <h1 class="h3 mb-4 text-gray-800">Pénzügyi beállítások / Adó osztályok</h1>
-    <div class="container">
-        <button class="btn btn-success mb-3" id="addProduct">Új adóosztály</button>
-        <table class="table table-bordered" id="taxes-table">
+
+
+    <div class="container p-0">
+
+        <div class="d-flex justify-content-between align-items-center mb-5">
+            <h1 class="h3 text-gray-800 mb-0">Pénzügyi beállítások / Adó osztályok</h1>
+            <button class="btn btn-success" id="addTax"><i class="fas fa-plus me-1"></i> Új adóosztály</button>
+        </div>
+
+        <table class="table table-bordered" id="taxesTable">
             <thead>
             <tr>
                 <th>ID</th>
-                <th>Adó</th>
-                <th>Cím</th>
-                <th>Leírás</th>
+                <th>Adó érték (%)</th>
+                <th>Adó megnevezés</th>
+                <th>Adó leírás</th>
                 <th>Műveletek</th>
             </tr>
             </thead>
         </table>
     </div>
 
+
     <!-- Modális ablak -->
-    <div class="modal fade" id="productModal" tabindex="-1" aria-labelledby="productModalLabel" aria-hidden="true">
+    <div class="modal fade" id="taxModal" tabindex="-1" aria-labelledby="taxModalLabel" aria-hidden="true">
         <div class="modal-dialog">
-            <form id="productForm">
+            <form id="taxForm">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="productModalLabel">Termék</h5>
+                        <h5 class="modal-title" id="taxModalLabel">Adó osztály szerkesztése</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Bezárás"></button>
                     </div>
                     <div class="modal-body">
-                        <input type="hidden" id="product_id">
+                        <input type="hidden" id="tax_id" name="id">
                         <div class="mb-3">
-                            <label for="name" class="form-label">Név</label>
-                            <input type="text" class="form-control" id="name" required>
+                            <label for="name" class="form-label">Adó érték (%)</label>
+                            <input type="number" class="form-control" id="tax_value" name="tax_value" required>
                         </div>
                         <div class="mb-3">
-                            <label for="price" class="form-label">Ár</label>
-                            <input type="number" class="form-control" id="price" required>
+                            <label for="price" class="form-label">Adó megnevezés</label>
+                            <input type="text" class="form-control" id="tax_name" name="tax_name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="price" class="form-label">Adó leírás</label>
+                            <input type="text" class="form-control" id="tax_description" name="tax_description">
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="submit" class="btn btn-primary">Mentés</button>
+                        <button type="submit" class="btn btn-primary save-btn">Mentés</button>
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Mégse</button>
                     </div>
                 </div>
@@ -50,72 +61,28 @@
 @section('scripts')
     <script type="module">
 
-
-        $(document).ready(function() {
-            var table = $('#taxes-table').DataTable({
-                processing: true,
-                serverSide: true,
-                ajax: '{{ route('admin.tax-categories.data') }}',
+        document.addEventListener('DOMContentLoaded', () => {
+            initCrud({
+                tableId: 'taxesTable',
+                modalId: 'taxModal',
+                formId: 'taxForm',
+                addButtonId: 'addTax',
+                dataUrl: '{{ route('admin.tax-categories.data') }}',
+                storeUrl: '{{ route('admin.tax-categories.store') }}',
+                destroyUrl: '{{ url('/admin/beallitasok/ado-osztalyok/') }}',
+                csrf: document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
                 columns: [
                     { data: 'id' },
                     { data: 'tax_value' },
                     { data: 'tax_name' },
                     { data: 'tax_description' },
                     { data: 'action', orderable: false, searchable: false }
-                ]
-            });
-
-            // Új termék hozzáadása
-            $('#addProduct').click(function() {
-                $('#productForm')[0].reset();
-                $('#product_id').val('');
-                $('#productModal').modal('show');
-            });
-
-            // Termék szerkesztése
-            $('#taxes-table').on('click', '.edit', function() {
-                var id = $(this).data('id');
-                $.get('/products/' + id, function(data) {
-                    $('#product_id').val(data.id);
-                    $('#name').val(data.name);
-                    $('#price').val(data.price);
-                    $('#productModal').modal('show');
-                });
-            });
-
-            // Termék mentése
-            $('#productForm').submit(function(e) {
-                e.preventDefault();
-                var id = $('#product_id').val();
-                var url = id ? '/products/' + id : '/products';
-                var method = id ? 'PUT' : 'POST';
-                $.ajax({
-                    url: url,
-                    type: method,
-                    data: {
-                        name: $('#name').val(),
-                        price: $('#price').val(),
-                        _token: '{{ csrf_token() }}'
-                    },
-                    success: function() {
-                        $('#productModal').modal('hide');
-                        table.ajax.reload();
-                    }
-                });
-            });
-
-            // Termék törlése
-            $('#taxes-table').on('click', '.delete', function() {
-                if (confirm('Biztosan törölni szeretnéd?')) {
-                    var id = $(this).data('id');
-                    $.ajax({
-                        url: '/products/' + id,
-                        type: 'DELETE',
-                        data: { _token: '{{ csrf_token() }}' },
-                        success: function() {
-                            table.ajax.reload();
-                        }
-                    });
+                ],
+                fillFormFn: (row) => {
+                    document.getElementById('id').value = row.id;
+                    document.getElementById('tax_value').value = row.tax_value;
+                    document.getElementById('tax_name').value = row.tax_name;
+                    document.getElementById('tax_description').value = row.tax_description;
                 }
             });
         });

@@ -3,12 +3,20 @@
 namespace App\Http\Controllers\Admin\Settings;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\TaxCategoryRequest;
 use App\Models\TaxCategory;
+use App\Services\TaxCategoryService;
 use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
 
 class TaxCategoryController extends Controller
 {
+    protected $tax_category_service;
+
+    public function __construct(TaxCategoryService $service)
+    {
+        $this->tax_category_service = $service;
+    }
     public function index()
     {
         return view('admin.settings.tax-categories');
@@ -26,5 +34,41 @@ class TaxCategoryController extends Controller
             })
             ->rawColumns(['action'])
             ->make(true);
+    }
+
+    public function store(TaxCategoryRequest $request)
+    {
+        $result = $this->tax_category_service->store($request->validated());
+
+        if ($result['success']) {
+            return response()->json(['message' => 'Mentés sikeres', 'tax' => $result['data']]);
+        } else {
+            return response()->json(['message' => 'Hiba történt', 'error' => $result['error']], 500);
+        }
+    }
+
+    public function update(TaxCategoryRequest $request, TaxCategory $tax)
+    {
+        $result = $this->tax_category_service->update($tax, $request->validated());
+
+        if ($result['success']) {
+            return response()->json(['message' => 'Mentés sikeres', 'tax' => $result['data']]);
+        } else {
+            return response()->json(['message' => 'Hiba történt', 'error' => $result['error']], 500);
+        }
+    }
+
+    public function destroy(TaxCategory $tax)
+    {
+        $result = $this->tax_category_service->delete($tax);
+
+        if ($result['success']) {
+            return response()->json(['message' => 'Sikeres törlés.']);
+        }
+
+        return response()->json([
+            'error' => 'Nem sikerült törölni az adóosztályt.',
+            'details' => $result['error']
+        ], 500);
     }
 }
