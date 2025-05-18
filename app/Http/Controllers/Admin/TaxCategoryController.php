@@ -1,12 +1,11 @@
 <?php
 
-namespace App\Http\Controllers\Admin\Settings;
+namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\TaxCategoryRequest;
 use App\Models\TaxCategory;
-use App\Services\TaxCategoryService;
-use Illuminate\Http\Request;
+use App\Services\Admin\TaxCategoryService;
 use Yajra\DataTables\Facades\DataTables;
 
 class TaxCategoryController extends Controller

@@ -9,7 +9,7 @@
     <hr class="sidebar-divider my-0">
 
     <li class="nav-item">
-        <a class="nav-link" href="/admin/dashboard">
+        <a class="nav-link" href="{{ route('admin.dashboard') }}">
             <i class="fas fa-fw fa-tachometer-alt"></i>
             <span>Dashboard</span></a>
     </li>
@@ -27,9 +27,9 @@
         </a>
         <div id="collapseSale" class="collapse">
             <div class="bg-white py-2 collapse-inner rounded">
-                <a class="collapse-item" href="#">Rendelések</a>
-                <a class="collapse-item" href="#">Kuponok</a>
-                <a class="collapse-item" href="#">Vevők és partnerek</a>
+                <a class="collapse-item" href="{{ route('admin.orders.index') }}">Rendelések</a>
+                <a class="collapse-item" href="{{ route('admin.coupons.index') }}">Kuponok</a>
+                <a class="collapse-item" href="{{ route('admin.customers.index') }}">Vevők és partnerek</a>
             </div>
         </div>
     </li>
@@ -113,7 +113,7 @@
         </a>
         <div id="collapseFinancialSettings" class="collapse">
             <div class="bg-white py-2 collapse-inner rounded">
-                <a class="collapse-item" href="/admin/beallitasok/ado-osztalyok">Adó osztályok</a>
+                <a class="collapse-item" href="{{ route('admin.tax-categories.index') }}">Adó osztályok</a>
             </div>
         </div>
     </li>

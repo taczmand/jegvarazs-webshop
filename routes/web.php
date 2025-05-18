@@ -1,11 +1,14 @@
 <?php
 
 use App\Http\Controllers\Admin\Auth\AdminLoginController;
+use App\Http\Controllers\Admin\CouponController;
+use App\Http\Controllers\Admin\CustomerController;
 use App\Http\Controllers\Admin\DashboardController;
-use App\Http\Controllers\Admin\Settings\TaxCategoryController;
+use App\Http\Controllers\Admin\OrderController;
+use App\Http\Controllers\Admin\TaxCategoryController;
 use App\Http\Controllers\Auth\CustomerLoginController;
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PagesController;
+use Illuminate\Support\Facades\Route;
 
 Route::get('/', [PagesController::class, 'index'])->name('index');
 Route::get('/rolunk', [PagesController::class, 'about'])->name('about');
@@ -26,7 +29,35 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::get('/kijelentkezes', [AdminLoginController::class, 'logout']);
 
     Route::middleware(['admin.auth'])->group(function () {
+
+        /* Dashboard */
+
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+        /* Bolt kezelés - Értékesítés */
+
+        // Rendelések
+        Route::get('/ertekesites/rendelesek', [OrderController::class, 'index'])->name('orders.index');
+        Route::get('/ertekesites/rendelesek/data', [OrderController::class, 'data'])->name('orders.data');
+        Route::post('/ertekesites/rendelesek', [OrderController::class, 'store'])->name('orders.store');
+        Route::put('/ertekesites/rendelesek/{order}', [OrderController::class, 'update'])->name('orders.update');
+        Route::delete('/ertekesites/rendelesek/{order}', [OrderController::class, 'destroy'])->name('orders.destroy');
+
+        // Kuponok
+        Route::get('/ertekesites/kuponok', [CouponController::class, 'index'])->name('coupons.index');
+        Route::get('/ertekesites/kuponok/data', [CouponController::class, 'data'])->name('coupons.data');
+        Route::post('/ertekesites/kuponok', [CouponController::class, 'store'])->name('coupons.store');
+        Route::put('/ertekesites/kuponok/{order}', [CouponController::class, 'update'])->name('coupons.update');
+        Route::delete('/ertekesites/kuponok/{order}', [CouponController::class, 'destroy'])->name('coupons.destroy');
+
+        // Vevők és partnerek
+        Route::get('/ertekesites/vevok', [CustomerController::class, 'index'])->name('customers.index');
+        Route::get('/ertekesites/vevok/data', [CustomerController::class, 'data'])->name('customers.data');
+        Route::post('/ertekesites/vevok', [CustomerController::class, 'store'])->name('customers.store');
+        Route::put('/ertekesites/vevok/{order}', [CustomerController::class, 'update'])->name('customers.update');
+        Route::delete('/ertekesites/vevok/{order}', [CustomerController::class, 'destroy'])->name('customers.destroy');
+
+        /* Beállítások - Pénzügyi beállítások */
 
         // Adó osztályok
         Route::get('/beallitasok/ado-osztalyok', [TaxCategoryController::class, 'index'])->name('tax-categories.index');

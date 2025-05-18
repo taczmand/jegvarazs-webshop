@@ -2,6 +2,7 @@ import { defineConfig } from 'vite';
 import laravel from 'laravel-vite-plugin';
 
 export default defineConfig({
+    base: '/projects/jegvarazs/public_html/',
     plugins: [
         laravel({
             input: [
