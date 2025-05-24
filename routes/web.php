@@ -1,10 +1,12 @@
 <?php
 
 use App\Http\Controllers\Admin\Auth\AdminLoginController;
+use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\CouponController;
 use App\Http\Controllers\Admin\CustomerController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\OrderController;
+use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\TaxCategoryController;
 use App\Http\Controllers\Auth\CustomerLoginController;
 use App\Http\Controllers\PagesController;
@@ -56,6 +58,24 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('/ertekesites/vevok', [CustomerController::class, 'store'])->name('customers.store');
         Route::put('/ertekesites/vevok/{order}', [CustomerController::class, 'update'])->name('customers.update');
         Route::delete('/ertekesites/vevok/{order}', [CustomerController::class, 'destroy'])->name('customers.destroy');
+
+        /* Bolt kezelés - Termékek */
+
+        // Összes termék
+        Route::get('/termekek', [ProductController::class, 'index'])->name('products.index');
+        Route::get('/termekek/data', [ProductController::class, 'data'])->name('products.data');
+        Route::get('/termekek/meta', [ProductController::class, 'meta'])->name('products.meta');
+        Route::get('/termekek/{id}', [ProductController::class, 'show'])->name('products.get');
+        Route::post('/termekek', [ProductController::class, 'store'])->name('products.store');
+        Route::put('/termekek/{id}', [ProductController::class, 'update'])->name('products.update');
+        Route::patch('/termekek/update-photo-alt', [ProductController::class, 'updateProductPhotoAlt'])->name('products.update_product_photo_alt');
+        Route::patch('/termekek/set-primary-photo', [ProductController::class, 'setPrimaryProductPhoto'])->name('products.set_primary_product_photo');
+        Route::delete('/termekek/delete-photo', [ProductController::class, 'deleteProductPhoto'])->name('products.delete_product_photo');
+        Route::delete('/termekek/{id}', [ProductController::class, 'destroy'])->name('products.destroy');
+
+        // Kategóriák
+        Route::get('/kategoriak', [CategoryController::class, 'index'])->name('categories.index');
+        Route::get('/kategoriak/data', [CategoryController::class, 'data'])->name('categories.data');
 
         /* Beállítások - Pénzügyi beállítások */
 

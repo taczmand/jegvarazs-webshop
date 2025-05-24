@@ -41,7 +41,7 @@
         </a>
         <div id="collapseProducts" class="collapse">
             <div class="bg-white py-2 collapse-inner rounded">
-                <a class="collapse-item" href="#">Összes termék</a>
+                <a class="collapse-item" href="{{ route('admin.products.index') }}">Összes termék</a>
                 <a class="collapse-item" href="#">Kategóriák</a>
                 <a class="collapse-item" href="#">Egyedi tulajdonságok</a>
                 <a class="collapse-item" href="#">Címkék</a>
