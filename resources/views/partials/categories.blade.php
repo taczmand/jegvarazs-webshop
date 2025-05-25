@@ -3,31 +3,24 @@
     <div class="container">
         <div class="row">
             <div class="categories__slider owl-carousel">
-                <div class="col-lg-3">
-                    <div class="categories__item set-bg" data-setbg="img/categories/cat-1.jpg">
-                        <h5><a href="#">Fresh Fruit</a></h5>
+                @foreach($categories as $category)
+                    @php
+                        $photo = $category->products->first()?->photos->firstWhere('is_main', true)?->path ??
+                                 $category->products->first()?->photos->first()?->path ??
+                                 'images/no-image.jpg';
+
+                        $photoUrl = asset('storage/' . $photo);
+                    @endphp
+                    <div class="col-lg-3">
+                        <div class="categories__item set-bg" data-setbg="{{ $photoUrl }}">
+                            <h5>
+                                <a href="{{ route('products.resolve', ['slugs' => $category->getFullSlug()]) }}">
+                                    {{ $category->title }}
+                                </a>
+                            </h5>
+                        </div>
                     </div>
-                </div>
-                <div class="col-lg-3">
-                    <div class="categories__item set-bg" data-setbg="img/categories/cat-2.jpg">
-                        <h5><a href="#">Dried Fruit</a></h5>
-                    </div>
-                </div>
-                <div class="col-lg-3">
-                    <div class="categories__item set-bg" data-setbg="img/categories/cat-3.jpg">
-                        <h5><a href="#">Vegetables</a></h5>
-                    </div>
-                </div>
-                <div class="col-lg-3">
-                    <div class="categories__item set-bg" data-setbg="img/categories/cat-4.jpg">
-                        <h5><a href="#">drink fruits</a></h5>
-                    </div>
-                </div>
-                <div class="col-lg-3">
-                    <div class="categories__item set-bg" data-setbg="img/categories/cat-5.jpg">
-                        <h5><a href="#">drink fruits</a></h5>
-                    </div>
-                </div>
+                @endforeach
             </div>
         </div>
     </div>

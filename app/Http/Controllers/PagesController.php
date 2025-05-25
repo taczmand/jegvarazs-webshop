@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Category;
+use App\Models\Product;
 use Illuminate\Http\Request;
 
 class PagesController extends Controller
@@ -29,5 +31,12 @@ class PagesController extends Controller
     public function appointment() {
 
         return view('pages.appointment');
+    }
+
+    public function product() {
+
+        $product = Product::where('slug', $slug)->firstOrFail();
+
+        return view('pages.products.show', compact('product'));
     }
 }

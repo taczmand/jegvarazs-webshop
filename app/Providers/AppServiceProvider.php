@@ -2,6 +2,9 @@
 
 namespace App\Providers;
 
+use App\Models\BasicData;
+use App\Models\Category;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
 
@@ -20,6 +23,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        if (!request()->is('admin/*')) {
+            View::share('categories', Category::with(['children' => function($query) {
+                $query->where('status', 'active');
+            }])->whereNull('parent_id')->where('status', 'active')->get());
+
+            View::share('basicdata', BasicData::all()->pluck('value', 'key')->toArray());
+        }
     }
 }

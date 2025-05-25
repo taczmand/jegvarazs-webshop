@@ -7,3 +7,4 @@
 @section('content')
     @include('partials.categories')
 @endsection
+

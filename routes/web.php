@@ -1,28 +1,18 @@
 <?php
 
 use App\Http\Controllers\Admin\Auth\AdminLoginController;
+use App\Http\Controllers\Admin\BasicDataController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\CouponController;
 use App\Http\Controllers\Admin\CustomerController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\OrderController;
-use App\Http\Controllers\Admin\ProductController;
+use App\Http\Controllers\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Admin\TaxCategoryController;
-use App\Http\Controllers\Auth\CustomerLoginController;
+use App\Http\Controllers\ShopCustomerController;
 use App\Http\Controllers\PagesController;
+use App\Http\Controllers\ProductController;
 use Illuminate\Support\Facades\Route;
-
-Route::get('/', [PagesController::class, 'index'])->name('index');
-Route::get('/rolunk', [PagesController::class, 'about'])->name('about');
-Route::get('/kapcsolat', [PagesController::class, 'contact'])->name('contact');
-Route::get('/idoponfoglalas', [PagesController::class, 'appointment'])->name('appointment');
-Route::get('/letoltesek', [PagesController::class, 'downloads'])->name('downloads');
-
-Route::get('/bejelentkezes', [CustomerLoginController::class, 'showLoginForm'])->name('login');
-Route::post('/bejelentkezes', [CustomerLoginController::class, 'login']);
-Route::middleware(['auth:customer'])->group(function () {
-    //Route::get('/dashboard', [CustomerDashboardController::class, 'index'])->name('dashboard');
-});
 
 // Admin
 Route::prefix('admin')->name('admin.')->group(function () {
@@ -62,20 +52,27 @@ Route::prefix('admin')->name('admin.')->group(function () {
         /* Bolt kezelés - Termékek */
 
         // Összes termék
-        Route::get('/termekek', [ProductController::class, 'index'])->name('products.index');
-        Route::get('/termekek/data', [ProductController::class, 'data'])->name('products.data');
-        Route::get('/termekek/meta', [ProductController::class, 'meta'])->name('products.meta');
-        Route::get('/termekek/{id}', [ProductController::class, 'show'])->name('products.get');
-        Route::post('/termekek', [ProductController::class, 'store'])->name('products.store');
-        Route::put('/termekek/{id}', [ProductController::class, 'update'])->name('products.update');
-        Route::patch('/termekek/update-photo-alt', [ProductController::class, 'updateProductPhotoAlt'])->name('products.update_product_photo_alt');
-        Route::patch('/termekek/set-primary-photo', [ProductController::class, 'setPrimaryProductPhoto'])->name('products.set_primary_product_photo');
-        Route::delete('/termekek/delete-photo', [ProductController::class, 'deleteProductPhoto'])->name('products.delete_product_photo');
-        Route::delete('/termekek/{id}', [ProductController::class, 'destroy'])->name('products.destroy');
+        Route::get('/termekek', [AdminProductController::class, 'index'])->name('products.index');
+        Route::get('/termekek/data', [AdminProductController::class, 'data'])->name('products.data');
+        Route::get('/termekek/meta', [AdminProductController::class, 'meta'])->name('products.meta');
+        Route::get('/termekek/{id}', [AdminProductController::class, 'show'])->name('products.get');
+        Route::post('/termekek', [AdminProductController::class, 'store'])->name('products.store');
+        Route::put('/termekek/{id}', [AdminProductController::class, 'update'])->name('products.update');
+        Route::patch('/termekek/update-photo-alt', [AdminProductController::class, 'updateProductPhotoAlt'])->name('products.update_product_photo_alt');
+        Route::patch('/termekek/set-primary-photo', [AdminProductController::class, 'setPrimaryProductPhoto'])->name('products.set_primary_product_photo');
+        Route::delete('/termekek/delete-photo', [AdminProductController::class, 'deleteProductPhoto'])->name('products.delete_product_photo');
+        Route::delete('/termekek/{id}', [AdminProductController::class, 'destroy'])->name('products.destroy');
 
         // Kategóriák
         Route::get('/kategoriak', [CategoryController::class, 'index'])->name('categories.index');
         Route::get('/kategoriak/data', [CategoryController::class, 'data'])->name('categories.data');
+
+        /* Beállítások - Webshop */
+
+        // Általános
+        Route::get('/beallitasok/altalanos', [BasicDataController::class, 'index'])->name('settings.general.index');
+        Route::get('/beallitasok/altalanos/data', [BasicDataController::class, 'data'])->name('settings.general.data');
+        Route::put('/beallitasok/altalanos/{id}', [BasicDataController::class, 'update'])->name('settings.general.update');
 
         /* Beállítások - Pénzügyi beállítások */
 
@@ -87,5 +84,25 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::delete('/beallitasok/ado-osztalyok/{tax}', [TaxCategoryController::class, 'destroy'])->name('tax-categories.destroy');
     });
 });
+
+Route::get('/bejelentkezes', [ShopCustomerController::class, 'showLoginForm'])->name('login');
+Route::post('/bejelentkezes', [ShopCustomerController::class, 'login']);
+Route::post('/elfelejtett-jelszo', [ShopCustomerController::class, 'passwordReset'])->name('password.reset');
+
+Route::middleware(['auth:customer'])->group(function () {
+    //Route::get('/dashboard', [CustomerDashboardController::class, 'index'])->name('dashboard');
+});
+
+Route::get('/', [PagesController::class, 'index'])->name('index');
+Route::get('/rolunk', [PagesController::class, 'about'])->name('about');
+Route::get('/kapcsolat', [PagesController::class, 'contact'])->name('contact');
+Route::get('/idoponfoglalas', [PagesController::class, 'appointment'])->name('appointment');
+Route::get('/letoltesek', [PagesController::class, 'downloads'])->name('downloads');
+
+//Route::get('/termekek/{slug}', [ProductController::class, 'show'])->name('products.show');
+Route::get('/termekek', [ProductController::class, 'index'])->name('products.index');
+Route::get('/termekek/{slugs}', [ProductController::class, 'resolve'])
+    ->where('slugs', '^(?!admin).*$') // ne kezdődjön admin-nal
+    ->name('products.resolve');
 
 

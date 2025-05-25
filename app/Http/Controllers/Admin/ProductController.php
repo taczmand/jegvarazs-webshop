@@ -42,9 +42,13 @@ class ProductController extends Controller
             })
             ->addColumn('action', function ($product) {
                 return '
-            <button class="btn btn-sm btn-primary edit" data-id="'.$product->id.'">Szerkesztés</button>
-            <button class="btn btn-sm btn-danger delete" data-id="'.$product->id.'">Törlés</button>
-        ';
+                    <button class="btn btn-sm btn-primary edit" data-id="'.$product->id.'" title="Szerkesztés">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-sm btn-danger delete" data-id="'.$product->id.'" title="Törlés">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                ';
             })
             ->rawColumns(['action'])
             ->make(true);

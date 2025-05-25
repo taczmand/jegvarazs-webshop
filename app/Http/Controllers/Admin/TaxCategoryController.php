@@ -24,11 +24,16 @@ class TaxCategoryController extends Controller
     public function data()
     {
         $taxes = TaxCategory::select(['id', 'tax_value', 'tax_name', 'tax_description', 'created_at']);
+
         return DataTables::of($taxes)
             ->addColumn('action', function ($tax) {
                 return '
-                    <button class="btn btn-sm btn-primary edit" data-id="'.$tax->id.'">Szerkesztés</button>
-                    <button class="btn btn-sm btn-danger delete" data-id="'.$tax->id.'">Törlés</button>
+                    <button class="btn btn-sm btn-primary edit" data-id="'.$tax->id.'" title="Szerkesztés">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-sm btn-danger delete" data-id="'.$tax->id.'" title="Törlés">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
                 ';
             })
             ->rawColumns(['action'])

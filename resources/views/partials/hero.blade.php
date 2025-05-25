@@ -8,13 +8,27 @@
                         <i class="fa fa-bars"></i>
                         <span>Termékek</span>
                     </div>
-                    <ul>
-                        <li><a href="#">Klíma</a></li>
-                        <li><a href="#">Rézcső</a></li>
-                        <li><a href="#">Konzol</a></li>
-                        <li><a href="#">Termosztát</a></li>
-                        <li><a href="#">Légtechnika</a></li>
-                        <li><a href="#">Tudom is én mi</a></li>
+                    <ul class="categories-list">
+                        @foreach($categories as $category)
+                            <li class="category-item">
+                                <a href="{{ route('products.resolve', ['slugs' => $category->getFullSlug()]) }}">
+                                    {{ $category->title }}
+                                </a>
+
+                                @if($category->children->count() > 0)
+                                    <ul class="subcategory-list">
+                                        @foreach($category->children as $subcategory)
+                                            <li>
+                                                <a href="{{ route('products.resolve', ['slugs' => $subcategory->getFullSlug()]) }}">
+                                                    {{ $subcategory->title }}
+                                                </a>
+                                            </li>
+                                        @endforeach
+                                    </ul>
+                                @endif
+                            </li>
+                        @endforeach
+
                     </ul>
                 </div>
             </div>
@@ -31,7 +45,7 @@
                             <i class="fa fa-phone"></i>
                         </div>
                         <div class="hero__search__phone__text">
-                            <h5>+36 (20) 778-9928</h5>
+                            <h5><a href="tel:{{ $basicdata['support_phone'] ?? '' }}" class="text-dark">{{ $basicdata['support_phone'] ?? '' }}</a></h5>
                             <span>Várjuk hívását!</span>
                         </div>
                     </div>

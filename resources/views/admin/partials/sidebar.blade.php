@@ -84,7 +84,7 @@
         </a>
         <div id="collapseWebshopSettings" class="collapse">
             <div class="bg-white py-2 collapse-inner rounded">
-                <a class="collapse-item" href="#">Általános</a>
+                <a class="collapse-item" href="{{ route('admin.settings.general.index') }}">Általános</a>
                 <a class="collapse-item" href="#">Letöltések</a>
                 <a class="collapse-item" href="#">Admin felhasználók</a>
             </div>

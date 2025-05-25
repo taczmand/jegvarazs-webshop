@@ -19,8 +19,26 @@ class Category extends Model
         return $this->hasMany(Category::class, 'parent_id');
     }
 
+    public function parent()
+    {
+        return $this->belongsTo(Category::class, 'parent_id');
+    }
+
     public function scopeActive(Builder $query): Builder
     {
         return $query->where('status', 'active');
+    }
+
+    public function getFullSlug(): string
+    {
+        $slugs = [];
+        $category = $this;
+
+        while ($category) {
+            $slugs[] = $category->slug;
+            $category = $category->parent;
+        }
+
+        return implode('/', array_reverse($slugs));
     }
 }

@@ -25,17 +25,18 @@ export function initCrud(options) {
         columns: columns
     });
 
-    document.getElementById(addButtonId).addEventListener('click', () => {
-        form.reset();
-        form.querySelector('[name="id"]').value = '';
-        modal.show();
-    });
+    if (addButtonId) {
+        document.getElementById(addButtonId).addEventListener('click', () => {
+            form.reset();
+            form.querySelector('[name="id"]').value = '';
+            modal.show();
+        });
+    }
 
     $(`#${tableId}`).on('click', '.edit', function () {
         const row = table.row($(this).closest('tr')).data();
         for (const key in row) {
             const input = form.querySelector(`[name="${key}"]`);
-            console.log(row, key);
             if (input) input.value = row[key];
         }
         modal.show();
@@ -47,7 +48,7 @@ export function initCrud(options) {
         const id = form.querySelector('[name="id"]').value;
         const isEdit = id !== '';
         const url = isEdit ? `${storeUrl}/${id}` : storeUrl;
-
+        console.log(url);
         const formData = new FormData(form);
         if (isEdit) formData.append('_method', 'PUT');
         formData.append('_token', csrfToken);
