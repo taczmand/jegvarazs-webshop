@@ -2,11 +2,16 @@
 
 namespace App\Models;
 
+use App\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
 class Category extends Model
 {
+    use LogsActivity;
+
+    protected $fillable = ['title', 'slug', 'description', 'parent_id', 'status'];
+
     public function products(){
         return $this->hasMany(Product::class,'cat_id','id')->where('status','active');
     }

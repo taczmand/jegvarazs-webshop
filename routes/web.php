@@ -66,6 +66,10 @@ Route::prefix('admin')->name('admin.')->group(function () {
         // Kategóriák
         Route::get('/kategoriak', [CategoryController::class, 'index'])->name('categories.index');
         Route::get('/kategoriak/data', [CategoryController::class, 'data'])->name('categories.data');
+        Route::get('/kategoriak/fetch', [CategoryController::class, 'fetch'])->name('categories.fetch');
+        Route::post('/kategoriak', [CategoryController::class, 'store'])->name('categories.store');
+        Route::put('/kategoriak/{id}', [CategoryController::class, 'update'])->name('categories.update');
+        Route::delete('/kategoriak/{id}', [CategoryController::class, 'destroy'])->name('products.destroy');
 
         /* Beállítások - Webshop */
 
