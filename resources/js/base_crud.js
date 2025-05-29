@@ -35,12 +35,22 @@ export function initCrud(options) {
 
     $(`#${tableId}`).on('click', '.edit', function () {
         const row = table.row($(this).closest('tr')).data();
+
         for (const key in row) {
             const input = form.querySelector(`[name="${key}"]`);
-            if (input) input.value = row[key];
+            if (!input) continue;
+
+            if (input.type === 'checkbox') {
+                const value = row[key];
+                input.checked = value === 'active' || value === 1 || value === '1' || value === true || value === 'true';
+            } else {
+                input.value = row[key];
+            }
         }
+
         modal.show();
     });
+
 
     form.addEventListener('submit', function (e) {
         e.preventDefault();
@@ -48,7 +58,7 @@ export function initCrud(options) {
         const id = form.querySelector('[name="id"]').value;
         const isEdit = id !== '';
         const url = isEdit ? `${storeUrl}/${id}` : storeUrl;
-        console.log(url);
+
         const formData = new FormData(form);
         if (isEdit) formData.append('_method', 'PUT');
         formData.append('_token', csrfToken);

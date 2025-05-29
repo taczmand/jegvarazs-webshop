@@ -6,8 +6,8 @@
     <div class="container p-0">
 
         <div class="d-flex justify-content-between align-items-center mb-5">
-            <h1 class="h3 text-gray-800 mb-0">Termékek / Címkék</h1>
-            <button class="btn btn-success" id="addButton"><i class="fas fa-plus me-1"></i> Új címke</button>
+            <h1 class="h3 text-gray-800 mb-0">Termékek / Egyedi tulajdonságok</h1>
+            <button class="btn btn-success" id="addButton"><i class="fas fa-plus me-1"></i> Új tulajdonság</button>
         </div>
 
         <table class="table table-bordered" id="adminTable">
@@ -30,7 +30,7 @@
             <form id="adminForm">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="adminModalLabel">Címke szerkesztése</h5>
+                        <h5 class="modal-title" id="adminModalLabel">Tulajdonság szerkesztése</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Bezárás"></button>
                     </div>
                     <div class="modal-body">
@@ -59,9 +59,9 @@
                 modalId: 'adminModal',
                 formId: 'adminForm',
                 addButtonId: 'addButton',
-                dataUrl: '{{ route('admin.tags.data') }}',
-                storeUrl: '{{ route('admin.tags.store') }}',
-                destroyUrl: '{{ url('/admin/cimkek/') }}',
+                dataUrl: '{{ route('admin.attributes.data') }}',
+                storeUrl: '{{ route('admin.attributes.store') }}',
+                destroyUrl: '{{ url('/admin/tulajdonsagok/') }}',
                 csrf: document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
                 columns: [
                     { data: 'id' },

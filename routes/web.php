@@ -1,13 +1,16 @@
 <?php
 
+use App\Http\Controllers\Admin\AttributeController;
 use App\Http\Controllers\Admin\Auth\AdminLoginController;
 use App\Http\Controllers\Admin\BasicDataController;
+use App\Http\Controllers\Admin\BrandController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\CouponController;
 use App\Http\Controllers\Admin\CustomerController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
+use App\Http\Controllers\Admin\TagController;
 use App\Http\Controllers\Admin\TaxCategoryController;
 use App\Http\Controllers\ShopCustomerController;
 use App\Http\Controllers\PagesController;
@@ -70,6 +73,27 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('/kategoriak', [CategoryController::class, 'store'])->name('categories.store');
         Route::put('/kategoriak/{id}', [CategoryController::class, 'update'])->name('categories.update');
         Route::delete('/kategoriak/{id}', [CategoryController::class, 'destroy'])->name('products.destroy');
+
+        // Egyedi tulajdonságok
+        Route::get('/tulajdonsagok', [AttributeController::class, 'index'])->name('attributes.index');
+        Route::get('/tulajdonsagok/data', [AttributeController::class, 'data'])->name('attributes.data');
+        Route::post('/tulajdonsagok', [AttributeController::class, 'store'])->name('attributes.store');
+        Route::put('tulajdonsagok/{id}', [AttributeController::class, 'update'])->name('attributes.update');
+        Route::delete('/tulajdonsagok/{id}', [AttributeController::class, 'destroy'])->name('attributes.destroy');
+
+        // Címkék
+        Route::get('/cimkek', [TagController::class, 'index'])->name('tags.index');
+        Route::get('/cimkek/data', [TagController::class, 'data'])->name('tags.data');
+        Route::post('/cimkek', [TagController::class, 'store'])->name('tags.store');
+        Route::put('cimkek/{id}', [TagController::class, 'update'])->name('tags.update');
+        Route::delete('/cimkek/{id}', [TagController::class, 'destroy'])->name('tags.destroy');
+
+        // Gyártók
+        Route::get('/gyartok', [BrandController::class, 'index'])->name('brands.index');
+        Route::get('/gyartok/data', [BrandController::class, 'data'])->name('brands.data');
+        Route::post('/gyartok', [BrandController::class, 'store'])->name('brands.store');
+        Route::put('gyartok/{id}', [BrandController::class, 'update'])->name('brands.update');
+        Route::delete('/gyartok/{id}', [BrandController::class, 'destroy'])->name('brands.destroy');
 
         /* Beállítások - Webshop */
 
