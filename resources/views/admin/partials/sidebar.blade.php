@@ -2,17 +2,24 @@
 <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
 
     <!-- Sidebar - Brand -->
-    <a class="sidebar-brand d-flex align-items-center justify-content-center" href="index.html">
+    <a class="sidebar-brand d-flex align-items-center justify-content-center" href="/admin">
         <img class="img-fluid" src="{{ asset('static_media/logo.jpg') }}" alt="">
     </a>
 
     <hr class="sidebar-divider my-0">
 
     <li class="nav-item">
+        <a class="nav-link" href="{{ route('index') }}" target="_blank">
+            <i class="fa-solid fa-arrow-up-right-from-square"></i>
+            <span>Ugrás a boltra</span></a>
+    </li>
+
+    <li class="nav-item">
         <a class="nav-link" href="{{ route('admin.dashboard') }}">
             <i class="fas fa-fw fa-tachometer-alt"></i>
             <span>Dashboard</span></a>
     </li>
+
 
     <hr class="sidebar-divider">
 
@@ -85,7 +92,7 @@
         <div id="collapseWebshopSettings" class="collapse">
             <div class="bg-white py-2 collapse-inner rounded">
                 <a class="collapse-item" href="{{ route('admin.settings.general.index') }}">Általános</a>
-                <a class="collapse-item" href="#">Letöltések</a>
+                <a class="collapse-item" href="{{ route('admin.settings.downloads.index') }}">Letöltések</a>
                 <a class="collapse-item" href="#">Admin felhasználók</a>
             </div>
         </div>
@@ -98,10 +105,10 @@
         </a>
         <div id="collapseOrderSettings" class="collapse">
             <div class="bg-white py-2 collapse-inner rounded">
-                <a class="collapse-item" href="#">Szállítási módok</a>
-                <a class="collapse-item" href="#">Fizetési módok</a>
-                <a class="collapse-item" href="#">Raktári állapotok</a>
-                <a class="collapse-item" href="#">Rendelési állapotok</a>
+                <a class="collapse-item" href="{{ route('admin.shipping-methods.index') }}">Szállítási módok</a>
+                <a class="collapse-item" href="{{ route('admin.payment-methods.index') }}">Fizetési módok</a>
+                <a class="collapse-item" href="{{ route('admin.stock-statuses.index') }}">Raktári állapotok</a>
+                <a class="collapse-item" href="{{ route('admin.order-statuses.index') }}">Rendelési állapotok</a>
             </div>
         </div>
     </li>

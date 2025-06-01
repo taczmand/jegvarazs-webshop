@@ -8,8 +8,13 @@ use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\CouponController;
 use App\Http\Controllers\Admin\CustomerController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\DownloadsController;
 use App\Http\Controllers\Admin\OrderController;
+use App\Http\Controllers\Admin\OrderStatusesController;
+use App\Http\Controllers\Admin\PaymentMethodController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
+use App\Http\Controllers\Admin\ShippingMethodController;
+use App\Http\Controllers\Admin\StockStatusesController;
 use App\Http\Controllers\Admin\TagController;
 use App\Http\Controllers\Admin\TaxCategoryController;
 use App\Http\Controllers\ShopCustomerController;
@@ -101,6 +106,32 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/beallitasok/altalanos', [BasicDataController::class, 'index'])->name('settings.general.index');
         Route::get('/beallitasok/altalanos/data', [BasicDataController::class, 'data'])->name('settings.general.data');
         Route::put('/beallitasok/altalanos/{id}', [BasicDataController::class, 'update'])->name('settings.general.update');
+
+        // Letöltések
+
+        Route::get('/letoltesek', [DownloadsController::class, 'index'])->name('settings.downloads.index');
+        Route::get('/letoltesek/data', [DownloadsController::class, 'data'])->name('settings.downloads.data');
+        Route::post('/letoltesek', [DownloadsController::class, 'store'])->name('settings.downloads.store');
+        Route::put('/letoltesek/{id}', [DownloadsController::class, 'update'])->name('settings.downloads.update');
+        Route::delete('/letoltesek/{id}', [DownloadsController::class, 'destroy'])->name('settings.downloads.destroy');
+
+        /* Beállítások - Rendelés */
+
+        //Szállítási módok configból
+
+        Route::get('/szallitasi-modok', [ShippingMethodController::class, 'index'])->name('shipping-methods.index');
+
+        //Fizetési módok configból
+
+        Route::get('/fizetesi-modok', [PaymentMethodController::class, 'index'])->name('payment-methods.index');
+
+        //Raktári állapotok configból
+
+        Route::get('/raktari-allapotok', [StockStatusesController::class, 'index'])->name('stock-statuses.index');
+
+        //Rendelési állapotok configból
+
+        Route::get('/rendelesi-allapotok', [OrderStatusesController::class, 'index'])->name('order-statuses.index');
 
         /* Beállítások - Pénzügyi beállítások */
 
