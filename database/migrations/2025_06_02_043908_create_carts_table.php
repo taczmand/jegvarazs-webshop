@@ -12,15 +12,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('categories', function (Blueprint $table) {
+        Schema::create('carts', function (Blueprint $table) {
             $table->id();
-            $table->string('title')->unique();
-            $table->string('slug')->unique();
-            $table->text('description')->nullable();
-            $table->boolean('is_parent')->default(1);
-            $table->unsignedBigInteger('parent_id')->nullable();
-            $table->enum('status',['active','inactive'])->default('inactive');
-            $table->foreign('parent_id')->references('id')->on('categories')->onDelete('SET NULL');
+            $table->unsignedBigInteger('customer_id')->nullable();
+            $table->foreign('customer_id')->references('id')->on('customers')->onDelete('cascade');
+            $table->unsignedBigInteger('coupon_id')->nullable();
+            $table->foreign('coupon_id')->references('id')->on('coupons')->onDelete('SET NULL');
             $table->timestamp('created_at')->default(DB::raw('CURRENT_TIMESTAMP'));
             $table->timestamp('updated_at')->default(DB::raw('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'));
         });
@@ -31,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('categories');
+        Schema::dropIfExists('carts');
     }
 };

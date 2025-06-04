@@ -10,7 +10,8 @@ import '../js/jquery-ui.min.js';
 import '../js/jquery.slicknav.js';
 import '../js/mixitup.min.js';
 import '../js/owl.carousel.min.js';
-
+import '../js/cart.js';
+import * as bootstrap from "bootstrap";
 
 'use strict';
 
@@ -34,6 +35,49 @@ import '../js/owl.carousel.min.js';
             var containerEl = document.querySelector('.featured__filter');
             var mixer = mixitup(containerEl);
         }
+        fetchCartSummary();
+    });
+
+    /*------------------
+        Fetch cart count
+    --------------------*/
+    window.fetchCartSummary = async function() {
+        try {
+            const response = await fetch('/kosar/osszesito', {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json', // 👈 EZ KELL, hogy Laravel ne irányítson át
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                },
+                credentials: 'same-origin' // 👈 biztosítja, hogy a session cookie is elküldésre kerüljön
+            });
+            const response_data = await response.json();
+            if (response_data.result === 'success') {
+                renderAfterAddToCart(response_data);
+            }
+        } catch (error) {
+            console.error('Hiba a kosár lekérésekor:', error);
+        }
+    }
+
+    function renderAfterAddToCart(cartData) {
+        const cartCountElement = document.getElementById('cart_count');
+        if (cartCountElement) {
+            cartCountElement.textContent = cartData.summary.total_items ? cartData.summary.total_items : 0;
+        }
+
+        const cartTotalElement = document.getElementById('cart_total_item_amount');
+        if (cartTotalElement) {
+            const price = cartData.summary.total_price ?? 0;
+            cartTotalElement.textContent = formatter.format(price);
+        }
+    }
+
+    const formatter = new Intl.NumberFormat('hu-HU', {
+        style: 'currency',
+        currency: 'HUF',
+        minimumFractionDigits: 0
     });
 
     /*------------------
@@ -208,23 +252,42 @@ import '../js/owl.carousel.min.js';
 		Quantity change
 	--------------------- */
     var proQty = $('.pro-qty');
-    proQty.prepend('<span class="dec qtybtn">-</span>');
-    proQty.append('<span class="inc qtybtn">+</span>');
+    proQty.prepend('<span class="dec qtybtn" id="dec_qty">-</span>');
+    proQty.append('<span class="inc qtybtn" id="inc_qty">+</span>');
     proQty.on('click', '.qtybtn', function () {
         var $button = $(this);
         var oldValue = $button.parent().find('input').val();
+        let itemId = $button.parent().data('item-id');
+
         if ($button.hasClass('inc')) {
             var newVal = parseFloat(oldValue) + 1;
+            changeQuantity(itemId, newVal);
         } else {
             // Don't allow decrementing below zero
-            if (oldValue > 0) {
+            if (oldValue > 1) {
                 var newVal = parseFloat(oldValue) - 1;
+                changeQuantity(itemId, newVal);
             } else {
-                newVal = 0;
+                newVal = 1;
             }
         }
         $button.parent().find('input').val(newVal);
     });
 
+    window.showToast = function(message, type = 'success') {
+        const toastEl = document.getElementById('globalToast');
+        const toastBody = document.getElementById('globalToastMessage');
+
+        // Típus alapján módosítjuk a háttér színt (Bootstrap 5)
+        toastEl.classList.remove('bg-success', 'bg-danger', 'bg-warning', 'bg-info');
+        toastEl.classList.add(`bg-${type}`);
+
+        toastBody.textContent = message;
+
+        const toast = new bootstrap.Toast(toastEl, { delay: 3000 });
+        toast.show();
+    };
+
 })(jQuery);
+
 

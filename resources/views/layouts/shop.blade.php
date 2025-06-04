@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>@yield('title', 'Webshop')</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@200;300;400;600;900&display=swap" rel="stylesheet">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     @vite('resources/sass/shop.scss')
 </head>
 <body class="">
@@ -25,6 +26,17 @@
     @yield('content')
     @include('partials.contact-form')
 </main>
+
+<div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1100">
+    <div id="globalToast" class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div id="globalToastMessage" class="toast-body">
+                Művelet sikeres!
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Bezárás"></button>
+        </div>
+    </div>
+</div>
 
 @include('partials.footer')
 

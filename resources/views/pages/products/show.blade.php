@@ -51,15 +51,22 @@
 
                         <div class="product__details__price">{{ number_format($product->price, 0, ',', ' ') }} Ft</div>
                         <p>{{ $product->description }}</p>
-                        <div class="product__details__quantity">
-                            <div class="quantity">
-                                <div class="pro-qty">
-                                    <input type="text" value="1">
+
+
+                        @auth('customer')
+                            <div class="product__details__quantity">
+                                <div class="quantity">
+                                    <div class="pro-qty">
+                                        <input type="text" value="1" min="1">
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                        <a href="#" class="primary-btn">Kosárba</a>
-                        <a href="#" class="heart-icon"><span class="icon_heart_alt"></span></a>
+                            <a onclick="addToCart({{ $product->id }})" href="#" class="primary-btn">Kosárba</a>
+                            <a href="#" class="heart-icon"><span class="icon_heart_alt"></span></a>
+                        @else
+                            <a href="{{ route('login') }}" class="primary-btn">Jelentkezz be a vásárláshoz</a>
+                        @endauth
+
                         <ul>
                             <li><b>Availability</b> <span>{{ $product->in_stock ? 'In Stock' : 'Out of Stock' }}</span></li>
                             <li><b>Shipping</b> <span>01 day shipping. <samp>Free pickup today</samp></span></li>

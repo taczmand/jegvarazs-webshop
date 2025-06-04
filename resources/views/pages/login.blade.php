@@ -27,7 +27,7 @@
 
         <div class="mb-3">
             <label for="email" class="form-label">Email cím</label>
-            <input type="email" name="email" id="email" class="form-control" placeholder="Email" required>
+            <input type="email" name="email" id="email" class="form-control" value="teszt.elek@mail.com" placeholder="Email" required>
         </div>
 
         <div class="mb-3">

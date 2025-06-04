@@ -53,7 +53,12 @@
                         </div>
 
                         <div class="header__top__right__auth">
-                            <a href="{{ route('login') }}"><i class="fa fa-user"></i> Bejelentkezés</a>
+                            @auth('customer')
+                                <a href="{{ route('logout') }}"><i class="fa fa-user"></i> Kijelentkezés</a>
+                            @else
+                                <a href="{{ route('login') }}"><i class="fa fa-user"></i> Bejelentkezés</a>
+                            @endauth
+
                         </div>
                     </div>
                 </div>
@@ -80,9 +85,9 @@
                 <div class="header__cart">
                     <ul>
                         <li><a href="#"><i class="fa fa-heart"></i> <span>0</span></a></li>
-                        <li><a href="#"><i class="fa fa-shopping-bag"></i> <span>0</span></a></li>
+                        <li><a href="{{ route('cart') }}"><i class="fa fa-shopping-bag"></i> <span id="cart_count">0</span></a></li>
                     </ul>
-                    <div class="header__cart__price">összesen: <span>0 Ft</span></div>
+                    <div class="header__cart__price">összesen: <span id="cart_total_item_amount">0</span></div>
                 </div>
             </div>
         </div>

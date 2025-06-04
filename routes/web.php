@@ -17,6 +17,7 @@ use App\Http\Controllers\Admin\ShippingMethodController;
 use App\Http\Controllers\Admin\StockStatusesController;
 use App\Http\Controllers\Admin\TagController;
 use App\Http\Controllers\Admin\TaxCategoryController;
+use App\Http\Controllers\CartController;
 use App\Http\Controllers\ShopCustomerController;
 use App\Http\Controllers\PagesController;
 use App\Http\Controllers\ProductController;
@@ -146,9 +147,15 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
 Route::get('/bejelentkezes', [ShopCustomerController::class, 'showLoginForm'])->name('login');
 Route::post('/bejelentkezes', [ShopCustomerController::class, 'login']);
+Route::get('/kijelentkezes', [ShopCustomerController::class, 'logout'])->name('logout');
 Route::post('/elfelejtett-jelszo', [ShopCustomerController::class, 'passwordReset'])->name('password.reset');
 
 Route::middleware(['auth:customer'])->group(function () {
+    Route::get('/kosar', [CartController::class, 'index'])->name('cart');
+    Route::post('/kosar/hozzaadas', [CartController::class, 'add']);
+    Route::get('/kosar/osszesito', [CartController::class, 'fetchSummary'])->name('cart.summary');
+    Route::post('/kosar/torles', [CartController::class, 'removeItemFromCart'])->name('cart.item.delete');
+    Route::post('/kosar/mennyiseg-valtoztatas', [CartController::class, 'changeItemQty'])->name('cart.item.change_qty');
     //Route::get('/dashboard', [CustomerDashboardController::class, 'index'])->name('dashboard');
 });
 
@@ -158,10 +165,11 @@ Route::get('/kapcsolat', [PagesController::class, 'contact'])->name('contact');
 Route::get('/idoponfoglalas', [PagesController::class, 'appointment'])->name('appointment');
 Route::get('/letoltesek', [PagesController::class, 'downloads'])->name('downloads');
 
-//Route::get('/termekek/{slug}', [ProductController::class, 'show'])->name('products.show');
 Route::get('/termekek', [ProductController::class, 'index'])->name('products.index');
 Route::get('/termekek/{slugs}', [ProductController::class, 'resolve'])
     ->where('slugs', '^(?!admin).*$') // ne kezdődjön admin-nal
     ->name('products.resolve');
+
+
 
 
