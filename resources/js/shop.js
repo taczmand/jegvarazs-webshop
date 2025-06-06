@@ -288,6 +288,10 @@ import * as bootstrap from "bootstrap";
         toast.show();
     };
 
+    window.baseURL = function() {
+        return import.meta.env.VITE_BASE_URL;
+    }
+
 })(jQuery);
 
 

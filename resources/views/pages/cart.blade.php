@@ -37,7 +37,15 @@
                                 </tr>
                                 </thead>
                                 <tbody>
+                                @php
+                                    $total_item_amount = 0;
+                                @endphp
+
                                     @foreach($cart->items as $item)
+                                        @php
+                                            $subtotal = $item->product->price * $item->quantity;
+                                            $total_item_amount += $subtotal;
+                                        @endphp
                                         <tr id="cart_item_{{ $item->id }}">
                                             <td class="shoping__cart__item">
                                                 <img src="img/cart/cart-1.jpg" alt="">
@@ -84,9 +92,9 @@
                         <div class="shoping__checkout">
                             <h5>Összesítő</h5>
                             <ul>
-                                <li>Részösszeg <span>999999 Ft</span></li>
-                                <li>Kupon <span>- 999999 Ft</span></li>
-                                <li>Összesen <span>999999 Ft</span></li>
+                                <li>Részösszeg <span>{{ number_format($total_item_amount, 0, ',', ' ') }} Ft</span></li>
+                                <li>Kupon <span>- todo</span></li>
+                                <li>Összesen <span>{{ number_format($total_item_amount, 0, ',', ' ') }} Ft</span></li>
                             </ul>
                             <a href="#" class="primary-btn">Tovább</a>
                         </div>

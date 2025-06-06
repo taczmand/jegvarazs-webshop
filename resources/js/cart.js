@@ -1,7 +1,7 @@
 async function addToCart(productId, quantity = 1) {
 
     try {
-        const response = await fetch('/kosar/hozzaadas', {
+        const response = await fetch(baseURL() + 'kosar/hozzaadas', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -20,7 +20,6 @@ async function addToCart(productId, quantity = 1) {
         } else if (res.result === 'error') {
             showToast(res.result, 'error');
         }
-        //renderAfterAddToCart(res.cart_count ?? 0);
     } catch (error) {
         console.error('Hiba:', error);
     }
