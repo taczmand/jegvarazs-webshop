@@ -42,8 +42,8 @@ class ProductController extends Controller
         // Lekérdezzük a teljes terméshalmazt ár elemzéshez
         $allProductsQuery = Product::whereIn('cat_id', $categoryIds);
 
-        $minPrice = $allProductsQuery->min('price');
-        $maxPrice = $allProductsQuery->max('price');
+        $minPrice = $allProductsQuery->min('gross_price');
+        $maxPrice = $allProductsQuery->max('gross_price');
 
         return view('pages.products.index', [
             'products' => $products,

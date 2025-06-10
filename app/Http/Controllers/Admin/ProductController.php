@@ -26,15 +26,18 @@ class ProductController extends Controller
 
     public function data()
     {
-        $products = Product::with('category')->select(['id', 'title', 'stock', 'price', 'status', 'created_at', 'cat_id']);
+        $products = Product::with(['category', 'taxCategory'])->select(['id', 'title', 'stock', 'gross_price', 'status', 'created_at', 'cat_id', 'tax_id']);
 
         return DataTables::of($products)
             ->addColumn('category', function ($product) {
                 return $product->category ? $product->category->title : '';
             })
-            ->editColumn('price', function ($product) {
+            ->editColumn('gross_price', function ($product) {
                 // HUF formázás: 123456 -> 123 456 Ft
-                return number_format($product->price, 0, ',', ' ') . ' Ft';
+                return number_format($product->gross_price, 0, ',', ' ') . ' Ft';
+            })
+            ->addColumn('tax_value', function ($product) {
+                return $product->taxCategory?->tax_value . '%' ?? '';
             })
             ->editColumn('created_at', function ($product) {
                 // Formázás: YYYY-MM-DD HH:mm:ss

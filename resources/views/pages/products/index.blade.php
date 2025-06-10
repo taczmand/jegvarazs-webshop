@@ -130,7 +130,7 @@
                                                         </div>
                                                         <div class="latest-product__item__text">
                                                             <h6>{{ $product->name }}</h6>
-                                                            <span>{{ number_format($product->price, 0, ',', ' ') }} Ft</span>
+                                                            <span>{{ number_format($product->gross_price, 0, ',', ' ') }} Ft</span>
                                                         </div>
                                                     </a>
                                                 @endforeach
@@ -188,7 +188,7 @@
                                                 $fullSlug = $product->category->getFullSlug() . '/' . $product->slug;
                                             @endphp
                                             <h6><a href="{{ route('products.resolve', ['slugs' => $fullSlug]) }}">{{ $product->title }}</a></h6>
-                                            <h5>{{ number_format($product->price, 0, ',', ' ') }} Ft</h5>
+                                            <h5>{{ number_format($product->gross_price, 0, ',', ' ') }} Ft</h5>
                                         </div>
                                     </div>
                                 </div>

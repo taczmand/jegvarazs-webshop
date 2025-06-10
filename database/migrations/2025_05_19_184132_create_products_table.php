@@ -18,12 +18,13 @@ return new class extends Migration
             $table->longText('description')->nullable();
             $table->integer('stock')->default(1);
             $table->enum('status',['active','inactive'])->default('inactive');
-            $table->float('price');
-            $table->float('discount')->default(0)->nullabale();
+            $table->float('gross_price');
+            $table->unsignedBigInteger('tax_id');
             $table->unsignedBigInteger('cat_id')->nullable();
             $table->unsignedBigInteger('brand_id')->nullable();
             $table->foreign('brand_id')->references('id')->on('brands')->onDelete('SET NULL');
             $table->foreign('cat_id')->references('id')->on('categories')->onDelete('SET NULL');
+            $table->foreign('tax_id')->references('id')->on('tax_categories');
             $table->timestamp('created_at')->default(DB::raw('CURRENT_TIMESTAMP'));
             $table->timestamp('updated_at')->default(DB::raw('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'));
         });

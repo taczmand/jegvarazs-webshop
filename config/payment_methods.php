@@ -31,10 +31,10 @@ return [
     ],
     [
         'name' => 'Készpénz',
-        'slug' => 'simplepay',
+        'slug' => 'cash',
         'active' => true,
         'fee' => 0,
-        'description' => 'Bankkártyás fizetés a SimplePay rendszerén keresztül.',
+        'description' => 'Készpénzes fizetés üzletünkben.',
         'public' => false,
     ],
 ];

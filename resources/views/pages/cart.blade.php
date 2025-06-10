@@ -30,7 +30,7 @@
                                 <thead>
                                 <tr>
                                     <th class="shoping__product">Termékek</th>
-                                    <th>Ár</th>
+                                    <th>Bruttó egységár</th>
                                     <th>Mennyiség</th>
                                     <th>Összesen</th>
                                     <th></th>
@@ -43,7 +43,7 @@
 
                                     @foreach($cart->items as $item)
                                         @php
-                                            $subtotal = $item->product->price * $item->quantity;
+                                            $subtotal = $item->product->gross_price * $item->quantity;
                                             $total_item_amount += $subtotal;
                                         @endphp
                                         <tr id="cart_item_{{ $item->id }}">
@@ -52,7 +52,9 @@
                                                 <h5>{{ $item->product->title }}</h5>
                                             </td>
                                             <td class="shoping__cart__price">
-                                                {{ number_format($item->product->price, 0, ',', ' ') }} Ft
+                                                {{ number_format($item->product->gross_price, 0, ',', ' ') }} Ft
+                                                <br>
+                                                <i style="font-weight: normal; font-size: 10px">(nettó egységár (TODO): {{ number_format($item->product->gross_price, 0, ',', ' ') }} Ft)</i>
                                             </td>
                                             <td class="shoping__cart__quantity">
                                                 <div class="quantity">
@@ -62,7 +64,7 @@
                                                 </div>
                                             </td>
                                             <td class="shoping__cart__total">
-                                                {{ number_format($item->product->price * $item->quantity, 0, ',', ' ') }} Ft
+                                                {{ number_format($item->product->gross_price * $item->quantity, 0, ',', ' ') }} Ft
                                             </td>
                                             <td class="shoping__cart__item__close">
                                                 <span class="icon_close" onclick="removeItemFromCart({{ $item->id }})"></span>
@@ -96,7 +98,7 @@
                                 <li>Kupon <span>- todo</span></li>
                                 <li>Összesen <span>{{ number_format($total_item_amount, 0, ',', ' ') }} Ft</span></li>
                             </ul>
-                            <a href="#" class="primary-btn">Tovább</a>
+                            <a href="{{ route('checkout') }}" class="primary-btn">Pénztár</a>
                         </div>
                     </div>
                 </div>

@@ -7,6 +7,7 @@ use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\Tag;
+use App\Models\TaxCategory;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -37,6 +38,7 @@ class ProductService
         $tags = Tag::all();
         $attributes = Attribute::all();
         $brands = Brand::active()->get();
+        $taxes = TaxCategory::all();
         $categories = Category::with(['children' => function ($query) {
             $query->where('status', 'active');
         }])->where('status', 'active')->get();
@@ -45,7 +47,8 @@ class ProductService
             'tags' => $tags,
             'attributes' => $attributes,
             'brands' => $brands,
-            'categories' => $categories
+            'categories' => $categories,
+            'taxes' => $taxes
         ]);
     }
 
@@ -115,7 +118,8 @@ class ProductService
                 'slug' => Str::slug($data['title']),
                 'description' => $data['description'] ?? null,
                 'stock' => $data['stock'],
-                'price' => $data['price'],
+                'gross_price' => $data['gross_price'],
+                'tax_id' => $data['tax_id'] ?? null,
                 'cat_id' => $data['category_id'] ?? null,
                 'child_cat_id' => $data['subcategory_id'] ?? null,
                 'brand_id' => $data['brand_id'] ?? null

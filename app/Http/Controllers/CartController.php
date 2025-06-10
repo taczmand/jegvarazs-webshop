@@ -68,7 +68,7 @@ class CartController extends Controller
             'total_items' => $cart->items->sum('quantity'),
             //'total_items' => $cart->items->count(),
             'total_price' => $cart->items->sum(function ($item) {
-                return $item->product->price * $item->quantity;
+                return $item->product->gross_price * $item->quantity;
             }),
             'items' => $cart->items,
         ];

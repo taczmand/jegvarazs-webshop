@@ -49,7 +49,7 @@
                     <div class="product__details__text">
                         <h3>{{ $product->title }}</h3>
 
-                        <div class="product__details__price">{{ number_format($product->price, 0, ',', ' ') }} Ft</div>
+                        <div class="product__details__price">{{ number_format($product->gross_price, 0, ',', ' ') }} Ft</div>
                         <p>{{ $product->description }}</p>
 
 

@@ -12,17 +12,24 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('user_actions', function (Blueprint $table) {
+        Schema::create('order_items', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
-            $table->string('action');
-            $table->string('model')->nullable();
-            $table->unsignedBigInteger('model_id')->nullable();
-            $table->json('data')->nullable(); // Extra adatok
+            $table->foreignId('order_id')
+                ->constrained('orders')
+                ->onDelete('cascade');
+
+            $table->foreignId('product_id')
+                ->nullable()
+                ->constrained('products')
+                ->nullOnDelete();
+
+            $table->string('product_name');
+            $table->integer('quantity')->default(1);
+            $table->decimal('gross_price', 10, 2);
+            $table->decimal('tax_value', 10, 2);
             $table->timestamp('created_at')->default(DB::raw('CURRENT_TIMESTAMP'));
             $table->timestamp('updated_at')->default(DB::raw('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'));
         });
-
     }
 
     /**
@@ -30,6 +37,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('user_actions');
+        Schema::dropIfExists('order_items');
     }
 };

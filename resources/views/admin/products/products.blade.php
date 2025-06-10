@@ -13,7 +13,8 @@
                 <th>ID</th>
                 <th>Név</th>
                 <th>Készlet</th>
-                <th>Ár (Ft)</th>
+                <th>Bruttó ár</th>
+                <th>ÁFA</th>
                 <th>Kategória</th>
                 <th>Státusz</th>
                 <th>Létrehozva</th>
@@ -44,30 +45,16 @@
                             <div class="tab-pane fade show active" id="basic">
                                 <input type="hidden" id="product_id" name="id">
                                 <div class="row">
+
                                     <div class="col-md-6">
                                         <div class="mb-3">
                                             <label class="form-label">Termék neve*</label>
                                             <input type="text" class="form-control" name="title" id="title" name="title" required>
                                         </div>
                                         <div class="mb-3">
-                                            <label class="form-label">Ár (Ft)*</label>
-                                            <input type="number" step="0.01" class="form-control" name="price" id="price" name="price" required>
+                                            <label class="form-label">Bruttó ár (Ft)*</label>
+                                            <input type="number" step="0.01" class="form-control" name="gross_price" id="gross_price" required>
                                         </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label class="form-label">Készlet*</label>
-                                            <input type="number" class="form-control" name="stock" id="stock" name="stock" required>
-                                        </div>
-                                        <div class="mb-3">
-                                            <label class="form-label">Státusz</label>
-                                            <select class="form-select" id="status" name="status" required>
-                                                <option value="active">Aktív</option>
-                                                <option value="inactive">Inaktív</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
                                         <div class="mb-3">
                                             <label class="form-label">Kategória*</label>
                                             <select class="form-select" id="categoriesSelect" name="category_id" required>
@@ -79,6 +66,27 @@
                                             </select>
                                         </div>
                                     </div>
+
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Készlet*</label>
+                                            <input type="number" class="form-control" name="stock" id="stock" name="stock" required>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">ÁFA (%)*</label>
+                                            <select class="form-select" id="tax-select" name="tax_id" required>
+                                            </select>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Státusz</label>
+                                            <select class="form-select" id="status" name="status" required>
+                                                <option value="active">Aktív</option>
+                                                <option value="inactive">Inaktív</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label">Leírás</label>
@@ -130,7 +138,8 @@
                     { data: 'id' },
                     { data: 'title' },
                     { data: 'stock' },
-                    { data: 'price' },
+                    { data: 'gross_price' },
+                    { data: 'tax_value' },
                     { data: 'category' },
                     { data: 'status' },
                     { data: 'created_at' },
@@ -150,6 +159,7 @@
                     renderBrands(allMetaData.original.brands);
                     renderAttributes(allMetaData.original.attributes);
                     renderTags(allMetaData.original.tags);
+                    renderTaxes(allMetaData.original.taxes);
                 } catch (error) {
                     showToast(error, 'danger');
                 }
@@ -224,7 +234,7 @@
                     // Alapadatok betöltése
                     $('#product_id').val(product.id);
                     $('#title').val(product.title);
-                    $('#price').val(product.price);
+                    $('#gross_price').val(product.gross_price);
                     $('#stock').val(product.stock);
                     $('#status').val(product.status);
                     $('#description').val(product.description || '');
@@ -236,6 +246,7 @@
                     renderAttributes(allMetaData.original.attributes, assignedAttributes);
                     renderTags(allMetaData.original.tags, assigned_tags);
                     renderPhotos(assigned_photos, product.id);
+                    renderTaxes(allMetaData.original.taxes, product.tax_id);
 
                     productModal.show();
                 }).fail(function(xhr, status, error) {
@@ -364,6 +375,20 @@
                             <input class="form-check-input" type="checkbox" name="tags[]" value="${tag.id}" id="tag_${tag.id}" ${checked}>
                             <label class="form-check-label" for="tag_${tag.id}">${tag.name}</label>
                         </div>
+                    `);
+                });
+            }
+            function renderTaxes(taxes, assignedTaxId = null) {
+                console.log(taxes);
+                const taxSelect = $('#tax-select');
+                taxSelect.empty();
+                taxSelect.append(`
+                        <option value="">Válassz a listából</option>
+                    `);
+                taxes.forEach(tax => {
+                    const selected = assignedTaxId === tax.id ? 'selected' : '';
+                    taxSelect.append(`
+                        <option value="${tax.id}" ${selected}>${tax.tax_value} (${tax.tax_name})</option>
                     `);
                 });
             }

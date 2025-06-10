@@ -9,7 +9,7 @@ use App\Http\Controllers\Admin\CouponController;
 use App\Http\Controllers\Admin\CustomerController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\DownloadsController;
-use App\Http\Controllers\Admin\OrderController;
+use App\Http\Controllers\Admin\OrderController As AdminOrderController;
 use App\Http\Controllers\Admin\OrderStatusesController;
 use App\Http\Controllers\Admin\PaymentMethodController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
@@ -18,9 +18,12 @@ use App\Http\Controllers\Admin\StockStatusesController;
 use App\Http\Controllers\Admin\TagController;
 use App\Http\Controllers\Admin\TaxCategoryController;
 use App\Http\Controllers\CartController;
+use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ShopCustomerController;
 use App\Http\Controllers\PagesController;
 use App\Http\Controllers\ProductController;
+use App\Models\Order;
 use Illuminate\Support\Facades\Route;
 
 // Admin
@@ -38,11 +41,14 @@ Route::prefix('admin')->name('admin.')->group(function () {
         /* Bolt kezelés - Értékesítés */
 
         // Rendelések
-        Route::get('/ertekesites/rendelesek', [OrderController::class, 'index'])->name('orders.index');
-        Route::get('/ertekesites/rendelesek/data', [OrderController::class, 'data'])->name('orders.data');
-        Route::post('/ertekesites/rendelesek', [OrderController::class, 'store'])->name('orders.store');
-        Route::put('/ertekesites/rendelesek/{order}', [OrderController::class, 'update'])->name('orders.update');
-        Route::delete('/ertekesites/rendelesek/{order}', [OrderController::class, 'destroy'])->name('orders.destroy');
+        Route::get('/ertekesites/rendelesek', [AdminOrderController::class, 'index'])->name('orders.index');
+        Route::get('/ertekesites/rendelesek/data', [AdminOrderController::class, 'data'])->name('orders.data');
+        Route::get('/ertekesites/rendeles/{id}', [AdminOrderController::class, 'show'])->name('orders.order');
+        Route::get('/ertekesites/rendeles/{id}/items', [AdminOrderController::class, 'items'])->name('orders.items');
+        Route::get('/ertekesites/rendeles/{id}/history', [AdminOrderController::class, 'history'])->name('orders.history');
+        Route::post('/ertekesites/rendelesek', [AdminOrderController::class, 'store'])->name('orders.store');
+        Route::put('/ertekesites/rendelesek/{order}', [AdminOrderController::class, 'update'])->name('orders.update');
+        Route::delete('/ertekesites/rendelesek/{order}', [AdminOrderController::class, 'destroy'])->name('orders.destroy');
 
         // Kuponok
         Route::get('/ertekesites/kuponok', [CouponController::class, 'index'])->name('coupons.index');
@@ -151,12 +157,27 @@ Route::get('/kijelentkezes', [ShopCustomerController::class, 'logout'])->name('l
 Route::post('/elfelejtett-jelszo', [ShopCustomerController::class, 'passwordReset'])->name('password.reset');
 
 Route::middleware(['auth:customer'])->group(function () {
+    // Kosár
     Route::get('/kosar', [CartController::class, 'index'])->name('cart');
     Route::post('/kosar/hozzaadas', [CartController::class, 'add']);
     Route::get('/kosar/osszesito', [CartController::class, 'fetchSummary'])->name('cart.summary');
     Route::post('/kosar/torles', [CartController::class, 'removeItemFromCart'])->name('cart.item.delete');
     Route::post('/kosar/mennyiseg-valtoztatas', [CartController::class, 'changeItemQty'])->name('cart.item.change_qty');
-    //Route::get('/dashboard', [CustomerDashboardController::class, 'index'])->name('dashboard');
+
+    // Pénztár
+    Route::get('/penztar', [CheckoutController::class, 'index'])->name('checkout');
+
+    // Rendelés
+    Route::post('/order', [OrderController::class, 'store'])->name('order.store');
+    Route::get('/order/success/{order}', function (Order $order) {
+        return view('pages.order_success', compact('order'));
+    })->name('order.success');
+
+    // Fizetési módok
+    Route::get('/simplepay/redirect/{order}', function (Order $order) {
+        // Itt jönne a SimplePay redirect logika
+        return "Redirecting to SimplePay for order #" . $order->id;
+    })->name('simplepay.redirect');
 });
 
 Route::get('/', [PagesController::class, 'index'])->name('index');

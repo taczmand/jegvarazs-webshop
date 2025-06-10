@@ -4,21 +4,20 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Order extends Model
+class OrderHistory extends Model
 {
     protected $guarded = [];
 
-    public function items()
+    public function order()
     {
-        return $this->hasMany(OrderItem::class);
+        return $this->belongsTo(Order::class);
     }
-
     public function customer()
     {
         return $this->belongsTo(Customer::class);
     }
-    public function history()
+    public function user()
     {
-        return $this->hasMany(OrderHistory::class);
+        return $this->belongsTo(User::class);
     }
 }

@@ -11,9 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('orders', function (Blueprint $table) {
-            $table->id();
-            $table->timestamps();
+        Schema::table('customers', function (Blueprint $table) {
+            $table->boolean('is_partner')->default(0)->after('phone')->comment('0, ha nem partner, 1 ha partner');
         });
     }
 
@@ -22,6 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('orders');
+        Schema::table('customers', function (Blueprint $table) {
+            $table->dropColumn('is_partner');
+        });
     }
 };

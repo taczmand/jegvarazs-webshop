@@ -2,7 +2,6 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -12,17 +11,20 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('user_actions', function (Blueprint $table) {
+        Schema::create('customer_billing_addresses', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
-            $table->string('action');
-            $table->string('model')->nullable();
-            $table->unsignedBigInteger('model_id')->nullable();
-            $table->json('data')->nullable(); // Extra adatok
+            $table->foreignId('customer_id')
+                ->constrained()
+                ->onDelete('cascade');
+            $table->string('name')->nullable();
+            $table->string('tax_number')->nullable();
+            $table->string('country')->default('HU');
+            $table->string('zip_code');
+            $table->string('city');
+            $table->string('address_line');
             $table->timestamp('created_at')->default(DB::raw('CURRENT_TIMESTAMP'));
             $table->timestamp('updated_at')->default(DB::raw('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'));
         });
-
     }
 
     /**
@@ -30,6 +32,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('user_actions');
+        Schema::dropIfExists('customer_billing_addresses');
     }
 };
