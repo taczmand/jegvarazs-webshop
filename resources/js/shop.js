@@ -289,6 +289,9 @@ import * as bootstrap from "bootstrap";
     };
 
     window.baseURL = function() {
+        const isDev = import.meta.env.MODE === 'development';
+
+        console.log('Futási környezet:', isDev ? 'Fejlesztés' : 'Éles');
         return import.meta.env.VITE_BASE_URL;
     }
 
