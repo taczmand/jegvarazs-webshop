@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\Auth\AdminLoginController;
 use App\Http\Controllers\Admin\BasicDataController;
 use App\Http\Controllers\Admin\BrandController;
 use App\Http\Controllers\Admin\CategoryController;
+use App\Http\Controllers\Admin\CompanySiteController;
 use App\Http\Controllers\Admin\CouponController;
 use App\Http\Controllers\Admin\CustomerController;
 use App\Http\Controllers\Admin\DashboardController;
@@ -133,6 +134,14 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('/letoltesek', [DownloadsController::class, 'store'])->name('settings.downloads.store');
         Route::put('/letoltesek/{id}', [DownloadsController::class, 'update'])->name('settings.downloads.update');
         Route::delete('/letoltesek/{id}', [DownloadsController::class, 'destroy'])->name('settings.downloads.destroy');
+
+        // Telephelyek
+
+        Route::get('/telephelyek', [CompanySiteController::class, 'index'])->name('settings.sites.index');
+        Route::get('/telephelyek/data', [CompanySiteController::class, 'data'])->name('settings.sites.data');
+        Route::post('/telephelyek', [CompanySiteController::class, 'store'])->name('settings.sites.store');
+        Route::put('/telephelyek/{id}', [CompanySiteController::class, 'update'])->name('settings.sites.update');
+        Route::delete('/telephelyek/{id}', [CompanySiteController::class, 'destroy'])->name('settings.sites.destroy');
 
         /* Beállítások - Rendelés */
 
