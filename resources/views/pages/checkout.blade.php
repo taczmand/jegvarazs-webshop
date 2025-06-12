@@ -223,21 +223,6 @@
                                     <div class="row">
                                         <div class="col-lg-6">
                                             <div class="checkout__input">
-                                                <p>E-mail cím<span>*</span></p>
-                                                <input type="email" name="shipping_email" value="{{ old('shipping_email') }}">
-                                            </div>
-                                        </div>
-                                        <div class="col-lg-6">
-                                            <div class="checkout__input">
-                                                <p>Telefonszám<span>*</span></p>
-                                                <input type="text" name="shipping_phone" value="{{ old('shipping_phone') }}">
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="row">
-                                        <div class="col-lg-6">
-                                            <div class="checkout__input">
                                                 <p>Ország<span>*</span></p>
                                                 <select name="shipping_country" class="form-control w-100">
                                                     @foreach(config('countries') as $code => $name)

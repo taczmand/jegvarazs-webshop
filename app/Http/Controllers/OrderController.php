@@ -67,8 +67,6 @@ class OrderController extends Controller
                 $shipping = $customer->shippingAddresses()->findOrFail($selected_shipping_id);
                 $shippingAddress = [
                     'name' => $shipping->name,
-                    'email' => $shipping->email,
-                    'phone' => $shipping->phone,
                     'country' => $shipping->country,
                     'zip_code' => $shipping->zip_code,
                     'city' => $shipping->city,
@@ -77,8 +75,6 @@ class OrderController extends Controller
             } else {
                 $shippingAddress = [
                     'name' => $validated['shipping_name'],
-                    'email' => $validated['shipping_email'],
-                    'phone' => $validated['shipping_phone'],
                     'country' => $validated['shipping_country'],
                     'zip_code' => $validated['shipping_zip_code'],
                     'city' => $validated['shipping_city'],

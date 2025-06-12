@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
 
 class Cart extends Model
 {
+    use LogsActivity;
+
     protected $fillable = ['customer_id'];
 
     public function items()

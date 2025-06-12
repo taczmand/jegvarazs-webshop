@@ -26,7 +26,7 @@ class ProductController extends Controller
 
     public function data()
     {
-        $products = Product::with(['category', 'taxCategory'])->select(['id', 'title', 'stock', 'gross_price', 'status', 'created_at', 'cat_id', 'tax_id']);
+        $products = Product::with(['category', 'taxCategory'])->select(['id', 'title', 'stock', 'gross_price', 'partner_gross_price', 'status', 'created_at', 'cat_id', 'tax_id']);
 
         return DataTables::of($products)
             ->addColumn('category', function ($product) {
@@ -35,6 +35,10 @@ class ProductController extends Controller
             ->editColumn('gross_price', function ($product) {
                 // HUF formázás: 123456 -> 123 456 Ft
                 return number_format($product->gross_price, 0, ',', ' ') . ' Ft';
+            })
+            ->editColumn('partner_gross_price', function ($product) {
+                // HUF formázás: 123456 -> 123 456 Ft
+                return number_format($product->partner_gross_price, 0, ',', ' ') . ' Ft';
             })
             ->addColumn('tax_value', function ($product) {
                 return $product->taxCategory?->tax_value . '%' ?? '';

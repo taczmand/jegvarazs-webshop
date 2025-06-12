@@ -46,7 +46,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/ertekesites/rendeles/{id}', [AdminOrderController::class, 'show'])->name('orders.order');
         Route::get('/ertekesites/rendeles/{id}/items', [AdminOrderController::class, 'items'])->name('orders.items');
         Route::get('/ertekesites/rendeles/{id}/history', [AdminOrderController::class, 'history'])->name('orders.history');
-        Route::post('/ertekesites/rendelesek', [AdminOrderController::class, 'store'])->name('orders.store');
+        //Route::post('/ertekesites/rendelesek', [AdminOrderController::class, 'store'])->name('orders.store');
         Route::put('/ertekesites/rendelesek/{order}', [AdminOrderController::class, 'update'])->name('orders.update');
         Route::delete('/ertekesites/rendelesek/{order}', [AdminOrderController::class, 'destroy'])->name('orders.destroy');
 
@@ -60,9 +60,21 @@ Route::prefix('admin')->name('admin.')->group(function () {
         // Vevők és partnerek
         Route::get('/ertekesites/vevok', [CustomerController::class, 'index'])->name('customers.index');
         Route::get('/ertekesites/vevok/data', [CustomerController::class, 'data'])->name('customers.data');
-        Route::post('/ertekesites/vevok', [CustomerController::class, 'store'])->name('customers.store');
-        Route::put('/ertekesites/vevok/{order}', [CustomerController::class, 'update'])->name('customers.update');
-        Route::delete('/ertekesites/vevok/{order}', [CustomerController::class, 'destroy'])->name('customers.destroy');
+        Route::get('/ertekesites/vevo/{id}', [CustomerController::class, 'show'])->name('customers.customer');
+        Route::post('/ertekesites/vevo', [CustomerController::class, 'update'])->name('customers.update');
+        Route::delete('/ertekesites/vevok/{id}', [CustomerController::class, 'destroy'])->name('customers.destroy');
+        Route::delete('/ertekesites/vevo/kosar/torol/{id}', [CustomerController::class, 'deleteCartItem'])->name('customers.cart.delete_item');
+        Route::post('/ertekesites/vevo/szallitasi-cim', [CustomerController::class, 'updateShippingAddress'])->name('customers.update_shipping_address');
+        Route::post('/ertekesites/vevo/szamlazasi-cim', [CustomerController::class, 'updateBillingAddress'])->name('customers.update_billing_address');
+        Route::delete('/ertekesites/vevo/szallitasi-cim/torol', [CustomerController::class, 'destroyShippingAddress'])->name('customers.destroy_shipping_address');
+        Route::delete('/ertekesites/vevo/szamlazasi-cim/torol', [CustomerController::class, 'destroyBillingAddress'])->name('customers.destroy_billing_address');
+
+        Route::get('/ertekesites/partner/arazo/{id}', [CustomerController::class, 'showProductsToPartner'])->name('customers.show_products_to_partner');
+        Route::post('/ertekesites/partner/arazo', [CustomerController::class, 'setProductPriceToPartner'])->name('customers.set_product_price_to_partner');
+        Route::post('/ertekesites/partner/szazalek', [CustomerController::class, 'setProductPricePercentToPartner'])->name('customers.set_product_price_percent_to_partner');
+        Route::delete('/ertekesites/partner/arazo', [CustomerController::class, 'destroyProductPriceToPartner'])->name('customers.destroy_product_price_to_partner');
+        Route::delete('/ertekesites/partner/arazo/torol', [CustomerController::class, 'destroyAllProductPriceToPartner'])->name('customers.destroy_all_product_price_to_partner');
+
 
         /* Bolt kezelés - Termékek */
 

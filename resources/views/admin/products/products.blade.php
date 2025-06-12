@@ -14,6 +14,7 @@
                 <th>Név</th>
                 <th>Készlet</th>
                 <th>Bruttó ár</th>
+                <th>Partner bruttó ár</th>
                 <th>ÁFA</th>
                 <th>Kategória</th>
                 <th>Státusz</th>
@@ -73,6 +74,10 @@
                                             <input type="number" class="form-control" name="stock" id="stock" name="stock" required>
                                         </div>
                                         <div class="mb-3">
+                                            <label class="form-label">Partner bruttó ár (Ft)</label>
+                                            <input type="number" step="0.01" class="form-control" name="partner_gross_price" id="partner_gross_price">
+                                        </div>
+                                        <div class="mb-3">
                                             <label class="form-label">ÁFA (%)*</label>
                                             <select class="form-select" id="tax-select" name="tax_id" required>
                                             </select>
@@ -80,8 +85,8 @@
                                         <div class="mb-3">
                                             <label class="form-label">Státusz</label>
                                             <select class="form-select" id="status" name="status" required>
-                                                <option value="active">Aktív</option>
                                                 <option value="inactive">Inaktív</option>
+                                                <option value="active">Aktív</option>
                                             </select>
                                         </div>
                                     </div>
@@ -139,6 +144,7 @@
                     { data: 'title' },
                     { data: 'stock' },
                     { data: 'gross_price' },
+                    { data: 'partner_gross_price' },
                     { data: 'tax_value' },
                     { data: 'category' },
                     { data: 'status' },
@@ -235,6 +241,7 @@
                     $('#product_id').val(product.id);
                     $('#title').val(product.title);
                     $('#gross_price').val(product.gross_price);
+                    $('#partner_gross_price').val(product.partner_gross_price);
                     $('#stock').val(product.stock);
                     $('#status').val(product.status);
                     $('#description').val(product.description || '');

@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
 
 class OrderItem extends Model
 {
+    use LogsActivity;
+
     protected $guarded = [];
 
     public function order()

@@ -68,11 +68,12 @@ class ProductService
                 'slug' => Str::slug($data['title']),
                 'description' => $data['description'] ?? null,
                 'stock' => $data['stock'],
-                'price' => $data['price'],
-                'discount' => 0,
+                'gross_price' => $data['gross_price'],
+                'partner_gross_price' => $data['partner_gross_price'] ?? $data['gross_price'],
+                'tax_id' => $data['tax_id'],
                 'cat_id' => $data['category_id'] ?? null,
-                'child_cat_id' => $data['subcategory_id'] ?? null,
-                'brand_id' => $data['brand_id'] ?? null
+                'brand_id' => $data['brand_id'] ?? null,
+                'status' => $data['status'] ?? 'inactive',
             ]);
 
             // Attribútumok mentése (kulcs szerint)
@@ -119,10 +120,11 @@ class ProductService
                 'description' => $data['description'] ?? null,
                 'stock' => $data['stock'],
                 'gross_price' => $data['gross_price'],
-                'tax_id' => $data['tax_id'] ?? null,
+                'partner_gross_price' => $data['partner_gross_price'] ?? $data['gross_price'],
+                'tax_id' => $data['tax_id'],
                 'cat_id' => $data['category_id'] ?? null,
-                'child_cat_id' => $data['subcategory_id'] ?? null,
-                'brand_id' => $data['brand_id'] ?? null
+                'brand_id' => $data['brand_id'] ?? null,
+                'status' => $data['status'],
             ]);
 
             // Attribútumok frissítése (kulcs szerint)

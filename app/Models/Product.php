@@ -9,7 +9,7 @@ class Product extends Model
 {
     use LogsActivity;
 
-    protected $fillable = ['title', 'slug', 'description', 'stock', 'status', 'price', 'discount', 'cat_id', 'brand_id', 'tax_id'];
+    protected $guarded = [];
     public function attributes()
     {
         return $this->belongsToMany(Attribute::class, 'product_attributes')
@@ -48,4 +48,9 @@ class Product extends Model
     {
         return $this->where('status', 'active');
     }
+    public function partnerProducts()
+    {
+        return $this->hasMany(PartnerProduct::class);
+    }
+
 }

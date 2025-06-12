@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\OrderHistory;
+use App\Models\OrderItem;
 
 class OrderController extends Controller
 {
@@ -33,12 +34,12 @@ class OrderController extends Controller
                 // Formázás: YYYY-MM-DD HH:mm:ss
                 return $order->created_at ? $order->created_at->format('Y-m-d H:i:s') : '';
             })
-            ->addColumn('action', function ($product) {
+            ->addColumn('action', function ($order) {
                 return '
-                    <button class="btn btn-sm btn-primary edit" data-id="'.$product->id.'" title="Szerkesztés">
+                    <button class="btn btn-sm btn-primary edit" data-id="'.$order->id.'" title="Szerkesztés">
                         <i class="fas fa-edit"></i>
                     </button>
-                    <button class="btn btn-sm btn-danger delete" data-id="'.$product->id.'" title="Törlés">
+                    <button class="btn btn-sm btn-danger delete" data-id="'.$order->id.'" title="Törlés">
                         <i class="fas fa-trash"></i>
                     </button>
                 ';
@@ -58,5 +59,70 @@ class OrderController extends Controller
             ->where('order_id', $id)
             ->get();
 
+    }
+
+    public function items($id)
+    {
+        return OrderItem::with(['product'])
+            ->where('order_id', $id)
+            ->get();
+    }
+
+    public function update($id)
+    {
+        $order = Order::findOrFail($id);
+        $order->status = request('status');
+        $order->comment = request('order_comment', $order->comment);
+        $order->contact_first_name = request('contact_first_name', $order->contact_first_name);
+        $order->contact_last_name = request('contact_last_name', $order->contact_last_name);
+        $order->contact_email = request('contact_email', $order->contact_email);
+        $order->contact_phone = request('contact_phone', $order->contact_phone);
+        $order->billing_name = request('billing_name', $order->billing_name);
+        $order->billing_country = request('billing_country', $order->billing_country);
+        $order->billing_postal_code = request('billing_postal_code', $order->billing_postal_code);
+        $order->billing_city = request('billing_city', $order->billing_city);
+        $order->billing_address_line = request('billing_address_line', $order->billing_address_line);
+        $order->billing_tax_number = request('billing_tax_number', $order->billing_tax_number);
+        $order->shipping_name = request('shipping_name', $order->shipping_name);
+        $order->shipping_country = request('shipping_country', $order->shipping_country);
+        $order->shipping_postal_code = request('shipping_postal_code', $order->shipping_postal_code);
+        $order->shipping_city = request('shipping_city', $order->shipping_city);
+        $order->shipping_address_line = request('shipping_address_line', $order->shipping_address_line);
+
+
+        if ($order->isDirty()) {
+
+            $order->save();
+
+            OrderHistory::create([
+                'order_id' => $order->id,
+                'user_id' => auth('admin')->id(),
+                'action' => 'order_updated',
+                'data' => json_encode([
+                    'order' => $order->toArray()
+                ]),
+            ]);
+            return response()->json([
+                'message' => 'Rendelés sikeresen frissítve.',
+                'order' => $order,
+            ], 200);
+        } else {
+            return response()->json([
+                'message' => 'Nincs változás a rendelésben.',
+            ], 200);
+        }
+
+
+    }
+
+    public function destroy($id)
+    {
+        $order = Order::findOrFail($id);
+        $order->items()->delete(); // Töröljük a rendelés tételeit
+        $order->delete(); // Töröljük magát a rendelést
+
+        return response()->json([
+            'message' => 'Rendelés sikeresen törölve.',
+        ], 200);
     }
 }
