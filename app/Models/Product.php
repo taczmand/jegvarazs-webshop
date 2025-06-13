@@ -52,5 +52,11 @@ class Product extends Model
     {
         return $this->hasMany(PartnerProduct::class);
     }
+    public function offerProducts()
+    {
+        return $this->belongsToMany(Offer::class, 'offer_products')
+            ->withPivot('gross_price')
+            ->withTimestamps();
+    }
 
 }

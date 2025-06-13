@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\CouponController;
 use App\Http\Controllers\Admin\CustomerController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\DownloadsController;
+use App\Http\Controllers\Admin\OfferController;
 use App\Http\Controllers\Admin\OrderController As AdminOrderController;
 use App\Http\Controllers\Admin\OrderStatusesController;
 use App\Http\Controllers\Admin\PaymentMethodController;
@@ -81,6 +82,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
         // Összes termék
         Route::get('/termekek', [AdminProductController::class, 'index'])->name('products.index');
+        Route::get('/termekek/kategoriakkal', [AdminProductController::class, 'fetchWithCategories'])->name('products.list-with-categories');
         Route::get('/termekek/data', [AdminProductController::class, 'data'])->name('products.data');
         Route::get('/termekek/meta', [AdminProductController::class, 'meta'])->name('products.meta');
         Route::get('/termekek/{id}', [AdminProductController::class, 'show'])->name('products.get');
@@ -119,6 +121,15 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('/gyartok', [BrandController::class, 'store'])->name('brands.store');
         Route::put('gyartok/{id}', [BrandController::class, 'update'])->name('brands.update');
         Route::delete('/gyartok/{id}', [BrandController::class, 'destroy'])->name('brands.destroy');
+
+        /* Ügyvitel - Ügyfél folyamatok */
+
+        // Ajánlatok
+        Route::get('/ajanlatok', [OfferController::class, 'index'])->name('offers.index');
+        Route::get('/ajanlatok/data', [OfferController::class, 'data'])->name('offers.data');
+        Route::get('/ajanlatok/termekek/{id}', [OfferController::class, 'showProductsToOffer'])->name('offers.show_products_to_offer');
+        Route::post('/ajanlatok', [OfferController::class, 'store'])->name('offers.store');
+        Route::delete('/ajanlatok/{id}', [OfferController::class, 'destroy'])->name('offers.destroy');
 
         /* Beállítások - Webshop */
 
@@ -169,6 +180,22 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('/beallitasok/ado-osztalyok', [TaxCategoryController::class, 'store'])->name('tax-categories.store');
         Route::put('/beallitasok/ado-osztalyok/{tax}', [TaxCategoryController::class, 'update'])->name('tax-categories.update');
         Route::delete('/beallitasok/ado-osztalyok/{tax}', [TaxCategoryController::class, 'destroy'])->name('tax-categories.destroy');
+
+        /* Fájlok elérése */
+
+        // Ajánlatok PDF fájlok elérése
+        Route::get('offers/{filename}', function ($filename) {
+            $path = storage_path('app/private/offers/' . $filename);
+
+            if (!file_exists($path)) {
+                abort(404);
+            }
+
+            return response()->file($path, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'inline; filename="' . $filename . '"'
+            ]);
+        })->name('offers.pdf');
     });
 });
 
@@ -211,6 +238,9 @@ Route::get('/termekek', [ProductController::class, 'index'])->name('products.ind
 Route::get('/termekek/{slugs}', [ProductController::class, 'resolve'])
     ->where('slugs', '^(?!admin).*$') // ne kezdődjön admin-nal
     ->name('products.resolve');
+
+
+
 
 
 

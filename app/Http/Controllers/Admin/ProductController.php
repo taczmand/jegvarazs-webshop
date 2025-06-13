@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ProductRequest;
+use App\Models\Category;
 use App\Models\Product;
 use App\Models\ProductPhoto;
 use App\Services\Admin\ProductService;
@@ -240,5 +241,13 @@ class ProductController extends Controller
             ], 500);
         }
 
+    }
+
+    public function fetchWithCategories() {
+        $categories = Category::with(['products'])
+            ->orderBy('title')
+            ->get();
+
+        return response()->json($categories);
     }
 }
