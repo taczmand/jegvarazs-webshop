@@ -71,7 +71,7 @@
         <div id="collapseCustomerProcesses" class="collapse">
             <div class="bg-white py-2 collapse-inner rounded">
                 <a class="collapse-item" href="{{ route('admin.offers.index') }}">Ajánlatok</a>
-                <a class="collapse-item" href="#">Szerződések</a>
+                <a class="collapse-item" href="{{ route('admin.contracts.index') }}">Szerződések</a>
                 <a class="collapse-item" href="#">Időpontfoglalások</a>
                 <a class="collapse-item" href="#">Munkalapok</a>
             </div>

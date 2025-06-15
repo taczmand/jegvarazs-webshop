@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\BasicDataController;
 use App\Http\Controllers\Admin\BrandController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\CompanySiteController;
+use App\Http\Controllers\Admin\ContractController;
 use App\Http\Controllers\Admin\CouponController;
 use App\Http\Controllers\Admin\CustomerController;
 use App\Http\Controllers\Admin\DashboardController;
@@ -130,6 +131,16 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/ajanlatok/termekek/{id}', [OfferController::class, 'showProductsToOffer'])->name('offers.show_products_to_offer');
         Route::post('/ajanlatok', [OfferController::class, 'store'])->name('offers.store');
         Route::delete('/ajanlatok/{id}', [OfferController::class, 'destroy'])->name('offers.destroy');
+
+        // Szerződések
+        Route::get('/szerzodesek', [ContractController::class, 'index'])->name('contracts.index');
+        Route::get('/szerzodesek/data', [ContractController::class, 'data'])->name('contracts.data');
+        Route::get('/szerzodesek/verzio/{id}', [ContractController::class, 'getVersionJson'])->name('contracts.version.json');
+        //Route::get('/contracts/create', [ContractController::class, 'create'])->name('contracts.create');
+        Route::post('/szerzodesek', [ContractController::class, 'store'])->name('contracts.store');
+        Route::get('/szerzodesek/v1', function () {
+            return view('pdf.contract_v1');
+        })->name('contracts.create_v1');
 
         /* Beállítások - Webshop */
 
