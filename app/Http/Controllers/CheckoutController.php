@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CompanySite;
+
 class CheckoutController extends Controller
 {
     public function index() {
@@ -14,6 +16,7 @@ class CheckoutController extends Controller
             'billing_addresses' => auth('customer')->user()->billingAddresses,
             'shipping_addresses' => auth('customer')->user()->shippingAddresses,
             'cart_items' => $cart_items,
+            'company_sites' => CompanySite::all()
         ]);
     }
 

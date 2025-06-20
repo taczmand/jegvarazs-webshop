@@ -197,6 +197,26 @@
 
                                 <div class="row mt-2">
                                     <div class="col-lg-12">
+                                        <div class="checkout__input__checkbox">
+                                            <label for="use_local_shipping">
+                                                Személyesen szeretném átvenni a termékeket
+                                                <input type="radio" id="use_local_shipping" name="shipping_choice" value="local" checked>
+                                                <span class="checkmark"></span>
+                                            </label>
+                                        </div>
+
+                                        <select class="form-control w-100" name="selected_shipping_address">
+                                            @foreach ($company_sites as $site)
+                                                <option value="{{ $site->id }}">
+                                                    {{ $site->name }} ({{ $site->country }} - {{ $site->zip_code }} {{ $site->city }}, {{ $site->address_line }})
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="row mt-2">
+                                    <div class="col-lg-12">
 
                                         <div class="checkout__input__checkbox">
                                             <label for="new_shipping_address">
@@ -208,6 +228,8 @@
 
                                     </div>
                                 </div>
+
+
 
                                 <div class="d-none" id="new_shipping_address_fields">
 
@@ -342,6 +364,7 @@
             const newBillingFields = document.getElementById('new_billing_address_fields');
 
             const existingShippingRadio = document.getElementById('use_existing_shipping');
+            const localShippingRadio = document.getElementById('use_local_shipping');
             const newShippingRadio = document.getElementById('new_shipping_address');
             const newShippingFields = document.getElementById('new_shipping_address_fields');
 
@@ -362,6 +385,7 @@
             }
 
             existingBillingRadio.addEventListener('change', toggleBillingFields);
+            localShippingRadio.addEventListener('change', toggleShippingFields);
             existingShippingRadio.addEventListener('change', toggleShippingFields);
             newBillingRadio.addEventListener('change', toggleBillingFields);
             newShippingRadio.addEventListener('change', toggleShippingFields);

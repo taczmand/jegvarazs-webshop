@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\CheckoutRequest;
+use App\Models\CompanySite;
 use App\Models\Order;
 use App\Models\OrderHistory;
 use App\Models\OrderItem;
@@ -72,7 +73,18 @@ class OrderController extends Controller
                     'city' => $shipping->city,
                     'address_line' => $shipping->address_line
                 ];
+            } elseif($request->input('shipping_choice') === 'local') {
+                $selected_site_id = $request->input('selected_shipping_address');
+                $site = CompanySite::findOrFail($selected_site_id);
+                $shippingAddress = [
+                    'name' => $site->name,
+                    'country' => $site->country,
+                    'zip_code' => $site->zip_code,
+                    'city' => $site->city,
+                    'address_line' => $site->address_line
+                ];
             } else {
+
                 $shippingAddress = [
                     'name' => $validated['shipping_name'],
                     'country' => $validated['shipping_country'],
