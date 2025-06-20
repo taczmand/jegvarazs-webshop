@@ -57,6 +57,7 @@
                                 <a href="{{ route('logout') }}"><i class="fa fa-user"></i> Kijelentkezés</a>
                             @else
                                 <a href="{{ route('login') }}"><i class="fa fa-user"></i> Bejelentkezés</a>
+                                <a href="{{ route('registration') }}"><i class="fa fa-user"></i> Regisztráció</a>
                             @endauth
 
                         </div>

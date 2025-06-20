@@ -64,9 +64,10 @@ async function changeQuantity(itemId, quantity) {
             showToast('A mennyiség frissítve!', 'success');
             location.reload(); // Refresh the cart summary
         } else if (res.result === 'error') {
-            showToast(res.error_message, 'error');
+            showToast(res.message, 'error');
         }
     } catch (error) {
+
         showToast(error, 'error');
     }
 }

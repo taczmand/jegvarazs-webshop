@@ -48,7 +48,7 @@ class CartController extends Controller
                 ]);
             }
         } catch (\Exception $e) {
-            return response()->json(['result' => 'error', 'error_message' => $e->getMessage()], 500);
+            return response()->json(['result' => 'error', 'error_message' => $e->getMessage()], 200);
         }
 
         return response()->json(['result' => 'success', 'cart_count' => $cart->items()->count()], 200);
@@ -103,32 +103,64 @@ class CartController extends Controller
 
     public function changeItemQty(Request $request)
     {
-        /*$request->validate([
-            'item_id' => 'required|exists:cart_items,id',
-            'quantity' => 'required|integer|min:1',
-        ]);*/
+        try {
+            $request->validate([
+                'item_id' => 'required|exists:cart_items,id',
+                'quantity' => 'required|integer|min:1',
+            ]);
 
-        $customer = $request->user('customer');
+            $customer = $request->user('customer');
 
-        if (!$customer) {
-            return response()->json(['result' => 'error', 'error_message' => 'Be kell jelentkezned a kosár módosításához.'], 401);
+            if (!$customer) {
+                return response()->json([
+                    'result' => 'error',
+                    'message' => 'Be kell jelentkezned a kosár módosításához.'
+                ], 401);
+            }
+
+            $cart = $customer->cart;
+
+            if (!$cart) {
+                return response()->json([
+                    'result' => 'error',
+                    'message' => 'Kosár nem található.'
+                ], 404);
+            }
+
+            $item = $cart->items()->find($request->item_id);
+
+            if (!$item) {
+                return response()->json([
+                    'result' => 'error',
+                    'message' => 'Kosár elem nem található.'
+                ], 404);
+            }
+
+            $item->quantity = $request->quantity;
+            $item->save(); // Observer itt lefut
+
+            return response()->json([
+                'result' => 'success',
+                'message' => 'Elem mennyisége frissítve.',
+                'new_quantity' => $item->quantity,
+            ], 200);
+
+        } catch (\App\Exceptions\OutOfStockException $e) {
+            return response()->json([
+                'result' => 'error',
+                'message' => $e->getMessage()
+            ], 200);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'result' => 'error',
+                'message' => 'Érvénytelen adatok.',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'result' => 'error',
+                'message' => 'Váratlan hiba történt.'
+            ], 500);
         }
-
-        $cart = $customer->cart;
-
-        if (!$cart) {
-            return response()->json(['result' => 'error', 'error_message' => 'Kosár nem található.'], 404);
-        }
-
-        $item = $cart->items()->find($request->item_id);
-
-        if (!$item) {
-            return response()->json(['result' => 'error', 'error_message' => 'Kosár elem nem található.'], 404);
-        }
-
-        $item->quantity = $request->quantity;
-        $item->save();
-
-        return response()->json(['result' => 'success', 'message' => 'Elem mennyisége frissítve.', 'new_quantity' => $item->quantity], 200);
     }
 }

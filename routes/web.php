@@ -218,6 +218,16 @@ Route::get('/bejelentkezes', [ShopCustomerController::class, 'showLoginForm'])->
 Route::post('/bejelentkezes', [ShopCustomerController::class, 'login']);
 Route::get('/kijelentkezes', [ShopCustomerController::class, 'logout'])->name('logout');
 Route::post('/elfelejtett-jelszo', [ShopCustomerController::class, 'passwordReset'])->name('password.reset');
+Route::get('/regisztracio', [ShopCustomerController::class, 'showRegistrationForm'])->name('registration');
+Route::post('/regisztracio', [ShopCustomerController::class, 'register']);
+Route::view('/regisztracio/sikeres', 'pages.partner_reg_success')->name('customer.register.success');
+
+Route::get('/', [PagesController::class, 'index'])->name('index');
+Route::get('/rolunk', [PagesController::class, 'about'])->name('about');
+Route::get('/kapcsolat', [PagesController::class, 'contact'])->name('contact');
+Route::get('/idopontfoglalas', [PagesController::class, 'appointment'])->name('appointment');
+Route::post('/idopontfoglalas', [PagesController::class, 'addAppointment'])->name('appointment.post');
+Route::get('/letoltesek', [PagesController::class, 'downloads'])->name('downloads');
 
 Route::middleware(['auth:customer'])->group(function () {
     // Kosár
@@ -243,11 +253,7 @@ Route::middleware(['auth:customer'])->group(function () {
     })->name('simplepay.redirect');
 });
 
-Route::get('/', [PagesController::class, 'index'])->name('index');
-Route::get('/rolunk', [PagesController::class, 'about'])->name('about');
-Route::get('/kapcsolat', [PagesController::class, 'contact'])->name('contact');
-Route::get('/idoponfoglalas', [PagesController::class, 'appointment'])->name('appointment');
-Route::get('/letoltesek', [PagesController::class, 'downloads'])->name('downloads');
+
 
 Route::get('/termekek', [ProductController::class, 'index'])->name('products.index');
 Route::get('/termekek/{slugs}', [ProductController::class, 'resolve'])
