@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Category;
 use App\Models\Offer;
 use App\Models\OfferProduct;
 use App\Models\Product;
@@ -57,6 +58,19 @@ class OfferController extends Controller
         return response()->json([
             'offer' => $offer
         ]);
+    }
+
+    public function fetchWithCategories() {
+        $categories = Category::whereHas('products', function($query) {
+            $query->where('is_selectable_by_installer', 1);
+        })
+            ->with(['products' => function($query) {
+                $query->where('is_selectable_by_installer', 1);
+            }])
+            ->orderBy('title')
+            ->get();
+
+        return response()->json($categories);
     }
 
     public function store(Request $request)

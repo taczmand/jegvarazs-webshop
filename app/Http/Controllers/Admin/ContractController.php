@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Category;
 use App\Models\Contract;
 use App\Models\ContractProduct;
 use App\Models\Product;
@@ -148,6 +149,19 @@ class ContractController extends Controller
             ], 500);
         }
 
+    }
+
+    public function fetchWithCategories() {
+        $categories = Category::whereHas('products', function($query) {
+            $query->where('is_offerable', 1);
+        })
+            ->with(['products' => function($query) {
+                $query->where('is_offerable', 1);
+            }])
+            ->orderBy('title')
+            ->get();
+
+        return response()->json($categories);
     }
 
 }

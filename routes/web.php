@@ -133,6 +133,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/ajanlatok/termekek/{id}', [OfferController::class, 'showProductsToOffer'])->name('offers.show_products_to_offer');
         Route::post('/ajanlatok', [OfferController::class, 'store'])->name('offers.store');
         Route::delete('/ajanlatok/{id}', [OfferController::class, 'destroy'])->name('offers.destroy');
+        Route::get('/ajanlatok/ajanlat-termekek', [OfferController::class, 'fetchWithCategories'])->name('offers.list-with-categories');
 
         // Szerződések
         Route::get('/szerzodesek', [ContractController::class, 'index'])->name('contracts.index');
@@ -143,6 +144,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/szerzodesek/v1', function () {
             return view('pdf.contract_v1');
         })->name('contracts.create_v1');
+        Route::get('/szerzodesek/szerzodes-termekek', [ContractController::class, 'fetchWithCategories'])->name('contracts.list-with-categories');
 
         // Munkalapok
         Route::get('/munkalapok', [WorksheetController::class, 'index'])->name('worksheets.index');

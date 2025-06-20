@@ -66,6 +66,10 @@
                                             <select class="form-select" id="brands-select" name="brand_id">
                                             </select>
                                         </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Szerződés és ajánlat generálásnál megjelenik?</label>
+                                            <input type="checkbox" name="is_offerable" id="is_offerable" class="" value="1">
+                                        </div>
                                     </div>
 
                                     <div class="col-md-6">
@@ -88,6 +92,10 @@
                                                 <option value="inactive">Inaktív</option>
                                                 <option value="active">Aktív</option>
                                             </select>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Munkalapnál megjelenik?</label>
+                                            <input type="checkbox" name="is_selectable_by_installer" id="is_selectable_by_installer" class="" value="1">
                                         </div>
                                     </div>
 
@@ -244,6 +252,8 @@
                     $('#partner_gross_price').val(product.partner_gross_price);
                     $('#stock').val(product.stock);
                     $('#status').val(product.status);
+                    $('#is_offerable').prop('checked', product.is_offerable);
+                    $('#is_selectable_by_installer').prop('checked', product.is_selectable_by_installer);
                     $('#description').val(product.description || '');
 
                     const treeCategories = buildCategoryTree(allMetaData.original.categories);

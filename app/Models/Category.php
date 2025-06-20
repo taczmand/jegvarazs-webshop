@@ -13,10 +13,10 @@ class Category extends Model
     protected $fillable = ['title', 'slug', 'description', 'parent_id', 'status'];
 
     public function products(){
-        return $this->hasMany(Product::class,'cat_id','id')->where('status','active');
+        return $this->hasMany(Product::class,'cat_id','id');
     }
     public function sub_products(){
-        return $this->hasMany(Product::class,'child_cat_id','id')->where('status','active');
+        return $this->hasMany(Product::class,'child_cat_id','id');
     }
 
     public function children()

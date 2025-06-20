@@ -289,7 +289,7 @@
                 const productManagerTable = $('#productManagerTable tbody');
                 productManagerTable.empty();
 
-                fetch(`/admin/termekek/kategoriakkal`)
+                fetch(`/admin/ajanlatok/ajanlat-termekek`)
                     .then(response => response.json())
                     .then(data => {
                         data.forEach(category => {

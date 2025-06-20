@@ -48,6 +48,7 @@ class Product extends Model
     {
         return $this->where('status', 'active');
     }
+
     public function partnerProducts()
     {
         return $this->hasMany(PartnerProduct::class);
