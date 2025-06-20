@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Models\BasicData;
 use App\Models\Category;
+use App\Models\Regulation;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
@@ -29,6 +30,7 @@ class AppServiceProvider extends ServiceProvider
             }])->whereNull('parent_id')->where('status', 'active')->get());
 
             View::share('basicdata', BasicData::all()->pluck('value', 'key')->toArray());
+            View::share('regulations', Regulation::active()->get());
         }
     }
 }

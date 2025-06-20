@@ -16,6 +16,7 @@ use App\Http\Controllers\Admin\OrderController As AdminOrderController;
 use App\Http\Controllers\Admin\OrderStatusesController;
 use App\Http\Controllers\Admin\PaymentMethodController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
+use App\Http\Controllers\Admin\RegulationController;
 use App\Http\Controllers\Admin\ShippingMethodController;
 use App\Http\Controllers\Admin\StockStatusesController;
 use App\Http\Controllers\Admin\TagController;
@@ -160,6 +161,14 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('/letoltesek', [DownloadsController::class, 'store'])->name('settings.downloads.store');
         Route::put('/letoltesek/{id}', [DownloadsController::class, 'update'])->name('settings.downloads.update');
         Route::delete('/letoltesek/{id}', [DownloadsController::class, 'destroy'])->name('settings.downloads.destroy');
+
+        // Szabályzatok
+
+        Route::get('/szabalyzatok', [RegulationController::class, 'index'])->name('settings.regulations.index');
+        Route::get('/szabalyzatok/data', [RegulationController::class, 'data'])->name('settings.regulations.data');
+        Route::post('/szabalyzatok', [RegulationController::class, 'store'])->name('settings.regulations.store');
+        Route::put('/szabalyzatok/{id}', [RegulationController::class, 'update'])->name('settings.regulations.update');
+        Route::delete('/szabalyzatok/{id}', [RegulationController::class, 'destroy'])->name('settings.regulations.destroy');
 
         // Telephelyek
 

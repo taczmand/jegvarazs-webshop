@@ -93,6 +93,7 @@
             <div class="bg-white py-2 collapse-inner rounded">
                 <a class="collapse-item" href="{{ route('admin.settings.general.index') }}">Általános</a>
                 <a class="collapse-item" href="{{ route('admin.settings.downloads.index') }}">Letöltések</a>
+                <a class="collapse-item" href="{{ route('admin.settings.regulations.index') }}">Szabályzatok</a>
                 <a class="collapse-item" href="#">Admin felhasználók</a>
                 <a class="collapse-item" href="{{ route('admin.settings.sites.index') }}">Telephelyek</a>
             </div>

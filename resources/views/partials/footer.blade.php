@@ -16,14 +16,12 @@
             </div>
             <div class="col-lg-4 col-md-6 col-sm-6 offset-lg-1">
                 <div class="footer__widget">
-                    <h6>Hasznos linkek</h6>
+                    <h6>Szabályzatok</h6>
+
                     <ul>
-                        <li><a href="#">Link 1</a></li>
-                        <li><a href="#">Link 2</a></li>
-                        <li><a href="#">Link 3</a></li>
-                        <li><a href="#">Link 4</a></li>
-                        <li><a href="#">Link 5</a></li>
-                        <li><a href="#">Link 6</a></li>
+                        @foreach ($regulations as $regulation)
+                            <a href="{{ $regulation->file_path }}" target="_blank"><li>{{ $regulation->file_name }}</li></a>
+                        @endforeach
                     </ul>
                     <ul>
                         <li><a href="#">Link 1</a></li>
