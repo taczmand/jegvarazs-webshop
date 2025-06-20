@@ -21,7 +21,6 @@ class CategoryController extends Controller
         $categories = Category::select([
             'categories.id as id',
             'categories.title as title',
-            'categories.slug as slug',
             'categories.description as description',
             'parent.title as parent_title', // szülőkategória neve alias néven
             'categories.status as status',

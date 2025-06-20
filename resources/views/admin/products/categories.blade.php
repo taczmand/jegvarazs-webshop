@@ -15,7 +15,6 @@
             <tr>
                 <th>ID</th>
                 <th>Kategórianév</th>
-                <th>Slug</th>
                 <th>Leírás</th>
                 <th>Szülőkategória</th>
                 <th>Állapot</th>
@@ -44,10 +43,6 @@
                             <input type="text" class="form-control" id="cat_title" name="cat_title" required>
                         </div>
                         <div class="mb-3">
-                            <label for="cat_slug" class="form-label">Slug</label>
-                            <input type="text" class="form-control" id="cat_slug" name="cat_slug" disabled>
-                        </div>
-                        <div class="mb-3">
                             <label for="cat_description" class="form-label">Leírás</label>
                             <textarea class="form-control" id="cat_description" name="cat_description"></textarea>
                         </div>
@@ -69,7 +64,6 @@
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <i id="cat_warning" class="hide">Figyelem! Ha módosítod a kategória nevét vagy slug-ját, meglévő URL-k lesznek elérhetetlenek!</i>
                         <button type="submit" class="btn btn-primary save-btn" id="saveCategory">Mentés</button>
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Mégse</button>
                     </div>
@@ -94,7 +88,6 @@
                 columns: [
                     { data: 'id' },
                     { data: 'title' },
-                    { data: 'slug' },
                     { data: 'description' },
                     { data: 'parent_title' },
                     { data: 'status' },
@@ -127,7 +120,6 @@
                 const row_data = $('#adminTable').DataTable().row($(this).parents('tr')).data();
                 $('#cat_id').val(row_data.id);
                 $('#cat_title').val(row_data.title);
-                $('#cat_slug').val(row_data.slug);
                 $('#cat_description').val(row_data.description);
 
                 const statusCheckbox = $('#cat_status');
@@ -142,7 +134,6 @@
                 }
                 const allCategories = await getAllCategories();
                 renderCategories(allCategories, row_data.id, row_data.parent_title);
-                $('#cat_warning').show();
                 adminModal.show();
             });
 
