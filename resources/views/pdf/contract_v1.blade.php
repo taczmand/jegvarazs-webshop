@@ -5,8 +5,7 @@
     <title>Szerződés</title>
     <style>
         body {
-            font-family: sans-serif;
-
+            font-family: DejaVu Sans, sans-serif;
             line-height: 1.6;
             padding: 40px;
             max-width: 100%;
@@ -15,65 +14,86 @@
         }
         h1, h2 {
             text-align: center;
-            margin-bottom: 0px;
+            margin-bottom: 0;
             font-size: 18px;
         }
         .section {
-            margin-top: 0px;
+            margin-top: 0;
         }
+
+        /* Két oszlop float-tal */
         .two-column {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0px;
             font-size: 14px;
+            /* clearfix */
+            zoom: 1;
+        }
+        .two-column::after {
+            content: "";
+            display: block;
+            clear: both;
         }
 
         .two-column .field {
-            flex: 0 0 48%;
-            display: flex;
+            width: 48%;
+            float: left;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            box-sizing: border-box;
+            margin-bottom: 10px;
         }
+        /* Ha szeretnéd, hogy egymás alatt legyenek a kisebb képernyőkön, akkor lehet media query-vel szélességet 100%-ra állítani */
 
         .field .label {
             font-weight: bold;
             margin-right: 5px;
-            flex-shrink: 0;
+            display: inline-block;
+            width: auto;
+            white-space: nowrap;
+            flex-shrink: 0; /* ez nem kell már flex nélkül */
         }
 
         .field .value {
-            flex-grow: 1;
+            display: inline-block;
+            max-width: calc(100% - 100px); /* egy kis korlátozás a hosszú szövegekre */
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
             border-bottom: 1px dotted #000;
+            vertical-align: bottom;
         }
+
         .field {
             margin-bottom: 10px;
         }
-        .field span.label {
-            font-weight: bold;
-            display: inline-block;
-            width: auto;
-        }
+
         .signature-line {
             margin-top: 60px;
-            display: flex;
-            justify-content: space-between;
+            /* két oszlop float-tal */
+            zoom: 1;
+        }
+        .signature-line::after {
+            content: "";
+            display: block;
+            clear: both;
         }
         .signature-line div {
+            float: left;
             width: 45%;
             border-top: 1px solid #000;
             text-align: center;
             padding-top: 5px;
             font-weight: bold;
+            box-sizing: border-box;
         }
+        /* Középre húzás helyett a margókat használhatod, ha kell */
+
         .pont {
             position: relative;
             line-height: 1;
             padding-left: 30px; /* hely a számnak */
             font-size: 14px;
+            margin-bottom: 10px;
         }
 
         .pont .szam {
@@ -98,16 +118,15 @@
             font-size: 0.9em;
         }
         .cotract-options {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
             margin-top: 20px;
             font-size: 12px;
         }
+        .cotract-options div {
+            display: inline-block;
+            margin-right: 15px;
+            white-space: nowrap;
+        }
         .contact-section {
-            display: flex;
-            flex-direction: row;
-            justify-content: space-around;
             margin-top: 20px;
             text-align: center;
         }
@@ -121,9 +140,25 @@
                 margin: 5mm;
             }
 
-            /* opcionális: az oldal tartalma is érintett lehet, ha kell */
             body {
-                margin: 0; /* vagy minimálisra, hogy ne legyen plusz margó */
+                margin: 0;
+            }
+        }
+
+        /* Kis képernyőn a two-column legyen egy oszlop */
+        @media screen and (max-width: 600px) {
+            .two-column .field {
+                width: 100%;
+                float: none;
+            }
+            .signature-line div {
+                width: 100%;
+                float: none;
+                margin-bottom: 20px;
+            }
+            .cotract-options div {
+                display: block;
+                margin-bottom: 5px;
             }
         }
     </style>

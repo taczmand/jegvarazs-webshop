@@ -20,6 +20,7 @@ use App\Http\Controllers\Admin\ShippingMethodController;
 use App\Http\Controllers\Admin\StockStatusesController;
 use App\Http\Controllers\Admin\TagController;
 use App\Http\Controllers\Admin\TaxCategoryController;
+use App\Http\Controllers\Admin\WorksheetController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\OrderController;
@@ -141,6 +142,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/szerzodesek/v1', function () {
             return view('pdf.contract_v1');
         })->name('contracts.create_v1');
+
+        // Munkalapok
+        Route::get('/munkalapok', [WorksheetController::class, 'index'])->name('worksheets.index');
 
         /* Beállítások - Webshop */
 

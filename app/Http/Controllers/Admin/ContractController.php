@@ -118,11 +118,12 @@ class ContractController extends Controller
 
 
             $pdf_data = [
-                'contract' => $contract,
+                'contract' => $contract->toArray(),
                 'products' => $products,
                 'data' => $contract->data,
                 // TODO: 'company' => config('app.company_info')
             ];
+            \Log::info($pdf_data);
 
             // PDF generálása
             $pdf = Pdf::loadView('pdf.contract_'.$request->get('contract_version'), $pdf_data);

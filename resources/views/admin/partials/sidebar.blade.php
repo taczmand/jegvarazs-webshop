@@ -73,7 +73,7 @@
                 <a class="collapse-item" href="{{ route('admin.offers.index') }}">Ajánlatok</a>
                 <a class="collapse-item" href="{{ route('admin.contracts.index') }}">Szerződések</a>
                 <a class="collapse-item" href="#">Időpontfoglalások</a>
-                <a class="collapse-item" href="#">Munkalapok</a>
+                <a class="collapse-item" href="{{ route('admin.worksheets.index') }}">Munkalapok</a>
             </div>
         </div>
     </li>
