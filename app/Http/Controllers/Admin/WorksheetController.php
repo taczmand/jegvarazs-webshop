@@ -11,6 +11,11 @@ class WorksheetController extends Controller
         return view('admin.business.worksheets');
     }
 
+    public function create()
+    {
+        return view('admin.business.worksheet_create');
+    }
+
     public function data()
     {
         // This method should return the data for the worksheets.

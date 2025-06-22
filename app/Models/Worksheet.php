@@ -18,4 +18,14 @@ class Worksheet extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
+    public function contract()
+    {
+        return $this->belongsTo(Contract::class, 'contract_id');
+    }
+
+    public function worker()
+    {
+        return $this->belongsTo(User::class, 'worker_id');
+    }
+
 }

@@ -25,6 +25,7 @@ use App\Http\Controllers\Admin\WorksheetController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\PostalCodeController;
 use App\Http\Controllers\ShopCustomerController;
 use App\Http\Controllers\PagesController;
 use App\Http\Controllers\ProductController;
@@ -145,9 +146,11 @@ Route::prefix('admin')->name('admin.')->group(function () {
             return view('pdf.contract_v1');
         })->name('contracts.create_v1');
         Route::get('/szerzodesek/szerzodes-termekek', [ContractController::class, 'fetchWithCategories'])->name('contracts.list-with-categories');
+        Route::get('/szerzodesek/termekek/{id}', [ContractController::class, 'showProductsToContract'])->name('contracts.show_products_to_contracts');
 
         // Munkalapok
         Route::get('/munkalapok', [WorksheetController::class, 'index'])->name('worksheets.index');
+        Route::get('/munkalapok/create', [WorksheetController::class, 'create'])->name('worksheets.create');
 
         /* Beállítások - Webshop */
 
@@ -221,7 +224,32 @@ Route::prefix('admin')->name('admin.')->group(function () {
                 'Content-Type' => 'application/pdf',
                 'Content-Disposition' => 'inline; filename="' . $filename . '"'
             ]);
-        })->name('offers.pdf');
+        })->name('offer.pdf');
+
+        // Szerződések PDF fájlok elérése
+        Route::get('contracts/{filename}', function ($filename) {
+            $path = storage_path('app/private/contracts/' . $filename);
+
+            if (!file_exists($path)) {
+                abort(404);
+            }
+
+            return response()->file($path, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'inline; filename="' . $filename . '"'
+            ]);
+        })->name('contract.pdf');
+
+        // Aláírások
+        Route::get('/szerzodes/alairas/{filename}', function ($filename) {
+            $path = storage_path("app/private/signatures/{$filename}");
+
+            if (!file_exists($path)) {
+                abort(404);
+            }
+
+            return response()->file($path);
+        })->name('contract.signature');
     });
 });
 
@@ -270,6 +298,9 @@ Route::get('/termekek', [ProductController::class, 'index'])->name('products.ind
 Route::get('/termekek/{slugs}', [ProductController::class, 'resolve'])
     ->where('slugs', '^(?!admin).*$') // ne kezdődjön admin-nal
     ->name('products.resolve');
+
+
+
 
 
 

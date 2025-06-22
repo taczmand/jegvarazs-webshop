@@ -173,7 +173,7 @@
     </div>
     <div class="field">
         <span class="label">Szerelés dátuma:</span>
-        <span class="value">{{ $data['installation_datetime'] }}</span>
+        <span class="value"></span>
     </div>
     <div class="field">
         <span class="label">Név / Cégnév:</span>
@@ -318,6 +318,10 @@
 </div>
 
 <div class="signature-line">
+    @if(!empty($signature_path) && file_exists($signature_path))
+        <p>Aláírás:</p>
+        <img src="{{ $signature_path }}" style="width: 200px; height: auto;">
+    @endif
     <div>Megrendelő</div>
     <div>Kivitelező</div>
 </div>

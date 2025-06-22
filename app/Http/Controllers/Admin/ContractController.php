@@ -38,6 +38,7 @@ class ContractController extends Controller
             'contracts.zip_code',
             'contracts.city',
             'contracts.address_line',
+            'contracts.installation_date',
             'contracts.created_at as created',
             'users.name as creator_name'])
             ->leftJoin('users', 'contracts.created_by', '=', 'users.id');
@@ -77,11 +78,22 @@ class ContractController extends Controller
     }
     public function store(Request $request)
     {
-        $version = $request->get('contract_version');
 
         DB::beginTransaction();
 
         try {
+            // Aláírás mentése, ha van
+            $signatureName = null;
+            if ($request->filled('signature')) {
+                $base64 = $request->input('signature');
+                if (preg_match('/^data:image\/png;base64,/', $base64)) {
+                    $base64 = substr($base64, strpos($base64, ',') + 1);
+                    $base64 = base64_decode($base64);
+                    $signatureName = 'signature_' . time() . '_' . uniqid() . '.png';
+                    Storage::disk('local')->put("signatures/{$signatureName}", $base64);
+                }
+            }
+
             $contract = Contract::create([
                 'version' => $request->input('contract_version'),
                 'name' => $request->input('contact_name'),
@@ -89,6 +101,7 @@ class ContractController extends Controller
                 'zip_code' => $request->input('contact_zip_code'),
                 'city' => $request->input('contact_city'),
                 'address_line' => $request->input('contact_address_line'),
+                'installation_date' => $request->input('installation_date'),
                 'phone' => $request->input('contact_phone'),
                 'email' => $request->input('contact_email'),
                 'mothers_name' => $request->input('mothers_name'),
@@ -96,6 +109,7 @@ class ContractController extends Controller
                 'date_of_birth' => $request->input('date_of_birth'),
                 'id_number' => $request->input('id_number'),
                 'data' => $request->input('contract_data', []),
+                'signature_path' => "{$signatureName}",
                 'created_by' => auth('admin')->id(),
             ]);
 
@@ -109,25 +123,28 @@ class ContractController extends Controller
                 $item = ContractProduct::create([
                     'contract_id' => $contract->id,
                     'product_id' => $productId,
+                    'product_qty' => $data['product_qty'],
                     'gross_price' => $data['gross_price'],
                 ]);
+
                 $products[] = [
                     'title' => Product::findOrFail($productId)->title ?? "N/A",
                     'gross_price' => $item->gross_price,
                 ];
             }
 
-
             $pdf_data = [
                 'contract' => $contract->toArray(),
                 'products' => $products,
                 'data' => $contract->data,
-                // TODO: 'company' => config('app.company_info')
+                'signature_path' => $signatureName ? storage_path("app/private/signatures/{$signatureName}") : null,
+                // 'company' => config('app.company_info') // opcionális
             ];
+
             \Log::info($pdf_data);
 
             // PDF generálása
-            $pdf = Pdf::loadView('pdf.contract_'.$request->get('contract_version'), $pdf_data);
+            $pdf = Pdf::loadView('pdf.contract_' . $request->get('contract_version'), $pdf_data);
 
             $file_name = 'contract_' . $contract->id . '.pdf';
             Storage::put("contracts/{$file_name}", $pdf->output());
@@ -148,8 +165,8 @@ class ContractController extends Controller
                 'errors' => $e->getMessage(),
             ], 500);
         }
-
     }
+
 
     public function fetchWithCategories() {
         $categories = Category::whereHas('products', function($query) {
@@ -164,4 +181,12 @@ class ContractController extends Controller
         return response()->json($categories);
     }
 
+    public function showProductsToContract($id)
+    {
+        $contract = Contract::with(['products'])->findOrFail($id);
+
+        return response()->json([
+            'contract' => $contract
+        ]);
+    }
 }

@@ -14,7 +14,7 @@ class Contract extends Model
     public function products()
     {
         return $this->belongsToMany(Product::class, 'contract_products')
-            ->withPivot('gross_price')
+            ->withPivot('gross_price', 'product_qty')
             ->withTimestamps();
     }
 

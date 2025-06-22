@@ -6,7 +6,7 @@
         <div class="d-flex justify-content-between align-items-center mb-5">
             <h1 class="h3 text-gray-800 mb-0">Ügyviteli folyamatok / Munkalapok</h1>
             <button class="btn btn-dark" id="showCalendar"><i class="fas fa-calendar me-1"></i></button>
-            <button class="btn btn-success" id="addButton"><i class="fas fa-plus me-1"></i> Új munkalap</button>
+            <a href="{{ route('admin.worksheets.create') }}" class="btn btn-success"><i class="fas fa-plus me-1"></i> Új munkalap</a>
         </div>
 
         <div class="d-none" id="calendarContainer">

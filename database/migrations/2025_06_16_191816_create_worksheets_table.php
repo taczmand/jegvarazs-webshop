@@ -14,13 +14,28 @@ return new class extends Migration
     {
         Schema::create('worksheets', function (Blueprint $table) {
             $table->id();
-            $table->string('title');
+            $table->string('work_name')->comment('Munka megnevezése');
+            $table->string('name');
+            $table->string('email')->nullable();
+            $table->string('phone')->nullable();
+            $table->string('country');
+            $table->string('zip_code');
+            $table->string('city');
+            $table->string('address_line');
             $table->text('description')->nullable();
-            $table->date('date')->nullable();
+            $table->date('installation_date')->comment('Szerelés dátuma');
+            $table->foreignId('worker_id')
+                ->constrained('users')
+                ->onDelete('no action')
+                ->onUpdate('no action');
+            $table->foreignId('contract_id')
+                ->constrained('contracts')
+                ->onDelete('no action')
+                ->onUpdate('no action');
             $table->foreignId('created_by')
                 ->constrained('users')
-                ->onDelete('cascade')
-                ->onUpdate('cascade');
+                ->onDelete('no action')
+                ->onUpdate('no action');
             $table->timestamp('created_at')->default(DB::raw('CURRENT_TIMESTAMP'));
             $table->timestamp('updated_at')->default(DB::raw('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'));
         });
