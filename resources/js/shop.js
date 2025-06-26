@@ -43,7 +43,7 @@ import * as bootstrap from "bootstrap";
     --------------------*/
     window.fetchCartSummary = async function() {
         try {
-            const response = await fetch('/kosar/osszesito', {
+            const response = await fetch(window.appConfig.APP_URL + 'kosar/osszesito', {
                 method: 'GET',
                 headers: {
                     'Accept': 'application/json', // 👈 EZ KELL, hogy Laravel ne irányítson át

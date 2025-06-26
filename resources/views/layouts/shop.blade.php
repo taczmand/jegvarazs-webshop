@@ -6,6 +6,11 @@
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@200;300;400;600;900&display=swap" rel="stylesheet">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     @vite('resources/sass/shop.scss')
+    <script>
+        window.appConfig = {
+            APP_URL: "{{ config('app.url') }}"
+        };
+    </script>
 </head>
 <body class="">
 

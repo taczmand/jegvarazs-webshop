@@ -1,7 +1,7 @@
 async function addToCart(productId, quantity = 1) {
 
     try {
-        const response = await fetch(baseURL() + 'kosar/hozzaadas', {
+        const response = await fetch(window.appConfig.APP_URL + 'kosar/hozzaadas', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -27,7 +27,7 @@ async function addToCart(productId, quantity = 1) {
 
 async function removeItemFromCart(itemId) {
     try {
-        const response = await fetch('/kosar/torles', {
+        const response = await fetch(window.appConfig.APP_URL + 'kosar/torles', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -50,7 +50,7 @@ async function removeItemFromCart(itemId) {
 
 async function changeQuantity(itemId, quantity) {
     try {
-        const response = await fetch('/kosar/mennyiseg-valtoztatas', {
+        const response = await fetch(window.appConfig.APP_URL + 'kosar/mennyiseg-valtoztatas', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
