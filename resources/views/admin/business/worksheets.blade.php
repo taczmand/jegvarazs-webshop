@@ -6,7 +6,7 @@
         <div class="d-flex justify-content-between align-items-center mb-5">
             <h1 class="h3 text-gray-800 mb-0">Ügyviteli folyamatok / Munkalapok</h1>
             <button class="btn btn-dark" id="showCalendar"><i class="fas fa-calendar me-1"></i></button>
-            <a href="{{ route('admin.worksheets.create') }}" class="btn btn-success"><i class="fas fa-plus me-1"></i> Új munkalap</a>
+            <a href="" class="btn btn-success"><i class="fas fa-plus me-1"></i> Új munkalap</a>
         </div>
 
         <div class="d-none" id="calendarContainer">
@@ -22,7 +22,6 @@
             <table id="calendar">
                 <thead>
                 <tr>
-                    <th>Óra</th>
                     <th>Hétfő</th>
                     <th>Kedd</th>
                     <th>Szerda</th>
@@ -43,11 +42,13 @@
             <thead>
             <tr>
                 <th>ID</th>
-                <th>Megnevezés</th>
-                <th>Leírás</th>
+                <th>Név</th>
+                <th>Munka</th>
+                <th>Ország</th>
                 <th>Irányítószám</th>
                 <th>Város</th>
                 <th>Cím</th>
+                <th>Szerződés</th>
                 <th>Készítette</th>
                 <th>Létrehozva</th>
                 <th>Műveletek</th>
@@ -157,37 +158,36 @@
 @section('scripts')
     <script type="module">
 
-        const startHour = 8;
-        const endHour = 18;
         const tbody = document.querySelector('#calendar tbody');
 
-        for (let hour = startHour; hour < endHour; hour++) {
+        function createEmptyRow() {
             const row = document.createElement('tr');
 
-            // első oszlop: óra
-            const hourCell = document.createElement('td');
-            hourCell.textContent = `${hour}:00`;
-            row.appendChild(hourCell);
-
-            // 7 nap
             for (let day = 0; day < 7; day++) {
                 const cell = document.createElement('td');
-                cell.dataset.hour = hour;
                 cell.dataset.day = day;
-                cell.addEventListener('click', () => {
-                    const title = prompt("Esemény címe:");
-                    if (title) {
-                        const eventDiv = document.createElement('div');
-                        eventDiv.className = 'event';
-                        eventDiv.textContent = title;
-                        cell.appendChild(eventDiv);
-                    }
-                });
+                cell.addEventListener('click', handleCellClick);
                 row.appendChild(cell);
             }
 
             tbody.appendChild(row);
         }
+
+        function handleCellClick(event) {
+            const cell = event.currentTarget;
+
+            // Példa: itt lekérheted a napot, ha szükséges
+            const day = cell.dataset.day;
+
+            // Itt állítod be a kívánt dátumot dinamikusan, ha akarod — most fixen:
+            const targetDate = '2025-06-26';
+
+            const url = `http://jegvarazs-webshop.test/admin/szerzodesek?make_contract=true&installation_date=${targetDate}`;
+            window.location.href = url;
+        }
+
+        // Induláskor 1 sor
+        createEmptyRow();
 
         $('#showCalendar').click(function() {
             $('#calendarContainer').removeClass('d-none');

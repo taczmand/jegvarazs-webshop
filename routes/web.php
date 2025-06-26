@@ -150,7 +150,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
         // Munkalapok
         Route::get('/munkalapok', [WorksheetController::class, 'index'])->name('worksheets.index');
-        Route::get('/munkalapok/create', [WorksheetController::class, 'create'])->name('worksheets.create');
+        Route::get('/munkalapok/data', [WorksheetController::class, 'data'])->name('worksheets.data');
 
         /* Beállítások - Webshop */
 

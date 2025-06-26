@@ -2,13 +2,25 @@
 
 @section('content')
 
-
     <div class="container p-0">
 
         <div class="d-flex justify-content-between align-items-center mb-5">
             <h1 class="h3 text-gray-800 mb-0">Ügyviteli folyamatok / Szerződések</h1>
             <button class="btn btn-success" id="addButton"><i class="fas fa-plus me-1"></i> Új szerződés</button>
         </div>
+
+        <table class="table table-bordered">
+            <tr>
+                <th><i class="fa-solid fa-filter"></i></th>
+                <th><input type="text" placeholder="ID" class="filter-input" data-column="0" data-name="id"></th>
+                <th><input type="text" placeholder="Név" class="filter-input" data-column="1"></th>
+                <th><input type="text" placeholder="Ország" class="filter-input" data-column="2"></th>
+                <th><input type="text" placeholder="Irányítószám" class="filter-input" data-column="3"></th>
+                <th><input type="text" placeholder="Város" class="filter-input" data-column="4"></th>
+                <th><input type="text" placeholder="Cím" class="filter-input" data-column="5"></th>
+            </tr>
+        </table>
+
 
         <table class="table table-bordered" id="adminTable">
             <thead>
@@ -188,8 +200,11 @@
         const adminModal = new bootstrap.Modal(adminModalDOM);
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
-        $(document).ready(function() {
+        $(document).ready(async function() {
             const table = $('#adminTable').DataTable({
+                language: {
+                    url: 'https://cdn.datatables.net/plug-ins/2.3.2/i18n/hu.json'
+                },
                 processing: true,
                 serverSide: true,
                 ajax: '{{ route('admin.contracts.data') }}',
@@ -205,6 +220,47 @@
                     {data: 'created'},
                     {data: 'action', orderable: false, searchable: false}
                 ],
+            });
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const searchId = urlParams.get('id');
+            const showModal = urlParams.get('modal');
+            const makeContract = urlParams.get('make_contract');
+            const installationDate = urlParams.get('installation_date');
+
+            if (searchId) {
+                $('.filter-input[data-name="id"]').val(searchId);
+                const input = $('.filter-input[data-name="id"]');
+                const i = input.attr('data-column');
+                const v = input.val();
+                table.columns(i).search(v).draw();
+
+                if (showModal) {
+                    let hasOpened = false;
+
+                    table.on('draw', function () {
+                        if (hasOpened) return; // csak egyszer futtassuk
+                        hasOpened = true;
+
+                        const viewBtn = $('#adminTable tbody .view[data-id="' + searchId + '"]');
+                        if (viewBtn.length) {
+                            viewBtn.trigger('click');
+                        }
+                    });
+                }
+            }
+
+            if (makeContract) {
+
+
+                await showModalToCreate(installationDate);
+            }
+
+
+            $('.filter-input').on('change keyup', function () {
+                var i =$(this).attr('data-column');  // getting column index
+                var v =$(this).val();  // getting search input value
+                table.columns(i).search(v).draw();
             });
 
             const signature_canvas = document.getElementById('signature-pad');
@@ -340,6 +396,10 @@
 
             // Új szerződés létrehozása modal megjelenítése
             $('#addButton').on('click', async function () {
+                await showModalToCreate();
+            });
+
+            async function showModalToCreate(installationDate = null) {
                 try {
                     resetForm('Új szerződés létrehozása');
                     $('#show_signature').addClass('d-none');
@@ -348,6 +408,9 @@
 
                     const loaded_version = await loadVersions("v1");
                     renderContractForm(loaded_version.fields);
+                    if (installationDate) {
+                        $('#installation_date').val(installationDate);
+                    }
                     loadProducts();
                     $('.contract-contact').find('input, select, textarea').prop('disabled', false);
 
@@ -357,7 +420,7 @@
                     showToast(error, 'danger');
                 }
                 adminModal.show();
-            });
+            }
 
             // Szerződés generálása
 
@@ -410,7 +473,7 @@
                 }
 
                 try {
-                    const res = await fetch(`/admin/szerzodesek/verzio/${version}`);
+                    const res = await fetch(`${window.appConfig.APP_URL}admin/szerzodesek/verzio/${version}`);
                     const data = await res.json();
 
                     if (data.error) {

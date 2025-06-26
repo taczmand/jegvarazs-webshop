@@ -29,7 +29,7 @@ class ContractController extends Controller
         ]);
     }
 
-    public function data()
+    public function data(Request $request)
     {
         $contracts = Contract::select([
             'contracts.id',
@@ -44,6 +44,11 @@ class ContractController extends Controller
             ->leftJoin('users', 'contracts.created_by', '=', 'users.id');
 
         return DataTables::of($contracts)
+            ->filterColumn('id', function ($query, $keyword) {
+                if (is_numeric($keyword)) {
+                    $query->where('contracts.id', '=', $keyword);
+                }
+            })
             ->addColumn('creator_name', function ($contract) {
                 return $contract->creator_name ?? 'Ismeretlen';
             })

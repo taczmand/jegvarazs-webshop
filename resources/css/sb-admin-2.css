@@ -11358,4 +11358,9 @@ body.sidebar-toggled footer.sticky-footer {
     max-width: 200px;
 }
 
+.dt-search {
+    display: none;
+}
+
+
 

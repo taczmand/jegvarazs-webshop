@@ -7,6 +7,11 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Admin')</title>
     @vite('resources/sass/admin.scss')
+    <script>
+        window.appConfig = {
+            APP_URL: "{{ config('app.url') }}"
+        };
+    </script>
 </head>
 
 <body id="page-top">
