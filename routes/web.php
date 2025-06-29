@@ -151,6 +151,13 @@ Route::prefix('admin')->name('admin.')->group(function () {
         // Munkalapok
         Route::get('/munkalapok', [WorksheetController::class, 'index'])->name('worksheets.index');
         Route::get('/munkalapok/data', [WorksheetController::class, 'data'])->name('worksheets.data');
+        Route::get('/munkalapok/byweek', [WorksheetController::class, 'getWorksheetsByWeek'])->name('worksheets.byweek');
+        Route::put('/munkalapok/{id}', [WorksheetController::class, 'update'])->name('worksheets.update');
+        Route::post('/munkalapok', [WorksheetController::class, 'store'])->name('worksheet.store');
+        Route::get('/munkalapok/munkalap-termekek', [WorksheetController::class, 'fetchWithCategories'])->name('worksheets.list-with-categories');
+        Route::get('/munkalapok/adatok/{id}', [WorksheetController::class, 'showDataToWorksheet'])->name('worksheets.show_data_to_worksheet');
+        Route::delete('/munkalapok/delete-photo', [WorksheetController::class, 'deleteWorksheetPhoto'])->name('worksheets.delete-photo');
+        Route::delete('/munkalap-torlese/{id}', [WorksheetController::class, 'destroy'])->name('worksheets.destroy');
 
         /* Beállítások - Webshop */
 
@@ -250,6 +257,17 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
             return response()->file($path);
         })->name('contract.signature');
+
+        // Munkalapképek
+        Route::get('/worksheets/{filename}', function ($filename) {
+            $path = storage_path("app/private/worksheet_images/{$filename}");
+
+            if (!file_exists($path)) {
+                abort(404);
+            }
+
+            return response()->file($path);
+        })->name('worksheets.image');
     });
 });
 

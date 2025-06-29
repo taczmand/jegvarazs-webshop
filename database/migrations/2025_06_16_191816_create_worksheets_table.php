@@ -23,11 +23,16 @@ return new class extends Migration
             $table->string('city');
             $table->string('address_line');
             $table->text('description')->nullable();
+            $table->text('worker_report')->nullable();
             $table->date('installation_date')->comment('Szerelés dátuma');
             $table->foreignId('worker_id')
                 ->constrained('users')
                 ->onDelete('no action')
                 ->onUpdate('no action');
+            $table->enum('work_status', ['Szerelésre vár', 'Felszerelve'])->default('Szerelésre vár');
+            $table->json('data')->nullable(); // Mentett adatok JSON formátumban
+            $table->enum('payment_method', ['cash', 'transfer']);
+            $table->integer('payment_amount')->default(0);
             $table->foreignId('contract_id')
                 ->constrained('contracts')
                 ->onDelete('no action')

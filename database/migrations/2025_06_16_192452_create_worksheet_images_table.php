@@ -12,12 +12,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('worksheet_item_images', function (Blueprint $table) {
+        Schema::create('worksheet_images', function (Blueprint $table) {
             $table->id();
             $table->string('image_path');
-            $table->text('description');
-            $table->foreignId('worksheet_item_id')
-                ->constrained('worksheet_items')
+            $table->enum('image_type', ['Adattábla', 'Telepítési tanúsítvány', 'Szerelés'])->default('Szerelés');
+            $table->foreignId('worksheet_id')
+                ->constrained('worksheets')
                 ->onDelete('cascade')
                 ->onUpdate('cascade');
             $table->timestamp('created_at')->default(DB::raw('CURRENT_TIMESTAMP'));

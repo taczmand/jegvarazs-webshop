@@ -8,9 +8,13 @@ class Worksheet extends Model
 {
     protected $guarded = [];
 
-    public function items()
+    protected $casts = [
+        'data' => 'array',
+    ];
+
+    public function photos()
     {
-        return $this->hasMany(WorksheetItem::class);
+        return $this->hasMany(WorksheetImage::class);
     }
 
     public function createdBy()
@@ -26,6 +30,13 @@ class Worksheet extends Model
     public function worker()
     {
         return $this->belongsTo(User::class, 'worker_id');
+    }
+
+    public function products()
+    {
+        return $this->belongsToMany(Product::class, 'worksheet_products')
+            ->withPivot('quantity')
+            ->withTimestamps();
     }
 
 }

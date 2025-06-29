@@ -5,19 +5,20 @@
 
         <div class="d-flex justify-content-between align-items-center mb-5">
             <h1 class="h3 text-gray-800 mb-0">Ügyviteli folyamatok / Munkalapok</h1>
-            <button class="btn btn-dark" id="showCalendar"><i class="fas fa-calendar me-1"></i></button>
-            <a href="" class="btn btn-success"><i class="fas fa-plus me-1"></i> Új munkalap</a>
+            <div>
+                <button class="btn btn-dark" id="showCalendar"><i class="fas fa-calendar me-1"></i> Naptár</button>
+                <button class="btn btn-dark d-none" id="hideCalendar"><i class="fa-solid fa-table"></i> Táblázat</button>
+                <button id="addButton" class="btn btn-success"><i class="fas fa-plus me-1"></i> Új munkalap</button>
+            </div>
         </div>
 
+
         <div class="d-none" id="calendarContainer">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h2 class="h4 text-gray-800 mb-0">Heti naptár</h2>
-                <button class="btn btn-secondary" id="hideCalendar"><i class="fas fa-times"></i> Bezárás</button>
-            </div>
+
             <div class="calendar-nav">
-                <button onclick="changeWeek(-1)">⬅ Előző hét</button>
+                <button class="btn btn-light" id="prevWeek">⬅ Előző hét</button>
                 <h2 id="weekLabel">Heti naptár</h2>
-                <button onclick="changeWeek(1)">Következő hét ➡</button>
+                <button class="btn btn-light" id="nextWeek">Következő hét ➡</button>
             </div>
             <table id="calendar">
                 <thead>
@@ -30,62 +31,88 @@
                     <th>Szombat</th>
                     <th>Vasárnap</th>
                 </tr>
+                <tr>
+                    @foreach(range(1, 7) as $i)
+                        <th>
+                            <button class="btn btn-sm btn-info new_contract_from_calendar mb-1">
+                                <i class="fas fa-plus me-1"></i> Új szerződés
+                            </button>
+                            <button class="btn btn-sm btn-success new_worksheet_from_calendar">
+                                <i class="fas fa-plus me-1"></i> Új munkalap
+                            </button>
+                        </th>
+                    @endforeach
+                </tr>
                 </thead>
                 <tbody>
                 <!-- JavaScript tölti ki -->
                 </tbody>
             </table>
+            <div id="calendarLoader" style="display: none; text-align: center; margin: 1rem 0;">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Betöltés...</span>
+                </div>
+            </div>
         </div>
 
-
-        <table class="table table-bordered" id="adminTable">
-            <thead>
-            <tr>
-                <th>ID</th>
-                <th>Név</th>
-                <th>Munka</th>
-                <th>Ország</th>
-                <th>Irányítószám</th>
-                <th>Város</th>
-                <th>Cím</th>
-                <th>Szerződés</th>
-                <th>Készítette</th>
-                <th>Létrehozva</th>
-                <th>Műveletek</th>
-            </tr>
-            </thead>
-        </table>
+        <div id="worksheet_table">
+            <table class="table table-bordered" id="adminTable">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Ügyfélnév</th>
+                    <th>Város</th>
+                    <th>Munka</th>
+                    <th>Szerelő</th>
+                    <th>Állapot</th>
+                    <th>Szerződés</th>
+                    <th>Készítette</th>
+                    <th>Létrehozva</th>
+                    <th>Műveletek</th>
+                </tr>
+                </thead>
+            </table>
+        </div>
     </div>
 
 
     <!-- Modális ablak -->
     <div class="modal fade" id="adminModal" tabindex="-1" aria-labelledby="adminModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-xl">
-            <form id="adminModalForm" action="" method="POST">
-                <input type="hidden" id="customer_id" name="id">
+            <form id="adminModalForm" action="" enctype="multipart/form-data">
+                <input type="hidden" id="worksheet_id" name="worksheet_id">
 
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="adminModalLabel">Vevő/partner szerkesztése</h5>
+                        <h5 class="modal-title" id="adminModalLabel">Munkalap szerkesztése</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Bezárás"></button>
                     </div>
                     <div class="modal-body">
 
                         <ul class="nav nav-tabs" id="productTab" role="tablist">
-                            <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#contact" type="button">Kapcsolati adatok</button></li>
-                            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#productmanager" type="button">Termékek</button></li>
-                            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#offer" type="button">Ajánlat generálás</button></li>
+                            <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#basic" type="button">Alapadatok</button></li>
+                            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#products" type="button">Termékek</button></li>
+                            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#images" type="button">Képek</button></li>
+                            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#worksheet" type="button">Munkalap</button></li>
                         </ul>
 
                         <div class="tab-content mt-3">
 
-                            <!-- Kapcsolati adatok tab -->
+                            <!-- Alapadatok tab -->
 
-                            <div class="tab-pane fade show active" id="contact">
-                                <table class="table table-bordered offer-contact-table">
+                            <div class="tab-pane fade show active" id="basic">
+                                <table class="table table-bordered worksheet-basic-table">
                                     <tbody>
                                     <tr>
-                                        <td class="w-25">Név</td>
+                                        <td class="w-25">Munka megnevezése</td>
+                                        <td><input type="text" class="form-control" id="work_name" name="work_name" required></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="w-25">Munka dátuma</td>
+                                        <td><input type="date" class="form-control" id="installation_date" name="installation_date" required></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="w-25">Ügyfélnév</td>
                                         <td><input type="text" class="form-control" id="contact_name" name="contact_name" required></td>
                                     </tr>
                                     <tr>
@@ -119,36 +146,137 @@
                                         <td><input type="email" class="form-control" id="contact_email" name="contact_email"></td>
                                     </tr>
                                     <tr>
-                                        <td>Megjegyzés</td>
+                                        <td>Szerelő hozzárendelése</td>
+                                        <td>
+                                            <select name="worker_id" class="form-control w-100" id="worker_id" name="worker_id">
+                                                <option value=""></option>
+                                                @foreach($users as $user)
+                                                    <option value="{{ $user->id }}">
+                                                        {{ $user->name }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Szerződés hozzárendelése</td>
+                                        <td>
+                                            <select name="contract_id" class="form-control w-100" id="contract_id" name="contract_id">
+                                                <option value=""></option>
+                                                @foreach($contracts as $contract)
+                                                    <option value="{{ $contract->id }}">
+                                                        {{ $contract->name }} (anyja neve: {{ $contract->mothers_name }})
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Munka leírása</td>
                                         <td><textarea class="form-control" id="contact_description" name="contact_description" rows="3"></textarea></td>
                                     </tbody>
                                 </table>
                             </div>
 
-                            <div class="tab-pane fade" id="productmanager">
+                            <!-- Termékek tab-->
+
+                            <div class="tab-pane fade" id="products">
                                 <div style="max-height: 300px; overflow-y: auto">
                                     <table class="table table-bordered" id="productManagerTable">
                                         <thead>
                                         <tr>
                                             <th>Kiválasztás</th>
                                             <th>Termék</th>
-                                            <th>Bruttó ár</th>
+                                            <th>Darabszám</th>
                                         </tr>
                                         </thead>
                                         <tbody>
-                                            <!-- Termékek betöltése itt -->
+                                        <!-- Termékek betöltése itt -->
                                         </tbody>
                                     </table>
                                 </div>
                             </div>
-                            <div class="tab-pane fade" id="offer">
-                                <button type="submit" class="btn btn-primary d-none" id="generateOffer">
-                                    <i class="fas fa-file-pdf"></i> Ajánlat generálása
-                                </button>
-                                <a href="" id="offer_pdf_link" target="_blank" class="btn btn-primary d-none">Generált PDF megtekintése</a>
+
+                            <!-- Képek tab-->
+
+                            <div class="tab-pane fade" id="images">
+                                <h5>Adattábla képek</h5>
+                                <div class="mb-3">
+                                    <label class="form-label">Új képek feltöltése adattábláról</label>
+                                    <input type="file" class="form-control" name="new_photos_to_datatable[]" multiple accept="image/*">
+                                </div>
+
+                                <div id="worksheetDataTablePhotos" class="mt-3"></div>
+
+                                <hr>
+
+                                <h5>Telepítési tanúsítvány képek</h5>
+                                <div class="mb-3">
+                                    <label class="form-label">Új képek feltöltése telepítési tanúsítványról</label>
+                                    <input type="file" class="form-control" name="new_photos_to_certificate[]" multiple accept="image/*">
+                                </div>
+
+                                <div id="worksheetCertificatePhotos" class="mt-3"></div>
+
+                                <hr>
+
+                                <h5>Szerelés képek</h5>
+                                <div class="mb-3">
+                                    <label class="form-label">Új képek feltöltése szerelésről</label>
+                                    <input type="file" class="form-control" name="new_photos_to_install[]" multiple accept="image/*">
+                                </div>
+
+                                <div id="worksheetInstallPhotos" class="mt-3"></div>
                             </div>
+
+                            <!-- Munkalap tab-->
+
+                            <div class="tab-pane fade" id="worksheet">
+                                <div class="mb-3">
+                                    <label for="payment_method" class="form-label">Fizetés típusa?</label>
+                                    <select id="payment_method" name="payment_method" class="form-control">
+                                        <option value="cash">Készpénz</option>
+                                        <option value="transfer">Átutalás</option>
+                                    </select>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="payment_amount" class="form-label">Átvett készpénz összege:</label>
+                                    <input type="number" name="payment_amount" id="payment_amount" class="form-control">
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="pipe" class="form-label">Mennyi plusz csövet használtál?*</label>
+                                    <input type="text" name="extra_data[pipe]" class="form-control">
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="console" class="form-label">Milyen konzolt használtál?*</label>
+                                    <input type="text" name="extra_data[console]" class="form-control">
+                                </div>
+                                <label for="worker_report">Szerelő megjegyzése:</label>
+                                <div class="mb-3">
+                                    <textarea name="worker_report" id="worker_report" rows="3" class="form-control"></textarea>
+                                </div>
+                            </div>
+
+
+
+
                         </div>
                     </div>
+                    <div class="modal-footer d-flex align-items-center gap-2">
+                        <label for="work_status" class="mb-0">Állapot:</label>
+
+                        <select class="form-control form-control-sm w-auto" name="work_status" id="work_status">
+                            <option value="Szerelésre vár">Szerelésre vár</option>
+                            <option value="Felszerelve">Felszerelve</option>
+                        </select>
+
+                        <button type="submit" class="btn btn-success btn-sm ms-auto" id="saveWorksheet">Mentés</button>
+                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Mégse</button>
+                    </div>
+
                 </div>
             </form>
         </div>
@@ -158,147 +286,304 @@
 @section('scripts')
     <script type="module">
 
-        const tbody = document.querySelector('#calendar tbody');
+        $(document).ready(function() {
 
-        function createEmptyRow() {
-            const row = document.createElement('tr');
+            const calendarBody = document.querySelector('#calendar tbody');
+            const weekLabel = document.getElementById('weekLabel');
 
-            for (let day = 0; day < 7; day++) {
-                const cell = document.createElement('td');
-                cell.dataset.day = day;
-                cell.addEventListener('click', handleCellClick);
-                row.appendChild(cell);
+            let currentMonday = new Date();
+            currentMonday.setDate(currentMonday.getDate() - (currentMonday.getDay() + 6) % 7); // hétfőre igazítás
+
+            function formatDate(date) {
+                return date.toISOString().split('T')[0];
             }
 
-            tbody.appendChild(row);
-        }
+            function getWeekDays(monday) {
+                const days = [];
+                for (let i = 0; i < 7; i++) {
+                    const d = new Date(monday);
+                    d.setDate(monday.getDate() + i);
+                    days.push(d);
+                }
+                return days;
+            }
 
-        function handleCellClick(event) {
-            const cell = event.currentTarget;
+            async function fetchWorksheets(startDate, endDate) {
+                const url = new URL('{{ route("admin.worksheets.byweek") }}', window.location.origin);
+                url.searchParams.append('start_date', startDate);
+                url.searchParams.append('end_date', endDate);
 
-            // Példa: itt lekérheted a napot, ha szükséges
-            const day = cell.dataset.day;
+                try {
+                    const response = await fetch(url);
+                    if (!response.ok) {
+                        console.error('Hiba az adatok betöltésekor:', response.statusText);
+                        return [];
+                    }
+                    return await response.json();
+                } catch (error) {
+                    console.error('Fetch error:', error);
+                    return [];
+                }
+            }
 
-            // Itt állítod be a kívánt dátumot dinamikusan, ha akarod — most fixen:
-            const targetDate = '2025-06-26';
+            async function renderCalendar() {
 
-            const url = `http://jegvarazs-webshop.test/admin/szerzodesek?make_contract=true&installation_date=${targetDate}`;
-            window.location.href = url;
-        }
+                // 🔹 Loader megjelenítése
+                document.getElementById('calendarLoader').style.display = 'block';
 
-        // Induláskor 1 sor
-        createEmptyRow();
+                calendarBody.innerHTML = '';
 
-        $('#showCalendar').click(function() {
-            $('#calendarContainer').removeClass('d-none');
-            $('#showCalendar').addClass('d-none');
-            $('#adminTable').addClass('d-none');
-        });
+                const days = getWeekDays(currentMonday);
+                const startStr = formatDate(days[0]);
+                const endStr = formatDate(days[6]);
 
-        $('#hideCalendar').click(function() {
-            $('#calendarContainer').addClass('d-none');
-            $('#adminTable').removeClass('d-none');
-            $('#showCalendar').removeClass('d-none');
-        });
+                if (weekLabel) {
+                    weekLabel.textContent = `Heti naptár: ${startStr} - ${endStr}`;
+                }
 
-        /*const adminModalDOM = document.getElementById('adminModal');
-        const adminModal = new bootstrap.Modal(adminModalDOM);
-        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                const worksheets = await fetchWorksheets(startStr, endStr);
 
-        $(document).ready(function() {
+                // 🔹 Loader elrejtése
+                document.getElementById('calendarLoader').style.display = 'none';
+
+                // 🔸 Meglévő <th>-ek dátum hozzárendelése (Blade-ből jöttek)
+                const headerThs = document.querySelectorAll('#calendar thead tr:nth-child(2) th');
+                headerThs.forEach((th, i) => {
+                    const dateStr = formatDate(days[i]);
+                    th.dataset.date = dateStr;
+
+                    // 🔹 Előző dátumcímke eltávolítása, ha van
+                    const oldLabel = th.querySelector('.calendar-date-label');
+                    if (oldLabel) {
+                        oldLabel.remove();
+                    }
+
+                    // 🔹 Új címke hozzáadása
+                    const dateLabel = document.createElement('div');
+                    dateLabel.textContent = formatDayLabel(days[i]);
+                    dateLabel.classList.add('calendar-date-label');
+                    th.prepend(dateLabel);
+
+                    // Gombokra is rátesszük a dátumot
+                    const contractBtn = th.querySelector('.new_contract_from_calendar');
+                    const worksheetBtn = th.querySelector('.new_worksheet_from_calendar');
+
+                    if (contractBtn) contractBtn.dataset.date = dateStr;
+                    if (worksheetBtn) worksheetBtn.dataset.date = dateStr;
+                });
+
+                // 🔸 Tartalom cellák
+                const tr = document.createElement('tr');
+                days.forEach(day => {
+                    const td = document.createElement('td');
+                    td.dataset.date = formatDate(day);
+
+                    const dayWorksheets = worksheets.filter(w => w.installation_date === td.dataset.date);
+
+                    dayWorksheets.forEach((w, index) => {
+                        const div = document.createElement('div');
+
+                        if (w.worker_name) {
+                            div.innerHTML += `
+                                <i class="fa-solid fa-users-gear"></i>
+                                ${w.worker_name}
+                                <br>
+                            `;
+                        }
+
+                        let statusIcon = '';
+                        if (w.work_status === 'Szerelésre vár') {
+                            statusIcon = '<i class="fas fa-tools text-danger me-1" title="Szerelésre vár"></i>';
+                        } else if (w.work_status === 'Felszerelve') {
+                            statusIcon = '<i class="fas fa-check-circle text-success me-1" title="Felszerelve"></i>';
+                        } else {
+                            statusIcon = '<i class="fas fa-question-circle text-muted me-1" title="Ismeretlen státusz"></i>';
+                        }
+
+                        div.innerHTML += `
+                            ${statusIcon}<strong>${w.work_name}</strong><br>
+                            ${w.name}<br>
+                            ${w.city}
+                        `;
+
+                        div.classList.add('worksheet-entry');
+
+                        if (index < dayWorksheets.length - 1) {
+                            const separator = document.createElement('hr');
+                            separator.classList.add('worksheet-separator');
+                            td.appendChild(div);
+                            td.appendChild(separator);
+                        } else {
+                            td.appendChild(div);
+                        }
+                    });
+
+
+                    tr.appendChild(td);
+                });
+
+                calendarBody.appendChild(tr);
+            }
+
+            function formatDayLabel(date) {
+                // 'MM-DD' formátumban
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day   = String(date.getDate()).padStart(2, '0');
+                return `${month}-${day}`;
+            }
+
+            function changeWeek(offset) {
+                currentMonday.setDate(currentMonday.getDate() + offset * 7);
+                renderCalendar();
+            }
+
+            $('#prevWeek').click(function() {
+                changeWeek(-1);
+            });
+            $('#nextWeek').click(function() {
+                changeWeek(1);
+            });
+
+            $(document).on('click', '.new_contract_from_calendar', function () {
+                const contract_date = $(this).data('date');
+                if (!contract_date) return;
+
+                const url = `${window.appConfig.APP_URL}admin/szerzodesek?make_contract=true&installation_date=${contract_date}`;
+                window.open(url, '_blank');
+            });
+
+            $(document).on('click', '.new_worksheet_from_calendar', function () {
+                const worksheet_date = $(this).data('date');
+                showCreateForm(worksheet_date);
+            });
+
+            $('#showCalendar').click(function() {
+                $('#hideCalendar').removeClass('d-none');
+                $('#calendarContainer').removeClass('d-none');
+                $('#showCalendar').addClass('d-none');
+                $('#worksheet_table').addClass('d-none');
+                renderCalendar();
+            });
+
+            $('#hideCalendar').click(function() {
+                $('#hideCalendar').addClass('d-none');
+                $('#calendarContainer').addClass('d-none');
+                $('#worksheet_table').removeClass('d-none');
+                $('#showCalendar').removeClass('d-none');
+            });
+
+            const adminModalDOM = document.getElementById('adminModal');
+            const adminModal = new bootstrap.Modal(adminModalDOM);
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+
             const table = $('#adminTable').DataTable({
                 processing: true,
                 serverSide: true,
-                ajax: '{{ route('admin.offers.data') }}',
+                ajax: '{{ route('admin.worksheets.data') }}',
                 columns: [
                     { data: 'id' },
                     { data: 'name' },
-                    { data: 'country' },
-                    { data: 'zip_code' },
                     { data: 'city' },
-                    { data: 'address_line' },
+                    { data: 'work_name' },
+                    { data: 'worker_name' },
+                    { data: 'work_status_icon', name: 'work_status_icon', orderable: false, searchable: false  },
+                    { data: 'contract_id' },
                     { data: 'creator_name' },
                     { data: 'created' },
                     { data: 'action', orderable: false, searchable: false }
                 ],
             });
 
-            // Új ajánlat létrehozása modal megjelenítése
+            // Új munkalap létrehozása modal megjelenítése
             $('#addButton').on('click', async function () {
-                try {
-                    resetForm('Új ajánlat létrehozása');
-                    loadProducts();
-                    $('.offer-contact-table').find('input, select, textarea').prop('disabled', false);
+                showCreateForm();
+            });
 
-                    $('#generateOffer').removeClass('d-none');
-                    $('#offer_pdf_link').addClass('d-none').removeAttr('href');
+            function showCreateForm(installation_date = null) {
+                try {
+                    resetForm('Új munkalap létrehozása');
+                    if (installation_date) {
+                        $('#installation_date').val(installation_date);
+                    }
+                    loadProducts();
+
+                    $('.worksheet-basic-table').find('input, select, textarea').prop('disabled', false);
+
                 } catch (error) {
                     showToast(error, 'danger');
                 }
                 adminModal.show();
-            });
+            }
 
-            // Ajánlat megtekintése
+            // Munkalap szerkesztése
 
-            $('#adminTable').on('click', '.view', async function () {
+            $('#adminTable').on('click', '.edit', async function () {
 
-                resetForm('Ajánlat megtekintése');
-                $('.offer-contact-table').find('input, select, textarea').prop('disabled', true);
-
-                $('#generateOffer').addClass('d-none');
+                resetForm('Munkalap szerkesztése');
+                //$('.offer-contact-table').find('input, select, textarea').prop('disabled', true);
 
 
                 const row_data = $('#adminTable').DataTable().row($(this).parents('tr')).data();
 
+                const worksheet_data = await loadWorksheetWithAttachedData(row_data.id);
 
+                const worksheet = worksheet_data || {};
+                const worksheet_products = worksheet.products || [];
 
-                const offer_data = await loadOfferProducts(row_data.id);
-                const offer = offer_data.offer || {};
-                const offer_products = offer.products || [];
+                // Alapadatok
 
-                // Kapcsolati adatok
+                $('#worksheet_id').val(worksheet.id);
+                $('#work_name').val(worksheet.work_name);
+                $('#installation_date').val(worksheet.installation_date);
+                $('#contact_name').val(worksheet.name);
+                $('#contact_name').val(worksheet.name);
+                $('#contact_country').val(worksheet.country);
+                $('#contact_zip_code').val(worksheet.zip_code);
+                $('#contact_city').val(worksheet.city);
+                $('#contact_address_line').val(worksheet.address_line);
+                $('#contact_description').val(worksheet.description);
+                $('#contact_phone').val(worksheet.phone);
+                $('#contact_email').val(worksheet.email);
+                $('#worker_id').val(worksheet.worker_id);
+                $('#contract_id').val(worksheet.contract_id);
+                $('#work_status').val(worksheet.work_status);
+                $('#payment_method').val(worksheet.payment_method);
+                $('#payment_amount').val(worksheet.payment_amount);
 
-                $('#offer_id').val(offer.id);
-                $('#contact_name').val(offer.name);
-                $('#contact_country').val(offer.country);
-                $('#contact_zip_code').val(offer.zip_code);
-                $('#contact_city').val(offer.city);
-                $('#contact_address_line').val(offer.address_line);
-                $('#contact_phone').val(offer.phone);
-                $('#contact_email').val(offer.email);
-                $('#contact_description').val(offer.description);
+                const extraData = worksheet.data || {};
 
-                // Termékek
-
-                const productManagerTable = $('#productManagerTable tbody');
-                productManagerTable.empty();
-                offer_products.forEach(item => {
-                    const row = `
-                        <tr>
-                            <td>${item.id}</td>
-                            <td>${item.title}</td>
-                            <td>${item.gross_price}</td>
-                        </tr>`;
-                    productManagerTable.append(row);
+                Object.entries(extraData).forEach(([key, value]) => {
+                    const $input = $(`[name="extra_data[${key}]"]`);
+                    if ($input.length) {
+                        $input.val(value);
+                    }
                 });
 
-                // Generált PDF link
 
-                $('#offer_pdf_link').removeClass('d-none').attr('href', `${offer.pdf_path}`);
+                // Termékek
+                loadProducts(worksheet_products);
+
+                // Képek
+                renderPhotos(worksheet.photos);
 
                 adminModal.show();
             });
 
-            // Ajánlat generálása
+            // Munkalap mentése
 
-            $('#generateOffer').on('click', function (e) {
+            $('#saveWorksheet').on('click', function (e) {
                 e.preventDefault();
                 const form = document.getElementById('adminModalForm');
                 const formData = new FormData(form);
                 formData.append('_token', csrfToken);
 
-                let url = '{{ route('admin.offers.store') }}';
-                let method = 'POST';  // Alapértelmezett metódus
+                const originalSaveButtonHtml = $(this).html();
+                $(this).html('Mentés...').prop('disabled', true);
+
+                let url = '{{ route('admin.worksheet.store') }}';
+                let method = 'POST';
+
 
                 $.ajax({
                     url: url,
@@ -321,32 +606,32 @@
                         showToast(msg, 'danger');
                     },
                     complete: () => {
-
+                        $(this).html(originalSaveButtonHtml).prop('disabled', false);
                     }
                 });
 
             });
 
-            // Ajánlat törlése
+            // Munkalap törlése
             $('#adminTable').on('click', '.delete', async function () {
                 const row_data = $('#adminTable').DataTable().row($(this).parents('tr')).data();
-                const offer_id = row_data.id;
+                const worksheet_id = row_data.id;
 
-                if (!confirm('Biztosan törölni szeretnéd ezt az ajánlatot?')) return;
+                if (!confirm('Biztosan törölni szeretnéd ezt a munkalapot?')) return;
 
                 try {
                     $.ajax({
-                        url: `{{ url('/admin/ajanlatok') }}/${offer_id}`,
+                        url: `{{ url('/admin/munkalap-torlese') }}/${worksheet_id}`,
                         method: 'DELETE',
                         headers: {
                             'X-CSRF-TOKEN': csrfToken
                         },
                         success: function(response) {
-                            showToast('Ajánlat sikeresen törölve!', 'success');
+                            showToast('Munkalap sikeresen törölve!', 'success');
                             table.ajax.reload();
                         },
                         error: function(xhr) {
-                            let msg = 'Hiba történt az ajánlat törlésekor';
+                            let msg = 'Hiba történt a munkalap törlésekor';
                             if (xhr.responseJSON && xhr.responseJSON.message) {
                                 msg = xhr.responseJSON.message;
                             }
@@ -358,41 +643,53 @@
                 }
             });
 
-            function loadProducts() {
+            function loadProducts(products = []) {
                 const productManagerTable = $('#productManagerTable tbody');
                 productManagerTable.empty();
 
-                fetch(`/admin/termekek/kategoriakkal`)
+                fetch(`/admin/munkalapok/munkalap-termekek`)
                     .then(response => response.json())
                     .then(data => {
+                        // Átalakítjuk a meglévő products tömböt egy gyors lookup objektummá
+                        const selectedProducts = {};
+                        products.forEach(p => {
+                            selectedProducts[p.id] = p.quantity ?? 1; // ha nincs quantity, akkor 1
+                        });
+
                         data.forEach(category => {
                             const categoryRow = `
-                    <tr class="table-secondary">
-                        <td colspan="3"><strong>${category.title}</strong></td>
-                    </tr>`;
+                                <tr class="table-secondary">
+                                    <td colspan="3"><strong>${category.title}</strong></td>
+                                </tr>
+                            `;
                             productManagerTable.append(categoryRow);
 
                             category.products.forEach(item => {
+                                const isChecked = selectedProducts.hasOwnProperty(item.id);
+                                const quantity = isChecked ? selectedProducts[item.id] : 1;
+
                                 const row = `
-                        <tr>
-                            <td>
-                                <input
-                                    type="checkbox"
-                                    name="products[${item.id}][selected]"
-                                    value="1"
-                                >
-                            </td>
-                            <td>${item.title}</td>
-                            <td>
-                                <input
-                                    type="number"
-                                    class="form-control"
-                                    name="products[${item.id}][gross_price]"
-                                    value="${item.gross_price}"
-                                    step="0.01"
-                                >
-                            </td>
-                        </tr>`;
+                                    <tr>
+                                        <td>
+                                            <input
+                                                type="checkbox"
+                                                name="products[${item.id}][selected]"
+                                                value="1"
+                                                ${isChecked ? 'checked' : ''}
+                                            >
+                                        </td>
+                                        <td>${item.title}</td>
+                                        <td>
+                                            <input
+                                                type="number"
+                                                class="form-control"
+                                                name="products[${item.id}][qty]"
+                                                value="${quantity}"
+                                                step="1"
+                                            >
+                                        </td>
+                                    </tr>
+                                `;
                                 productManagerTable.append(row);
                             });
                         });
@@ -402,12 +699,110 @@
                     });
             }
 
+            function renderPhotos(photos = []) {
+                const containerForDatatablePhotos = $('#worksheetDataTablePhotos');
+                const containerForCertificatePhotos = $('#worksheetCertificatePhotos');
+                const containerForInstallPhotos = $('#worksheetInstallPhotos');
+
+                containerForDatatablePhotos.empty();
+                containerForCertificatePhotos.empty();
+                containerForInstallPhotos.empty();
+
+                if (!photos.length) {
+                    containerForDatatablePhotos.append('<p class="text-muted">Nincs feltöltött adattábla kép.</p>');
+                    containerForCertificatePhotos.append('<p class="text-muted">Nincs feltöltött tanúsítvány kép.</p>');
+                    containerForInstallPhotos.append('<p class="text-muted">Nincs feltöltött szerelés kép.</p>');
+                    return;
+                }
+
+                const containers = {
+                    'Adattábla': containerForDatatablePhotos,
+                    'Telepítési tanúsítvány': containerForCertificatePhotos,
+                    'Szerelés': containerForInstallPhotos
+                };
+
+                const tables = {
+                    'Adattábla': createPhotoTable(),
+                    'Telepítési tanúsítvány': createPhotoTable(),
+                    'Szerelés': createPhotoTable()
+                };
+
+                photos.forEach(photo => {
+                    const type = photo.image_type;
+                    const container = containers[type];
+                    const table = tables[type];
+
+                    if (!container || !table) return;
+
+                    const description = photo.description || '';
+
+                    const row = $(`
+                        <tr data-photo-id="${photo.id}">
+                            <td>
+                                <a href="${window.appConfig.APP_URL}admin/worksheets/${photo.image_path}" target="_blank">
+                                    <img src="${window.appConfig.APP_URL}admin/worksheets/${photo.image_path}" alt="${description}" class="img-thumbnail" style="width: 100px;">
+                                </a>
+                            </td>
+                            <td class="text-center">
+                                <button type="button" class="btn btn-sm btn-danger delete-photo" data-photo-id="${photo.id}">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `);
+
+                    table.find('tbody').append(row);
+                });
+
+                Object.entries(tables).forEach(([type, table]) => {
+                    const container = containers[type];
+                    if (container) {
+                        container.append(table);
+                    }
+                });
+
+                // --- Kép törlése
+                $('.delete-photo').off('click').on('click', function () {
+                    const photoId = $(this).data('photo-id');
+                    const row = $(this).closest('tr');
+
+                    if (!confirm('Biztosan törölni szeretnéd ezt a képet?')) return;
+
+                    $.ajax({
+                        url: `/admin/munkalapok/delete-photo`,
+                        method: 'DELETE',
+                        data: { id: photoId, _token: $('meta[name="csrf-token"]').attr('content') },
+                        success: () => {
+                            row.remove();
+                            showToast('Kép törölve', 'success');
+                        },
+                        error: () => showToast('Nem sikerült törölni a képet', 'danger')
+                    });
+                });
+
+                function createPhotoTable() {
+                    return $(`
+                        <div style="max-height: 300px; overflow-y: auto;">
+                            <table class="table table-bordered table-sm align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Feltöltött képek</th>
+                                        <th>Törlés</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    `);
+                }
+            }
 
 
 
-            async function loadOfferProducts(id) {
+
+            async function loadWorksheetWithAttachedData(id) {
                 try {
-                    const response = await fetch(`{{ url('/admin/ajanlatok/termekek') }}/${id}`, {
+                    const response = await fetch(`{{ url('/admin/munkalapok/adatok') }}/${id}`, {
                         headers: {
                             'X-CSRF-TOKEN': csrfToken
                         }
@@ -424,7 +819,23 @@
 
             function resetForm(title = null) {
                 $('#adminModalLabel').text(title);
+
+                const form = document.getElementById('adminModalForm');
+                if (form) {
+                    form.reset(); // Alap HTML input mezők ürítése
+
+                    // Egyéb dolgok resetelése:
+                    $(form).find('input[type="checkbox"], input[type="radio"]').prop('checked', false);
+                    $(form).find('select').val('').trigger('change'); // select2 kompatibilitás
+                    $(form).find('textarea').val('');
+                    $(form).find('input[type="file"]').val(''); // fájlmezők törlése
+
+                    // Ha szeretnél, eltüntethetsz előzőleg betöltött képeket is, pl.:
+                    $('#worksheetDataTablePhotos').empty();
+                    $('#worksheetCertificatePhotos').empty();
+                    $('#worksheetInstallPhotos').empty();
+                }
             }
-        });*/
+        });
     </script>
 @endsection

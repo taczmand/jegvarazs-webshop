@@ -62,10 +62,10 @@ class OfferController extends Controller
 
     public function fetchWithCategories() {
         $categories = Category::whereHas('products', function($query) {
-            $query->where('is_selectable_by_installer', 1);
+            $query->where('is_offerable', 1);
         })
             ->with(['products' => function($query) {
-                $query->where('is_selectable_by_installer', 1);
+                $query->where('is_offerable', 1);
             }])
             ->orderBy('title')
             ->get();
