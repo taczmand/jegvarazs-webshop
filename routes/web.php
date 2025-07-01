@@ -12,7 +12,7 @@ use App\Http\Controllers\Admin\CustomerController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\DownloadsController;
 use App\Http\Controllers\Admin\OfferController;
-use App\Http\Controllers\Admin\OrderController As AdminOrderController;
+use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\OrderStatusesController;
 use App\Http\Controllers\Admin\PaymentMethodController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
@@ -21,14 +21,14 @@ use App\Http\Controllers\Admin\ShippingMethodController;
 use App\Http\Controllers\Admin\StockStatusesController;
 use App\Http\Controllers\Admin\TagController;
 use App\Http\Controllers\Admin\TaxCategoryController;
+use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\WorksheetController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\OrderController;
-use App\Http\Controllers\PostalCodeController;
-use App\Http\Controllers\ShopCustomerController;
 use App\Http\Controllers\PagesController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\ShopCustomerController;
 use App\Models\Order;
 use Illuminate\Support\Facades\Route;
 
@@ -165,6 +165,14 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/beallitasok/altalanos', [BasicDataController::class, 'index'])->name('settings.general.index');
         Route::get('/beallitasok/altalanos/data', [BasicDataController::class, 'data'])->name('settings.general.data');
         Route::put('/beallitasok/altalanos/{id}', [BasicDataController::class, 'update'])->name('settings.general.update');
+
+        // Rendszer - Felhasználók
+        Route::get('/felhasznalok', [UserController::class, 'index'])->name('settings.users.index');
+        Route::get('/felhasznalok/data', [UserController::class, 'data'])->name('settings.users.data');
+        Route::get('/felhasznalok/roles', [UserController::class, 'getRoles'])->name('settings.users.roles');
+        Route::get('/felhasznalok/permissions', [UserController::class, 'getPermissions'])->name('settings.users.permissions');
+
+
 
         // Letöltések
 

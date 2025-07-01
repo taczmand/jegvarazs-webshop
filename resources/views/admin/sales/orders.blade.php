@@ -9,19 +9,25 @@
             <h1 class="h3 text-gray-800 mb-0">Értékesítés / Rendelések</h1>
         </div>
 
-        <table class="table table-bordered" id="adminTable">
-            <thead>
-            <tr>
-                <th>ID</th>
-                <th>Dátum</th>
-                <th>Vásárló</th>
-                <th>Teljes összeg</th>
-                <th>Állapot</th>
-                <th>Termékek száma</th>
-                <th>Műveletek</th>
-            </tr>
-            </thead>
-        </table>
+        @if(auth('admin')->user()->can('view-orders'))
+            <table class="table table-bordered" id="adminTable">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Dátum</th>
+                    <th>Vásárló</th>
+                    <th>Teljes összeg</th>
+                    <th>Állapot</th>
+                    <th>Termékek száma</th>
+                    <th>Műveletek</th>
+                </tr>
+                </thead>
+            </table>
+        @else
+            <div class="alert alert-danger" role="alert">
+                Nincs jogosultságod!
+            </div>
+        @endif
     </div>
 
     <!-- Modális ablak -->

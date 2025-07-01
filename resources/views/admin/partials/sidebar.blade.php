@@ -29,7 +29,7 @@
 
     <li class="nav-item">
         <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseSale" aria-expanded="false">
-            <i class="fas fa-fw fa-circle"></i>
+            <i class="fa-solid fa-money-bill-transfer"></i>
             <span>Értékesítés</span>
         </a>
         <div id="collapseSale" class="collapse">
@@ -43,7 +43,7 @@
 
     <li class="nav-item">
         <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseProducts" aria-expanded="false">
-            <i class="fas fa-fw fa-circle"></i>
+            <i class="fa-solid fa-list"></i>
             <span>Termékek</span>
         </a>
         <div id="collapseProducts" class="collapse">
@@ -65,7 +65,7 @@
 
     <li class="nav-item">
         <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseCustomerProcesses" aria-expanded="false">
-            <i class="fas fa-fw fa-circle"></i>
+            <i class="fa-solid fa-business-time"></i>
             <span>Ügyfél folyamatok</span>
         </a>
         <div id="collapseCustomerProcesses" class="collapse">
@@ -86,55 +86,34 @@
 
     <li class="nav-item">
         <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseWebshopSettings" aria-expanded="false">
-            <i class="fas fa-fw fa-circle"></i>
+            <i class="fa-solid fa-gears"></i>
             <span>Webshop</span>
         </a>
         <div id="collapseWebshopSettings" class="collapse">
-            <div class="bg-white py-2 collapse-inner rounded">
-                <a class="collapse-item" href="{{ route('admin.settings.general.index') }}">Általános</a>
-                <a class="collapse-item" href="{{ route('admin.settings.downloads.index') }}">Letöltések</a>
-                <a class="collapse-item" href="{{ route('admin.settings.regulations.index') }}">Szabályzatok</a>
-                <a class="collapse-item" href="#">Admin felhasználók</a>
-                <a class="collapse-item" href="{{ route('admin.settings.sites.index') }}">Telephelyek</a>
-            </div>
-        </div>
-    </li>
-
-    <li class="nav-item">
-        <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseOrderSettings" aria-expanded="false">
-            <i class="fas fa-fw fa-circle"></i>
-            <span>Rendelés</span>
-        </a>
-        <div id="collapseOrderSettings" class="collapse">
             <div class="bg-white py-2 collapse-inner rounded">
                 <a class="collapse-item" href="{{ route('admin.shipping-methods.index') }}">Szállítási módok</a>
                 <a class="collapse-item" href="{{ route('admin.payment-methods.index') }}">Fizetési módok</a>
                 <a class="collapse-item" href="{{ route('admin.stock-statuses.index') }}">Raktári állapotok</a>
                 <a class="collapse-item" href="{{ route('admin.order-statuses.index') }}">Rendelési állapotok</a>
-            </div>
-        </div>
-    </li>
-
-    <li class="nav-item">
-        <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseFinancialSettings" aria-expanded="false">
-            <i class="fas fa-fw fa-circle"></i>
-            <span>Pénzügyi beállítások</span>
-        </a>
-        <div id="collapseFinancialSettings" class="collapse">
-            <div class="bg-white py-2 collapse-inner rounded">
                 <a class="collapse-item" href="{{ route('admin.tax-categories.index') }}">Adó osztályok</a>
+                <a class="collapse-item" href="{{ route('admin.settings.downloads.index') }}">Letöltések</a>
+                <a class="collapse-item" href="{{ route('admin.settings.regulations.index') }}">Szabályzatok</a>
+                <a class="collapse-item" href="{{ route('admin.settings.sites.index') }}">Telephelyek</a>
+                <a class="collapse-item" href="#">SEO beállítások</a>
             </div>
         </div>
     </li>
 
     <li class="nav-item">
-        <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseSEOSettings" aria-expanded="false">
-            <i class="fas fa-fw fa-circle"></i>
-            <span>SEO és analítika</span>
+        <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseSystemSettings" aria-expanded="false">
+            <i class="fa-solid fa-screwdriver-wrench"></i>
+            <span>Rendszer</span>
         </a>
-        <div id="collapseSEOSettings" class="collapse">
+        <div id="collapseSystemSettings" class="collapse">
             <div class="bg-white py-2 collapse-inner rounded">
-                <a class="collapse-item" href="#">SEO beállítások</a>
+                <a class="collapse-item" href="{{ route('admin.settings.general.index') }}">Általános</a>
+                <a class="collapse-item" href="{{ route('admin.settings.users.index') }}">Felhasználók</a>
+                <a class="collapse-item" href="{{ route('admin.settings.sites.index') }}">Telephelyek</a>
             </div>
         </div>
     </li>
@@ -147,7 +126,7 @@
 
     <li class="nav-item">
         <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseAnalytics" aria-expanded="false">
-            <i class="fas fa-fw fa-circle"></i>
+            <i class="fa-solid fa-chart-simple"></i>
             <span>Aktivitás</span>
         </a>
         <div id="collapseAnalytics" class="collapse">

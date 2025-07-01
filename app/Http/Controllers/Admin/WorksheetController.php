@@ -14,9 +14,16 @@ use Illuminate\Support\Facades\DB;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Auth;
 
 class WorksheetController extends Controller
 {
+    protected $user = null;
+    public function __construct()
+    {
+        $this->user = Auth::guard('admin')->user();
+    }
+
     public function index()
     {
         $contracts = Contract::orderBy('name')->get();
@@ -36,11 +43,23 @@ class WorksheetController extends Controller
             return response()->json(['error' => 'Missing date range'], 400);
         }
 
-        $worksheets = Worksheet::with(['worker:id,name']) // csak az id és name mező betöltése
-        ->whereBetween('installation_date', [$startDate, $endDate])
-            ->get();
+        $user = auth('admin')->user(); // vagy auth()->user(), ha nincs guard
+        //dd($user);
 
-        // Átalakítjuk, hogy a worker neve is benne legyen közvetlenül
+        // Jogosultságellenőrzés
+        if ($user->can('view-worksheets')) {
+            $query = Worksheet::with(['worker:id,name'])
+                ->whereBetween('installation_date', [$startDate, $endDate]);
+        } elseif ($user->can('view-own-worksheets')) {
+            $query = Worksheet::with(['worker:id,name'])
+                ->where('worker_id', $user->id)
+                ->whereBetween('installation_date', [$startDate, $endDate]);
+        } else {
+            return response()->json(['error' => 'Nincs jogosultság'], 403);
+        }
+
+        $worksheets = $query->get();
+
         $result = $worksheets->map(function ($worksheet) {
             return [
                 'id' => $worksheet->id,
@@ -49,12 +68,14 @@ class WorksheetController extends Controller
                 'work_name' => $worksheet->work_name,
                 'work_status' => $worksheet->work_status,
                 'installation_date' => $worksheet->installation_date,
-                'worker_name' => optional($worksheet->worker)->name, // ha van worker
+                'worker_name' => optional($worksheet->worker)->name,
             ];
         });
 
         return response()->json($result);
     }
+
+
 
 
 
@@ -73,6 +94,11 @@ class WorksheetController extends Controller
         ])
             ->leftJoin('users as creator', 'worksheets.created_by', '=', 'creator.id')
             ->leftJoin('users as worker', 'worksheets.worker_id', '=', 'worker.id');
+
+        // Ha technician, csak a saját munkalapokat láthatja
+        if ($this->user->hasRole('technician')) {
+            $worksheets->where('worksheets.worker_id', $this->user->id);
+        }
 
         return DataTables::of($worksheets)
             ->filterColumn('id', function ($query, $keyword) {

@@ -64,18 +64,6 @@
                         Profil
                     </a>
                 </li>
-                <li>
-                    <a class="dropdown-item" href="#">
-                        <i class="fas fa-cogs fa-sm fa-fw me-2 text-gray-400"></i>
-                        Beállítások
-                    </a>
-                </li>
-                <li>
-                    <a class="dropdown-item" href="#">
-                        <i class="fas fa-list fa-sm fa-fw me-2 text-gray-400"></i>
-                        Aktivitás napló
-                    </a>
-                </li>
                 <li><hr class="dropdown-divider"></li>
                 <li>
                     <a class="dropdown-item" href="/admin/kijelentkezes">
