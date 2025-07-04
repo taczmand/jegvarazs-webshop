@@ -21,7 +21,6 @@
             </tr>
         </table>
 
-
         <table class="table table-bordered" id="adminTable">
             <thead>
             <tr>
@@ -251,8 +250,6 @@
             }
 
             if (makeContract) {
-
-
                 await showModalToCreate(installationDate);
             }
 
@@ -447,6 +444,8 @@
                         showToast(response.message || 'Sikeres!', 'success');
                         table.ajax.reload();
                         adminModal.hide();
+                        const worksheet_id = response.data.worksheet.id;
+                        window.location.href = `{{ url('/admin/munkalapok') }}?id=${worksheet_id}`;
                     },
                     error(xhr) {
                         let msg = 'Hiba!';

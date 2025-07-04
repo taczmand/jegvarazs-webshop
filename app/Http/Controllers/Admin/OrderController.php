@@ -15,10 +15,50 @@ class OrderController extends Controller
     }
     public function data()
     {
-        $orders = Order::with(['items', 'customer'])->select(['id', 'status', 'created_at', 'customer_id']);
+        $orders = Order::select([
+            'orders.id',
+            'orders.status',
+            'orders.created_at',
+            'orders.customer_id',
+            'customers.last_name',
+            'customers.first_name',
+        ])->leftJoin('customers', 'orders.customer_id', '=', 'customers.id')
+            ->with('items', 'customer');
 
         return datatables()
             ->of($orders)
+            ->orderColumn('status', function ($query, $order) {
+                $query->orderBy('orders.status', $order);
+            })
+            ->orderColumn('customer_name', function ($query, $order) {
+                $query->orderBy('customers.last_name', $order)
+                    ->orderBy('customers.first_name', $order);
+            })
+            ->filterColumn('id', function ($query, $keyword) {
+                if (is_numeric($keyword)) {
+                    $query->where('orders.id', '=', $keyword);
+                }
+            })
+            ->filterColumn('customer_name', function ($query, $keyword) {
+                $query->where(function($q) use ($keyword) {
+                    $q->where('customers.last_name', 'like', "%{$keyword}%")
+                        ->orWhere('customers.first_name', 'like', "%{$keyword}%");
+                });
+            })
+            ->filterColumn('status', function ($query, $keyword) {
+                if (!empty($keyword)) {
+                    $query->where('orders.status', 'like', "%{$keyword}%");
+                }
+            })
+            ->addColumn('status', function ($order) {
+                $translations = [
+                    'pending'   => 'Függőben',
+                    'completed' => 'Teljesítve',
+                    'cancelled' => 'Törölve',
+                    'processing'=> 'Feldolgozás alatt',
+                ];
+                return $translations[$order->status] ?? ucfirst($order->status);
+            })
             ->addColumn('total_amount', function ($order) {
                 return $order->items->sum(function ($item) {
                     return $item->quantity * $item->product->gross_price;
@@ -28,25 +68,28 @@ class OrderController extends Controller
                 return $order->items->count();
             })
             ->addColumn('customer_name', function ($order) {
-                return $order->customer ? $order->customer->last_name ." ". $order->customer->first_name : 'N/A';
+                return $order->last_name && $order->first_name
+                    ? $order->last_name . ' ' . $order->first_name
+                    : ($order->customer ? $order->customer->last_name . ' ' . $order->customer->first_name : 'N/A');
             })
             ->editColumn('created_at', function ($order) {
-                // Formázás: YYYY-MM-DD HH:mm:ss
                 return $order->created_at ? $order->created_at->format('Y-m-d H:i:s') : '';
             })
             ->addColumn('action', function ($order) {
                 return '
-                    <button class="btn btn-sm btn-primary edit" data-id="'.$order->id.'" title="Szerkesztés">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="btn btn-sm btn-danger delete" data-id="'.$order->id.'" title="Törlés">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                ';
+                <button class="btn btn-sm btn-primary edit" data-id="' . $order->id . '" title="Szerkesztés">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn btn-sm btn-danger delete" data-id="' . $order->id . '" title="Törlés">
+                    <i class="fas fa-trash"></i>
+                </button>
+            ';
             })
             ->rawColumns(['action'])
             ->make(true);
     }
+
+
 
     public function show($id)
     {

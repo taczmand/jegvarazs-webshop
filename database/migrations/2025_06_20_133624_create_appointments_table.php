@@ -23,11 +23,7 @@ return new class extends Migration
             $table->date('appointment_date')->nullable();
             $table->enum('appointment_type', ['Karbantartás', 'Felmérés'])->default('Karbantartás');
             $table->text('message')->nullable();
-            $table->foreignId('viewed_by')->nullable()
-                ->constrained('users')
-                ->onDelete('cascade')
-                ->onUpdate('cascade');
-            $table->enum('status', ['Függőben', 'Folyamatban', 'Törölve'])->default('Függőben');
+            $table->enum('status', ['Függőben', 'Folyamatban', 'Törölve', 'Kész'])->default('Függőben');
             $table->timestamp('created_at')->default(DB::raw('CURRENT_TIMESTAMP'));
             $table->timestamp('updated_at')->default(DB::raw('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'));
         });

@@ -15,6 +15,7 @@ return new class extends Migration
         Schema::create('worksheets', function (Blueprint $table) {
             $table->id();
             $table->string('work_name')->comment('Munka megnevezése');
+            $table->enum('work_type', ['Karbantartás', 'Szerelés', 'Felmérés'])->default('Szerelés');
             $table->string('name');
             $table->string('email')->nullable();
             $table->string('phone')->nullable();

@@ -5,11 +5,30 @@
 
     <div class="container p-0">
 
-        <div class="d-flex justify-content-between align-items-center mb-5">
-            <h1 class="h3 text-gray-800 mb-0">Értékesítés / Rendelések</h1>
+        <div class="d-flex align-items-center mb-3 pb-2 border-bottom">
+            <i class="fa-solid fa-money-bill-transfer text-primary me-2"></i>
+            <h2 class="h5 text-primary mb-0">Értékesítés / Rendelések</h2>
         </div>
 
         @if(auth('admin')->user()->can('view-orders'))
+
+            <table class="table table-bordered">
+                <tr>
+                    <th><i class="fa-solid fa-filter text-gray-500"></i></th>
+                    <th><input type="text" placeholder="ID" class="filter-input form-control" data-column="0"></th>
+                    <th><input type="text" placeholder="Vásárló" class="filter-input form-control" data-column="2"></th>
+                    <th>
+                        <select class="form-select filter-input" data-column="4">
+                            <option value="">Állapot (összes)</option>
+                            <option value="pending">Függőben</option>
+                            <option value="processing">Feldolgozás alatt</option>
+                            <option value="completed">Befejezve</option>
+                            <option value="cancelled">Törölve</option>
+                        </select>
+                    </th>
+                </tr>
+            </table>
+
             <table class="table table-bordered" id="adminTable">
                 <thead>
                 <tr>
@@ -280,9 +299,13 @@
 
         $(document).ready(function() {
             const table = $('#adminTable').DataTable({
+                language: {
+                    url: 'https://cdn.datatables.net/plug-ins/2.3.2/i18n/hu.json'
+                },
                 processing: true,
                 serverSide: true,
                 ajax: '{{ route('admin.orders.data') }}',
+                order: [[0, 'desc']],
                 columns: [
                     {data: 'id'},
                     {data: 'created_at'},
@@ -292,6 +315,12 @@
                     {data: 'items_count'},
                     {data: 'action', orderable: false, searchable: false}
                 ],
+            });
+
+            $('.filter-input').on('change keyup', function () {
+                var i =$(this).attr('data-column');  // getting column index
+                var v =$(this).val();  // getting search input value
+                table.columns(i).search(v).draw();
             });
 
             // Rendelés szerkesztése
@@ -308,7 +337,6 @@
                 $('#order_date_display').text(row_data.created_at);
                 $('#customer_name_display').text(row_data.customer_name);
                 $('#total_amount_display').text(row_data.total_amount);
-
 
                 renderBasicData(order_data);
                 renderOrderItems(order_items);

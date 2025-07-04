@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AppointmentController;
 use App\Http\Controllers\Admin\AttributeController;
 use App\Http\Controllers\Admin\Auth\AdminLoginController;
 use App\Http\Controllers\Admin\BasicDataController;
@@ -159,6 +160,13 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::delete('/munkalapok/delete-photo', [WorksheetController::class, 'deleteWorksheetPhoto'])->name('worksheets.delete-photo');
         Route::delete('/munkalap-torlese/{id}', [WorksheetController::class, 'destroy'])->name('worksheets.destroy');
 
+        // Időpontfoglalások
+        Route::get('/idopontfoglalasok', [AppointmentController::class, 'index'])->name('appointments.index');
+        Route::get('/idopontfoglalasok/data', [AppointmentController::class, 'data'])->name('appointments.data');
+        Route::post('/idopontfoglalasok', [AppointmentController::class, 'store'])->name('appointments.store');
+        Route::put('/idopontfoglalasok/{id}', [AppointmentController::class, 'update'])->name('appointments.update');
+        Route::delete('/idopontfoglalasok/{id}', [AppointmentController::class, 'destroy'])->name('appointments.destroy');
+
         /* Beállítások - Webshop */
 
         // Általános
@@ -168,10 +176,13 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
         // Rendszer - Felhasználók
         Route::get('/felhasznalok', [UserController::class, 'index'])->name('settings.users.index');
+        Route::get('/felhasznalo/{id}', [UserController::class, 'fetchWithPermissions'])->name('settings.users.fetch');
         Route::get('/felhasznalok/data', [UserController::class, 'data'])->name('settings.users.data');
         Route::get('/felhasznalok/roles', [UserController::class, 'getRoles'])->name('settings.users.roles');
         Route::get('/felhasznalok/permissions', [UserController::class, 'getPermissions'])->name('settings.users.permissions');
-
+        Route::post('/felhasznalok', [UserController::class, 'store'])->name('settings.users.store');
+        Route::put('/felhasznalok/{id}', [UserController::class, 'update'])->name('settings.users.update');
+        Route::delete('/felhasznalok/{id}', [UserController::class, 'destroy'])->name('settings.users.destroy');
 
 
         // Letöltések
@@ -224,6 +235,10 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('/beallitasok/ado-osztalyok', [TaxCategoryController::class, 'store'])->name('tax-categories.store');
         Route::put('/beallitasok/ado-osztalyok/{tax}', [TaxCategoryController::class, 'update'])->name('tax-categories.update');
         Route::delete('/beallitasok/ado-osztalyok/{tax}', [TaxCategoryController::class, 'destroy'])->name('tax-categories.destroy');
+
+        // A még meg nem tekintett rekordok lekérése
+        Route::get('/beallitasok/uj-adatok', [BasicDataController::class, 'getNewRecords'])->name('settings.new_records');
+        Route::post('/beallitasok/uj-adatok/megtekintes', [BasicDataController::class, 'markAsViewed'])->name('settings.mark_as_viewed');
 
         /* Fájlok elérése */
 

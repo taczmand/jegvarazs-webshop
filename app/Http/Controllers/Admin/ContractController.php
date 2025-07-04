@@ -7,6 +7,7 @@ use App\Models\Category;
 use App\Models\Contract;
 use App\Models\ContractProduct;
 use App\Models\Product;
+use App\Models\Worksheet;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -156,10 +157,32 @@ class ContractController extends Controller
 
             $contract->update(['pdf_path' => "contracts/{$file_name}"]);
 
+            // Munkalap létrehozása
+            $worksheet = Worksheet::create([
+                'work_name' => "Szerződéses munkalap - {$contract->name}",
+                'work_type' => "Szerelés",
+                'name' => $contract->name,
+                'email' => $contract->email || '',
+                'phone' => $contract->phone || '',
+                'country' => $contract->country,
+                'zip_code' => $contract->zip_code,
+                'city' => $contract->city,
+                'address_line' => $contract->address_line,
+                'installation_date' => $contract->installation_date,
+                'work_status' => "Szerelésre vár",
+                'contract_id' => $contract->id,
+                'created_by' => auth('admin')->id(),
+            ]);
+
             DB::commit();
 
             return response()->json([
-                'message' => 'Sikeres generálás!'
+                'message' => 'Sikeres generálás!',
+                'data' => [
+                    'contract' => $contract,
+                    'worksheet' => $worksheet,
+                    'pdf_path' => Storage::url($contract->pdf_path),
+                ]
             ], 200);
         } catch (\Throwable $e) {
             DB::rollBack();

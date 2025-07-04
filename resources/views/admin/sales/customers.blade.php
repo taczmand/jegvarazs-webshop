@@ -299,7 +299,7 @@
                 const customer_all_data = await getCustomerData(row_data.id);
                 customer_data = customer_all_data.customer;
 
-                renderCartItems(customer_data.cart.items);
+                renderCartItems(customer_data.cart?.items);
                 renderOrders(customer_data.orders);
                 renderShippingData(customer_all_data);
                 renderBillingData(customer_all_data);
@@ -316,6 +316,8 @@
                 $('#customer_status').val(customer_data.status === 'active' ? 'active' : 'inactive');
                 $('#customer_created_at').text(customer_data.created_at);
                 $('#customer_updated_at').text(customer_data.updated_at);
+
+                sendViewRequest("customers", row_data.id);
 
                 adminModal.show();
             });
@@ -336,6 +338,10 @@
             function renderCartItems(cart_items) {
                 const tbody = $('#cartTable tbody');
                 tbody.empty();
+                if (!cart_items || cart_items.length === 0) {
+                    tbody.append('<tr><td colspan="6" class="text-center">A kosár üres</td></tr>');
+                    return;
+                }
                 cart_items.forEach(item => {
 
                     const product = item.product;

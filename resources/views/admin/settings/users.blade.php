@@ -13,7 +13,6 @@
                 <th>ID</th>
                 <th>Név</th>
                 <th>E-mail cím</th>
-                <th>Szerepkörök</th>
                 <th>Létrehozva</th>
                 <th>Műveletek</th>
             </tr>
@@ -23,7 +22,7 @@
 
     <div class="modal fade" id="userModal" tabindex="-1" aria-labelledby="userModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-xl">
-            <form id="userForm" enctype="multipart/form-data">
+            <form id="userForm">
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title" id="userModalLabel"></h5>
@@ -55,7 +54,7 @@
                                         </div>
                                         <div class="mb-3">
                                             <label class="form-label">Jelszó újra*</label>
-                                            <input type="password" class="form-control" name="repassword" id="repassword" required>
+                                            <input type="password" class="form-control" name="password_confirmation" id="password_confirmation" required>
                                         </div>
 
                                     </div>
@@ -99,7 +98,6 @@
                     { data: 'id' },
                     { data: 'name' },
                     { data: 'email' },
-                    { data: 'roles' },
                     { data: 'created_at' },
                     { data: 'action', orderable: false, searchable: false }
                 ]
@@ -118,6 +116,109 @@
                     showToast(error, 'danger');
                 }
                 userModal.show();
+            });
+
+            $('#usersTable').on('click', '.edit', async function () {
+
+                resetForm('Felhasználó szerkesztése');
+
+                const row_data = $('#usersTable').DataTable().row($(this).parents('tr')).data();
+                $('#user_id').val(row_data.id);
+
+                // Jogosultságok betöltése
+                const user = await fetch(`/admin/felhasznalo/${row_data.id}`);
+                const userData = await user.json();
+
+                $('#name').val(userData.name);
+                $('#email').val(userData.email);
+                $('#password').val(''); // Jelszó mező ürítése
+                $('#password_confirmation').val(''); // Jelszó megerősítés mező ürítése
+
+
+                try {
+                    const permissions = await getPermissions();
+                    renderPermissions(permissions, userData.permissions.map(p => p.name));
+                } catch (error) {
+                    showToast(error, 'danger');
+                }
+                userModal.show();
+            });
+
+
+            $('#saveUser').on('click', function (e) {
+                e.preventDefault();
+                const form = document.getElementById('userForm');
+                const formData = new FormData(form);
+                formData.append('_token', csrfToken);
+
+                const originalSaveButtonHtml = $(this).html();
+                $(this).html('Mentés...').prop('disabled', true);
+
+                const userId = $('#user_id').val();
+
+                let url = '{{ route('admin.settings.users.store') }}';
+                let method = 'POST';  // Alapértelmezett metódus
+
+                if (userId) {
+                    url = `/admin/felhasznalok/${userId}`;  // update URL, ha van ID
+                    formData.append('_method', 'PUT');  // PUT metódus jelzése
+                }
+
+                $.ajax({
+                    url: url,
+                    method: method,
+                    data: formData,
+                    contentType: false,
+                    processData: false,
+                    success(response) {
+                        showToast(response.message || 'Sikeres!', 'success');
+                        table.ajax.reload();
+                        userModal.hide();
+                    },
+                    error(xhr) {
+                        let msg = 'Hiba!';
+                        if (xhr.responseJSON?.errors) {
+                            msg = Object.values(xhr.responseJSON.errors).flat().join(' ');
+                        } else if (xhr.responseJSON?.message) {
+                            msg = xhr.responseJSON.message;
+                        }
+                        showToast(msg, 'danger');
+                    },
+                    complete: () => {
+                        $(this).html(originalSaveButtonHtml).prop('disabled', false);
+                    }
+                });
+
+            });
+
+            $('#usersTable').on('click', '.delete', async function () {
+                const row_data = $('#usersTable').DataTable().row($(this).parents('tr')).data();
+                const userId = row_data.id;
+
+                if (!confirm('Biztosan törölni szeretnéd a felhasználót?')) return;
+
+                try {
+                    $.ajax({
+                        url: `{{ url('/admin/felhasznalok') }}/${userId}`,
+                        method: 'DELETE',
+                        headers: {
+                            'X-CSRF-TOKEN': csrfToken
+                        },
+                        success: function(response) {
+                            showToast('Felhasználó sikeresen törölve!', 'success');
+                            table.ajax.reload();
+                        },
+                        error: function(xhr) {
+                            let msg = 'Hiba történt a felhasználó törlésekor';
+                            if (xhr.responseJSON && xhr.responseJSON.message) {
+                                msg = xhr.responseJSON.message;
+                            }
+                            showToast(msg, 'danger');
+                        }
+                    });
+                } catch (error) {
+                    showToast(error.message || 'Hiba történt a felhasználó törlésekor', 'danger');
+                }
             });
 
 

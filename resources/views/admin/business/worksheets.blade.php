@@ -55,6 +55,18 @@
             </div>
         </div>
 
+        <table class="table table-bordered">
+            <tr>
+                <th><i class="fa-solid fa-filter"></i></th>
+                <th><input type="text" placeholder="ID" class="filter-input" data-column="0" data-name="id"></th>
+                <th><input type="text" placeholder="Név" class="filter-input" data-column="1"></th>
+                <th><input type="text" placeholder="Ország" class="filter-input" data-column="2"></th>
+                <th><input type="text" placeholder="Irányítószám" class="filter-input" data-column="3"></th>
+                <th><input type="text" placeholder="Város" class="filter-input" data-column="4"></th>
+                <th><input type="text" placeholder="Cím" class="filter-input" data-column="5"></th>
+            </tr>
+        </table>
+
         <div id="worksheet_table">
             <table class="table table-bordered" id="adminTable">
                 <thead>
@@ -62,7 +74,7 @@
                     <th>ID</th>
                     <th>Ügyfélnév</th>
                     <th>Város</th>
-                    <th>Munka</th>
+                    <th>Munka típusa</th>
                     <th>Szerelő</th>
                     <th>Állapot</th>
                     <th>Szerződés</th>
@@ -106,6 +118,16 @@
                                     <tr>
                                         <td class="w-25">Munka megnevezése</td>
                                         <td><input type="text" class="form-control" id="work_name" name="work_name" required></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="w-25">Munka típusa</td>
+                                        <td>
+                                            <select name="work_type" id="work_type" class="form-control">
+                                                <option value="Karbantartás">Karbantartás</option>
+                                                <option value="Szerelés">Szerelés</option>
+                                                <option value="Felmérés">Felmérés</option>
+                                            </select>
+                                        </td>
                                     </tr>
                                     <tr>
                                         <td class="w-25">Munka dátuma</td>
@@ -232,6 +254,50 @@
                             <!-- Munkalap tab-->
 
                             <div class="tab-pane fade" id="worksheet">
+
+                                <div id="worksheet_szereles" class="d-none">
+                                    <div class="mb-3">
+                                        <label for="pipe" class="form-label">Mennyi plusz csövet használtál?*</label>
+                                        <input type="text" name="extra_data[pipe]" class="form-control">
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="console" class="form-label">Milyen konzolt használtál?*</label>
+                                        <input type="text" name="extra_data[console]" class="form-control">
+                                    </div>
+                                </div>
+
+                                <div id="worksheet_karbantartas" class="d-none">
+                                    <div class="mb-3">
+                                        <label for="cleaning_type" class="form-label">Tisztítás típusa*</label>
+                                        <select id="cleaning_type" name="extra_data[cleaning_type]" class="form-control">
+                                            <option value="basic_clean">Alaptisztítás</option>
+                                            <option value="full_clean">Teljes mosás</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="device_qty" class="form-label">Hány darab készülék?*</label>
+                                        <input type="text" name="extra_data[device_qty]" class="form-control">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="self_installation" class="form-label">Saját telepítés?*</label>
+                                        <select id="self_installation" name="extra_data[self_installation]" class="form-control">
+                                            <option value="igen">Igen</option>
+                                            <option value="nem">Nem</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div id="worksheet_felmeres" class="d-none">
+                                    <div class="mb-3">
+                                        <label for="exist_contract" class="form-label">Szerződéskötés történt?*</label>
+                                        <select id="exist_contract" name="extra_data[exist_contract]" class="form-control">
+                                            <option value="igen">Igen</option>
+                                            <option value="nem">Nem</option>
+                                        </select>
+                                    </div>
+                                </div>
+
                                 <div class="mb-3">
                                     <label for="payment_method" class="form-label">Fizetés típusa?</label>
                                     <select id="payment_method" name="payment_method" class="form-control">
@@ -239,21 +305,11 @@
                                         <option value="transfer">Átutalás</option>
                                     </select>
                                 </div>
-
                                 <div class="mb-3">
-                                    <label for="payment_amount" class="form-label">Átvett készpénz összege:</label>
-                                    <input type="number" name="payment_amount" id="payment_amount" class="form-control">
+                                    <label for="maintenance_payment_amount" class="form-label">Átvett készpénz összege:</label>
+                                    <input type="number" name="maintenance_payment_amount" id="maintenance_payment_amount" class="form-control">
                                 </div>
 
-                                <div class="mb-3">
-                                    <label for="pipe" class="form-label">Mennyi plusz csövet használtál?*</label>
-                                    <input type="text" name="extra_data[pipe]" class="form-control">
-                                </div>
-
-                                <div class="mb-3">
-                                    <label for="console" class="form-label">Milyen konzolt használtál?*</label>
-                                    <input type="text" name="extra_data[console]" class="form-control">
-                                </div>
                                 <label for="worker_report">Szerelő megjegyzése:</label>
                                 <div class="mb-3">
                                     <textarea name="worker_report" id="worker_report" rows="3" class="form-control"></textarea>
@@ -287,6 +343,63 @@
     <script type="module">
 
         $(document).ready(function() {
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const searchId = urlParams.get('id');
+
+            const adminModalDOM = document.getElementById('adminModal');
+            const adminModal = new bootstrap.Modal(adminModalDOM);
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+            const table = $('#adminTable').DataTable({
+                processing: true,
+                serverSide: true,
+                ajax: '{{ route('admin.worksheets.data') }}',
+                columns: [
+                    { data: 'id' },
+                    { data: 'name' },
+                    { data: 'city' },
+                    { data: 'work_type' },
+                    { data: 'worker_name' },
+                    { data: 'work_status_icon', name: 'work_status_icon', orderable: false, searchable: false  },
+                    { data: 'contract_id' },
+                    { data: 'creator_name' },
+                    { data: 'created' },
+                    { data: 'action', orderable: false, searchable: false }
+                ],
+            });
+
+            if (searchId) {
+                $('.filter-input[data-name="id"]').val(searchId);
+                const input = $('.filter-input[data-name="id"]');
+                const i = input.attr('data-column');
+                const v = input.val();
+                table.columns(i).search(v).draw();
+
+                editWorksheet(searchId);
+            }
+
+            $('#work_type').change(function() {
+                const workType = $(this).val();
+                renderWorkTypeFields(workType);
+            });
+
+            function renderWorkTypeFields(workType) {
+
+                $('#worksheet_szereles').addClass('d-none');
+                $('#worksheet_karbantartas').addClass('d-none');
+                $('#worksheet_felmeres').addClass('d-none');
+
+                if ("Szerelés" === workType) {
+                    $('#worksheet_szereles').removeClass('d-none');
+                }
+                if ("Karbantartás" === workType) {
+                    $('#worksheet_karbantartas').removeClass('d-none');
+                }
+                if ("Felmérés" === workType) {
+                    $('#worksheet_felmeres').removeClass('d-none');
+                }
+            }
 
             const calendarBody = document.querySelector('#calendar tbody');
             const weekLabel = document.getElementById('weekLabel');
@@ -378,11 +491,12 @@
                     const td = document.createElement('td');
                     td.dataset.date = formatDate(day);
 
+
                     const dayWorksheets = worksheets.filter(w => w.installation_date === td.dataset.date);
 
                     dayWorksheets.forEach((w, index) => {
                         const div = document.createElement('div');
-
+                        div.dataset.id = w.id;
                         if (w.worker_name) {
                             div.innerHTML += `
                                 <i class="fa-solid fa-users-gear"></i>
@@ -424,6 +538,11 @@
 
                 calendarBody.appendChild(tr);
             }
+
+            $(document).on('click', '.worksheet-entry', function () {
+                const worksheet_id = this.dataset.id;
+                editWorksheet(worksheet_id);
+            });
 
             function formatDayLabel(date) {
                 // 'MM-DD' formátumban
@@ -472,28 +591,7 @@
                 $('#showCalendar').removeClass('d-none');
             });
 
-            const adminModalDOM = document.getElementById('adminModal');
-            const adminModal = new bootstrap.Modal(adminModalDOM);
-            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
-
-            const table = $('#adminTable').DataTable({
-                processing: true,
-                serverSide: true,
-                ajax: '{{ route('admin.worksheets.data') }}',
-                columns: [
-                    { data: 'id' },
-                    { data: 'name' },
-                    { data: 'city' },
-                    { data: 'work_name' },
-                    { data: 'worker_name' },
-                    { data: 'work_status_icon', name: 'work_status_icon', orderable: false, searchable: false  },
-                    { data: 'contract_id' },
-                    { data: 'creator_name' },
-                    { data: 'created' },
-                    { data: 'action', orderable: false, searchable: false }
-                ],
-            });
 
             // Új munkalap létrehozása modal megjelenítése
             $('#addButton').on('click', async function () {
@@ -526,7 +624,11 @@
 
                 const row_data = $('#adminTable').DataTable().row($(this).parents('tr')).data();
 
-                const worksheet_data = await loadWorksheetWithAttachedData(row_data.id);
+                editWorksheet(row_data.id);
+            });
+
+            async function editWorksheet(id) {
+                const worksheet_data = await loadWorksheetWithAttachedData(id);
 
                 const worksheet = worksheet_data || {};
                 const worksheet_products = worksheet.products || [];
@@ -535,8 +637,8 @@
 
                 $('#worksheet_id').val(worksheet.id);
                 $('#work_name').val(worksheet.work_name);
+                $('#work_type').val(worksheet.work_type);
                 $('#installation_date').val(worksheet.installation_date);
-                $('#contact_name').val(worksheet.name);
                 $('#contact_name').val(worksheet.name);
                 $('#contact_country').val(worksheet.country);
                 $('#contact_zip_code').val(worksheet.zip_code);
@@ -567,8 +669,11 @@
                 // Képek
                 renderPhotos(worksheet.photos);
 
+                // Munkalap specifikus mezők
+                renderWorkTypeFields(worksheet.work_type);
+
                 adminModal.show();
-            });
+            }
 
             // Munkalap mentése
 

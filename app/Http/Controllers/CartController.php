@@ -47,6 +47,7 @@ class CartController extends Controller
                     'quantity' => $request->quantity,
                 ]);
             }
+            $cart->touch();
         } catch (\Exception $e) {
             return response()->json(['result' => 'error', 'error_message' => $e->getMessage()], 200);
         }
@@ -96,6 +97,8 @@ class CartController extends Controller
             return response()->json(['result' => 'error', 'error_message' => 'Kosár elem nem található.'], 404);
         }
 
+        $cart->touch();
+
         $item->delete();
 
         return response()->json(['result' => 'success', 'message' => 'Elem eltávolítva a kosárból.'], 200);
@@ -137,6 +140,7 @@ class CartController extends Controller
             }
 
             $item->quantity = $request->quantity;
+            $cart->touch();
             $item->save(); // Observer itt lefut
 
             return response()->json([

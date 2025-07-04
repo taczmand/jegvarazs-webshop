@@ -17,3 +17,26 @@ window.showToast = function (message, type = 'success') {
     const toast = new bootstrap.Toast(toastEl, { delay: 3000 });
     toast.show();
 };
+
+window.sendViewRequest = function (model, id) {
+    fetch(`${window.appConfig.APP_URL}admin/beallitasok/uj-adatok/megtekintes`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+        },
+        credentials: 'same-origin', // vagy 'include' ha más domainek is érintettek
+        body: JSON.stringify({
+            model,
+            id
+        }),
+    })
+        .then(res => {
+            if (!res.ok) throw new Error('Megtekintés mentése sikertelen');
+            return res.json();
+        })
+        .catch(err => {
+            console.error('Hiba a megtekintés mentésében:', err);
+        });
+
+}

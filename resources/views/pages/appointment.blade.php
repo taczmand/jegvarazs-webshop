@@ -46,7 +46,7 @@
         </div>
         <div class="mb-3">
             <label for="zip_code" class="form-label">Irányítószám*</label>
-            <input type="email" name="zip_code" id="zip_code" class="form-control" value="" placeholder="" required>
+            <input type="text" name="zip_code" id="zip_code" class="form-control" value="" placeholder="" required>
         </div>
         <div class="mb-3">
             <label for="city" class="form-label">Város*</label>
@@ -58,7 +58,7 @@
         </div>
 
         <div class="mb-3">
-            <label for="address_line" class="form-label">Kérem, válasszon az alábbi felsorolásból</label>
+            <label for="address_line" class="form-label">Kérem, válasszon az alábbi felsorolásból*</label>
             <select name="appointment_type" id="appointment_type" class="form-control" required>
                 <option value="Karbantartás">Karbantartás</option>
                 <option value="Felmérés">Felmérés</option>

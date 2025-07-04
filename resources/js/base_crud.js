@@ -8,7 +8,9 @@ export function initCrud(options) {
         storeUrl,
         updateUrl,
         destroyUrl,
-        columns
+        columns,
+        model,
+        order
     } = options;
 
     const modalDOM = document.getElementById(modalId);
@@ -22,7 +24,14 @@ export function initCrud(options) {
         processing: true,
         serverSide: true,
         ajax: dataUrl,
-        columns: columns
+        columns: columns,
+        order: order || [[0, 'desc']],
+    });
+
+    document.querySelectorAll('[data-bs-dismiss="modal"]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            table.ajax.reload();
+        });
     });
 
     if (addButtonId) {
@@ -38,6 +47,7 @@ export function initCrud(options) {
 
         for (const key in row) {
             const input = form.querySelector(`[name="${key}"]`);
+
             if (!input) continue;
 
             if (input.type === 'checkbox') {
@@ -48,8 +58,33 @@ export function initCrud(options) {
             }
         }
 
+        const id = row.id;
+
+        if (model && id) {
+            fetch(`${window.appConfig.APP_URL}admin/beallitasok/uj-adatok/megtekintes`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                },
+                body: JSON.stringify({
+                    model,
+                    id
+                }),
+            })
+                .then(res => {
+                    if (!res.ok) throw new Error('Megtekintés mentése sikertelen');
+                    return res.json();
+                })
+                .catch(err => {
+                    console.error('Hiba a megtekintés mentésében:', err);
+                });
+        }
+
         modal.show();
     });
+
+
 
 
     form.addEventListener('submit', function (e) {

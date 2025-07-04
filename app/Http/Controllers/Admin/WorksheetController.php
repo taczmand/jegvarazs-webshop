@@ -81,23 +81,40 @@ class WorksheetController extends Controller
 
     public function data()
     {
-        $worksheets = Worksheet::select([
-            'worksheets.id',
-            'worksheets.name',
-            'worksheets.city',
-            'worksheets.work_name',
-            'worksheets.work_status',
-            'worksheets.contract_id',
-            'worksheets.created_at as created',
-            'creator.name as creator_name',
-            'worker.name as worker_name',
-        ])
-            ->leftJoin('users as creator', 'worksheets.created_by', '=', 'creator.id')
-            ->leftJoin('users as worker', 'worksheets.worker_id', '=', 'worker.id');
+        $user = $this->user;
 
-        // Ha technician, csak a saját munkalapokat láthatja
-        if ($this->user->hasRole('technician')) {
-            $worksheets->where('worksheets.worker_id', $this->user->id);
+        // Jogosultságellenőrzés
+        if ($user->can('view-worksheets')) {
+            $worksheets = Worksheet::select([
+                'worksheets.id',
+                'worksheets.name',
+                'worksheets.city',
+                'worksheets.work_type',
+                'worksheets.work_status',
+                'worksheets.contract_id',
+                'worksheets.created_at as created',
+                'creator.name as creator_name',
+                'worker.name as worker_name',
+            ])
+                ->leftJoin('users as creator', 'worksheets.created_by', '=', 'creator.id')
+                ->leftJoin('users as worker', 'worksheets.worker_id', '=', 'worker.id');
+        } elseif ($user->can('view-own-worksheets')) {
+            $worksheets = Worksheet::select([
+                'worksheets.id',
+                'worksheets.name',
+                'worksheets.city',
+                'worksheets.work_name',
+                'worksheets.work_status',
+                'worksheets.contract_id',
+                'worksheets.created_at as created',
+                'creator.name as creator_name',
+                'worker.name as worker_name',
+            ])
+                ->leftJoin('users as creator', 'worksheets.created_by', '=', 'creator.id')
+                ->leftJoin('users as worker', 'worksheets.worker_id', '=', 'worker.id')
+                ->where('worksheets.worker_id', $user->id);
+        } else {
+            return response()->json(['error' => 'Nincs jogosultság'], 403);
         }
 
         return DataTables::of($worksheets)
@@ -108,31 +125,25 @@ class WorksheetController extends Controller
             })
             ->addColumn('contract_id', function ($worksheet) {
                 if ($worksheet->contract_id) {
-                    return '<a class="btn btn-sm btn-info" target="_blank" href="'.route('admin.contracts.index', ['modal' => true, 'id' => $worksheet->contract_id]).'"><i class="fa-solid fa-link"></i></a>';
+                    return '<a class="btn btn-sm btn-info" target="_blank" href="' . route('admin.contracts.index', ['modal' => true, 'id' => $worksheet->contract_id]) . '"><i class="fa-solid fa-link"></i></a>';
                 }
                 return "-";
             })
             ->addColumn('work_status_icon', function ($worksheet) {
-                if ($worksheet->work_status === 'Szerelésre vár') {
-                    return '<i class="fas fa-tools text-danger" title="Szerelésre vár"></i>';
-                } elseif ($worksheet->work_status === 'Felszerelve') {
-                    return '<i class="fas fa-check-circle text-success" title="Felszerelve"></i>';
-                } else {
-                    return '<i class="fas fa-question-circle text-muted" title="Ismeretlen státusz"></i>';
-                }
+                return match($worksheet->work_status) {
+                    'Szerelésre vár' => '<i class="fas fa-tools text-danger" title="Szerelésre vár"></i>',
+                    'Felszerelve' => '<i class="fas fa-check-circle text-success" title="Felszerelve"></i>',
+                    default => '<i class="fas fa-question-circle text-muted" title="Ismeretlen státusz"></i>',
+                };
             })
-            ->addColumn('creator_name', function ($worksheet) {
-                return $worksheet->creator_name ?? '-';
-            })
-            ->addColumn('worker_name', function ($worksheet) {
-                return $worksheet->worker_name ?? '-';
-            })
+            ->addColumn('creator_name', fn($worksheet) => $worksheet->creator_name ?? '-')
+            ->addColumn('worker_name', fn($worksheet) => $worksheet->worker_name ?? '-')
             ->addColumn('action', function ($worksheet) {
                 return '
-                <button class="btn btn-sm btn-primary edit" data-id="'.$worksheet->id.'" title="Szerkesztés">
+                <button class="btn btn-sm btn-primary edit" data-id="' . $worksheet->id . '" title="Szerkesztés">
                     <i class="fas fa-edit"></i>
                 </button>
-                <button class="btn btn-sm btn-danger delete" data-id="'.$worksheet->id.'" title="Törlés">
+                <button class="btn btn-sm btn-danger delete" data-id="' . $worksheet->id . '" title="Törlés">
                     <i class="fas fa-trash-alt"></i>
                 </button>
             ';
@@ -140,6 +151,7 @@ class WorksheetController extends Controller
             ->rawColumns(['contract_id', 'action', 'work_status_icon'])
             ->make(true);
     }
+
     public function store(Request $request)
     {
         DB::beginTransaction();
@@ -149,6 +161,7 @@ class WorksheetController extends Controller
 
             $data = [
                 'work_name'         => $request->input('work_name'),
+                'work_type'         => $request->input('work_type'),
                 'name'              => $request->input('contact_name'),
                 'email'             => $request->input('contact_email'),
                 'phone'             => $request->input('contact_phone'),
@@ -170,56 +183,113 @@ class WorksheetController extends Controller
             // Ha "Felszerelve" státuszba mentik
             if ($request->input('work_status') === 'Felszerelve') {
 
-                // Ha fizetés típusa készpénz, akkor ki kell tölteni az összeget:
-
                 $paymentMethod = $request->input('payment_method');
                 $paymentAmount = $request->input('payment_amount');
+                $workType = $request->input('work_type');
 
-                if ($paymentMethod === 'cash' && (empty($paymentAmount) || $paymentAmount == 0)) {
-                    return response()->json([
-                        'message' => 'Készpénzes fizetés esetén a fizetett összeg megadása kötelező.',
-                    ], 422);
+                if ("Szerelés" === $workType) {
+
+                    // Ha fizetés típusa készpénz, akkor ki kell tölteni az összeget:
+                    if ($paymentMethod === 'cash' && (empty($paymentAmount) || $paymentAmount == 0)) {
+                        return response()->json([
+                            'message' => 'Készpénzes fizetés esetén a fizetett összeg megadása kötelező.',
+                        ], 422);
+                    }
+
+                    // Extra adatok közül ezek a kötelezők:
+
+                    $extraData = $request->input('extra_data', []);
+                    $requiredExtraFields = [
+                        'pipe' => 'Mennyi plusz csövet használtál?',
+                        'console'   => 'Milyen konzolt használtál?',
+                    ];
+
+                    $missingFields = [];
+
+                    foreach ($requiredExtraFields as $field => $label) {
+                        if (empty($extraData[$field])) {
+                            $missingFields[] = $label;
+                        }
+                    }
+
+                    if (!empty($missingFields)) {
+                        return response()->json([
+                            'message' => 'A "Felszerelve" státuszhoz az alábbi extra mezők is szükségesek: ' . implode(', ', $missingFields)
+                        ], 422);
+                    }
+
+                    // Ellenőrizni kell a képeket
+                    $existingPhotos = collect();
+                    $worksheet = $worksheetId ? Worksheet::with('photos')->find($worksheetId) : null;
+
+                    if ($worksheet) {
+                        $existingPhotos = $worksheet->photos->groupBy('image_type');
+                    }
+
+                    $hasDatatable = $request->hasFile('new_photos_to_datatable') || ($existingPhotos->has('Adattábla') && $existingPhotos['Adattábla']->isNotEmpty());
+                    $hasCertificate = $request->hasFile('new_photos_to_certificate') || ($existingPhotos->has('Telepítési tanúsítvány') && $existingPhotos['Telepítési tanúsítvány']->isNotEmpty());
+                    $hasInstall = $request->hasFile('new_photos_to_install') || ($existingPhotos->has('Szerelés') && $existingPhotos['Szerelés']->isNotEmpty());
+
+                    if (!$hasDatatable || !$hasCertificate || !$hasInstall) {
+                        return response()->json([
+                            'message' => 'A "Felszerelve" státuszhoz minden képtípusból legalább 1 kép szükséges (Adattábla, Tanúsítvány, Szerelés).'
+                        ], 422);
+                    }
                 }
+                if ("Karbantartás" === $workType) {
 
-                // Extra adatok közül ezek a kötelezők:
+                    // Ha fizetés típusa készpénz, akkor ki kell tölteni az összeget:
+                    if ($paymentMethod === 'cash' && (empty($paymentAmount) || $paymentAmount == 0)) {
+                        return response()->json([
+                            'message' => 'Készpénzes fizetés esetén a fizetett összeg megadása kötelező.',
+                        ], 422);
+                    }
 
-                $extraData = $request->input('extra_data', []);
-                $requiredExtraFields = [
-                    'pipe' => 'Mennyi plusz csövet használtál?',
-                    'console'   => 'Milyen konzolt használtál?',
-                ];
+                    // Extra adatok közül ezek a kötelezők:
 
-                $missingFields = [];
+                    $extraData = $request->input('extra_data', []);
+                    $requiredExtraFields = [
+                        'cleaning_type' => 'Tisztítás típusa'
+                    ];
 
-                foreach ($requiredExtraFields as $field => $label) {
-                    if (empty($extraData[$field])) {
-                        $missingFields[] = $label;
+                    $missingFields = [];
+
+                    foreach ($requiredExtraFields as $field => $label) {
+                        if (empty($extraData[$field])) {
+                            $missingFields[] = $label;
+                        }
+                    }
+
+                    if (!empty($missingFields)) {
+                        return response()->json([
+                            'message' => 'A "Felszerelve" státuszhoz az alábbi extra mezők is szükségesek: ' . implode(', ', $missingFields)
+                        ], 422);
                     }
                 }
 
-                if (!empty($missingFields)) {
-                    return response()->json([
-                        'message' => 'A "Felszerelve" státuszhoz az alábbi extra mezők is szükségesek: ' . implode(', ', $missingFields)
-                    ], 422);
+                if ("Felmérés" === $workType) {
+                    // Extra adatok közül ezek a kötelezők:
+
+                    $extraData = $request->input('extra_data', []);
+                    $requiredExtraFields = [
+                        'exist_contract' => 'Szerződéskötés történt?'
+                    ];
+
+                    $missingFields = [];
+
+                    foreach ($requiredExtraFields as $field => $label) {
+                        if (empty($extraData[$field])) {
+                            $missingFields[] = $label;
+                        }
+                    }
+
+                    if (!empty($missingFields)) {
+                        return response()->json([
+                            'message' => 'A "Felszerelve" státuszhoz az alábbi extra mezők is szükségesek: ' . implode(', ', $missingFields)
+                        ], 422);
+                    }
                 }
 
-                // Ellenőrizni kell a képeket
-                $existingPhotos = collect();
-                $worksheet = $worksheetId ? Worksheet::with('photos')->find($worksheetId) : null;
-
-                if ($worksheet) {
-                    $existingPhotos = $worksheet->photos->groupBy('image_type');
-                }
-
-                $hasDatatable = $request->hasFile('new_photos_to_datatable') || ($existingPhotos->has('Adattábla') && $existingPhotos['Adattábla']->isNotEmpty());
-                $hasCertificate = $request->hasFile('new_photos_to_certificate') || ($existingPhotos->has('Telepítési tanúsítvány') && $existingPhotos['Telepítési tanúsítvány']->isNotEmpty());
-                $hasInstall = $request->hasFile('new_photos_to_install') || ($existingPhotos->has('Szerelés') && $existingPhotos['Szerelés']->isNotEmpty());
-
-                if (!$hasDatatable || !$hasCertificate || !$hasInstall) {
-                    return response()->json([
-                        'message' => 'A "Felszerelve" státuszhoz minden képtípusból legalább 1 kép szükséges (Adattábla, Tanúsítvány, Szerelés).'
-                    ], 422);
-                }
             }
 
             if ($worksheetId) {
