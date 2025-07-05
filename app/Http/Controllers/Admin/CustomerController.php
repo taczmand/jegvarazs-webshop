@@ -21,29 +21,67 @@ class CustomerController extends Controller
 
     public function data()
     {
-        $customers = Customer::select(['id', 'last_name', 'first_name', 'phone', 'email', 'is_partner', 'status', 'created_at as created', 'updated_at as updated']);
+        $customers = Customer::select([
+            'id',
+            'last_name',
+            'first_name',
+            'phone',
+            'email',
+            'is_partner',
+            'status',
+            'created_at as created',
+            'updated_at as updated'
+        ]);
 
         return DataTables::of($customers)
             ->addColumn('customer_name', function ($customer) {
-                return $customer->last_name ." ". $customer->first_name;
+                return $customer->last_name . " " . $customer->first_name;
+            })
+            ->filterColumn('id', function ($query, $keyword) {
+                if (is_numeric($keyword)) {
+                    $query->where('id', '=', $keyword);
+                }
+            })
+            ->filterColumn('customer_name', function ($query, $keyword) {
+                $query->where(function ($q) use ($keyword) {
+                    $q->where('first_name', 'like', "%{$keyword}%")
+                        ->orWhere('last_name', 'like', "%{$keyword}%");
+                });
+            })
+            ->filterColumn('email', function ($query, $keyword) {
+                $query->where('email', 'like', "%{$keyword}%");
+            })
+            ->filterColumn('status', function ($query, $keyword) {
+                $query->where('status', '=', "{$keyword}");
             })
             ->editColumn('created_at', function ($customer) {
-                // Formázás: YYYY-MM-DD HH:mm:ss
-                return $customer->created_at ? $customer->created_at->format('Y-m-d H:i:s') : '';
+                return $customer->created ? \Carbon\Carbon::parse($customer->created)->format('Y-m-d H:i:s') : '';
             })
             ->addColumn('action', function ($customer) {
-                return '
-                    <button class="btn btn-sm btn-primary edit" data-id="'.$customer->id.'" title="Szerkesztés">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="btn btn-sm btn-danger delete" data-id="'.$customer->id.'" title="Törlés">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                ';
+                $user = auth('admin')->user();
+                $actions = '';
+
+                if ($user && $user->can('edit-customer')) {
+                    $actions .= '
+                        <button class="btn btn-sm btn-primary edit" data-id="' . $customer->id . '" title="Szerkesztés">
+                            <i class="fas fa-edit"></i>
+                        </button>';
+                }
+
+                if ($user && $user->can('delete-customer')) {
+                    $actions .= '
+                        <button class="btn btn-sm btn-danger delete" data-id="' . $customer->id . '" title="Törlés">
+                            <i class="fas fa-trash"></i>
+                        </button>';
+                }
+
+                return $actions;
             })
+
             ->rawColumns(['action'])
             ->make(true);
     }
+
 
     public function show($id)
     {
@@ -66,11 +104,17 @@ class CustomerController extends Controller
         return response()->json(['success' => true, 'message' => 'Cart item deleted successfully.']);
     }
 
-    public function showProductsToPartner($id)
+    public function showProductsToPartner(Request $request, $id)
     {
+        $search = $request->query('product_search');
+
         $products = Product::with(['partnerProducts' => function ($query) use ($id) {
             $query->where('customer_id', $id);
-        }])->get();
+        }])
+            ->when($search, function ($query) use ($search) {
+                $query->where('title', 'like', "%{$search}%");
+            })
+            ->get();
 
         return response()->json($products);
     }
@@ -114,7 +158,11 @@ class CustomerController extends Controller
 
         foreach ($products as $product) {
 
-            $discounted_price = round($product->gross_price * (1 - $percent / 100), 2);
+            if(100 === $percent) {
+                $discounted_price = 0.00;
+            } else {
+                $discounted_price = round($product->gross_price * (1 - $percent / 100), 2);
+            }
 
             PartnerProduct::updateOrInsert(
                 [

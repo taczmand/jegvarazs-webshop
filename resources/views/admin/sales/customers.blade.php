@@ -5,25 +5,68 @@
 
     <div class="container p-0">
 
-        <div class="d-flex justify-content-between align-items-center mb-5">
-            <h1 class="h3 text-gray-800 mb-0">Értékesítés / Vevők és partnerek</h1>
+        <div class="d-flex align-items-center mb-3 pb-2 border-bottom">
+            <i class="fa-solid fa-money-bill-transfer text-primary me-2"></i>
+            <h2 class="h5 text-primary mb-0">Értékesítés / Vevők és partnerek</h2>
         </div>
 
-        <table class="table table-bordered" id="adminTable">
-            <thead>
-            <tr>
-                <th>ID</th>
-                <th>Név</th>
-                <th>Telefonszám</th>
-                <th>Email</th>
-                <th>Partner?</th>
-                <th>Állapot</th>
-                <th>Létrehozva</th>
-                <th>Módosítva</th>
-                <th>Műveletek</th>
-            </tr>
-            </thead>
-        </table>
+        @if(auth('admin')->user()->can('view-customers'))
+
+            <div class="filters d-flex flex-wrap gap-2 mb-3 align-items-center">
+                <div class="filter-group">
+                    <i class="fa-solid fa-filter text-gray-500"></i>
+                </div>
+
+                <div class="filter-group flex-grow-1 flex-md-shrink-0">
+                    <input type="text" placeholder="ID" class="filter-input form-control" data-column="0">
+                </div>
+
+                <div class="filter-group flex-grow-1 flex-md-shrink-0">
+                    <input type="text" placeholder="Név" class="filter-input form-control" data-column="1">
+                </div>
+
+                <div class="filter-group flex-grow-1 flex-md-shrink-0">
+                    <input type="text" placeholder="Email" class="filter-input form-control" data-column="3">
+                </div>
+
+                <div class="filter-group flex-grow-1 flex-md-shrink-0">
+                    <select class="form-select filter-input" data-column="4">
+                        <option value="">Partner (összes)</option>
+                        <option value="1">Igen</option>
+                        <option value="0">Nem</option>
+                    </select>
+                </div>
+
+                <div class="filter-group flex-grow-1 flex-md-shrink-0">
+                    <select class="form-select filter-input" data-column="5">
+                        <option value="">Állapot (összes)</option>
+                        <option value="active">Aktív</option>
+                        <option value="inactive">Inaktív</option>
+                    </select>
+                </div>
+            </div>
+
+
+            <table class="table table-bordered display responsive nowrap" id="adminTable" style="width:100%">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th data-priority="1">Név</th>
+                    <th>Telefonszám</th>
+                    <th>Email</th>
+                    <th>Partner?</th>
+                    <th>Állapot</th>
+                    <th>Létrehozva</th>
+                    <th>Módosítva</th>
+                    <th data-priority="2">Műveletek</th>
+                </tr>
+                </thead>
+            </table>
+        @else
+            <div class="alert alert-danger">
+                Nincs jogosultságod a vevők és partnerek megtekintésére.
+            </div>
+        @endif
     </div>
 
     <!-- Modális ablak -->
@@ -231,8 +274,9 @@
                             <div id="partner_prices_section">
                                 <label for="discount_percentage" class="form-label">Kedvezményes százalékos ár beállítása az összes termékre az alap bruttó árból számolva:</label>
                                 <input type="number" class="form-control" id="discount_percentage" name="discount_percentage" min="0" max="100" step="0.01" value="0">
-                                <button class="btn btn-success mt-2" id="applyDiscount">Százalékos ár beállítása</button>
+                                <button class="btn btn-success mt-2" id="applyDiscount">Százalékos ár beállítása az összes termékre</button>
                                 <button class="btn btn-danger mt-2" id="resetPartnerPrices">Egyedi árak törlése az összes terméknél</button>
+                                <input type="text" class="form-control mt-2" id="searchProduct" placeholder="Termék keresése...">
                                 <div style="max-height: 400px; overflow-y: auto;" class="mt-2">
                                     <table class="table table-bordered" id="priceManagerTable">
                                         <thead>
@@ -271,9 +315,13 @@
             var customer_data = null;
 
             const table = $('#adminTable').DataTable({
+                language: {
+                    url: 'https://cdn.datatables.net/plug-ins/2.3.2/i18n/hu.json'
+                },
                 processing: true,
                 serverSide: true,
                 ajax: '{{ route('admin.customers.data') }}',
+                order: [[0, 'desc']],
                 columns: [
                     {data: 'id'},
                     {data: 'customer_name'},
@@ -291,6 +339,14 @@
                 ],
             });
 
+            // Szűrők beállítása
+
+            $('.filter-input').on('change keyup', function () {
+                var i =$(this).attr('data-column');
+                var v =$(this).val();
+                table.columns(i).search(v).draw();
+            });
+
             // Rendelés szerkesztése
 
             $('#adminTable').on('click', '.edit', async function () {
@@ -304,7 +360,6 @@
                 renderShippingData(customer_all_data);
                 renderBillingData(customer_all_data);
                 loadProductsWithPartnerPrices(row_data.id, customer_data.is_partner);
-
 
                 $('#customer_id').val(row_data.id);
                 $('#customer_id_display').text(row_data.id);
@@ -320,6 +375,10 @@
                 sendViewRequest("customers", row_data.id);
 
                 adminModal.show();
+            });
+
+            $(document).on('input', '#searchProduct', function() {
+                loadProductsWithPartnerPrices($('#customer_id_display').text(), $('#customer_is_partner').val());
             });
 
             async function getCustomerData(customer_id) {
@@ -457,12 +516,12 @@
                     const priceManagerTable = $('#priceManagerTable tbody');
                     priceManagerTable.empty();
 
-                    fetch(`{{ url('/admin/ertekesites/partner/arazo') }}/${customer_id}`)
+                    fetch(`{{ url('/admin/ertekesites/partner/arazo') }}/${customer_id}/?product_search=${$('#searchProduct').val()}`)
                         .then(response => response.json())
                         .then(data => {
                             data.forEach(item => {
                                 const partner_products = item.partner_products || [];
-                                const discount_gross_price_value = partner_products[0]?.discount_gross_price || '';
+                                const discount_gross_price_value = partner_products[0]?.discount_gross_price ?? '';
 
                                 const row = `<tr>
                                 <td>${item.title}</td>
@@ -470,8 +529,8 @@
                                 <td>${item.partner_gross_price}</td>
                                 <td><input type="number" class="form-control" value="${discount_gross_price_value}"></td>
                                 <td>
-                                    <button class="btn btn-success edit-price" data-product_id="${item.id}"><i class="fas fa-save"></i></button>
-                                    <button class="btn btn-danger delete-price" data-product_id="${item.id}"><i class="fas fa-trash"></i></button>
+                                    <button class="btn btn-success edit-price" data-product_id="${item.id}" title="Egyedi ár mentése"><i class="fas fa-save"></i></button>
+                                    <button class="btn btn-danger delete-price" data-product_id="${item.id}" title="Egyedi ár törlése"><i class="fa-solid fa-eraser"></i></button>
                                 </td>
                             </tr>`;
                                 priceManagerTable.append(row);
@@ -825,6 +884,39 @@
                     showToast(error.message || 'Hiba történt az egyedi árak törlésekor', 'danger');
                 }
             });
+
+            // Vásárló törlése
+
+            $('#adminTable').on('click', '.delete', async function () {
+                const row_data = $('#adminTable').DataTable().row($(this).parents('tr')).data();
+                const customerId = row_data.id;
+
+                if (!confirm('Biztosan törölni szeretnéd a vevőt? Figyelem! Minden adat törlődni fog a vevővel kapcsolatban!')) return;
+
+                try {
+                    $.ajax({
+                        url: `{{ url('/admin/ertekesites/vevok') }}/${customerId}`,
+                        method: 'DELETE',
+                        headers: {
+                            'X-CSRF-TOKEN': csrfToken
+                        },
+                        success: function(response) {
+                            showToast('Vevő vagy partner sikeresen törölve!', 'success');
+                            table.ajax.reload();
+                        },
+                        error: function(xhr) {
+                            let msg = 'Hiba történt a vevő vagy partner törlésekor';
+                            if (xhr.responseJSON && xhr.responseJSON.message) {
+                                msg = xhr.responseJSON.message;
+                            }
+                            showToast(msg, 'danger');
+                        }
+                    });
+                } catch (error) {
+                    showToast(error.message || 'Hiba történt a termék törlésekor', 'danger');
+                }
+            });
+
 
         });
     </script>

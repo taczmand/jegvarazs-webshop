@@ -135,6 +135,8 @@
 
 
     </script>
+    <link rel="stylesheet" href="https://cdn.datatables.net/2.3.2/css/dataTables.dataTables.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/3.0.5/css/responsive.dataTables.css">
 </head>
 
 <body id="page-top">
@@ -191,6 +193,8 @@
 <!-- Vendor Scripts -->
 <script src="{{ asset('vendor/js/jquery-3.3.1.min.js') }}"></script>
 <script src="{{ asset('vendor/js/datatables.min.js') }}"></script>
+<script src="https://cdn.datatables.net/responsive/3.0.5/js/dataTables.responsive.js"></script>
+<script src="https://cdn.datatables.net/responsive/3.0.5/js/responsive.dataTables.js"></script>
 
 <!-- Custom Scripts with Vite load -->
 @vite('resources/js/admin.js')

@@ -22,45 +22,81 @@ class ProductController extends Controller
     }
     public function index()
     {
-        return view('admin.products.products');
+        $categories = Category::orderBy('title')->get();
+        return view('admin.products.products', compact('categories'));
     }
 
     public function data()
     {
-        $products = Product::with(['category', 'taxCategory'])->select(['id', 'title', 'stock', 'gross_price', 'partner_gross_price', 'status', 'created_at', 'cat_id', 'tax_id']);
+        $products = Product::with(['category', 'taxCategory'])
+            ->select([
+                'id',
+                'title',
+                'stock',
+                'gross_price',
+                'partner_gross_price',
+                'status',
+                'created_at',
+                'cat_id',
+                'tax_id'
+            ]);
 
         return DataTables::of($products)
+            // ID szűrés: pontos egyezés
+            ->filterColumn('id', function ($query, $keyword) {
+                if (is_numeric($keyword)) {
+                    $query->where('products.id', $keyword);
+                }
+            })
+            ->filterColumn('category', function ($query, $keyword) {
+                $query->whereHas('category', function ($q) use ($keyword) {
+                    $q->where('id', '=', "{$keyword}");
+                });
+            })
+            ->filterColumn('status', function ($query, $keyword) {
+                $query->where('status', '=', "{$keyword}");
+            })
             ->addColumn('category', function ($product) {
                 return $product->category ? $product->category->title : '';
             })
             ->editColumn('gross_price', function ($product) {
-                // HUF formázás: 123456 -> 123 456 Ft
                 return number_format($product->gross_price, 0, ',', ' ') . ' Ft';
             })
             ->editColumn('partner_gross_price', function ($product) {
-                // HUF formázás: 123456 -> 123 456 Ft
                 return number_format($product->partner_gross_price, 0, ',', ' ') . ' Ft';
             })
             ->addColumn('tax_value', function ($product) {
                 return $product->taxCategory?->tax_value . '%' ?? '';
             })
             ->editColumn('created_at', function ($product) {
-                // Formázás: YYYY-MM-DD HH:mm:ss
                 return $product->created_at ? $product->created_at->format('Y-m-d H:i:s') : '';
             })
             ->addColumn('action', function ($product) {
-                return '
-                    <button class="btn btn-sm btn-primary edit" data-id="'.$product->id.'" title="Szerkesztés">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="btn btn-sm btn-danger delete" data-id="'.$product->id.'" title="Törlés">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                ';
+                $user = auth('admin')->user();
+                $buttons = '';
+
+                if ($user && $user->can('edit-product')) {
+                    $buttons .= '
+                        <button class="btn btn-sm btn-primary edit" data-id="' . $product->id . '" title="Szerkesztés">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                    ';
+                }
+
+                if ($user && $user->can('delete-product')) {
+                    $buttons .= '
+                        <button class="btn btn-sm btn-danger delete" data-id="' . $product->id . '" title="Törlés">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    ';
+                }
+
+                return $buttons;
             })
             ->rawColumns(['action'])
             ->make(true);
     }
+
 
     /**
      * AJAX endpoint: adott termék adatainak lekérése JSON-ként.

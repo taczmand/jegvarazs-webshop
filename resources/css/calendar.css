@@ -19,7 +19,7 @@ h2 {
     table-layout: fixed;
 }
 
-#calendar th, td {
+#calendar td {
     border: 1px solid #ccc !important;
     text-align: center;
     height: 60px;
@@ -28,6 +28,10 @@ h2 {
 
 #calendar th {
     background-color: #f0f0f0;
+    border: 1px solid #ccc !important;
+    text-align: center;
+    height: 60px;
+    position: relative;
 }
 
 #calendar .event {

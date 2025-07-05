@@ -12,39 +12,47 @@
 
         @if(auth('admin')->user()->can('view-orders'))
 
-            <table class="table table-bordered">
-                <tr>
-                    <th><i class="fa-solid fa-filter text-gray-500"></i></th>
-                    <th><input type="text" placeholder="ID" class="filter-input form-control" data-column="0"></th>
-                    <th><input type="text" placeholder="Vásárló" class="filter-input form-control" data-column="2"></th>
-                    <th>
-                        <select class="form-select filter-input" data-column="4">
-                            <option value="">Állapot (összes)</option>
-                            <option value="pending">Függőben</option>
-                            <option value="processing">Feldolgozás alatt</option>
-                            <option value="completed">Befejezve</option>
-                            <option value="cancelled">Törölve</option>
-                        </select>
-                    </th>
-                </tr>
-            </table>
+            <div class="filters d-flex flex-wrap gap-2 mb-3 align-items-center">
+                <div class="filter-group">
+                    <i class="fa-solid fa-filter text-gray-500"></i>
+                </div>
 
-            <table class="table table-bordered" id="adminTable">
+                <div class="filter-group flex-grow-1 flex-md-shrink-0">
+                    <input type="text" placeholder="ID" class="filter-input form-control" data-column="0">
+                </div>
+
+                <div class="filter-group flex-grow-1 flex-md-shrink-0">
+                    <input type="text" placeholder="Vásárló" class="filter-input form-control" data-column="2">
+                </div>
+
+                <div class="filter-group flex-grow-1 flex-md-shrink-0">
+                    <select class="form-select filter-input" data-column="4">
+                        <option value="">Állapot (összes)</option>
+                        <option value="pending">Függőben</option>
+                        <option value="processing">Feldolgozás alatt</option>
+                        <option value="completed">Befejezve</option>
+                        <option value="cancelled">Törölve</option>
+                    </select>
+                </div>
+            </div>
+
+
+            <table class="table table-bordered display responsive nowrap" id="adminTable" style="width:100%">
                 <thead>
                 <tr>
-                    <th>ID</th>
+                    <th data-priority="1">ID</th>
                     <th>Dátum</th>
-                    <th>Vásárló</th>
+                    <th data-priority="2">Vásárló</th>
                     <th>Teljes összeg</th>
                     <th>Állapot</th>
                     <th>Termékek száma</th>
-                    <th>Műveletek</th>
+                    <th data-priority="3">Műveletek</th>
                 </tr>
                 </thead>
             </table>
         @else
-            <div class="alert alert-danger" role="alert">
-                Nincs jogosultságod!
+            <div class="alert alert-danger">
+                Nincs jogosultságod a rendelések megtekintésére!
             </div>
         @endif
     </div>
@@ -317,9 +325,11 @@
                 ],
             });
 
+            // Szűrők beállítása
+
             $('.filter-input').on('change keyup', function () {
-                var i =$(this).attr('data-column');  // getting column index
-                var v =$(this).val();  // getting search input value
+                var i =$(this).attr('data-column');
+                var v =$(this).val();
                 table.columns(i).search(v).draw();
             });
 
@@ -535,7 +545,7 @@
                         }
                     });
                 } catch (error) {
-                    showToast(error.message || 'Hiba történt a termék törlésekor', 'danger');
+                    showToast(error.message || 'Hiba történt a rendelés törlésekor', 'danger');
                 }
             });
 

@@ -75,8 +75,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('/ertekesites/vevo/szamlazasi-cim', [CustomerController::class, 'updateBillingAddress'])->name('customers.update_billing_address');
         Route::delete('/ertekesites/vevo/szallitasi-cim/torol', [CustomerController::class, 'destroyShippingAddress'])->name('customers.destroy_shipping_address');
         Route::delete('/ertekesites/vevo/szamlazasi-cim/torol', [CustomerController::class, 'destroyBillingAddress'])->name('customers.destroy_billing_address');
+        Route::delete('/ertekesites/vevo/{id}', [CustomerController::class, 'destroy'])->name('customers.destroy');
 
-        Route::get('/ertekesites/partner/arazo/{id}', [CustomerController::class, 'showProductsToPartner'])->name('customers.show_products_to_partner');
+        Route::get('/ertekesites/partner/arazo/{id}/', [CustomerController::class, 'showProductsToPartner'])->name('customers.show_products_to_partner');
         Route::post('/ertekesites/partner/arazo', [CustomerController::class, 'setProductPriceToPartner'])->name('customers.set_product_price_to_partner');
         Route::post('/ertekesites/partner/szazalek', [CustomerController::class, 'setProductPricePercentToPartner'])->name('customers.set_product_price_percent_to_partner');
         Route::delete('/ertekesites/partner/arazo', [CustomerController::class, 'destroyProductPriceToPartner'])->name('customers.destroy_product_price_to_partner');

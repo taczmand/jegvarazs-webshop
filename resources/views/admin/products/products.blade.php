@@ -2,27 +2,68 @@
 
 @section('content')
     <div class="container p-0">
-        <div class="d-flex justify-content-between align-items-center mb-5">
-            <h1 class="h3 text-gray-800 mb-0">Termékek / Összes termék</h1>
-            <button class="btn btn-success" id="addProduct"><i class="fas fa-plus me-1"></i> Új termék</button>
+
+        <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+            <h2 class="h5 text-primary mb-0"><i class="fa-solid fa-money-bill-transfer text-primary me-2"></i> Termékek / Összes termék</h2>
+            @if(auth('admin')->user()->can('create-product'))
+                <button class="btn btn-success" id="addProduct"><i class="fas fa-plus me-1"></i> Új termék</button>
+            @endif
         </div>
 
-        <table class="table table-bordered" id="productsTable">
-            <thead>
-            <tr>
-                <th>ID</th>
-                <th>Név</th>
-                <th>Készlet</th>
-                <th>Bruttó ár</th>
-                <th>Partner bruttó ár</th>
-                <th>ÁFA</th>
-                <th>Kategória</th>
-                <th>Státusz</th>
-                <th>Létrehozva</th>
-                <th>Műveletek</th>
-            </tr>
-            </thead>
-        </table>
+        @if(auth('admin')->user()->can('view-products'))
+
+            <div class="filters d-flex flex-wrap gap-2 mb-3 align-items-center">
+                <div class="filter-group">
+                    <i class="fa-solid fa-filter text-gray-500"></i>
+                </div>
+
+                <div class="filter-group flex-grow-1 flex-md-shrink-0">
+                    <input type="text" placeholder="ID" class="filter-input form-control" data-column="0">
+                </div>
+
+                <div class="filter-group flex-grow-1 flex-md-shrink-0">
+                    <input type="text" placeholder="Terméknév" class="filter-input form-control" data-column="1">
+                </div>
+
+                <div class="filter-group flex-grow-1 flex-md-shrink-0">
+                    <select class="form-select filter-input" data-column="6">
+                        <option value="">Kategória (összes)</option>
+                        @foreach($categories as $category)
+                            <option value="{{ $category->id }}">{{ $category->title }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="filter-group flex-grow-1 flex-md-shrink-0">
+                    <select class="form-select filter-input" data-column="7">
+                        <option value="">Állapot (összes)</option>
+                        <option value="active">Aktív</option>
+                        <option value="inactive">Inaktív</option>
+                    </select>
+                </div>
+            </div>
+
+            <table class="table table-bordered display responsive nowrap" id="productsTable" style="width:100%">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th data-priority="1">Terméknév</th>
+                    <th>Készlet</th>
+                    <th>Bruttó ár</th>
+                    <th>Partner bruttó ár</th>
+                    <th>ÁFA</th>
+                    <th data-priority="3">Kategória</th>
+                    <th>Státusz</th>
+                    <th>Létrehozva</th>
+                    <th data-priority="2">Műveletek</th>
+                </tr>
+                </thead>
+            </table>
+        @else
+            <div class="alert alert-warning">
+                Nincs jogosultságod a termékek megtekintéséhez.
+            </div>
+        @endif
     </div>
 
     <div class="modal fade" id="productModal" tabindex="-1" aria-labelledby="productModalLabel" aria-hidden="true">
@@ -144,9 +185,13 @@
 
         $(document).ready(function() {
             const table = $('#productsTable').DataTable({
+                language: {
+                    url: 'https://cdn.datatables.net/plug-ins/2.3.2/i18n/hu.json'
+                },
                 processing: true,
                 serverSide: true,
                 ajax: '{{ route('admin.products.data') }}',
+                order: [[0, 'desc']],
                 columns: [
                     { data: 'id' },
                     { data: 'title' },
@@ -159,6 +204,14 @@
                     { data: 'created_at' },
                     { data: 'action', orderable: false, searchable: false }
                 ]
+            });
+
+            // Szűrők beállítása
+
+            $('.filter-input').on('change keyup', function () {
+                var i =$(this).attr('data-column');
+                var v =$(this).val();
+                table.columns(i).search(v).draw();
             });
 
             // Új termék létrehozása modal megjelenítése
@@ -396,7 +449,6 @@
                 });
             }
             function renderTaxes(taxes, assignedTaxId = null) {
-                console.log(taxes);
                 const taxSelect = $('#tax-select');
                 taxSelect.empty();
                 taxSelect.append(`

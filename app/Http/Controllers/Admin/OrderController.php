@@ -76,14 +76,26 @@ class OrderController extends Controller
                 return $order->created_at ? $order->created_at->format('Y-m-d H:i:s') : '';
             })
             ->addColumn('action', function ($order) {
-                return '
-                <button class="btn btn-sm btn-primary edit" data-id="' . $order->id . '" title="Szerkesztés">
-                    <i class="fas fa-edit"></i>
-                </button>
-                <button class="btn btn-sm btn-danger delete" data-id="' . $order->id . '" title="Törlés">
-                    <i class="fas fa-trash"></i>
-                </button>
-            ';
+                $user = auth('admin')->user();
+                $buttons = '';
+
+                if ($user->can('edit-order')) {
+                    $buttons .= '
+                        <button class="btn btn-sm btn-primary edit" data-id="' . $order->id . '" title="Szerkesztés">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                    ';
+                }
+
+                if ($user->can('delete-order')) {
+                    $buttons .= '
+                        <button class="btn btn-sm btn-danger delete" data-id="' . $order->id . '" title="Törlés">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    ';
+                }
+
+                return $buttons;
             })
             ->rawColumns(['action'])
             ->make(true);
