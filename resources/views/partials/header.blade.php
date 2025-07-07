@@ -52,15 +52,41 @@
                             @endif
                         </div>
 
-                        <div class="header__top__right__auth">
+                        <div class="header__top__right__auth dropdown">
                             @auth('customer')
-                                <a href="{{ route('logout') }}"><i class="fa fa-user"></i> Kijelentkezés</a>
+                                <a class="dropdown-toggle" href="#" role="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fa fa-user"></i> {{ auth('customer')->user()->name ?? 'Fiók' }}
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                                    <li>
+                                        <a class="dropdown-item" href="{{ route('logout') }}"
+                                           onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                                            <i class="fa fa-sign-out-alt me-2"></i> Kijelentkezés
+                                        </a>
+                                        <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
+                                            @csrf
+                                        </form>
+                                    </li>
+                                </ul>
                             @else
-                                <a href="{{ route('login') }}"><i class="fa fa-user"></i> Bejelentkezés</a>
-                                <a href="{{ route('registration') }}"><i class="fa fa-user"></i> Regisztráció</a>
+                                <a class="dropdown-toggle" href="#" role="button" id="guestDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fa fa-user"></i> Fiók
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="guestDropdown">
+                                    <li>
+                                        <a class="dropdown-item" href="{{ route('login') }}">
+                                            <i class="fa fa-sign-in-alt me-2"></i> Bejelentkezés
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="{{ route('registration') }}">
+                                            <i class="fa fa-user-plus me-2"></i> Regisztráció
+                                        </a>
+                                    </li>
+                                </ul>
                             @endauth
-
                         </div>
+
                     </div>
                 </div>
             </div>
@@ -73,17 +99,18 @@
                     <a href="{{ route('index') }}"><img src="{{ asset('static_media/logo.jpg') }}" alt=""></a>
                 </div>
             </div>
-            <div class="col-lg-6">
+            <div class="col-lg-6 d-flex align-items-center">
                 <nav class="header__menu">
                     <ul>
                         <li class="{{ Route::currentRouteName() === 'downloads' ? 'active' : '' }}"><a href="/letoltesek">Letöltések</a></li>
+                        <li class="{{ Route::currentRouteName() === 'blog' ? 'active' : '' }}"><a href="/blog">Blog</a></li>
                         <li class="{{ Route::currentRouteName() === 'appointments' ? 'active' : '' }}"><a href="/idopontfoglalas">Időpontfoglalás</a></li>
                         <li class="{{ Route::currentRouteName() === 'contact' ? 'active' : '' }}"><a href="/kapcsolat">Kapcsolat</a></li>
                     </ul>
                 </nav>
             </div>
             <div class="col-lg-3">
-                <div class="header__cart">
+                <div class="header__cart align-items-center justify-content-end">
                     <ul>
                         <li><a href="#"><i class="fa fa-heart"></i> <span>0</span></a></li>
                         <li><a href="{{ route('cart') }}"><i class="fa fa-shopping-bag"></i> <span id="cart_count">0</span></a></li>

@@ -4,7 +4,7 @@
     <div class="container p-0">
 
         <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
-            <h2 class="h5 text-primary mb-0"><i class="fa-solid fa-money-bill-transfer text-primary me-2"></i> Termékek / Összes termék</h2>
+            <h2 class="h5 text-primary mb-0"><i class="fa-solid fa-list text-primary me-2"></i> Termékek / Összes termék</h2>
             @if(auth('admin')->user()->can('create-product'))
                 <button class="btn btn-success" id="addProduct"><i class="fas fa-plus me-1"></i> Új termék</button>
             @endif

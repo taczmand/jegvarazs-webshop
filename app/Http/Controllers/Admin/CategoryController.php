@@ -27,29 +27,69 @@ class CategoryController extends Controller
             'categories.created_at as created',
             'categories.updated_at as updated'
         ])
-            ->leftJoin('categories as parent', 'categories.parent_id', '=', 'parent.id')
-            ->orderBy('categories.created_at', 'desc');
+            ->leftJoin('categories as parent', 'categories.parent_id', '=', 'parent.id');
 
         return DataTables::of($categories)
+            ->addColumn('status', function ($row) {
+                $translations = [
+                    'active' => 'Aktív',
+                    'inactive' => 'Inaktív'
+                ];
+
+                return $translations[$row->status] ?? ucfirst($row->status);
+            })
             ->addColumn('parent', function ($category) {
                 return $category->parent_title ?? ''; // ha nincs szülő, üres string
             })
+            ->orderColumn('status', function ($query, $order) {
+                $query->orderBy('categories.status', $order);
+            })
+            ->filterColumn('id', function ($query, $keyword) {
+                if (is_numeric($keyword)) {
+                    $query->where('categories.id', $keyword);
+                }
+            })
+            ->filterColumn('title', function ($query, $keyword) {
+                $query->where('categories.title', 'like', "%{$keyword}%");
+            })
+            ->filterColumn('description', function ($query, $keyword) {
+                $query->where('categories.description', 'like', "%{$keyword}%");
+            })
+            ->filterColumn('status', function ($query, $keyword) {
+                $query->where('categories.status', '=', "{$keyword}");
+            })
+
+            ->orderColumn('parent_title', function ($query, $order) {
+                $query->orderBy('categories.title', $order);
+            })
             ->addColumn('action', function ($category) {
-                return '
-                    <button class="btn btn-sm btn-primary edit" data-id="'.$category->id.'" title="Szerkesztés">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="btn btn-sm btn-danger delete" data-id="'.$category->id.'" title="Törlés">
-                        <i class="fas fa-trash-alt"></i>
-                    </button>
-                ';
+                $user = auth('admin')->user();
+                $buttons = '';
+
+                if ($user && $user->can('edit-category')) {
+                    $buttons .= '
+                        <button class="btn btn-sm btn-primary edit" data-id="' . $category->id . '" title="Szerkesztés">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                    ';
+                }
+
+                if ($user && $user->can('delete-category')) {
+                    $buttons .= '
+                        <button class="btn btn-sm btn-danger delete" data-id="' . $category->id . '" title="Törlés">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    ';
+                }
+
+                return $buttons;
             })
             ->rawColumns(['action'])
             ->make(true);
     }
 
     public function fetch() {
-        $categories = Category::active()->get();
+        $categories = Category::active()->orderBy('title')->get();
         return response()->json($categories);
     }
 

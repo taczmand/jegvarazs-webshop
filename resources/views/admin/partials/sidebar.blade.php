@@ -17,7 +17,7 @@
     <li class="nav-item">
         <a class="nav-link" href="{{ route('admin.dashboard') }}">
             <i class="fas fa-fw fa-tachometer-alt"></i>
-            <span>Dashboard</span></a>
+            <span>Vezérlőpult</span></a>
     </li>
 
 
@@ -98,8 +98,6 @@
                 <a class="collapse-item" href="{{ route('admin.tax-categories.index') }}">Adó osztályok</a>
                 <a class="collapse-item" href="{{ route('admin.settings.downloads.index') }}">Letöltések</a>
                 <a class="collapse-item" href="{{ route('admin.settings.regulations.index') }}">Szabályzatok</a>
-                <a class="collapse-item" href="{{ route('admin.settings.sites.index') }}">Telephelyek</a>
-                <a class="collapse-item" href="#">SEO beállítások</a>
             </div>
         </div>
     </li>

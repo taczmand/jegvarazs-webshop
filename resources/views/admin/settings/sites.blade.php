@@ -5,28 +5,53 @@
 
     <div class="container p-0">
 
-        <div class="d-flex justify-content-between align-items-center mb-5">
-            <h1 class="h3 text-gray-800 mb-0">Webshop / Telephelyek</h1>
-            <button class="btn btn-success" id="addButton"><i class="fas fa-plus me-1"></i> Új telephely</button>
+        <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+            <h2 class="h5 text-primary mb-0"><i class="fa-solid fa-gears text-primary me-2"></i> Webshop / Telephelyek</h2>
+            @if(auth('admin')->user()->can('create-site'))
+                <button class="btn btn-success" id="addButton"><i class="fas fa-plus me-1"></i> Új telephely</button>
+            @endif
         </div>
 
-        <table class="table table-bordered" id="adminTable">
-            <thead>
-            <tr>
-                <th>ID</th>
-                <th>Megnevezés</th>
-                <th>Ország</th>
-                <th>Irányítószám</th>
-                <th>Város</th>
-                <th>Cím</th>
-                <th>Telefonszám</th>
-                <th>E-mail cím</th>
-                <th>Létrehozva</th>
-                <th>Módosítva</th>
-                <th>Műveletek</th>
-            </tr>
-            </thead>
-        </table>
+        @if(auth('admin')->user()->can('view-sites'))
+
+            <div class="filters d-flex flex-wrap gap-2 mb-3 align-items-center">
+                <div class="filter-group">
+                    <i class="fa-solid fa-filter text-gray-500"></i>
+                </div>
+
+                <div class="filter-group flex-grow-1 flex-md-shrink-0">
+                    <input type="text" placeholder="ID" class="filter-input form-control" data-column="0">
+                </div>
+
+                <div class="filter-group flex-grow-1 flex-md-shrink-0">
+                    <input type="text" placeholder="Megnevezés" class="filter-input form-control" data-column="1">
+                </div>
+
+            </div>
+
+            <table class="table table-bordered display responsive nowrap" id="adminTable" style="width:100%">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th data-priority="1">Megnevezés</th>
+                    <th>Ország</th>
+                    <th>Irányítószám</th>
+                    <th>Város</th>
+                    <th>Cím</th>
+                    <th>Telefonszám</th>
+                    <th>E-mail cím</th>
+                    <th>Létrehozva</th>
+                    <th>Módosítva</th>
+                    <th data-priority="2">Műveletek</th>
+                </tr>
+                </thead>
+            </table>
+        @else
+            <div class="alert alert-warning">
+                <i class="fa-solid fa-exclamation-triangle me-2"></i>
+                Nincs jogosultságod a telephelyek megtekintéséhez.
+            </div>
+        @endif
     </div>
 
 
@@ -94,9 +119,13 @@
 
         $(document).ready(function() {
             const table = $('#adminTable').DataTable({
+                language: {
+                    url: 'https://cdn.datatables.net/plug-ins/2.3.2/i18n/hu.json'
+                },
                 processing: true,
                 serverSide: true,
                 ajax: '{{ route('admin.settings.sites.data') }}',
+                order: [[0, 'desc']],
                 columns: [
                     { data: 'id' },
                     { data: 'name' },
@@ -110,6 +139,14 @@
                     { data: 'updated' },
                     { data: 'action', orderable: false, searchable: false }
                 ],
+            });
+
+            // Szűrők beállítása
+
+            $('.filter-input').on('change keyup', function () {
+                var i =$(this).attr('data-column');
+                var v =$(this).val();
+                table.columns(i).search(v).draw();
             });
 
             // Új letöltési tétel létrehozása modal megjelenítése

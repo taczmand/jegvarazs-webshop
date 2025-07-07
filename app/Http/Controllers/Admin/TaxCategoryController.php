@@ -27,14 +27,26 @@ class TaxCategoryController extends Controller
 
         return DataTables::of($taxes)
             ->addColumn('action', function ($tax) {
-                return '
-                    <button class="btn btn-sm btn-primary edit" data-id="'.$tax->id.'" title="Szerkesztés">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="btn btn-sm btn-danger delete" data-id="'.$tax->id.'" title="Törlés">
-                        <i class="fas fa-trash-alt"></i>
-                    </button>
-                ';
+                $user = auth('admin')->user();
+                $buttons = '';
+
+                if ($user && $user->can('edit-tax')) {
+                    $buttons .= '
+                        <button class="btn btn-sm btn-primary edit" data-id="' . $tax->id . '" title="Szerkesztés">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                    ';
+                }
+
+                if ($user && $user->can('delete-tax')) {
+                    $buttons .= '
+                        <button class="btn btn-sm btn-danger delete" data-id="' . $tax->id . '" title="Törlés">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    ';
+                }
+
+                return $buttons;
             })
             ->rawColumns(['action'])
             ->make(true);

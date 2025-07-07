@@ -53,13 +53,13 @@
         <li class="nav-item dropdown no-arrow">
             <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
                data-bs-toggle="dropdown" aria-expanded="false">
-                <span class="me-2 d-none d-lg-inline text-gray-600 small">{{ optional(Auth::guard('admin')->user())->name }}</span>
+                <span class="me-2 d-none d-lg-inline text-gray-600 small" id="profile_name">{{ optional(Auth::guard('admin')->user())->name }}</span>
             </a>
             <!-- Dropdown - User Information -->
             <ul class="dropdown-menu dropdown-menu-end shadow animated--grow-in"
                 aria-labelledby="userDropdown">
                 <li>
-                    <a class="dropdown-item" href="#">
+                    <a class="dropdown-item" href="/admin/profil">
                         <i class="fas fa-user fa-sm fa-fw me-2 text-gray-400"></i>
                         Profil
                     </a>

@@ -16,6 +16,12 @@ class UserController extends Controller
         return view('admin.settings.users');
     }
 
+    public function profil()
+    {
+        $profil = auth('admin')->user();
+        return view('admin.profil', compact('profil'));
+    }
+
     public function data()
     {
         $users = User::with('roles')
@@ -26,15 +32,27 @@ class UserController extends Controller
             ->editColumn('created_at', function ($user) {
                 return $user->created_at ? $user->created_at->format('Y-m-d H:i:s') : '';
             })
-            ->addColumn('action', function ($user) {
-                return '
-                    <button class="btn btn-sm btn-primary edit" data-id="'.$user->id.'" title="Szerkesztés">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="btn btn-sm btn-danger delete" data-id="'.$user->id.'" title="Törlés">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                ';
+            ->addColumn('action', function ($user_row) {
+                $user = auth('admin')->user();
+                $buttons = '';
+
+                if ($user && $user->can('edit-user')) {
+                    $buttons .= '
+                        <button class="btn btn-sm btn-primary edit" data-id="' . $user_row->id . '" title="Szerkesztés">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                    ';
+                }
+
+                if ($user && $user->can('delete-user')) {
+                    $buttons .= '
+                        <button class="btn btn-sm btn-danger delete" data-id="' . $user_row->id . '" title="Törlés">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    ';
+                }
+
+                return $buttons;
             })
             ->rawColumns(['action'])
             ->make(true);
@@ -97,7 +115,7 @@ class UserController extends Controller
         }
     }
 
-public function update(Request $request, $id)
+    public function update(Request $request, $id)
     {
         $request->validate([
             'name' => 'required|string|max:255',

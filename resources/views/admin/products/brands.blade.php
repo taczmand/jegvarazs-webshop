@@ -5,24 +5,46 @@
 
     <div class="container p-0">
 
-        <div class="d-flex justify-content-between align-items-center mb-5">
-            <h1 class="h3 text-gray-800 mb-0">Termékek / Gyártók</h1>
-            <button class="btn btn-success" id="addButton"><i class="fas fa-plus me-1"></i> Új gyártó</button>
+        <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+            <h2 class="h5 text-primary mb-0"><i class="fa-solid fa-list text-primary me-2"></i> Termékek / Gyártók</h2>
+            @if(auth('admin')->user()->can('create-brand'))
+                <button class="btn btn-success" id="addButton"><i class="fas fa-plus me-1"></i> Új gyártó</button>
+            @endif
         </div>
 
-        <table class="table table-bordered" id="adminTable">
-            <thead>
-            <tr>
-                <th>ID</th>
-                <th>Név</th>
-                <th>Slug</th>
-                <th>Állapot</th>
-                <th>Létrehozva</th>
-                <th>Módosítva</th>
-                <th>Műveletek</th>
-            </tr>
-            </thead>
-        </table>
+        @if(auth('admin')->user()->can('view-brands'))
+
+            <div class="filters d-flex flex-wrap gap-2 mb-3 align-items-center">
+                <div class="filter-group">
+                    <i class="fa-solid fa-filter text-gray-500"></i>
+                </div>
+
+                <div class="filter-group flex-grow-1 flex-md-shrink-0">
+                    <input type="text" placeholder="ID" class="filter-input form-control" data-column="0">
+                </div>
+
+                <div class="filter-group flex-grow-1 flex-md-shrink-0">
+                    <input type="text" placeholder="Név" class="filter-input form-control" data-column="1">
+                </div>
+            </div>
+
+            <table class="table table-bordered display responsive nowrap" id="adminTable" style="width:100%">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th data-priority="1">Név</th>
+                    <th>Állapot</th>
+                    <th>Létrehozva</th>
+                    <th>Módosítva</th>
+                    <th data-priority="2">Műveletek</th>
+                </tr>
+                </thead>
+            </table>
+        @else
+            <div class="alert alert-warning" role="alert">
+                Nincs jogosultságod a gyártók megtekintésére.
+            </div>
+        @endif
     </div>
 
 
@@ -40,10 +62,6 @@
                         <div class="mb-3">
                             <label for="name" class="form-label">Név</label>
                             <input type="text" class="form-control" id="title" name="title" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="name" class="form-label">Slug</label>
-                            <input type="text" class="form-control" id="slug" name="slug" disabled>
                         </div>
                         <div class="form-check mb-3">
                             <input
@@ -84,16 +102,15 @@
                 columns: [
                     { data: 'id' },
                     { data: 'title' },
-                    { data: 'slug' },
                     { data: 'status' },
                     { data: 'created' },
                     { data: 'updated' },
                     { data: 'action', orderable: false, searchable: false }
                 ],
+                model: 'brands',
                 fillFormFn: (row) => {
                     document.getElementById('id').value = row.id;
                     document.getElementById('title').value = row.title;
-                    document.getElementById('slug').value = row.slug;
                     document.getElementById('status').value = row.status;
                 }
             });

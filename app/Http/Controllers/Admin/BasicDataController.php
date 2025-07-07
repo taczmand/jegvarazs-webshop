@@ -24,11 +24,18 @@ class BasicDataController extends Controller
         $data_rows = BasicData::select(['id', 'key', 'value']);
         return DataTables::of($data_rows)
             ->addColumn('action', function ($data) {
-                return '
-                    <button class="btn btn-sm btn-primary edit" data-id="'.$data->id.'" title="Szerkesztés">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                ';
+                $user = auth('admin')->user();
+                $buttons = '';
+
+                if ($user && $user->can('edit-settings')) {
+                    $buttons .= '
+                        <button class="btn btn-sm btn-primary edit" data-id="' . $data->id . '" title="Szerkesztés">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                    ';
+                }
+
+                return $buttons;
             })
             ->rawColumns(['action'])
             ->make(true);
@@ -55,6 +62,20 @@ class BasicDataController extends Controller
         $newRecords = UserAction::query()
             ->select('model', DB::raw('count(*) as count'), DB::raw('max(created_at) as latest'))
             ->where('action', 'created')
+            ->whereIn('model', [
+                'orders',
+                'coupons',
+                'customers',
+                'products',
+                'categories',
+                'attributes',
+                'tags',
+                'brands',
+                'appointments',
+                'offers',
+                'contracts',
+                'worksheets'
+            ])
             ->whereNull('viewed_by')
             ->groupBy('model')
             ->orderByDesc('latest')

@@ -22,15 +22,41 @@ class RegulationController extends Controller
         $regulations = Regulation::select(['id', 'file_name', 'file_path', 'file_description', 'status', 'created_at as created', 'updated_at as updated']);
 
         return DataTables::of($regulations)
+            ->addColumn('status', function ($row) {
+                $translations = [
+                    'active' => 'Aktív',
+                    'inactive' => 'Inaktív'
+                ];
+
+                return $translations[$row->status] ?? ucfirst($row->status);
+            })
+            ->filterColumn('status', function ($query, $keyword) {
+                $query->where('status', '=', "{$keyword}");
+            })
+            ->orderColumn('status', function ($query, $order) {
+                $query->orderBy('status', $order);
+            })
             ->addColumn('action', function ($regulation) {
-                return '
-                    <button class="btn btn-sm btn-primary edit" data-id="'.$regulation->id.'" title="Szerkesztés">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="btn btn-sm btn-danger delete" data-id="'.$regulation->id.'" title="Törlés">
-                        <i class="fas fa-trash-alt"></i>
-                    </button>
-                ';
+                $user = auth('admin')->user();
+                $buttons = '';
+
+                if ($user && $user->can('edit-regulation')) {
+                    $buttons .= '
+                        <button class="btn btn-sm btn-primary edit" data-id="' . $regulation->id . '" title="Szerkesztés">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                    ';
+                }
+
+                if ($user && $user->can('delete-regulation')) {
+                    $buttons .= '
+                        <button class="btn btn-sm btn-danger delete" data-id="' . $regulation->id . '" title="Törlés">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    ';
+                }
+
+                return $buttons;
             })
             ->rawColumns(['action'])
             ->make(true);

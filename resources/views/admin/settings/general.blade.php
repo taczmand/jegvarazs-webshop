@@ -5,20 +5,42 @@
 
     <div class="container p-0">
 
-        <div class="d-flex justify-content-between align-items-center mb-5">
-            <h1 class="h3 text-gray-800 mb-0">Webshop beállítások / Általános</h1>
+        <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+            <h2 class="h5 text-primary mb-0"><i class="fa-solid fa-screwdriver-wrench text-primary me-2"></i> Rendszer / Általános beállítások</h2>
         </div>
 
-        <table class="table table-bordered" id="adminTable">
-            <thead>
-            <tr>
-                <th>ID</th>
-                <th>Kulcs</th>
-                <th>Érték</th>
-                <th>Műveletek</th>
-            </tr>
-            </thead>
-        </table>
+        @if(auth('admin')->user()->can('view-regulations'))
+
+            <div class="filters d-flex flex-wrap gap-2 mb-3 align-items-center">
+                <div class="filter-group">
+                    <i class="fa-solid fa-filter text-gray-500"></i>
+                </div>
+
+                <div class="filter-group flex-grow-1 flex-md-shrink-0">
+                    <input type="text" placeholder="ID" class="filter-input form-control" data-column="0">
+                </div>
+
+                <div class="filter-group flex-grow-1 flex-md-shrink-0">
+                    <input type="text" placeholder="Kulcs" class="filter-input form-control" data-column="1">
+                </div>
+
+            </div>
+
+            <table class="table table-bordered display responsive nowrap" id="adminTable" style="width:100%">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th  data-priority="1">Kulcs</th>
+                    <th>Érték</th>
+                    <th  data-priority="2">Műveletek</th>
+                </tr>
+                </thead>
+            </table>
+        @else
+            <div class="alert alert-danger" role="alert">
+                Nincs jogosultságod az általános beállítások megtekintéséhez.
+            </div>
+        @endif
     </div>
 
 

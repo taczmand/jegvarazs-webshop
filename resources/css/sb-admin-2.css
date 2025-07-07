@@ -11280,76 +11280,7 @@ body.sidebar-toggled footer.sticky-footer {
     width: 100%;
 }
 
-/* Custom css */
 
-.hero__categories {
-    position: relative;
-    width: 200px;
-    font-family: Arial, sans-serif;
-}
-
-.hero__categories__all {
-    display: flex;
-    align-items: center;
-    font-weight: bold;
-    margin-bottom: 10px;
-}
-
-.categories-list,
-.subcategory-list {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-}
-
-.category-item {
-    position: relative;
-    margin-bottom: 5px;
-}
-
-.category-item > a {
-    color: #333;
-    text-decoration: none;
-    display: block;
-    padding: 5px 10px;
-    background-color: #f4f4f4;
-    border-radius: 3px;
-}
-
-.category-item > a:hover {
-    background-color: #ddd;
-}
-
-/* Alkategória lista alapban rejtve */
-.subcategory-list {
-    position: absolute;
-    top: 0;
-    left: 100%;
-    margin-left: 10px;
-    background-color: #f9f9f9;
-    border: 1px solid #ccc;
-    min-width: 150px;
-    display: none;
-    border-radius: 3px;
-    z-index: 1000;
-}
-
-/* Alkategóriák elemei */
-.subcategory-list li a {
-    padding: 5px 10px;
-    display: block;
-    color: #555;
-    text-decoration: none;
-}
-
-.subcategory-list li a:hover {
-    background-color: #eee;
-}
-
-/* Hover hatás: amikor az adott főkategóriára áll a kurzor, megjelenik az alkategória */
-.category-item:hover > .subcategory-list {
-    display: block;
-}
 
 .dataTable td {
     white-space: nowrap;

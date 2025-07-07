@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Appointment;
+use App\Models\BlogPost;
+use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
 use Illuminate\Http\Request;
@@ -10,8 +12,39 @@ use Illuminate\Http\Request;
 class PagesController extends Controller
 {
     public function index() {
+        $all_categories = Category::with([
+            'products' => function ($q) {
+                $q->with(['photos' => function ($q2) {
+                    $q2->where('is_main', true);
+                }]);
+            }
+        ])->active()->get();
 
-        return view('pages.index');
+        $last_blogs = BlogPost::latest()
+            ->where('status', 'published')
+            ->take(3)
+            ->get();
+
+        $brands = Brand::all();
+
+        return view('pages.index', [
+            'all_categories' => $all_categories,
+            'last_blogs' => $last_blogs,
+            'brands' => $brands
+        ]);
+
+    }
+
+    public function blog() {
+        $blogs = BlogPost::where('status', 'published')->latest()->paginate(10);
+
+        return view('pages.blog.index', compact('blogs'));
+    }
+
+    public function blogPost($slug) {
+        $blog = BlogPost::where('slug', $slug)->firstOrFail();
+
+        return view('pages.blog.show', compact('blog'));
     }
 
     public function about() {

@@ -21,6 +21,9 @@ export function initCrud(options) {
     const form = document.getElementById(formId);
 
     const table = $(`#${tableId}`).DataTable({
+        language: {
+            url: 'https://cdn.datatables.net/plug-ins/2.3.2/i18n/hu.json'
+        },
         processing: true,
         serverSide: true,
         ajax: dataUrl,
@@ -28,14 +31,29 @@ export function initCrud(options) {
         order: order || [[0, 'desc']],
     });
 
+    document.querySelectorAll('.filter-input').forEach(function (input) {
+        input.addEventListener('change', handleFilter);
+        input.addEventListener('keyup', handleFilter);
+    });
+
+    function handleFilter(event) {
+        const columnIndex = event.target.getAttribute('data-column');
+        const value = event.target.value;
+
+        if (table) {
+            table.column(columnIndex).search(value).draw();
+        }
+    }
+
     document.querySelectorAll('[data-bs-dismiss="modal"]').forEach(function (btn) {
         btn.addEventListener('click', function () {
             table.ajax.reload();
         });
     });
 
-    if (addButtonId) {
-        document.getElementById(addButtonId).addEventListener('click', () => {
+    const addButton = document.getElementById(addButtonId);
+    if (addButton) {
+        addButton.addEventListener('click', () => {
             form.reset();
             form.querySelector('[name="id"]').value = '';
             modal.show();
@@ -52,7 +70,7 @@ export function initCrud(options) {
 
             if (input.type === 'checkbox') {
                 const value = row[key];
-                input.checked = value === 'active' || value === 1 || value === '1' || value === true || value === 'true';
+                input.checked = value === 'active' || value === 1 || value === '1' || value === true || value === 'true' || value === 'Aktív';
             } else {
                 input.value = row[key];
             }
@@ -83,8 +101,6 @@ export function initCrud(options) {
 
         modal.show();
     });
-
-
 
 
     form.addEventListener('submit', function (e) {

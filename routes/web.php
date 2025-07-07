@@ -44,6 +44,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
         /* Dashboard */
 
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+        Route::get('/profil', [UserController::class, 'profil'])->name('profile');
+
 
         /* Bolt kezelés - Értékesítés */
 
@@ -309,6 +311,8 @@ Route::get('/kapcsolat', [PagesController::class, 'contact'])->name('contact');
 Route::get('/idopontfoglalas', [PagesController::class, 'appointment'])->name('appointment');
 Route::post('/idopontfoglalas', [PagesController::class, 'addAppointment'])->name('appointment.post');
 Route::get('/letoltesek', [PagesController::class, 'downloads'])->name('downloads');
+Route::get('/blog', [PagesController::class, 'blog'])->name('blog');
+Route::get('/blog/{slug}', [PagesController::class, 'blogPost'])->name('blog.post');
 
 Route::middleware(['auth:customer'])->group(function () {
     // Kosár
@@ -333,8 +337,6 @@ Route::middleware(['auth:customer'])->group(function () {
         return "Redirecting to SimplePay for order #" . $order->id;
     })->name('simplepay.redirect');
 });
-
-
 
 Route::get('/termekek', [ProductController::class, 'index'])->name('products.index');
 Route::get('/termekek/{slugs}', [ProductController::class, 'resolve'])

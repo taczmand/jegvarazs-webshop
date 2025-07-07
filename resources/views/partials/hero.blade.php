@@ -10,25 +10,8 @@
                     </div>
                     <ul class="categories-list">
                         @foreach($categories as $category)
-                            <li class="category-item">
-                                <a href="{{ route('products.resolve', ['slugs' => $category->getFullSlug()]) }}">
-                                    {{ $category->title }}
-                                </a>
-
-                                @if($category->children->count() > 0)
-                                    <ul class="subcategory-list">
-                                        @foreach($category->children as $subcategory)
-                                            <li>
-                                                <a href="{{ route('products.resolve', ['slugs' => $subcategory->getFullSlug()]) }}">
-                                                    {{ $subcategory->title }}
-                                                </a>
-                                            </li>
-                                        @endforeach
-                                    </ul>
-                                @endif
-                            </li>
+                            @include('partials.category-item', ['category' => $category])
                         @endforeach
-
                     </ul>
                 </div>
             </div>

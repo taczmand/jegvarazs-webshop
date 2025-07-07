@@ -21,14 +21,26 @@ class AttributeController extends Controller
 
         return DataTables::of($attributes)
             ->addColumn('action', function ($attribute) {
-                return '
-                    <button class="btn btn-sm btn-primary edit" data-id="'.$attribute->id.'" title="Szerkesztés">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="btn btn-sm btn-danger delete" data-id="'.$attribute->id.'" title="Törlés">
-                        <i class="fas fa-trash-alt"></i>
-                    </button>
-                ';
+                $user = auth('admin')->user();
+                $buttons = '';
+
+                if ($user && $user->can('edit-attribute')) {
+                    $buttons .= '
+                        <button class="btn btn-sm btn-primary edit" data-id="' . $attribute->id . '" title="Szerkesztés">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                    ';
+                }
+
+                if ($user && $user->can('delete-attribute')) {
+                    $buttons .= '
+                        <button class="btn btn-sm btn-danger delete" data-id="' . $attribute->id . '" title="Törlés">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    ';
+                }
+
+                return $buttons;
             })
             ->rawColumns(['action'])
             ->make(true);

@@ -20,14 +20,26 @@ class CompanySiteController extends Controller
 
         return DataTables::of($sites)
             ->addColumn('action', function ($site) {
-                return '
-                    <button class="btn btn-sm btn-primary edit" data-id="'.$site->id.'" title="Szerkesztés">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="btn btn-sm btn-danger delete" data-id="'.$site->id.'" title="Törlés">
-                        <i class="fas fa-trash-alt"></i>
-                    </button>
-                ';
+                $user = auth('admin')->user();
+                $buttons = '';
+
+                if ($user && $user->can('edit-site')) {
+                    $buttons .= '
+                        <button class="btn btn-sm btn-primary edit" data-id="' . $site->id . '" title="Szerkesztés">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                    ';
+                }
+
+                if ($user && $user->can('delete-site')) {
+                    $buttons .= '
+                        <button class="btn btn-sm btn-danger delete" data-id="' . $site->id . '" title="Törlés">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    ';
+                }
+
+                return $buttons;
             })
             ->rawColumns(['action'])
             ->make(true);

@@ -5,22 +5,46 @@
 
     <div class="container p-0">
 
-        <div class="d-flex justify-content-between align-items-center mb-5">
-            <h1 class="h3 text-gray-800 mb-0">Termékek / Egyedi tulajdonságok</h1>
-            <button class="btn btn-success" id="addButton"><i class="fas fa-plus me-1"></i> Új tulajdonság</button>
+        <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+            <h2 class="h5 text-primary mb-0"><i class="fa-solid fa-list text-primary me-2"></i> Termékek / Egyedi tulajdonságok</h2>
+            @if(auth('admin')->user()->can('create-attribute'))
+                <button class="btn btn-success" id="addButton"><i class="fas fa-plus me-1"></i> Új tulajdonság</button>
+            @endif
         </div>
 
-        <table class="table table-bordered" id="adminTable">
-            <thead>
-            <tr>
-                <th>ID</th>
-                <th>Név</th>
-                <th>Létrehozva</th>
-                <th>Módosítva</th>
-                <th>Műveletek</th>
-            </tr>
-            </thead>
-        </table>
+        @if(auth('admin')->user()->can('view-attributes'))
+
+            <div class="filters d-flex flex-wrap gap-2 mb-3 align-items-center">
+                <div class="filter-group">
+                    <i class="fa-solid fa-filter text-gray-500"></i>
+                </div>
+
+                <div class="filter-group flex-grow-1 flex-md-shrink-0">
+                    <input type="text" placeholder="ID" class="filter-input form-control" data-column="0">
+                </div>
+
+                <div class="filter-group flex-grow-1 flex-md-shrink-0">
+                    <input type="text" placeholder="Név" class="filter-input form-control" data-column="1">
+                </div>
+            </div>
+
+            <table class="table table-bordered display responsive nowrap" id="adminTable" style="width:100%">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th data-priority="1">Név</th>
+                    <th>Létrehozva</th>
+                    <th>Módosítva</th>
+                    <th data-priority="2">Műveletek</th>
+                </tr>
+                </thead>
+            </table>
+        @else
+            <div class="alert alert-warning" role="alert">
+                Nincs jogosultságod a tulajdonságok megtekintésére.
+            </div>
+        @endif
+
     </div>
 
 
@@ -70,6 +94,7 @@
                     { data: 'updated' },
                     { data: 'action', orderable: false, searchable: false }
                 ],
+                model: 'attributes',
                 fillFormFn: (row) => {
                     document.getElementById('id').value = row.id;
                     document.getElementById('name').value = row.name;
