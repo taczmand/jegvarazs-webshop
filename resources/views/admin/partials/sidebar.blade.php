@@ -57,6 +57,20 @@
         </div>
     </li>
 
+    <li class="nav-item">
+        <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseCMS" aria-expanded="false">
+            <i class="fa-solid fa-file-lines"></i>
+            <span>Tartalomkezelés <span id="new_product" class="badge badge-secondary ml-2 d-none">0</span></span></span>
+        </a>
+        <div id="collapseCMS" class="collapse">
+            <div class="bg-white py-2 collapse-inner rounded">
+                <a class="collapse-item" href="{{ route('admin.blog.index') }}">Blog bejegyzések</a>
+                <a class="collapse-item" href="{{ route('admin.settings.downloads.index') }}">Letöltések</a>
+                <a class="collapse-item" href="{{ route('admin.settings.regulations.index') }}">Szabályzatok</a>
+            </div>
+        </div>
+    </li>
+
     <hr class="sidebar-divider">
 
     <div class="sidebar-heading">
@@ -96,8 +110,6 @@
                 <a class="collapse-item" href="{{ route('admin.stock-statuses.index') }}">Raktári állapotok</a>
                 <a class="collapse-item" href="{{ route('admin.order-statuses.index') }}">Rendelési állapotok</a>
                 <a class="collapse-item" href="{{ route('admin.tax-categories.index') }}">Adó osztályok</a>
-                <a class="collapse-item" href="{{ route('admin.settings.downloads.index') }}">Letöltések</a>
-                <a class="collapse-item" href="{{ route('admin.settings.regulations.index') }}">Szabályzatok</a>
             </div>
         </div>
     </li>

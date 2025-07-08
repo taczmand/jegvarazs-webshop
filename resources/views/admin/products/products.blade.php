@@ -227,6 +227,7 @@
                     renderAttributes(allMetaData.original.attributes);
                     renderTags(allMetaData.original.tags);
                     renderTaxes(allMetaData.original.taxes);
+                    renderPhotos([], null);  // Üres fotók kezdetben
                 } catch (error) {
                     showToast(error, 'danger');
                 }

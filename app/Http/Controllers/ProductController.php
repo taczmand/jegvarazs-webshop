@@ -11,7 +11,44 @@ class ProductController extends Controller
     public function index()
     {
         $products = Product::with('category')->paginate(12);
-        return view('pages.products.index', compact('products'));
+
+        $tags = Tag::all()->pluck('id', 'name')->toArray();
+
+        $latest_products = Product::with(['photos'])
+            ->where('status', 'active')
+            ->orderBy('created_at', 'desc')
+            ->take(5)
+            ->get();
+
+        $allProductsQuery = Product::where('status', 'active');
+        $minPrice = $allProductsQuery->min('gross_price');
+        $maxPrice = $allProductsQuery->max('gross_price');
+
+        $nav = collect();
+
+        $nav->prepend([
+            'title' => 'Termékek',
+            'url' => route('products.index'),
+        ]);
+
+        $nav->prepend([
+            'title' => 'Főoldal',
+            'url' => route('index'),
+        ]);
+
+        return view('pages.products.index', [
+            'products' => $products,
+            'breadcrumbs' => [
+                'page_title' => 'Termékek',
+                'nav' => $nav,
+                'cover_image' => null,
+            ],
+            'tags' => $tags,
+            'minPrice' => $minPrice,
+            'maxPrice' => $maxPrice,
+            'latest_products' => $latest_products,
+            'product_count' => $allProductsQuery->count(),
+        ]);
     }
 
     public function category($categorySlugs)
@@ -29,21 +66,38 @@ class ProductController extends Controller
 
         $categoryIds = $this->collectCategoryIds($parent);
 
-        $products = Product::whereIn('cat_id', $categoryIds)->paginate(12);
+        $products = Product::whereIn('cat_id', $categoryIds)->where('status', 'active')->paginate(12);
 
         $tags = Tag::all()->pluck('id', 'name')->toArray();
 
-        $latest_products = Product::whereIn('cat_id', $categoryIds)
+        $latest_products = Product::whereIn('cat_id', $categoryIds)->where('status', 'active')
             ->orderBy('created_at', 'desc')
             ->take(5)
             ->get();
 
-
-        // Lekérdezzük a teljes terméshalmazt ár elemzéshez
-        $allProductsQuery = Product::whereIn('cat_id', $categoryIds);
-
+        $allProductsQuery = Product::whereIn('cat_id', $categoryIds)->where('status', 'active');
         $minPrice = $allProductsQuery->min('gross_price');
         $maxPrice = $allProductsQuery->max('gross_price');
+
+        // 🔻 Breadcrumbs felépítése
+        $nav = collect();
+        $current = $parent;
+        while ($current) {
+            $nav->prepend([
+                'title' => $current->title,
+                'url' => route('products.resolve', ['slugs' => $current->getFullSlug()])
+            ]);
+            $current = $current->parent;
+        }
+        $nav->prepend([
+            'title' => 'Termékek',
+            'url' => route('products.index'),
+        ]);
+
+        $nav->prepend([
+            'title' => 'Főoldal',
+            'url' => route('index'),
+        ]);
 
         return view('pages.products.index', [
             'products' => $products,
@@ -52,8 +106,14 @@ class ProductController extends Controller
             'minPrice' => $minPrice,
             'maxPrice' => $maxPrice,
             'latest_products' => $latest_products,
+            'breadcrumbs' => [
+                'page_title' => $parent->title,
+                'nav' => $nav,
+                'cover_image' => $parent->cover_image ?? null,
+            ],
         ]);
     }
+
     public function show(string $categorySlugs, string $productSlug)
     {
         $product = Product::with(['category', 'photos'])

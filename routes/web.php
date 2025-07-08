@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\AppointmentController;
 use App\Http\Controllers\Admin\AttributeController;
 use App\Http\Controllers\Admin\Auth\AdminLoginController;
 use App\Http\Controllers\Admin\BasicDataController;
+use App\Http\Controllers\Admin\BlogsController;
 use App\Http\Controllers\Admin\BrandController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\CompanySiteController;
@@ -186,6 +187,15 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('/felhasznalok', [UserController::class, 'store'])->name('settings.users.store');
         Route::put('/felhasznalok/{id}', [UserController::class, 'update'])->name('settings.users.update');
         Route::delete('/felhasznalok/{id}', [UserController::class, 'destroy'])->name('settings.users.destroy');
+
+        // Blog
+        Route::get('/blog', [BlogsController::class, 'index'])->name('blog.index');
+        Route::get('/blog/data', [BlogsController::class, 'data'])->name('blog.data');
+        Route::get('/blog/fetch/{id}', [BlogsController::class, 'fetch'])->name('blog.fetch');
+        Route::post('/blog', [BlogsController::class, 'store'])->name('blog.store');
+        Route::put('/blog/{id}', [BlogsController::class, 'update'])->name('blog.update');
+        Route::delete('/blog/delete-photo', [BlogsController::class, 'deleteBlogPhoto'])->name('blog.delete-photo');
+        Route::delete('/blog/{id}', [BlogsController::class, 'destroy'])->name('blog.destroy');
 
 
         // Letöltések

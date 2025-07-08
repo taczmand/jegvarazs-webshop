@@ -8,6 +8,7 @@
 
 @section('content')
     @include('partials.breadcrumbs', ['breadcrumbs' => [
+        'cover_image' => asset('storage/' . $blog->featured_image),
         'page_title' => $blog->title,
         'nav' => [
             ['title' => 'Főoldal', 'url' => route('index')],
@@ -21,9 +22,6 @@
             <div class="row">
                 <div class="col-lg-12">
                     <div class="blog__details__text">
-                        <div class="blog__details__pic">
-                            <img src="{{ asset('storage/' . ($blog->featured_image ?? 'static_media/no-image.jpg')) }}" alt="{{ $blog->title }}">
-                        </div>
                         <h3>{{ $blog->title }}</h3>
 
                         {!! $blog->content !!}

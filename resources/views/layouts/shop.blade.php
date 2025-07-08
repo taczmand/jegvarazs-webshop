@@ -30,7 +30,7 @@
 </div>
 
 
-<main class="container mx-auto p-4">
+<main class="container mx-auto">
     @yield('content')
     @include('partials.contact-form')
 </main>

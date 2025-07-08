@@ -3,12 +3,14 @@
 @section('content')
     <div class="container p-0">
 
-        <div class="d-flex justify-content-between align-items-center mb-5">
-            <h1 class="h3 text-gray-800 mb-0">Ügyviteli folyamatok / Munkalapok</h1>
+        <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+            <h2 class="h5 text-primary mb-0"><i class="fa-solid fa-business-time text-primary me-2"></i> Ügyviteli folyamatok / Munkalapok</h2>
             <div>
                 <button class="btn btn-dark" id="showCalendar"><i class="fas fa-calendar me-1"></i> Naptár</button>
                 <button class="btn btn-dark d-none" id="hideCalendar"><i class="fa-solid fa-table"></i> Táblázat</button>
-                <button id="addButton" class="btn btn-success"><i class="fas fa-plus me-1"></i> Új munkalap</button>
+                @if(auth('admin')->user()->can('create-worksheet'))
+                    <button class="btn btn-success" id="addButton"><i class="fas fa-plus me-1"></i> Új munkalap</button>
+                @endif
             </div>
         </div>
 
@@ -55,36 +57,61 @@
             </div>
         </div>
 
-        <table class="table table-bordered">
-            <tr>
-                <th><i class="fa-solid fa-filter"></i></th>
-                <th><input type="text" placeholder="ID" class="filter-input" data-column="0" data-name="id"></th>
-                <th><input type="text" placeholder="Név" class="filter-input" data-column="1"></th>
-                <th><input type="text" placeholder="Ország" class="filter-input" data-column="2"></th>
-                <th><input type="text" placeholder="Irányítószám" class="filter-input" data-column="3"></th>
-                <th><input type="text" placeholder="Város" class="filter-input" data-column="4"></th>
-                <th><input type="text" placeholder="Cím" class="filter-input" data-column="5"></th>
-            </tr>
-        </table>
+        @if(auth('admin')->user()->can('view-worksheets'))
 
-        <div id="worksheet_table">
-            <table class="table table-bordered" id="adminTable">
-                <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Ügyfélnév</th>
-                    <th>Város</th>
-                    <th>Munka típusa</th>
-                    <th>Szerelő</th>
-                    <th>Állapot</th>
-                    <th>Szerződés</th>
-                    <th>Készítette</th>
-                    <th>Létrehozva</th>
-                    <th>Műveletek</th>
-                </tr>
-                </thead>
-            </table>
-        </div>
+            <div class="filters d-flex flex-wrap gap-2 mb-3 align-items-center" id="worksheetFilters">
+                <div class="filter-group">
+                    <i class="fa-solid fa-filter text-gray-500"></i>
+                </div>
+
+                <div class="filter-group flex-grow-1 flex-md-shrink-0">
+                    <input type="text" placeholder="ID" class="filter-input form-control" data-column="0">
+                </div>
+
+                <div class="filter-group flex-grow-1 flex-md-shrink-0">
+                    <input type="text" placeholder="Ügyfélnév" class="filter-input form-control" data-column="2">
+                </div>
+
+                <div class="filter-group flex-grow-1 flex-md-shrink-0">
+                    <select class="form-select filter-input" data-column="4">
+                        <option value="">Összes típus</option>
+                        <option value="Karbantartás">Karbantartás</option>
+                        <option value="Szerelés">Szerelés</option>
+                        <option value="Felmérés">Felmérés</option>
+                    </select>
+                </div>
+
+                <div class="filter-group flex-grow-1 flex-md-shrink-0">
+                    <input type="text" placeholder="Munkalap adatok pl.: hitelre" class="filter-input form-control" data-column="5">
+                </div>
+
+            </div>
+
+            <div id="worksheet_table">
+                <table class="table table-bordered display responsive nowrap" id="adminTable" style="width:100%">
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th data-priority="0">Dátum</th>
+                        <th data-priority="1">Ügyfélnév</th>
+                        <th data-priority="3">Város</th>
+                        <th data-priority="4">Munka típusa</th>
+                        <th>Munkalap adatok</th>
+                        <th>Szerelő</th>
+                        <th data-priority="5">Állapot</th>
+                        <th>Szerződés</th>
+                        <th>Készítette</th>
+                        <th>Létrehozva</th>
+                        <th data-priority="2">Műveletek</th>
+                    </tr>
+                    </thead>
+                </table>
+            </div>
+        @else
+            <div class="alert alert-warning">
+                Nincs jogosultságod a munkalapok megtekintésére.
+            </div>
+        @endif
     </div>
 
 
@@ -294,12 +321,13 @@
                                         <select id="exist_contract" name="extra_data[exist_contract]" class="form-control">
                                             <option value="igen">Igen</option>
                                             <option value="nem">Nem</option>
+                                            <option value="hitel">Hitelre lesz</option>
                                         </select>
                                     </div>
                                 </div>
 
                                 <div class="mb-3">
-                                    <label for="payment_method" class="form-label">Fizetés típusa?</label>
+                                    <label for="payment_method" class="form-label">Fizetés módja?</label>
                                     <select id="payment_method" name="payment_method" class="form-control">
                                         <option value="cash">Készpénz</option>
                                         <option value="transfer">Átutalás</option>
@@ -352,14 +380,20 @@
             const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
             const table = $('#adminTable').DataTable({
+                language: {
+                    url: 'https://cdn.datatables.net/plug-ins/2.3.2/i18n/hu.json'
+                },
                 processing: true,
                 serverSide: true,
                 ajax: '{{ route('admin.worksheets.data') }}',
+                order: [[0, 'desc']],
                 columns: [
                     { data: 'id' },
+                    { data: 'installation_date' },
                     { data: 'name' },
                     { data: 'city' },
                     { data: 'work_type' },
+                    { data: 'data' },
                     { data: 'worker_name' },
                     { data: 'work_status_icon', name: 'work_status_icon', orderable: false, searchable: false  },
                     { data: 'contract_id' },
@@ -378,6 +412,14 @@
 
                 editWorksheet(searchId);
             }
+
+            // Szűrők beállítása
+
+            $('.filter-input').on('change keyup', function () {
+                var i =$(this).attr('data-column');
+                var v =$(this).val();
+                table.columns(i).search(v).draw();
+            });
 
             $('#work_type').change(function() {
                 const workType = $(this).val();
@@ -581,6 +623,7 @@
                 $('#calendarContainer').removeClass('d-none');
                 $('#showCalendar').addClass('d-none');
                 $('#worksheet_table').addClass('d-none');
+                $('#worksheetFilters').addClass('d-none');
                 renderCalendar();
             });
 
@@ -588,6 +631,7 @@
                 $('#hideCalendar').addClass('d-none');
                 $('#calendarContainer').addClass('d-none');
                 $('#worksheet_table').removeClass('d-none');
+                $('#worksheetFilters').removeClass('d-none');
                 $('#showCalendar').removeClass('d-none');
             });
 

@@ -6,7 +6,7 @@
     <div class="container p-0">
 
         <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
-            <h2 class="h5 text-primary mb-0"><i class="fa-solid fa-gears text-primary me-2"></i> Webshop / Letöltések</h2>
+            <h2 class="h5 text-primary mb-0"><i class="fa-solid fa-file-lines text-primary me-2"></i> Tartalomkezelés / Letöltések</h2>
             @if(auth('admin')->user()->can('create-download'))
                 <button class="btn btn-success" id="addButton"><i class="fas fa-plus me-1"></i> Új letöltés</button>
             @endif

@@ -5,13 +5,30 @@
 @endsection
 
 @section('content')
-    @include('partials.breadcrumbs', ['breadcrumbs' => [
-        'page_title' => $product->title,
-        'nav' => [
-            ['title' => 'Főoldal', 'url' => route('index')]
-        ],
-    ]
-    ])
+    @php
+        $category = $product->category ?? $product->categories->first();
+        $categoryTrail = [];
+
+        while ($category) {
+            $categoryTrail[] = [
+                'title' => $category->title,
+                'url' => route('products.resolve', ['slugs' => $category->getFullSlug()])
+            ];
+            $category = $category->parent;
+        }
+
+        $breadcrumbs = [
+            'page_title' => $product->title,
+            'nav' => array_merge([
+                ['title' => 'Főoldal', 'url' => route('index')],
+                ['title' => 'Termékek', 'url' => route('products.index')],
+            ], array_reverse($categoryTrail)),
+        ];
+    @endphp
+
+    @include('partials.breadcrumbs', ['breadcrumbs' => $breadcrumbs])
+
+
 
     <!-- Product Details Section Begin -->
     <section class="product-details spad">

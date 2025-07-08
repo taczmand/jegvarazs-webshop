@@ -87,10 +87,12 @@ class WorksheetController extends Controller
         if ($user->can('view-worksheets')) {
             $worksheets = Worksheet::select([
                 'worksheets.id',
+                'worksheets.installation_date',
                 'worksheets.name',
                 'worksheets.city',
                 'worksheets.work_type',
                 'worksheets.work_status',
+                'worksheets.data',
                 'worksheets.contract_id',
                 'worksheets.created_at as created',
                 'creator.name as creator_name',
@@ -101,10 +103,13 @@ class WorksheetController extends Controller
         } elseif ($user->can('view-own-worksheets')) {
             $worksheets = Worksheet::select([
                 'worksheets.id',
+                'worksheets.installation_date',
                 'worksheets.name',
                 'worksheets.city',
                 'worksheets.work_name',
+                'worksheets.work_type',
                 'worksheets.work_status',
+                'worksheets.data',
                 'worksheets.contract_id',
                 'worksheets.created_at as created',
                 'creator.name as creator_name',
@@ -122,6 +127,35 @@ class WorksheetController extends Controller
                 if (is_numeric($keyword)) {
                     $query->where('worksheets.id', '=', $keyword);
                 }
+            })
+            ->addColumn('data', function ($worksheet) {
+                $data = $worksheet->data;
+
+                if (is_string($data)) {
+                    $json = json_decode($data, true);
+                } elseif (is_array($data)) {
+                    $json = $data;
+                } else {
+                    $json = [];
+                }
+
+                if (!is_array($json) || empty($json)) {
+                    return '-';
+                }
+
+                $html = '';
+                foreach ($json as $key => $value) {
+                    [$label, $translatedValue] = $this->translateDataEntry($key, $value);
+                    $html .= "<div><strong>{$label}:</strong> {$translatedValue}</div>";
+                }
+
+                return $html;
+            })
+
+            ->filterColumn('data', function ($query, $keyword) {
+                $query->where(function ($q) use ($keyword) {
+                    $q->where('worksheets.data', 'like', '%' . $keyword . '%');
+                });
             })
             ->addColumn('contract_id', function ($worksheet) {
                 if ($worksheet->contract_id) {
@@ -148,9 +182,49 @@ class WorksheetController extends Controller
                 </button>
             ';
             })
-            ->rawColumns(['contract_id', 'action', 'work_status_icon'])
+            ->rawColumns(['contract_id', 'action', 'work_status_icon', 'data'])
             ->make(true);
     }
+
+    protected function translateDataEntry(string $key, $value): array
+    {
+        $keyTranslations = [
+            'pipe' => 'Plusz cső',
+            'console' => 'Konzol',
+            'device_qty' => 'Készülékek',
+            'exist_contract' => 'Szerződéskötés',
+            'cleaning_type' => 'Tisztítás',
+            'self_installation' => 'Saját telepítés'
+        ];
+
+        $valueTranslations = [
+            'exist_contract' => [
+                'hitel' => 'Hitelre lesz',
+                'igen' => 'Igen',
+                'nem' => 'Nem',
+            ],
+            'cleaning_type' => [
+                'basic_clean' => 'Alaptisztítás',
+                'full_clean' => 'Teljes mosás',
+            ],
+            'self_installation' => [
+                'igen' => 'Igen',
+                'nem' => 'Nem',
+            ]
+        ];
+
+        $translatedKey = $keyTranslations[$key] ?? ucfirst(str_replace('_', ' ', $key));
+
+        $translatedValue = $value;
+        if (isset($valueTranslations[$key]) && isset($valueTranslations[$key][$value])) {
+            $translatedValue = $valueTranslations[$key][$value];
+        } elseif (is_null($value) || $value === '') {
+            $translatedValue = '-';
+        }
+
+        return [$translatedKey, $translatedValue];
+    }
+
 
     public function store(Request $request)
     {
@@ -173,7 +247,7 @@ class WorksheetController extends Controller
                 'worker_report'     => $request->input('worker_report') ?? null,
                 'installation_date' => $request->input('installation_date'),
                 'worker_id'         => $request->input('worker_id') ?? null,
-                'data'              => $request->input('extra_data') ?? [],
+                'data'              => array_filter($request->input('extra_data') ?? [], fn($value) => !is_null($value)),
                 'payment_method'    => $request->input('payment_method') ?? null,
                 'payment_amount'    => $request->input('payment_amount') ?? 0,
                 'work_status'       => $request->input('work_status'),
@@ -184,7 +258,7 @@ class WorksheetController extends Controller
             if ($request->input('work_status') === 'Felszerelve') {
 
                 $paymentMethod = $request->input('payment_method');
-                $paymentAmount = $request->input('payment_amount');
+                $paymentAmount = $request->input('maintenance_payment_amount');
                 $workType = $request->input('work_type');
 
                 if ("Szerelés" === $workType) {

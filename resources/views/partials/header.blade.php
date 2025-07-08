@@ -63,7 +63,7 @@
                                            onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
                                             <i class="fa fa-sign-out-alt me-2"></i> Kijelentkezés
                                         </a>
-                                        <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
+                                        <form id="logout-form" action="{{ route('logout') }}" method="GET" class="d-none">
                                             @csrf
                                         </form>
                                     </li>

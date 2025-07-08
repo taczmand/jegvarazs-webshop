@@ -6,13 +6,8 @@
 
 
 @section('content')
-    @include('partials.breadcrumbs', ['breadcrumbs' => [
-        'page_title' => 'Termékek',
-        'nav' => [
-            ['title' => 'Főoldal', 'url' => route('index')]
-        ],
-    ]
-    ])
+    @include('partials.breadcrumbs', ['breadcrumbs' => $breadcrumbs])
+    @inject('stockHelper', 'App\Helpers\StockStatusHelper')
 
     <div class="container">
 
@@ -24,30 +19,10 @@
                     <div class="col-lg-3 col-md-5">
                         <div class="sidebar">
                             <div class="sidebar__item">
-                                @isset($category)
-                                    <h4>{{ $category->title }}</h4>
-                                @else
-                                    <h4>Kategóriák</h4>
-                                @endisset
-                                @isset($category)
-                                    @if($category->children->isNotEmpty())
-                                        <ul>
-                                            @foreach($category->children as $child)
-                                                <li>
-                                                    <a href="{{ route('products.resolve', ['slugs' => $child->getFullSlug()]) }}">
-                                                        {{ $child->title }}
-                                                    </a>
-                                                </li>
-                                            @endforeach
-                                        </ul>
-                                    @endif
-                                @endisset
-                            </div>
-                            <div class="sidebar__item">
                                 <h4>Ár</h4>
                                 <div class="price-range-wrap">
                                     <div class="price-range ui-slider ui-corner-all ui-slider-horizontal ui-widget ui-widget-content"
-                                         data-min="{{ $minPrice ?? 0 }}" data-max="{{ $maxPrice ?? 999999999 }}">
+                                         data-min="{{ $minPrice ?? 0 }}" data-max="{{ $maxPrice ?? 9999999 }}">
                                         <div class="ui-slider-range ui-corner-all ui-widget-header"></div>
                                         <span tabindex="0" class="ui-slider-handle ui-corner-all ui-state-default"></span>
                                         <span tabindex="0" class="ui-slider-handle ui-corner-all ui-state-default"></span>
@@ -122,15 +97,18 @@
 
                                                     @php
                                                         $fullSlug = $product->category->getFullSlug() . '/' . $product->slug;
+                                                        $mainPhoto = $product->photos->firstWhere('is_main', true);
                                                     @endphp
 
                                                     <a href="{{ route('products.resolve', ['slugs' => $fullSlug]) }}" class="latest-product__item">
                                                         <div class="latest-product__item__pic">
-                                                            <img src="{{ asset($product->image_path ?? 'images/no-image.jpg') }}" alt="{{ $product->title }}">
+                                                            <img src="{{ asset('storage/' . $mainPhoto?->path ?? 'static_media/no-image.jpg') }}" alt="{{ $product->title }}">
                                                         </div>
                                                         <div class="latest-product__item__text">
-                                                            <h6>{{ $product->name }}</h6>
-                                                            <span>{{ number_format($product->gross_price, 0, ',', ' ') }} Ft</span>
+                                                            <h6>{{ $product->title }}</h6>
+                                                            @auth('customer')
+                                                                <span>{{ number_format($product->gross_price, 0, ',', ' ') }} Ft</span>
+                                                            @endauth
                                                         </div>
                                                     </a>
                                                 @endforeach
@@ -147,48 +125,75 @@
                     <div class="col-lg-9 col-md-7">
 
                         <div class="filter__item">
-                            <div class="row">
-                                <div class="col-lg-4 col-md-5">
-                                    <div class="filter__sort">
-                                        <span>Sort By</span>
-                                        <select>
-                                            <option value="0">Default</option>
-                                            <option value="0">Default</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="col-lg-4 col-md-4">
-                                    <div class="filter__found">
-                                        <h6><span>16</span> termék</h6>
-                                    </div>
-                                </div>
-                                <div class="col-lg-4 col-md-3">
-                                    <div class="filter__option">
-                                        <span class="icon_grid-2x2"></span>
-                                        <span class="icon_ul"></span>
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                                        <div class="filter__found">
+                                            <h6 class="mb-0"><span>{{ $product_count }}</span> termék</h6>
+                                        </div>
+
+                                        <div class="filter__sort d-flex align-items-center gap-2">
+                                            <span class="fw-bold">Rendezés:</span>
+                                            <select class="form-select form-select-sm" style="min-width: 220px;">
+                                                <option value="0">Terméknév szerint növekvő</option>
+                                                <option value="1">Terméknév szerint csökkenő</option>
+                                                <option value="2">Ár szerint növekvő</option>
+                                                <option value="3">Ár szerint csökkenő</option>
+                                            </select>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
+
                         </div>
                         <div class="row">
                             @forelse($products as $product)
                                 @php
+                                    $status = $stockHelper::resolve($product->stock);
                                     $mainPhoto = $product->photos->firstWhere('is_main', true);
                                 @endphp
                                 <div class="col-lg-4 col-md-6 col-sm-6">
                                     <div class="product__item">
-                                        <div class="product__item__pic set-bg" data-setbg="{{ asset('storage/' . $mainPhoto?->path ?? 'images/no-image.jpg') }}">
-                                            <ul class="product__item__pic__hover">
-                                                <li><a href="#"><i class="fa fa-heart"></i></a></li>
-                                                <li><a href="#" onclick="addToCart({{ $product->id }})"><i class="fa fa-shopping-cart"></i></a></li>
-                                            </ul>
+                                        <div class="product__item__pic set-bg" data-setbg="{{ asset('storage/' . $mainPhoto?->path ?? 'static_media/no-image.jpg') }}">
+                                            @auth('customer')
+                                                <ul class="product__item__pic__hover">
+                                                    <li><a href="#"><i class="fa fa-heart"></i></a></li>
+                                                    <li><a href="#" onclick="addToCart({{ $product->id }})"><i class="fa fa-shopping-cart"></i></a></li>
+                                                </ul>
+                                            @endauth
                                         </div>
                                         <div class="product__item__text">
                                             @php
                                                 $fullSlug = $product->category->getFullSlug() . '/' . $product->slug;
+                                                $email = $basicdata['support_email'];
+
+                                                $subject = rawurlencode('Érdeklődés: ' . $product->title);
+
+                                                $bodyText = "Tisztelt Ügyfélszolgálat,\n\nSzeretnék érdeklődni a következő termékről:\n" .
+                                                            "Név: {$product->title}\n" .
+                                                            "Azonosító: {$product->id}";
+
+                                                $body = rawurlencode($bodyText);
+
+                                                $mailto = "mailto:{$email}?subject={$subject}&body={$body}";
                                             @endphp
+
                                             <h6><a href="{{ route('products.resolve', ['slugs' => $fullSlug]) }}">{{ $product->title }}</a></h6>
-                                            <h5>{{ number_format($product->gross_price, 0, ',', ' ') }} Ft</h5>
+                                            @auth('customer')
+                                                <h5>{{ number_format($product->gross_price, 0, ',', ' ') }} Ft</h5>
+                                                @if ($status)
+                                                    @if ("backorder" === $status['slug'])
+                                                        <a class="badge bg-{{ $status['color'] }}" href="{{ $mailto }}" class="btn btn-sm btn-outline-primary mt-2">
+                                                            {{ $status['name'] }} <i class="fa fa-envelope"></i>
+                                                        </a>
+                                                    @else
+                                                        <span class="badge bg-{{ $status['color'] }}">
+                                                            {{ $status['name'] }}
+                                                        </span>
+                                                    @endif
+
+                                                @endif
+                                            @endauth
                                         </div>
                                     </div>
                                 </div>
