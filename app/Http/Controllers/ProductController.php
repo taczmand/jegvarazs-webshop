@@ -111,6 +111,7 @@ class ProductController extends Controller
                 'nav' => $nav,
                 'cover_image' => $parent->cover_image ?? null,
             ],
+            'product_count' => $allProductsQuery->count(),
         ]);
     }
 

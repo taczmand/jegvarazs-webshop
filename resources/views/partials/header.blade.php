@@ -102,10 +102,10 @@
             <div class="col-lg-6 d-flex align-items-center">
                 <nav class="header__menu">
                     <ul>
-                        <li class="{{ Route::currentRouteName() === 'downloads' ? 'active' : '' }}"><a href="/letoltesek">Letöltések</a></li>
-                        <li class="{{ Route::currentRouteName() === 'blog' ? 'active' : '' }}"><a href="/blog">Blog</a></li>
-                        <li class="{{ Route::currentRouteName() === 'appointments' ? 'active' : '' }}"><a href="/idopontfoglalas">Időpontfoglalás</a></li>
-                        <li class="{{ Route::currentRouteName() === 'contact' ? 'active' : '' }}"><a href="/kapcsolat">Kapcsolat</a></li>
+                        <li class="{{ Route::currentRouteName() === 'downloads' ? 'active' : '' }}"><a href="{{ config('app.url') }}letoltesek">Letöltések</a></li>
+                        <li class="{{ Route::currentRouteName() === 'blog' ? 'active' : '' }}"><a href="{{ config('app.url') }}blog">Blog</a></li>
+                        <li class="{{ Route::currentRouteName() === 'appointments' ? 'active' : '' }}"><a href="{{ config('app.url') }}idopontfoglalas">Időpontfoglalás</a></li>
+                        <li class="{{ Route::currentRouteName() === 'contact' ? 'active' : '' }}"><a href="{{ config('app.url') }}kapcsolat">Kapcsolat</a></li>
                     </ul>
                 </nav>
             </div>

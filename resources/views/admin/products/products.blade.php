@@ -495,7 +495,7 @@
 
                     const row = $(`
                         <tr data-photo-id="${photo.id}">
-                            <td><a href="/storage/${photo.path}" target="_blank"><img src="/storage/${photo.path}" alt="${alt}" class="img-thumbnail" style="width: 100px;"></a></td>
+                            <td><a href="${window.appConfig.APP_URL}storage/${photo.path}" target="_blank"><img src="${window.appConfig.APP_URL}storage/${photo.path}" alt="${alt}" class="img-thumbnail" style="width: 100px;"></a></td>
                             <td>
                                 <input type="text" class="form-control form-control-sm photo-alt-input" value="${alt}" data-photo-id="${photo.id}">
                             </td>
