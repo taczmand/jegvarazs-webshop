@@ -5,31 +5,63 @@
 
     <div class="container p-0">
 
-        <div class="d-flex justify-content-between align-items-center mb-5">
-            <h1 class="h3 text-gray-800 mb-0">Ügyfél folyamatok / Időpontfoglalások</h1>
-            <button class="btn btn-success" id="addButton"><i class="fas fa-plus me-1"></i> Új időpontfoglalás</button>
+        <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+            <h2 class="h5 text-primary mb-0"><i class="fa-solid fa-business-time text-primary me-2"></i> Ügyfél folyamatok / Időpontfoglalások</h2>
+            @if(auth('admin')->user()->can('create-appointment'))
+                <button class="btn btn-success" id="addButton"><i class="fas fa-plus me-1"></i> Új időpontfoglalás</button>
+            @endif
         </div>
 
-        <table class="table table-bordered" id="appointmentsTable">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Ügyfélnév</th>
-                    <th style="display:none">E-mail</th>
-                    <th style="display:none">Telefonszám</th>
-                    <th style="display:none">Irányítószám</th>
-                    <th>Város</th>
-                    <th>Cím</th>
-                    <th>Dátum</th>
-                    <th>Típus</th>
-                    <th style="display:none">Megjegyzés</th>
-                    <th>Látta</th>
-                    <th>Állapot</th>
-                    <th>Létrehozva</th>
-                    <th>Műveletek</th>
-                </tr>
-                </thead>
-        </table>
+        @if(auth('admin')->user()->can('view-appointments'))
+
+            <div class="filters d-flex flex-wrap gap-2 mb-3 align-items-center">
+                <div class="filter-group">
+                    <i class="fa-solid fa-filter text-gray-500"></i>
+                </div>
+
+                <div class="filter-group flex-grow-1 flex-md-shrink-0">
+                    <input type="text" placeholder="ID" class="filter-input form-control" data-column="0">
+                </div>
+
+                <div class="filter-group flex-grow-1 flex-md-shrink-0">
+                    <input type="text" placeholder="Ügyfélnév" class="filter-input form-control" data-column="1">
+                </div>
+                <div class="filter-group flex-grow-1 flex-md-shrink-0">
+                    <input type="text" placeholder="Irányítószám" class="filter-input form-control" data-column="3">
+                </div>
+                <div class="filter-group flex-grow-1 flex-md-shrink-0">
+                    <input type="text" placeholder="Város" class="filter-input form-control" data-column="4">
+                </div>
+                <div class="filter-group flex-grow-1 flex-md-shrink-0">
+                    <input type="text" placeholder="Cím" class="filter-input form-control" data-column="5">
+                </div>
+            </div>
+
+            <table class="table table-bordered display responsive nowrap" id="appointmentsTable" style="width:100%">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th data-priority="1">Ügyfélnév</th>
+                        <th style="display:none">E-mail</th>
+                        <th style="display:none">Telefonszám</th>
+                        <th style="display:none">Irányítószám</th>
+                        <th>Város</th>
+                        <th>Cím</th>
+                        <th>Dátum</th>
+                        <th>Típus</th>
+                        <th style="display:none">Megjegyzés</th>
+                        <th>Látta</th>
+                        <th>Állapot</th>
+                        <th>Létrehozva</th>
+                        <th data-priority="2">Műveletek</th>
+                    </tr>
+                    </thead>
+            </table>
+        @else
+            <div class="alert alert-warning" role="alert">
+                Nincs jogosultsága az időpontfoglalások megtekintéséhez.
+            </div>
+        @endif
     </div>
 
 
@@ -157,11 +189,5 @@
             });
         });
 
-        /*$(document).ready(function() {
-            $('#appointmentsTable').on('click', '.edit', async function () {
-                const row_data = $('#appointmentsTable').DataTable().row($(this).parents('tr')).data();
-                console.log(row_data.id, row_data.viewed_by);
-            });
-        });*/
     </script>
 @endsection

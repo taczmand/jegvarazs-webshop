@@ -18,8 +18,8 @@
             <div class="col-lg-9">
                 <div class="hero__search">
                     <div class="hero__search__form">
-                        <form action="#">
-                            <input type="text" placeholder="Kereséshez gépeljen ide...">
+                        <form action="{{ route('search') }}" method="GET">
+                            <input type="text" placeholder="Kereséshez gépeljen ide..." name="query" value="{{ request()->input('query') }}">
                             <button type="submit" class="site-btn">Keresés</button>
                         </form>
                     </div>

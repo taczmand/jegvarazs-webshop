@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Helpers\AmountToText;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Contract;
@@ -54,14 +55,24 @@ class ContractController extends Controller
                 return $contract->creator_name ?? 'Ismeretlen';
             })
             ->addColumn('action', function ($contract) {
-                return '
-                    <button class="btn btn-sm btn-primary view" data-id="'.$contract->id.'" title="Megtekintés">
+                $user = auth('admin')->user();
+
+                $buttons = '
+                    <button class="btn btn-sm btn-primary view" data-id="' . $contract->id . '" title="Megtekintés">
                         <i class="fas fa-eye"></i>
                     </button>
-                    <button class="btn btn-sm btn-danger delete" data-id="'.$contract->id.'" title="Törlés">
-                        <i class="fas fa-trash-alt"></i>
-                    </button>
                 ';
+
+
+                if ($user && $user->can('delete-contract')) {
+                    $buttons .= '
+                        <button class="btn btn-sm btn-danger delete" data-id="' . $contract->id . '" title="Törlés">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    ';
+                }
+
+                return $buttons;
             })
             ->rawColumns(['action'])
             ->make(true);
@@ -136,12 +147,19 @@ class ContractController extends Controller
                 $products[] = [
                     'title' => Product::findOrFail($productId)->title ?? "N/A",
                     'gross_price' => $item->gross_price,
+                    'product_qty' => $item->product_qty
                 ];
             }
+
+            $totalGross = collect($products)->sum(function ($item) {
+                return $item['gross_price'] * $item['product_qty'];
+            });
 
             $pdf_data = [
                 'contract' => $contract->toArray(),
                 'products' => $products,
+                'total_gross' => $totalGross,
+                'total_gross_text' => AmountToText::convert($totalGross),
                 'data' => $contract->data,
                 'signature_path' => $signatureName ? storage_path("app/private/signatures/{$signatureName}") : null,
                 // 'company' => config('app.company_info') // opcionális
@@ -217,4 +235,44 @@ class ContractController extends Controller
             'contract' => $contract
         ]);
     }
+
+    public function getPdf(Request $request, $id)
+    {
+        $contract = Contract::findOrFail($id);
+
+        $products = $contract->products->map(function ($item) {
+            return [
+                'title' => $item->title ?? "N/A",
+                'gross_price' => $item->pivot->gross_price,
+                'product_qty' => $item->pivot->product_qty
+            ];
+        })->toArray();
+
+        $signatureName = $contract->signature_path;
+
+        $totalGross = collect($products)->sum(function ($item) {
+            return $item['gross_price'] * $item['product_qty'];
+        });
+        //dd($contract->toArray());
+        $pdf_data = [
+            'contract' => $contract->toArray(),
+            'products' => $products,
+            'data' => $contract->data,
+            'total_gross' => $totalGross,
+            'total_gross_text' => AmountToText::convert($totalGross),
+            'signature_path' => $signatureName ? storage_path("app/private/signatures/{$signatureName}") : null
+        ];
+        //dd($pdf_data['products']);
+
+        \Log::info($pdf_data);
+
+        // PDF generálása
+        $pdf = Pdf::loadView('pdf.contract_v1', $pdf_data);
+        return $pdf->stream('contract.pdf');
+    }
+
+
+
+
+
 }

@@ -141,10 +141,10 @@
         </a>
         <div id="collapseAnalytics" class="collapse">
             <div class="bg-white py-2 collapse-inner rounded">
-                <a class="collapse-item" href="#">Megnézett termékek</a>
-                <a class="collapse-item" href="#">Vásárolt termékek</a>
-                <a class="collapse-item" href="#">Keresések</a>
-                <a class="collapse-item" href="#">Admin tevékenységek</a>
+                <a class="collapse-item" href="{{ route('admin.stats.watched_products') }}">Megtekintett termékek</a>
+                <a class="collapse-item" href="{{ route('admin.stats.purchased_products') }}">Vásárolt termékek</a>
+                <a class="collapse-item" href="{{ route('admin.stats.searched_products') }}">Keresések</a>
+                <a class="collapse-item" href="{{ route('admin.stats.admin_logs') }}">Admin tevékenységek</a>
             </div>
         </div>
     </li>

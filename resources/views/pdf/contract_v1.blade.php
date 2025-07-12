@@ -1,3 +1,4 @@
+@inject('convertHelper', 'App\Helpers\AmountToText')
 <!DOCTYPE html>
 <html lang="hu">
 <head>
@@ -6,16 +7,20 @@
     <style>
         body {
             font-family: DejaVu Sans, sans-serif;
-            line-height: 1.6;
-            padding: 40px;
+            line-height: 1;
+            font-size: 8pt;
+            padding: 0;
             max-width: 100%;
             margin: 0;
             color: #000;
+            background-image: url("{{ public_path('static_media/uj_logo_nagy_opal.png') }}");
+            background-position: center center;
+            background-repeat: no-repeat;
+            background-size: contain;
         }
         h1, h2 {
             text-align: center;
-            margin-bottom: 0;
-            font-size: 18px;
+            font-size: 14pt;
         }
         .section {
             margin-top: 0;
@@ -23,26 +28,17 @@
 
         /* Két oszlop float-tal */
         .two-column {
-            font-size: 14px;
-            /* clearfix */
-            zoom: 1;
-        }
-        .two-column::after {
-            content: "";
-            display: block;
-            clear: both;
+           width: 100%;
         }
 
         .two-column .field {
-            width: 48%;
-            float: left;
+            width: 49%;
+            display: inline-block;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
             box-sizing: border-box;
-            margin-bottom: 10px;
         }
-        /* Ha szeretnéd, hogy egymás alatt legyenek a kisebb képernyőkön, akkor lehet media query-vel szélességet 100%-ra állítani */
 
         .field .label {
             font-weight: bold;
@@ -50,37 +46,35 @@
             display: inline-block;
             width: auto;
             white-space: nowrap;
-            flex-shrink: 0; /* ez nem kell már flex nélkül */
         }
 
         .field .value {
             display: inline-block;
-            max-width: calc(100% - 100px); /* egy kis korlátozás a hosszú szövegekre */
+            max-width: 200px; /* egy kis korlátozás a hosszú szövegekre */
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
             border-bottom: 1px dotted #000;
-            vertical-align: bottom;
+            vertical-align: top;
         }
 
         .field {
             margin-bottom: 10px;
         }
+        .signature-image div {
+            display: inline-block;
+            width: 49%;
+            text-align: center;
+            box-sizing: border-box;
+        }
 
         .signature-line {
-            margin-top: 60px;
-            /* két oszlop float-tal */
-            zoom: 1;
-        }
-        .signature-line::after {
-            content: "";
-            display: block;
-            clear: both;
+            margin-top: 1mm;;
         }
         .signature-line div {
-            float: left;
-            width: 45%;
-            border-top: 1px solid #000;
+            display: inline-block;
+            width: 49%;
+            border-top: 1px dotted #000;
             text-align: center;
             padding-top: 5px;
             font-weight: bold;
@@ -92,7 +86,6 @@
             position: relative;
             line-height: 1;
             padding-left: 30px; /* hely a számnak */
-            font-size: 14px;
             margin-bottom: 10px;
         }
 
@@ -104,7 +97,6 @@
         }
         p {
             line-height: 1;
-            font-size: 14px;
         }
 
         ul.options {
@@ -127,40 +119,17 @@
             white-space: nowrap;
         }
         .contact-section {
-            margin-top: 20px;
             text-align: center;
+        }
+        .contact-section h3 {
+            display: inline-block;
+            margin-right: 5mm;
         }
         .footer {
             margin-top: 80px;
             font-size: 0.9em;
         }
 
-        @media print {
-            @page {
-                margin: 5mm;
-            }
-
-            body {
-                margin: 0;
-            }
-        }
-
-        /* Kis képernyőn a two-column legyen egy oszlop */
-        @media screen and (max-width: 600px) {
-            .two-column .field {
-                width: 100%;
-                float: none;
-            }
-            .signature-line div {
-                width: 100%;
-                float: none;
-                margin-bottom: 20px;
-            }
-            .cotract-options div {
-                display: block;
-                margin-bottom: 5px;
-            }
-        }
     </style>
 </head>
 <body>
@@ -173,35 +142,35 @@
     </div>
     <div class="field">
         <span class="label">Szerelés dátuma:</span>
-        <span class="value"></span>
+        <span class="value">{{ $contract['installation_date'] ?? "" }}</span>
     </div>
     <div class="field">
         <span class="label">Név / Cégnév:</span>
-        <span class="value">Teszt Elek Kft.</span>
+        <span class="value">{{ $contract['name'] ?? "" }}</span>
     </div>
     <div class="field">
         <span class="label">Születési hely, idő:</span>
-        <span class="value">Budapest, 1990.01.01.</span>
+        <span class="value">{{ $contract['place_of_birth'] ?? "" }}, {{ $contract['date_of_birth'] ?? "" }}</span>
     </div>
     <div class="field">
         <span class="label">Anyja neve:</span>
-        <span class="value">Kovács Ilona</span>
+        <span class="value">{{ $contract['mothers_name'] ?? "" }}</span>
     </div>
     <div class="field">
         <span class="label">Szem. szám / adószám:</span>
-        <span class="value">123456AA / 9876543210</span>
+        <span class="value">{{ $contract['id_number'] ?? "" }}</span>
     </div>
     <div class="field">
         <span class="label">Telefonszám:</span>
-        <span class="value">+36 30 123 4567</span>
+        <span class="value">{{ $contract['phone'] ?? "" }}</span>
     </div>
     <div class="field">
         <span class="label">E-mail cím:</span>
-        <span class="value">teszt@ceg.hu</span>
+        <span class="value">{{ $contract['email'] ?? "" }}</span>
     </div>
     <div class="field">
         <span class="label">Lakcím / Székhely:</span>
-        <span class="value">1024 Budapest, Fő utca 1.</span>
+        <span class="value">{{ $contract['zip_code'] ?? "" }} {{ $contract['city'] }}, {{ $contract['address_line'] }}</span>
     </div>
 </div>
 
@@ -214,7 +183,16 @@
     </div>
 
     <div class="pont">
-        <span class="szam">2.</span> A szerződő felek által kölcsönösen kialkudott vételár ………………………., azaz …………………………………… forint, mely munkadíjjal együtt értendő.
+        @php
+            $total_gross = $contract['data']['price'] ?? null;
+            if (is_numeric($total_gross)) {
+                $total_gross_amount = number_format($total_gross, 0, ',', ' ');
+            } else {
+                $total_gross_amount = "?";
+            }
+            $total_gross_text = $convertHelper->convert($total_gross);
+        @endphp
+        <span class="szam">2.</span> A szerződő felek által kölcsönösen kialkudott vételár <b style="display: inline-block; border-bottom: 1px dotted #000;">{!! $total_gross_amount !!} Ft</b>, azaz <b style="display: inline-block; border-bottom: 1px dotted #000;">{!! $total_gross_text !!}</b> forint, mely munkadíjjal együtt értendő.
     </div>
 
     <div class="pont">
@@ -222,9 +200,42 @@
     </div>
 
     <div class="pont">
-        <span class="szam"><b>1.</b></span> <b>a*, ………………….. Ft</b> azaz ……………………………………………….. Ft foglaló jogcímen a szerződés aláírásával egyidőben kerül átadásra.<br>
-        <b>b*, ………………….. Ft</b> azaz ……………………………………….. Ft foglaló jogcímen a <b>10104260-72764100-01005001</b> számlaszámra kerül átutalásra. A szerződés a foglaló jóváírásának
-        megtörténtekor válik véglegessé, a kialkudott határidőre (…………év …………….hónap …………..nap)
+        @php
+            \Carbon\Carbon::setLocale('hu');
+            $spaces = str_repeat("\u{00A0}", 20);
+
+            $cash_amount = $spaces;
+            $cash_amount_text = $spaces;
+
+            $transfer_amount = $spaces;
+            $transfer_amount_text = $spaces;
+
+            $due_date = '…………év …………….hónap …………..nap';
+
+            $amount = $contract['data']['deposit_amount'] ?? null;
+
+            if ($contract['data']['deposit_due_date']) {
+                $carbon = \Carbon\Carbon::parse($contract['data']['deposit_due_date']);
+                $due_date = '<b style="border-bottom: 1px dotted black">'.$carbon->year . '</b> év <b style="border-bottom: 1px dotted black">' . $carbon->translatedFormat('F') . '</b> hónap <b style="border-bottom: 1px dotted black">' . $carbon->day . '</b> nap';
+            }
+
+            if ($contract['data']['deposit_payment_method'] === "Készpénz") {
+                if (!empty($amount)) {
+                    $cash_amount_text = $convertHelper->convert($amount);
+                    $cash_amount = number_format($amount, 0, ',', ' ');
+                }
+            }
+
+            if ($contract['data']['deposit_payment_method'] === "Átutalás") {
+                if (!empty($amount)) {
+                    $transfer_amount_text = $convertHelper->convert($amount);
+                    $transfer_amount = number_format($amount, 0, ',', ' ');
+                }
+            }
+        @endphp
+        <span class="szam"><b>1.</b></span> <b style="display: inline-block; border-bottom: 1px dotted #000;">a*, {{ $cash_amount }} Ft</b> azaz <b style="display: inline-block; border-bottom: 1px dotted #000;">{{ $cash_amount_text }}</b> forint foglaló jogcímen a szerződés aláírásával egyidőben kerül átadásra.<br>
+        <b style="display: inline-block; border-bottom: 1px dotted #000;">b*, {{ $transfer_amount }} Ft</b> azaz <b style="display: inline-block; border-bottom: 1px dotted #000;">{{ $transfer_amount_text }}</b> forint foglaló jogcímen a <b>10104260-72764100-01005001</b> számlaszámra kerül átutalásra. A szerződés a foglaló jóváírásának
+        megtörténtekor válik véglegessé, a kialkudott határidőre ({!! $due_date !!}) történő
         történő átutalás elmulasztásával a szerződés semmisnek tekintendő.
     </div>
 
@@ -233,8 +244,38 @@
         visszajár.</p>
 
     <div class="pont">
-        <span class="szam"><b>2.</b></span><b>a*, ……………………… Ft</b> azaz ……………………………. forint a munka elvégzésével kerül készpénzben kifizetésre.<br>
-        <b>b*, ………………….. Ft</b> azaz …………………………………….. forint a munka elvégzésével kerül átutalásra a <b>10104260-72764100-01005001</b> (…………év …………….hónap …………..napjáig)
+        @php
+            $cash_amount = $spaces;
+            $cash_amount_text = $spaces;
+
+            $transfer_amount = $spaces;
+            $transfer_amount_text = $spaces;
+
+            $due_date = '…………év …………….hónap …………napjáig';
+
+            $amount = $contract['data']['refund_amount'] ?? null;
+
+            if ($contract['data']['refund_due_date']) {
+                $carbon = \Carbon\Carbon::parse($contract['data']['refund_due_date']);
+                $due_date = '<b style="border-bottom: 1px dotted black">'.$carbon->year . '</b> év <b style="border-bottom: 1px dotted black">' . $carbon->translatedFormat('F') . '</b> hónap <b style="border-bottom: 1px dotted black">' . $carbon->day . '</b> napjáig';
+            }
+
+            if ($contract['data']['refund_payment_method'] === "Készpénz") {
+                if (!empty($amount)) {
+                    $cash_amount_text = $convertHelper->convert($amount);
+                    $cash_amount = number_format($amount, 0, ',', ' ');
+                }
+            }
+
+            if ($contract['data']['refund_payment_method'] === "Átutalás") {
+                if (!empty($amount)) {
+                    $transfer_amount_text = $convertHelper->convert($amount);
+                    $transfer_amount = number_format($amount, 0, ',', ' ');
+                }
+            }
+        @endphp
+        <span class="szam"><b>2.</b></span><b style="border-bottom: 1px dotted black">a*, {{ $cash_amount }} Ft</b> azaz <b style="border-bottom: 1px dotted black">{{ $cash_amount_text }}</b> forint a munka elvégzésével kerül készpénzben kifizetésre.<br>
+        <b style="border-bottom: 1px dotted black">b*, {{ $transfer_amount }} Ft</b> azaz <b style="border-bottom: 1px dotted black">{{ $transfer_amount_text }}</b> forint a munka elvégzésével kerül átutalásra a <b>10104260-72764100-01005001</b> ({!! $due_date !!})
         számlaszámra.
     </div>
 
@@ -271,7 +312,17 @@
     </div>
 
     <div class="pont">
-        <span class="szam">10.</span> Jelen szerződésben rögzített munka teljesítésének dátuma: …….…….év………….…..hónap………….nap.
+        @php
+
+        if (isset($contract['data']['completion_due_date'])) {
+            $carbon = \Carbon\Carbon::parse($contract['data']['completion_due_date'] ?? '');
+            $completion_due_date = '<b style="border-bottom: 1px dotted black">'.$carbon->year . '</b> év <b style="border-bottom: 1px dotted black">' . $carbon->translatedFormat('F') . '</b> hónap <b style="border-bottom: 1px dotted black">' . $carbon->day . '</b> nap';
+        } else {
+            $completion_due_date = '… év … hónap … nap';
+        }
+
+        @endphp
+        <span class="szam">10.</span> Jelen szerződésben rögzített munka teljesítésének dátuma: {!! $completion_due_date !!}.
     </div>
 
     <div class="pont">
@@ -286,30 +337,50 @@
 </div>
 
 <div class="section cotract-options">
+    @php
+        $has_ground_bracket_checked = isset($contract['data']['has_ground_bracket']) && $contract['data']['has_ground_bracket'] ? 'checked' : '';
+        $has_roof_mounting_checked = isset($contract['data']['roof_mounting']) && $contract['data']['roof_mounting'] ? 'checked' : '';
+        $has_decor_piping_checked = isset($contract['data']['has_decor_and_piping']) && $contract['data']['has_decor_and_piping'] ? 'checked' : '';
+        $has_concrete_wall_checked = isset($contract['data']['has_concrete_wall']) && $contract['data']['has_concrete_wall'] ? 'checked' : '';
+
+        $bracket = $contract['data']['bracket'] ?? null; // Konzol
+        $insulation_cm = $contract['data']['insulation_thickness_cm'] ?? null; // Szigetelés cm-ben
+
+        // Ezek akkor legyenek "checked", ha van értékük
+        $has_bracket_checked = $bracket ? 'checked' : '';
+        $has_insulation_cm_checked = $insulation_cm ? 'checked' : '';
+    @endphp
+
     <div>
-        <input type="checkbox">
+        <input type="checkbox" {{ $has_ground_bracket_checked }}>
         <span>Talpkonzol</span>
     </div>
+
     <div>
-        <input type="checkbox">
-        <span>... konzol</span>
+        <input type="checkbox" {{ $has_bracket_checked }}>
+        <span>{{ $bracket ?? '... konzol' }}</span>
     </div>
+
     <div>
-        <input type="checkbox">
+        <input type="checkbox" {{ $has_roof_mounting_checked }}>
         <span>Tetőszerelés</span>
     </div>
+
     <div>
-        <input type="checkbox">
+        <input type="checkbox" {{ $has_decor_piping_checked }}>
         <span>Dekor és csövezés</span>
     </div>
+
     <div>
-        <input type="checkbox">
-        <span>... cm szigetelés</span>
+        <input type="checkbox" {{ $has_insulation_cm_checked }}>
+        <span>{{ $insulation_cm ? $insulation_cm . ' cm szigetelés' : '... cm szigetelés' }}</span>
     </div>
+
     <div>
-        <input type="checkbox">
+        <input type="checkbox" {{ $has_concrete_wall_checked }}>
         <span>Betonfal</span>
     </div>
+
 </div>
 
 <div class="contact-section">
@@ -317,11 +388,19 @@
     <h3>Norbi: 06-20/778-9928</h3>
 </div>
 
-<div class="signature-line">
+<div class="signature-image">
+    <div>
     @if(!empty($signature_path) && file_exists($signature_path))
-        <p>Aláírás:</p>
         <img src="{{ $signature_path }}" style="width: 200px; height: auto;">
     @endif
+    </div>
+    <div>
+        @if(file_exists(storage_path("app/private/signatures/jegvarazs_szerzodes_v1_kivitelezo_alairas.png")))
+            <img src="{{ storage_path("app/private/signatures/jegvarazs_szerzodes_v1_kivitelezo_alairas.png") }}" style="width: 200px; height: auto;">
+        @endif
+    </div>
+</div>
+<div class="signature-line">
     <div>Megrendelő</div>
     <div>Kivitelező</div>
 </div>
@@ -329,14 +408,36 @@
 <div class="section">
     <h2>Nyilatkozat foglaló megfizetéséről</h2>
     <p>Mint kivitelező felelősségem teljes tudatában nyilatkozom, hogy az általam elvállalt munka ellenértéke :
-        .……….…………………….Ft, melyből </p>
+        <b style="display: inline-block; border-bottom: 1px dotted #000;">{!! $total_gross_amount !!}</b> Ft, melyből </p>
+    @php
+        $cash_amount = $spaces;
+        $transfer_amount = $spaces;
 
+        $amount = $contract['data']['deposit_amount'] ?? null;
+
+        if ($contract['data']['deposit_payment_method'] === "Készpénz") {
+            if (!empty($amount)) {
+                $cash_amount = number_format($amount, 0, ',', ' ');
+            }
+        }
+
+        if ($contract['data']['deposit_payment_method'] === "Átutalás") {
+            if (!empty($amount)) {
+                $transfer_amount = number_format($amount, 0, ',', ' ');
+            }
+        }
+        $due_date = '…………év …………….hónap …………..napjáig';
+
+        if ($contract['data']['deposit_due_date']) {
+            $carbon = \Carbon\Carbon::parse($contract['data']['deposit_due_date']);
+            $due_date = '<b style="border-bottom: 1px dotted black">'.$carbon->year . '</b> év <b style="border-bottom: 1px dotted black">' . $carbon->translatedFormat('F') . '</b> hónap <b style="border-bottom: 1px dotted black">' . $carbon->day . '</b> napjáig';
+        }
+    @endphp
     <div class="pont">
-        <span class="szam">1.</span> a <b>foglaló …………………………… Ft</b> ami a szerződés aláírásakor <b>megfizetésre került</b>.
+        <span class="szam">1.</span> a <b>foglaló <b style="border-bottom: 1px dotted black">{!! $cash_amount !!}</b> Ft</b> ami a szerződés aláírásakor <b>megfizetésre került</b>.
     </div>
     <div class="pont">
-        <span class="szam">2.</span> a <b>foglaló …………………………… Ft mely</b> átutalásra kerül a (…………év …………….hónap
-        …………..napjáig) <b>10104260-72764100-01005001</b> számlaszámra. A kialkudott határidőre történő
+        <span class="szam">2.</span> a <b>foglaló <b style="border-bottom: 1px dotted black">{!! $transfer_amount !!}</b> Ft mely</b> átutalásra kerül a ({!! $due_date !!}) <b>10104260-72764100-01005001</b> számlaszámra. A kialkudott határidőre történő
         átutalás elmulasztásával a szerződés semmisnek tekintendő
     </div>
 
@@ -353,26 +454,16 @@
         <thead>
             <tr>
                 <th>Megnevezés</th>
-                <th>Teljesítmény</th>
+                <th>Mennyiség</th>
             </tr>
         </thead>
         <tbody>
+            @foreach($contract['products'] as $product)
             <tr>
-                <td>Klíma 1</td>
-                <td>3.5 kW</td>
+                <td>{{ $product['title'] }}</td>
+                <td>{{ $product['pivot']['product_qty'] }} db</td>
             </tr>
-            <tr>
-                <td>Klíma 2</td>
-                <td>5.0 kW</td>
-            </tr>
-            <tr>
-                <td>Klíma 3</td>
-                <td>2.5 kW</td>
-            </tr>
-            <tr>
-                <td>Klíma 4</td>
-                <td>4.0 kW</td>
-            </tr>
+            @endforeach
         </tbody>
     </table>
 </div>
@@ -415,9 +506,25 @@
     </p>
     <p>Fent nevezett a fenti tájékoztatást megértettem, tudomásul vettem és személyes adataim rögzítéséhez , kezeléséhez szabad akaratomból
         hozzájárulok. </p>
-    <p style="margin-top: 20px">…………………,………………. …………..év………………hónap……..nap</p>
-</div>
 
+    @php
+        $carbon = \Carbon\Carbon::parse($contract['data']['contract_datetime'] ?? '');
+        $contract_date = '<b style="border-bottom: 1px dotted black">'.$carbon->year . '</b> év <b style="border-bottom: 1px dotted black">' . $carbon->translatedFormat('F') . '</b> hónap <b style="border-bottom: 1px dotted black">' . $carbon->day . '</b> nap';
+    @endphp
+    <p style="margin-top: 20px">{{ $contract['data']['contract_location'] ?? '?'  }}, {!! $contract_date !!}</p>
+</div>
+<div class="signature-image">
+    <div>
+        @if(!empty($signature_path) && file_exists($signature_path))
+            <img src="{{ $signature_path }}" style="width: 200px; height: auto;">
+        @endif
+    </div>
+    <div>
+        @if(file_exists(storage_path("app/private/signatures/jegvarazs_szerzodes_v1_kivitelezo_alairas.png")))
+            <img src="{{ storage_path("app/private/signatures/jegvarazs_szerzodes_v1_kivitelezo_alairas.png") }}" style="width: 200px; height: auto;">
+        @endif
+    </div>
+</div>
 <div class="signature-line">
     <div>Megrendelő</div>
     <div>Kivitelező</div>

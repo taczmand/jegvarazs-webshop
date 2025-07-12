@@ -44,14 +44,24 @@ class AppointmentController extends Controller
                 return $item->viewed_by_name ?? '-';
             })
             ->addColumn('action', function ($item) {
-                return '
-                <button class="btn btn-sm btn-primary edit" data-id="' . $item->id . '" title="Szerkesztés">
-                    <i class="fas fa-edit"></i>
-                </button>
-                <button class="btn btn-sm btn-danger delete" data-id="' . $item->id . '" title="Törlés">
-                    <i class="fas fa-trash-alt"></i>
-                </button>
-            ';
+                $user = auth('admin')->user();
+                $actions = '';
+
+                if ($user && $user->can('edit-appointment')) {
+                    $actions .= '
+                        <button class="btn btn-sm btn-primary edit" data-id="' . $item->id . '" title="Szerkesztés">
+                            <i class="fas fa-edit"></i>
+                        </button>';
+                }
+
+                if ($user && $user->can('delete-appointment')) {
+                    $actions .= '
+                        <button class="btn btn-sm btn-danger delete" data-id="' . $item->id . '" title="Törlés">
+                            <i class="fas fa-trash"></i>
+                        </button>';
+                }
+
+                return $actions;
             })
             ->rawColumns(['action'])
             ->make(true);
@@ -103,7 +113,6 @@ class AppointmentController extends Controller
                 'appointment_date' => $request->input('appointment_date'),
                 'appointment_type' => $request->input('appointment_type', 'Karbantartás'),
                 'message'          => $request->input('message'),
-                'viewed_by'        => $request->input('viewed_by'),
                 'status'           => $request->input('status', 'Függőben'),
             ]);
 
@@ -144,7 +153,4 @@ class AppointmentController extends Controller
             ], 500);
         }
     }
-
-
-
 }

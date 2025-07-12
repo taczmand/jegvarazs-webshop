@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\CheckoutRequest;
 use App\Models\CompanySite;
 use App\Models\Order;
+use App\Models\OrderedProduct;
 use App\Models\OrderHistory;
 use App\Models\OrderItem;
 use App\Services\Order\PaymentHandlers\PaymentHandlerFactory;

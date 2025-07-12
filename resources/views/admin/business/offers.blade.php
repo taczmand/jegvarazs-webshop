@@ -5,26 +5,58 @@
 
     <div class="container p-0">
 
-        <div class="d-flex justify-content-between align-items-center mb-5">
-            <h1 class="h3 text-gray-800 mb-0">Ügyviteli folyamatok / Ajánlatok</h1>
-            <button class="btn btn-success" id="addButton"><i class="fas fa-plus me-1"></i> Új ajánlat</button>
+        <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+            <h2 class="h5 text-primary mb-0"><i class="fa-solid fa-business-time text-primary me-2"></i> Ügyfél folyamatok / Ajánlatok</h2>
+            @if(auth('admin')->user()->can('create-offer'))
+                <button class="btn btn-success" id="addButton"><i class="fas fa-plus me-1"></i> Új ajánlat</button>
+            @endif
         </div>
 
-        <table class="table table-bordered" id="adminTable">
-            <thead>
-            <tr>
-                <th>ID</th>
-                <th>Név</th>
-                <th>Ország</th>
-                <th>Irányítószám</th>
-                <th>Város</th>
-                <th>Cím</th>
-                <th>Készítette</th>
-                <th>Létrehozva</th>
-                <th>Műveletek</th>
-            </tr>
-            </thead>
-        </table>
+        @if(auth('admin')->user()->can('view-offers'))
+
+            <div class="filters d-flex flex-wrap gap-2 mb-3 align-items-center">
+                <div class="filter-group">
+                    <i class="fa-solid fa-filter text-gray-500"></i>
+                </div>
+
+                <div class="filter-group flex-grow-1 flex-md-shrink-0">
+                    <input type="text" placeholder="ID" class="filter-input form-control" data-column="0">
+                </div>
+
+                <div class="filter-group flex-grow-1 flex-md-shrink-0">
+                    <input type="text" placeholder="Név" class="filter-input form-control" data-column="1">
+                </div>
+                <div class="filter-group flex-grow-1 flex-md-shrink-0">
+                    <input type="text" placeholder="Irányítószám" class="filter-input form-control" data-column="3">
+                </div>
+                <div class="filter-group flex-grow-1 flex-md-shrink-0">
+                    <input type="text" placeholder="Város" class="filter-input form-control" data-column="4">
+                </div>
+                <div class="filter-group flex-grow-1 flex-md-shrink-0">
+                    <input type="text" placeholder="Cím" class="filter-input form-control" data-column="5">
+                </div>
+            </div>
+
+            <table class="table table-bordered display responsive nowrap" id="adminTable" style="width:100%">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th data-priority="1">Név</th>
+                    <th>Ország</th>
+                    <th>Irányítószám</th>
+                    <th>Város</th>
+                    <th>Cím</th>
+                    <th>Készítette</th>
+                    <th>Létrehozva</th>
+                    <th data-priority="2">Műveletek</th>
+                </tr>
+                </thead>
+            </table>
+        @else
+            <div class="alert alert-warning">
+                Nincs jogosultságod az ajánlatok megtekintésére.
+            </div>
+        @endif
     </div>
 
 
@@ -134,6 +166,9 @@
 
         $(document).ready(function() {
             const table = $('#adminTable').DataTable({
+                language: {
+                    url: 'https://cdn.datatables.net/plug-ins/2.3.2/i18n/hu.json'
+                },
                 processing: true,
                 serverSide: true,
                 ajax: '{{ route('admin.offers.data') }}',
@@ -163,6 +198,12 @@
                     showToast(error, 'danger');
                 }
                 adminModal.show();
+            });
+
+            $('.filter-input').on('change keyup', function () {
+                var i =$(this).attr('data-column');  // getting column index
+                var v =$(this).val();  // getting search input value
+                table.columns(i).search(v).draw();
             });
 
             // Ajánlat megtekintése
@@ -204,7 +245,7 @@
                         <tr>
                             <td>${item.id}</td>
                             <td>${item.title}</td>
-                            <td>${item.gross_price}</td>
+                            <td>${item.pivot.gross_price}</td>
                         </tr>`;
                     productManagerTable.append(row);
                 });
@@ -351,6 +392,7 @@
 
             function resetForm(title = null) {
                 $('#adminModalLabel').text(title);
+                $('#adminModalForm')[0].reset();
             }
         });
     </script>

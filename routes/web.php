@@ -20,6 +20,7 @@ use App\Http\Controllers\Admin\PaymentMethodController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Admin\RegulationController;
 use App\Http\Controllers\Admin\ShippingMethodController;
+use App\Http\Controllers\Admin\StatController;
 use App\Http\Controllers\Admin\StockStatusesController;
 use App\Http\Controllers\Admin\TagController;
 use App\Http\Controllers\Admin\TaxCategoryController;
@@ -41,7 +42,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::get('/kijelentkezes', [AdminLoginController::class, 'logout']);
 
     Route::middleware(['admin.auth'])->group(function () {
-
+        Route::get('contract/{id}/pdf', [ContractController::class, 'getPdf'])->name('contract.pdf');
         /* Dashboard */
 
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -123,6 +124,17 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('/cimkek', [TagController::class, 'store'])->name('tags.store');
         Route::put('cimkek/{id}', [TagController::class, 'update'])->name('tags.update');
         Route::delete('/cimkek/{id}', [TagController::class, 'destroy'])->name('tags.destroy');
+
+        // Statisztika
+        Route::get('/statisztika/keresett-termekek', [StatController::class, 'searchedProducts'])->name('stats.searched_products');
+        Route::get('/statisztika/keresett-termekek/data', [StatController::class, 'searchedProductsData'])->name('stats.searched_products.data');
+        Route::get('/statisztika/megnezett-termekek', [StatController::class, 'watchedProducts'])->name('stats.watched_products');
+        Route::get('/statisztika/megnezett-termekek/data', [StatController::class, 'watchedProductsData'])->name('stats.watched_products.data');
+        Route::get('/statisztika/admin-tevekenysegek', [StatController::class, 'adminLogs'])->name('stats.admin_logs');
+        Route::get('/statisztika/admin-tevekenysegek/data', [StatController::class, 'adminLogsData'])->name('stats.admin_logs.data');
+        Route::get('/statisztika/vasarolt-termekek', [StatController::class, 'purchasedProducts'])->name('stats.purchased_products');
+        Route::get('/statisztika/vasarolt-termekek/data', [StatController::class, 'purchasedProductsData'])->name('stats.purchased_products.data');
+
 
         // Gyártók
         Route::get('/gyartok', [BrandController::class, 'index'])->name('brands.index');
@@ -314,6 +326,7 @@ Route::post('/elfelejtett-jelszo', [ShopCustomerController::class, 'passwordRese
 Route::get('/regisztracio', [ShopCustomerController::class, 'showRegistrationForm'])->name('registration');
 Route::post('/regisztracio', [ShopCustomerController::class, 'register']);
 Route::view('/regisztracio/sikeres', 'pages.partner_reg_success')->name('customer.register.success');
+Route::get('/kereses', [PagesController::class, 'search'])->name('search');
 
 Route::get('/', [PagesController::class, 'index'])->name('index');
 Route::get('/rolunk', [PagesController::class, 'about'])->name('about');

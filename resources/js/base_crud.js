@@ -13,12 +13,15 @@ export function initCrud(options) {
         order
     } = options;
 
-    const modalDOM = document.getElementById(modalId);
-    const modal = new bootstrap.Modal(modalDOM);
+    if (modalId) {
+        const modalDOM = document.getElementById(modalId);
+        const modal = new bootstrap.Modal(modalDOM);
+    }
     const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
-
-    const form = document.getElementById(formId);
+    if (formId) {
+        const form = document.getElementById(formId);
+    }
 
     const table = $(`#${tableId}`).DataTable({
         language: {
@@ -102,47 +105,49 @@ export function initCrud(options) {
         modal.show();
     });
 
+    if (formId) {
 
-    form.addEventListener('submit', function (e) {
-        e.preventDefault();
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
 
-        const id = form.querySelector('[name="id"]').value;
-        const isEdit = id !== '';
-        const url = isEdit ? `${storeUrl}/${id}` : storeUrl;
+            const id = form.querySelector('[name="id"]').value;
+            const isEdit = id !== '';
+            const url = isEdit ? `${storeUrl}/${id}` : storeUrl;
 
-        const formData = new FormData(form);
-        if (isEdit) formData.append('_method', 'PUT');
-        formData.append('_token', csrfToken);
+            const formData = new FormData(form);
+            if (isEdit) formData.append('_method', 'PUT');
+            formData.append('_token', csrfToken);
 
-        const $submitBtn = $(form).find('.save-btn');
-        const originalHtml = $submitBtn.html();
-        $submitBtn.html('Mentés...').prop('disabled', true);
+            const $submitBtn = $(form).find('.save-btn');
+            const originalHtml = $submitBtn.html();
+            $submitBtn.html('Mentés...').prop('disabled', true);
 
-        $.ajax({
-            url,
-            type: 'POST',
-            data: formData,
-            processData: false,
-            contentType: false,
-            success: (res) => {
-                showToast(res.message || 'Sikeres!', 'success');
-                table.ajax.reload();
-                modal.hide();
-            },
-            error: (xhr) => {
-                let msg = 'Hiba!';
-                if (xhr.responseJSON?.errors) {
-                    msg = Object.values(xhr.responseJSON.errors).flat().join(' ');
-                } else if (xhr.responseJSON?.message) {
-                    msg = xhr.responseJSON.message;
+            $.ajax({
+                url,
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: (res) => {
+                    showToast(res.message || 'Sikeres!', 'success');
+                    table.ajax.reload();
+                    modal.hide();
+                },
+                error: (xhr) => {
+                    let msg = 'Hiba!';
+                    if (xhr.responseJSON?.errors) {
+                        msg = Object.values(xhr.responseJSON.errors).flat().join(' ');
+                    } else if (xhr.responseJSON?.message) {
+                        msg = xhr.responseJSON.message;
+                    }
+                    showToast(msg, 'danger');
+                },
+                complete: () => {
+                    $submitBtn.html(originalHtml).prop('disabled', false);
                 }
-                showToast(msg, 'danger');
-            },
-            complete: () => {
-                $submitBtn.html(originalHtml).prop('disabled', false);
-            }
+            });
         });
-    });
+    }
 
     $(`#${tableId}`).on('click', '.delete', function () {
         if (!confirm('Biztosan törlöd?')) return;

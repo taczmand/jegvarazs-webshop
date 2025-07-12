@@ -7,6 +7,7 @@ use App\Models\BlogPost;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\Searched;
 use Illuminate\Http\Request;
 
 class PagesController extends Controller
@@ -102,5 +103,26 @@ class PagesController extends Controller
         }
 
         return redirect()->back()->with('success', 'Az időpontfoglalás sikeresen elküldve!');
+    }
+
+    public function search(Request $request) {
+        $query = $request->input('query');
+
+        if (!$query) {
+            return redirect()->back()->with('error', 'Kérjük, adjon meg keresési kifejezést.');
+        }
+
+        $products = Product::where('title', 'like', '%' . $query . '%')->where('status', true)
+            ->orWhere('description', 'like', '%' . $query . '%')
+            ->paginate(10);
+
+
+        Searched::create([
+            'search_term' => $query,
+            'number_of_hits' => $products->count(),
+            'ip_address' => $request->ip()
+        ]);
+
+        return view('pages.search_results', compact('products', 'query'));
     }
 }

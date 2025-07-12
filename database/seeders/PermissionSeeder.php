@@ -68,6 +68,20 @@ class PermissionSeeder extends Seeder
             ['id' => 56, 'name' => 'create-worksheet', 'label' => 'Munkalap létrehozása', 'group' => 'Ügyviteli folyamatok'],
             ['id' => 57, 'name' => 'edit-worksheet', 'label' => 'Munkalap szerkesztése', 'group' => 'Ügyviteli folyamatok'],
             ['id' => 58, 'name' => 'delete-worksheet', 'label' => 'Munkalap törlése', 'group' => 'Ügyviteli folyamatok'],
+            ['id' => 59, 'name' => 'view-contracts', 'label' => 'Szerződések megtekintése', 'group' => 'Ügyviteli folyamatok'],
+            ['id' => 60, 'name' => 'create-contract', 'label' => 'Szerződés létrehozása', 'group' => 'Ügyviteli folyamatok'],
+            ['id' => 61, 'name' => 'delete-contract', 'label' => 'Szerződés törlése', 'group' => 'Ügyviteli folyamatok'],
+            ['id' => 62, 'name' => 'view-offers', 'label' => 'Ajánlatok megtekintése', 'group' => 'Ügyviteli folyamatok'],
+            ['id' => 63, 'name' => 'create-offer', 'label' => 'Ajánlat létrehozása', 'group' => 'Ügyviteli folyamatok'],
+            ['id' => 64, 'name' => 'delete-offer', 'label' => 'Ajánlat törlése', 'group' => 'Ügyviteli folyamatok'],
+            ['id' => 65, 'name' => 'view-appointments', 'label' => 'Időpontfoglalások megtekintése', 'group' => 'Ügyviteli folyamatok'],
+            ['id' => 66, 'name' => 'create-appointment', 'label' => 'Időpontfoglalás létrehozása', 'group' => 'Ügyviteli folyamatok'],
+            ['id' => 67, 'name' => 'edit-appointment', 'label' => 'Időpontfoglalás szerkesztése', 'group' => 'Ügyviteli folyamatok'],
+            ['id' => 68, 'name' => 'delete-appointment', 'label' => 'Időpontfoglalás törlése', 'group' => 'Ügyviteli folyamatok'],
+            ['id' => 69, 'name' => 'view-searched-products', 'label' => 'Keresések megtekintése', 'group' => 'Jelentések'],
+            ['id' => 70, 'name' => 'view-viewed-products', 'label' => 'Megtekintett termékek megtekintése', 'group' => 'Jelentések'],
+            ['id' => 71, 'name' => 'view-admin-logs', 'label' => 'Admin tevékenységek megtekintése', 'group' => 'Jelentések'],
+            ['id' => 72, 'name' => 'view-purchased-products', 'label' => 'Vásárolt termékek megtekintése', 'group' => 'Jelentések'],
 
         ];
 

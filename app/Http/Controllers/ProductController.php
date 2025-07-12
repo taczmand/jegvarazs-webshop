@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\Tag;
+use App\Models\WatchedProduct;
+use Illuminate\Http\Request;
 
 class ProductController extends Controller
 {
@@ -120,6 +122,16 @@ class ProductController extends Controller
         $product = Product::with(['category', 'photos'])
             ->where('slug', $productSlug)
             ->firstOrFail();
+
+        WatchedProduct::updateOrCreate(
+            [
+                'product_id' => $product->id,
+                'ip_address' => request()->ip(),
+            ],
+            [
+                'updated_at' => now()
+            ]
+        );
 
         return view('pages.products.show', compact('product'));
     }
