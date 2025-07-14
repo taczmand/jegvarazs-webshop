@@ -6,6 +6,7 @@ use App\Models\Appointment;
 use App\Models\BlogPost;
 use App\Models\Brand;
 use App\Models\Category;
+use App\Models\NewsletterSubscription;
 use App\Models\Product;
 use App\Models\Searched;
 use Illuminate\Http\Request;
@@ -124,5 +125,35 @@ class PagesController extends Controller
         ]);
 
         return view('pages.search_results', compact('products', 'query'));
+    }
+
+    public function newSubscription(Request $request)
+    {
+        /*$request->validate([
+            'email' => 'required|email|max:255'
+        ]);*/
+        // Ellenőrizzük, hogy a felhasználó nem adta-e meg az email címét
+        if (!$request->email) {
+            return response()->json(['result' => 'error', 'error_message' => 'Kérjük, adja meg az email címét.'], 200);
+        }
+        // Ellenőrizzük, hogy az email cím formátuma helyes-e
+        if (!filter_var($request->email, FILTER_VALIDATE_EMAIL)) {
+            return response()->json(['result' => 'error', 'error_message' => 'Kérjük, adjon meg egy érvényes email címet.'], 200);
+        }
+
+        // Ellenőrizzük, hogy a felhasználó már fel van-e iratkozva
+        $existingSubscription = NewsletterSubscription::where('email', $request->email)->first();
+        if ($existingSubscription) {
+            return response()->json(['result' => 'error', 'error_message' => 'Ez az email cím már fel van iratkozva a hírlevélre.'], 200);
+        }
+
+        try {
+            NewsletterSubscription::create([
+                'email' => $request->email
+            ]);
+            return response()->json(['result' => 'success', 'message' => 'Sikeresen feliratkozott a hírlevélre!'], 200);
+        } catch (\Exception $e) {
+            return response()->json(['result' => 'error', 'error_message' => $e->getMessage()], 200);
+        }
     }
 }

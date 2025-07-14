@@ -119,7 +119,7 @@ class ProductController extends Controller
 
     public function show(string $categorySlugs, string $productSlug)
     {
-        $product = Product::with(['category', 'photos'])
+        $product = Product::with(['category', 'photos', 'attributes', 'tags', 'brand'])
             ->where('slug', $productSlug)
             ->firstOrFail();
 
@@ -133,7 +133,13 @@ class ProductController extends Controller
             ]
         );
 
-        return view('pages.products.show', compact('product'));
+        $relatedProducts = Product::where('cat_id', $product->cat_id)
+            ->where('id', '!=', $product->id)
+            ->where('status', 'active')
+            ->take(4)
+            ->get();
+
+        return view('pages.products.show', compact('product', 'relatedProducts'));
     }
 
     public function resolve($slugs)

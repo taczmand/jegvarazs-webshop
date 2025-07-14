@@ -163,7 +163,7 @@
                 $('#user_id').val(row_data.id);
 
                 // Jogosultságok betöltése
-                const user = await fetch(`/admin/felhasznalo/${row_data.id}`);
+                const user = await fetch(`${window.appConfig.APP_URL}admin/felhasznalo/${row_data.id}`);
                 const userData = await user.json();
 
                 $('#name').val(userData.name);

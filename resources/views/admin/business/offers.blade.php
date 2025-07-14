@@ -330,7 +330,7 @@
                 const productManagerTable = $('#productManagerTable tbody');
                 productManagerTable.empty();
 
-                fetch(`/admin/ajanlatok/ajanlat-termekek`)
+                fetch(`${window.appConfig.APP_URL}admin/ajanlatok/ajanlat-termekek`)
                     .then(response => response.json())
                     .then(data => {
                         data.forEach(category => {

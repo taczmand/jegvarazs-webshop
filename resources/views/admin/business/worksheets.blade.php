@@ -796,7 +796,7 @@
                 const productManagerTable = $('#productManagerTable tbody');
                 productManagerTable.empty();
 
-                fetch(`/admin/munkalapok/munkalap-termekek`)
+                fetch(`${window.appConfig.APP_URL}admin/munkalapok/munkalap-termekek`)
                     .then(response => response.json())
                     .then(data => {
                         // Átalakítjuk a meglévő products tömböt egy gyors lookup objektummá

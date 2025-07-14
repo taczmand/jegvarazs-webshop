@@ -38,19 +38,16 @@
                 <div class="col-lg-6 col-md-6">
                     <div class="product__details__pic">
                         @php
-                            $mainPhoto = $product->photos->firstWhere('is_main', 1);
+                            $mainPhoto = $product->photos->firstWhere('is_main', true);
                         @endphp
                         <div class="product__details__pic__item">
                             @if($mainPhoto)
-                                <img class="product__details__pic__item--large" src="{{ asset('storage/' . $mainPhoto->path) }}" alt="{{ $mainPhoto->alt ?? $product->name }}">
+                                <img class="product__details__pic__item--large" src="{{ asset('storage/' . $mainPhoto->path) }}" alt="{{ $mainPhoto->alt ?? $product->title }}">
                             @else
-                                <img class="product__details__pic__item--large" src="{{ asset('images/placeholder.jpg') }}" alt="Nincs kép">
+                                <img class="product__details__pic__item--large" src="{{ asset('static_media/no-image.jpg') }}" alt="{{ $product->title }}">
                             @endif
                         </div>
                         <div class="product__details__pic__slider owl-carousel">
-
-
-
                             @foreach($product->photos as $image)
                                 <img
                                     data-imgbigurl="{{ asset('storage/' . $image->path) }}"
@@ -64,10 +61,42 @@
                 <!-- Product Details -->
                 <div class="col-lg-6 col-md-6">
                     <div class="product__details__text">
+                        @if($product->tags->isNotEmpty())
+                            <div class="mb-3">
+                                @foreach($product->tags as $tag)
+                                    <span class="badge bg-success p-2 text-dark">#{{ $tag->name }}</span>
+                                @endforeach
+                            </div>
+                        @endif
                         <h3>{{ $product->title }}</h3>
+                        @auth('customer')
+                            <div class="product__details__price">{{ number_format($product->gross_price, 0, ',', ' ') }} Ft</div>
+                        @endauth
 
-                        <div class="product__details__price">{{ number_format($product->gross_price, 0, ',', ' ') }} Ft</div>
-                        <p>{{ $product->description }}</p>
+                        @php
+                            $description = strip_tags($product->description);
+
+                            // Ha a szöveg 500 karakternél hosszabb
+                            if (strlen($description) > 500) {
+                                $cutPosition = strrpos(substr($description, 0, 500), ' ');
+                                $shortDescription = substr($description, 0, $cutPosition) . '...';
+                            } else {
+                                $shortDescription = $description;
+                            }
+                        @endphp
+
+                        <p>
+                            {!! $shortDescription !!}
+                            <a href="#tabs-1">Tovább olvasom</a>
+                        </p>
+
+                        @if($product->attributes->isNotEmpty())
+                            <ul>
+                                @foreach($product->attributes as $attribute)
+                                    <li><span>{{ $attribute->name }}:</span> {{ $attribute->pivot->value }}</li>
+                                @endforeach
+                            </ul>
+                        @endif
 
 
                         @auth('customer')
@@ -79,24 +108,15 @@
                                 </div>
                             </div>
                             <a onclick="addToCart({{ $product->id }})" href="#" class="primary-btn">Kosárba</a>
-                            <a href="#" class="heart-icon"><span class="icon_heart_alt"></span></a>
+                            <!--<a href="#" class="heart-icon"><span class="icon_heart_alt"></span></a>-->
                         @else
-                            <a href="{{ route('login') }}" class="primary-btn">Jelentkezz be a vásárláshoz</a>
+                            <a href="{{ route('login') }}" class="primary-btn mt-3">Jelentkezz be a vásárláshoz</a>
                         @endauth
-
+                        @auth('customer')
                         <ul>
-                            <li><b>Availability</b> <span>{{ $product->in_stock ? 'In Stock' : 'Out of Stock' }}</span></li>
-                            <li><b>Shipping</b> <span>01 day shipping. <samp>Free pickup today</samp></span></li>
-                            <li><b>Weight</b> <span>{{ $product->weight }} kg</span></li>
-                            <li><b>Share on</b>
-                                <div class="share">
-                                    <a href="#"><i class="fa fa-facebook"></i></a>
-                                    <a href="#"><i class="fa fa-twitter"></i></a>
-                                    <a href="#"><i class="fa fa-instagram"></i></a>
-                                    <a href="#"><i class="fa fa-pinterest"></i></a>
-                                </div>
-                            </li>
+                            <li><b>Készlet</b> <span>{{ $product->in_stock ? 'In Stock' : 'Out of Stock' }}</span></li>
                         </ul>
+                        @endauth
                     </div>
                 </div>
 
@@ -105,25 +125,12 @@
                     <div class="product__details__tab">
                         <ul class="nav nav-tabs" role="tablist">
                             <li class="nav-item"><a class="nav-link active" data-toggle="tab" href="#tabs-1" role="tab">Leírás</a></li>
-                            <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tabs-2" role="tab">Information</a></li>
                         </ul>
                         <div class="tab-content">
                             <div class="tab-pane active" id="tabs-1" role="tabpanel">
                                 <div class="product__details__tab__desc">
                                     <h6>Termék leírás</h6>
-                                    <p>{{ $product->description }}</p>
-                                </div>
-                            </div>
-                            <div class="tab-pane" id="tabs-2" role="tabpanel">
-                                <div class="product__details__tab__desc">
-                                    <h6>Additional Information</h6>
-
-                                </div>
-                            </div>
-                            <div class="tab-pane" id="tabs-3" role="tabpanel">
-                                <div class="product__details__tab__desc">
-                                    <h6>Reviews</h6>
-
+                                    <p>{!! $product->description !!}</p>
                                 </div>
                             </div>
                         </div>
@@ -141,71 +148,37 @@
             <div class="row">
                 <div class="col-lg-12">
                     <div class="section-title related__product__title">
-                        <h2>Related Product</h2>
+                        <h2>Hasonló termékek</h2>
                     </div>
                 </div>
             </div>
             <div class="row">
-                <div class="col-lg-3 col-md-4 col-sm-6">
-                    <div class="product__item">
-                        <div class="product__item__pic set-bg" data-setbg="img/product/product-1.jpg">
-                            <ul class="product__item__pic__hover">
-                                <li><a href="#"><i class="fa fa-heart"></i></a></li>
-                                <li><a href="#"><i class="fa fa-retweet"></i></a></li>
-                                <li><a href="#"><i class="fa fa-shopping-cart"></i></a></li>
-                            </ul>
-                        </div>
-                        <div class="product__item__text">
-                            <h6><a href="#">Crab Pool Security</a></h6>
-                            <h5>$30.00</h5>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-3 col-md-4 col-sm-6">
-                    <div class="product__item">
-                        <div class="product__item__pic set-bg" data-setbg="img/product/product-2.jpg">
-                            <ul class="product__item__pic__hover">
-                                <li><a href="#"><i class="fa fa-heart"></i></a></li>
-                                <li><a href="#"><i class="fa fa-retweet"></i></a></li>
-                                <li><a href="#"><i class="fa fa-shopping-cart"></i></a></li>
-                            </ul>
-                        </div>
-                        <div class="product__item__text">
-                            <h6><a href="#">Crab Pool Security</a></h6>
-                            <h5>$30.00</h5>
+
+                <!-- Loop through related products -->
+                @foreach($relatedProducts as $related_product)
+                    @php
+                        $fullSlug = $related_product->category->getFullSlug() . '/' . $related_product->slug;
+                        $mainPhoto = $related_product->photos->firstWhere('is_main', true);
+                    @endphp
+                    <div class="col-lg-3 col-md-4 col-sm-6">
+                        <div class="product__item">
+                            <div class="product__item__pic set-bg" data-setbg="{{ asset('storage/' . $mainPhoto?->path ?? 'static_media/no-image.jpg') }}">
+                                <ul class="product__item__pic__hover">
+                                    <!--<li><a href="#"><i class="fa fa-heart"></i></a></li>
+                                    <li><a href="#"><i class="fa fa-retweet"></i></a></li>-->
+                                    @auth('customer')
+                                        <li><a href="#" onclick="addToCart({{ $related_product->id }})"><i class="fa fa-shopping-cart"></i></a></li>
+                                    @endauth
+                                </ul>
+                            </div>
+                            <div class="product__item__text">
+                                <h6><a href="{{ route('products.resolve', ['slugs' => $fullSlug]) }}">{{ $related_product->title }}</a></h6>
+                                <h5>{{ number_format($related_product->gross_price, 0, ',', ' ') }} Ft</h5>
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div class="col-lg-3 col-md-4 col-sm-6">
-                    <div class="product__item">
-                        <div class="product__item__pic set-bg" data-setbg="img/product/product-3.jpg">
-                            <ul class="product__item__pic__hover">
-                                <li><a href="#"><i class="fa fa-heart"></i></a></li>
-                                <li><a href="#"><i class="fa fa-retweet"></i></a></li>
-                                <li><a href="#"><i class="fa fa-shopping-cart"></i></a></li>
-                            </ul>
-                        </div>
-                        <div class="product__item__text">
-                            <h6><a href="#">Crab Pool Security</a></h6>
-                            <h5>$30.00</h5>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-3 col-md-4 col-sm-6">
-                    <div class="product__item">
-                        <div class="product__item__pic set-bg" data-setbg="img/product/product-7.jpg">
-                            <ul class="product__item__pic__hover">
-                                <li><a href="#"><i class="fa fa-heart"></i></a></li>
-                                <li><a href="#"><i class="fa fa-retweet"></i></a></li>
-                                <li><a href="#"><i class="fa fa-shopping-cart"></i></a></li>
-                            </ul>
-                        </div>
-                        <div class="product__item__text">
-                            <h6><a href="#">Crab Pool Security</a></h6>
-                            <h5>$30.00</h5>
-                        </div>
-                    </div>
-                </div>
+                @endforeach
+
             </div>
         </div>
     </section>

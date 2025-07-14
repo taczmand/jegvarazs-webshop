@@ -13,7 +13,7 @@ class PermissionSeeder extends Seeder
         $permissions = [
             ['id' => 1, 'name' => 'view-orders', 'label' => 'Rendelések megtekintése', 'group' => 'Rendelések'],
             ['id' => 3, 'name' => 'view-customers', 'label' => 'Vevők és partenerek megtekintése', 'group' => 'Vevők és partnerek'],
-            ['id' => 4, 'name' => 'create-customer', 'label' => 'Vevő vagy partner létrehozása', 'group' => 'Vevők és parnerek'],
+            ['id' => 4, 'name' => 'create-customer', 'label' => 'Vevő vagy partner létrehozása', 'group' => 'Vevők és partnerek'],
             ['id' => 5, 'name' => 'view-worksheets', 'label' => 'Munkalapok megtekintése', 'group' => 'Munkalapok'],
             ['id' => 6, 'name' => 'view-own-worksheets', 'label' => 'Saját munkalap megtekintése', 'group' => 'Munkalapok'],
             ['id' => 7, 'name' => 'edit-order', 'label' => 'Rendelés szerkesztése', 'group' => 'Rendelések'],

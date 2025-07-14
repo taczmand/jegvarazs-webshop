@@ -157,7 +157,7 @@
                                         <div class="product__item__pic set-bg" data-setbg="{{ asset('storage/' . $mainPhoto?->path ?? 'static_media/no-image.jpg') }}">
                                             @auth('customer')
                                                 <ul class="product__item__pic__hover">
-                                                    <li><a href="#"><i class="fa fa-heart"></i></a></li>
+                                                    <!--<li><a href="#"><i class="fa fa-heart"></i></a></li>-->
                                                     <li><a href="#" onclick="addToCart({{ $product->id }})"><i class="fa fa-shopping-cart"></i></a></li>
                                                 </ul>
                                             @endauth

@@ -57,7 +57,7 @@
     <div class="map">
 
         <iframe
-            src="https://www.google.com/maps/embed?pb=!1m14!1m8!1m3!1d172453.52189512542!2d19.745011632789563!3d47.517726068584345!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xb1e23a0095f31d3%3A0x17f667b9171735!2zSsOpZ3ZhcsOhenMgS2zDrW1hIErDoXN6YmVyw6lueQ!5e0!3m2!1shu!2shu!4v1747079509692!5m2!1shu!2shu"
+            src="{{ $basic_data['company_address_maps_link'] }}"
             height="500"
             style="border:0;"
             allowfullscreen=""

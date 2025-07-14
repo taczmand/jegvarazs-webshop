@@ -626,7 +626,7 @@
                 const productManagerTable = $('#productManagerTable tbody');
                 productManagerTable.empty();
 
-                fetch(`/admin/szerzodesek/szerzodes-termekek`)
+                fetch(`${window.appConfig.APP_URL}admin/szerzodesek/szerzodes-termekek`)
                     .then(response => response.json())
                     .then(data => {
                         data.forEach(category => {

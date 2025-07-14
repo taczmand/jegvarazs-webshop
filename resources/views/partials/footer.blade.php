@@ -5,12 +5,12 @@
             <div class="col-lg-3 col-md-6 col-sm-6">
                 <div class="footer__about">
                     <div class="footer__about__logo">
-                        <a href="./index.html"><img src="{{ asset('storage/logo.jpg') }}" alt=""></a>
+                        <a href="{{ route('index') }}"><img src="{{ asset('static_media/logo.jpg') }}" alt=""></a>
                     </div>
                     <ul>
-                        <li>Cím: 5100 Jászberény, Bercsényi út 78.</li>
-                        <li>Telefon: +36 20 6612 061</li>
-                        <li>Email: info@jegvarazsbolt.hu</li>
+                        <li>Cím: <a href="{{ $basicdata['company_address_maps_link'] }}" target="_blank">{{ $basicdata['company_address'] }}</a></li>
+                        <li>Telefon: <a href="tel:{{ $basicdata['support_phone'] }}">{{ $basicdata['support_phone'] }}</a></li>
+                        <li>Email: <a href="mailto:{{ $basicdata['support_email'] }}">{{ $basicdata['support_email'] }}</a></li>
                     </ul>
                 </div>
             </div>
@@ -23,29 +23,53 @@
                             <a href="{{ $regulation->file_path }}" target="_blank"><li>{{ $regulation->file_name }}</li></a>
                         @endforeach
                     </ul>
-                    <ul>
-                        <li><a href="#">Link 1</a></li>
-                        <li><a href="#">Link 2</a></li>
-                        <li><a href="#">Link 3</a></li>
-                        <li><a href="#">Link 4</a></li>
-                        <li><a href="#">Link 5</a></li>
-                        <li><a href="#">Link 6</a></li>
-                    </ul>
                 </div>
             </div>
             <div class="col-lg-4 col-md-12">
                 <div class="footer__widget">
                     <h6>Iratkozzon fel hírlevelünkre!</h6>
                     <p>Értesüljön elsőként híreinkről, ajánlatainkról és feliratkozóinknak szóló, különleges akcióinkról!</p>
-                    <form action="#">
-                        <input type="text" placeholder="Enter your mail">
-                        <button type="submit" class="site-btn">Feliratkozás</button>
+                    <form>
+                        <input type="text" placeholder="E-mail cím" id="subscription_email" required>
+                        <button data-subscribe-button class="site-btn">Feliratkozás</button>
                     </form>
                     <div class="footer__widget__social">
-                        <a href="#"><i class="fab fa-facebook"></i></a>
-                        <a href="#"><i class="fab fa-instagram"></i></a>
-                        <a href="#"><i class="fab fa-twitter"></i></a>
-                        <a href="#"><i class="fab fa-pinterest"></i></a>
+                        @if(!empty($basicdata['social_facebook']))
+                            <a href="{{ $basicdata['social_facebook'] }}" target="_blank"><i class="fab fa-facebook"></i></a>
+                        @endif
+                        @if(!empty($basicdata['social_instagram']))
+                            <a href="{{ $basicdata['social_instagram'] }}" target="_blank"><i class="fab fa-instagram"></i></a>
+                        @endif
+                        @if(!empty($basicdata['social_twitter']))
+                            <a href="{{ $basicdata['social_twitter'] }}" target="_blank"><i class="fab fa-twitter"></i></a>
+                        @endif
+                            @if(!empty($basicdata['social_linkedin']))
+                                <a href="{{ $basicdata['social_linkedin'] }}" target="_blank"><i class="fab fa-linkedin"></i></a>
+                            @endif
+                            @if(!empty($basicdata['social_youtube']))
+                                <a href="{{ $basicdata['social_youtube'] }}" target="_blank"><i class="fab fa-youtube"></i></a>
+                            @endif
+                            @if(!empty($basicdata['social_tiktok']))
+                                <a href="{{ $basicdata['social_tiktok'] }}" target="_blank"><i class="fab fa-tiktok"></i></a>
+                            @endif
+                            @if(!empty($basicdata['social_pinterest']))
+                                <a href="{{ $basicdata['social_pinterest'] }}" target="_blank"><i class="fab fa-pinterest-p"></i></a>
+                            @endif
+                            @if(!empty($basicdata['social_whatsapp']))
+                                <a href="{{ $basicdata['social_whatsapp'] }}" target="_blank"><i class="fab fa-whatsapp"></i></a>
+                            @endif
+                            @if(!empty($basicdata['social_telegram']))
+                                <a href="{{ $basicdata['social_telegram'] }}" target="_blank"><i class="fab fa-telegram-plane"></i></a>
+                            @endif
+                            @if(!empty($basicdata['social_viber']))
+                                <a href="{{ $basicdata['social_viber'] }}" target="_blank"><i class="fab fa-viber"></i></a>
+                            @endif
+                            @if(!empty($basicdata['social_snapchat']))
+                                <a href="{{ $basicdata['social_snapchat'] }}" target="_blank"><i class="fab fa-snapchat-ghost"></i></a>
+                            @endif
+                            @if(!empty($basicdata['social_twitch']))
+                                <a href="{{ $basicdata['social_twitch'] }}" target="_blank"><i class="fab fa-twitch"></i></a>
+                            @endif
                     </div>
                 </div>
             </div>
@@ -53,10 +77,11 @@
         <div class="row">
             <div class="col-lg-12">
                 <div class="footer__copyright">
-                    <div class="footer__copyright__text"><p><!-- Link back to Colorlib can't be removed. Template is licensed under CC BY 3.0. -->
-                            Copyright &copy;<script>document.write(new Date().getFullYear());</script> All rights reserved
-                            <!-- Link back to Colorlib can't be removed. Template is licensed under CC BY 3.0. --></p></div>
-                    <div class="footer__copyright__payment"><img src="img/payment-item.png" alt=""></div>
+                    <div class="footer__copyright__text"><p>
+                        @if(!empty($basicdata['company_footer_text']))
+                            {!! $basicdata['company_footer_text'] !!}
+                        @endif
+                    </div>
                 </div>
             </div>
         </div>

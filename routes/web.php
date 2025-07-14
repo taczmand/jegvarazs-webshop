@@ -337,6 +337,9 @@ Route::get('/letoltesek', [PagesController::class, 'downloads'])->name('download
 Route::get('/blog', [PagesController::class, 'blog'])->name('blog');
 Route::get('/blog/{slug}', [PagesController::class, 'blogPost'])->name('blog.post');
 
+// Új feliratkozás
+Route::post('/newsletter/add', [PagesController::class, 'newSubscription'])->name('cart.new_subscription');
+
 Route::middleware(['auth:customer'])->group(function () {
     // Kosár
     Route::get('/kosar', [CartController::class, 'index'])->name('cart');
@@ -344,6 +347,8 @@ Route::middleware(['auth:customer'])->group(function () {
     Route::get('/kosar/osszesito', [CartController::class, 'fetchSummary'])->name('cart.summary');
     Route::post('/kosar/torles', [CartController::class, 'removeItemFromCart'])->name('cart.item.delete');
     Route::post('/kosar/mennyiseg-valtoztatas', [CartController::class, 'changeItemQty'])->name('cart.item.change_qty');
+
+
 
     // Pénztár
     Route::get('/penztar', [CheckoutController::class, 'index'])->name('checkout');

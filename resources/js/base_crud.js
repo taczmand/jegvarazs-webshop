@@ -15,13 +15,14 @@ export function initCrud(options) {
 
     if (modalId) {
         const modalDOM = document.getElementById(modalId);
-        const modal = new bootstrap.Modal(modalDOM);
+        if (modalDOM) {
+            var modal = new bootstrap.Modal(modalDOM);
+        }
     }
+
     const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
-    if (formId) {
-        const form = document.getElementById(formId);
-    }
+    const form = document.getElementById(formId);
 
     const table = $(`#${tableId}`).DataTable({
         language: {
@@ -105,7 +106,7 @@ export function initCrud(options) {
         modal.show();
     });
 
-    if (formId) {
+    if (form) {
 
         form.addEventListener('submit', function (e) {
             e.preventDefault();

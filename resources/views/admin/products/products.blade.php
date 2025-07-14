@@ -178,10 +178,17 @@
 @endsection
 
 @section('scripts')
+    <script src="https://cdn.tiny.cloud/1/k486ypuedp01hfc64g7mn3t9rc5lp8h53a5korymr6qvuvb9/tinymce/7/tinymce.min.js" referrerpolicy="origin"></script>
     <script type="module">
         const productModalDOM = document.getElementById('productModal');
         const productModal = new bootstrap.Modal(productModalDOM);
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+        tinymce.init({
+            selector: 'textarea#description',
+            plugins: 'anchor autolink charmap codesample emoticons image link lists media searchreplace table visualblocks wordcount',
+            toolbar: 'undo redo | blocks | bold italic | alignleft aligncenter alignright | indent outdent | bullist numlist | code | table'
+        });
 
         $(document).ready(function() {
             const table = $('#productsTable').DataTable({
@@ -239,6 +246,7 @@
             $('#saveProduct').on('click', function (e) {
                 e.preventDefault();
                 const form = document.getElementById('productForm');
+                tinymce.triggerSave();
                 const formData = new FormData(form);
                 formData.append('_token', csrfToken);
 
@@ -308,7 +316,7 @@
                     $('#status').val(product.status);
                     $('#is_offerable').prop('checked', product.is_offerable);
                     $('#is_selectable_by_installer').prop('checked', product.is_selectable_by_installer);
-                    $('#description').val(product.description || '');
+                    tinymce.get('description').setContent(product.description || '');
 
                     const treeCategories = buildCategoryTree(allMetaData.original.categories);
                     renderCategories(treeCategories, product.cat_id);

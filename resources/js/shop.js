@@ -11,6 +11,7 @@ import '../js/jquery.slicknav.js';
 import '../js/mixitup.min.js';
 import '../js/owl.carousel.min.js';
 import '../js/cart.js';
+import '../js/newsletter.js';
 import * as bootstrap from "bootstrap";
 
 'use strict';
@@ -274,7 +275,7 @@ import * as bootstrap from "bootstrap";
         $button.parent().find('input').val(newVal);
     });
 
-    window.showToast = function(message, type = 'success') {
+    /*window.showToast = function(message, type = 'success') {
         const toastEl = document.getElementById('globalToast');
         const toastBody = document.getElementById('globalToastMessage');
 
@@ -285,8 +286,53 @@ import * as bootstrap from "bootstrap";
         toastBody.textContent = message;
 
         const toast = new bootstrap.Toast(toastEl, { delay: 3000 });
+        console.log(toast);
         toast.show();
+    };*/
+
+    window.showToast = function(message, type = 'success', duration = 3000) {
+        const container = document.getElementById('myCoolToastContainer');
+        if (!container) return;
+
+        const toast = document.createElement('div');
+        toast.className = 'myCoolToast';
+        toast.textContent = message;
+
+        // Inline stílus a típus alapján
+        switch (type) {
+            case 'success':
+                toast.style.backgroundColor = '#28a745';
+                toast.style.color = '#fff';
+                break;
+            case 'error':
+                toast.style.backgroundColor = '#dc3545';
+                toast.style.color = '#fff';
+                break;
+            case 'info':
+                toast.style.backgroundColor = '#17a2b8';
+                toast.style.color = '#fff';
+                break;
+            case 'warning':
+                toast.style.backgroundColor = '#ffc107';
+                toast.style.color = '#000';
+                break;
+            default:
+                toast.style.backgroundColor = '#333';
+                toast.style.color = '#fff';
+        }
+
+        container.appendChild(toast);
+
+        setTimeout(() => toast.classList.add('show'), 100);
+
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => toast.remove(), 400);
+        }, duration);
     };
+
+
+
 
     window.baseURL = function() {
         const isDev = import.meta.env.MODE === 'development';
@@ -294,6 +340,8 @@ import * as bootstrap from "bootstrap";
         console.log('Futási környezet:', isDev ? 'Fejlesztés' : 'Éles');
         return import.meta.env.VITE_BASE_URL;
     }
+
+
 
 })(jQuery);
 
