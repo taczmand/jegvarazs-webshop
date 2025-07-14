@@ -306,6 +306,7 @@
                                     <div class="mb-3">
                                         <label for="cleaning_type" class="form-label">Tisztítás típusa*</label>
                                         <select id="cleaning_type" name="extra_data[cleaning_type]" class="form-control">
+                                            <option value="">Válassz</option>
                                             <option value="basic_clean">Alaptisztítás</option>
                                             <option value="full_clean">Teljes mosás</option>
                                         </select>
@@ -317,6 +318,7 @@
                                     <div class="mb-3">
                                         <label for="self_installation" class="form-label">Saját telepítés?*</label>
                                         <select id="self_installation" name="extra_data[self_installation]" class="form-control">
+                                            <option value="">Válassz</option>
                                             <option value="igen">Igen</option>
                                             <option value="nem">Nem</option>
                                         </select>
@@ -327,6 +329,7 @@
                                     <div class="mb-3">
                                         <label for="exist_contract" class="form-label">Szerződéskötés történt?*</label>
                                         <select id="exist_contract" name="extra_data[exist_contract]" class="form-control">
+                                            <option value="">Válassz</option>
                                             <option value="igen">Igen</option>
                                             <option value="nem">Nem</option>
                                             <option value="hitel">Hitelre lesz</option>

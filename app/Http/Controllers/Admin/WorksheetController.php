@@ -11,6 +11,7 @@ use App\Models\WorksheetImage;
 use App\Models\WorksheetProduct;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Spatie\LaravelImageOptimizer\Facades\ImageOptimizer;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -389,6 +390,7 @@ class WorksheetController extends Controller
 
             // képek mentése
             $imageGroups = [
+                'new_photos_to_local' => 'Helyszíni felmérés',
                 'new_photos_to_datatable' => 'Adattábla',
                 'new_photos_to_certificate' => 'Telepítési tanúsítvány',
                 'new_photos_to_install' => 'Szerelés',
@@ -400,14 +402,21 @@ class WorksheetController extends Controller
 
                     foreach ($request->file($inputName) as $photo) {
                         $extension = $photo->getClientOriginalExtension();
-                        $filename = Str::random(40) . '.' . $extension; // vagy: uniqid() . '.' . $extension
+                        $filename = Str::random(40) . '.' . $extension;
                         $storagePath = 'worksheet_images/' . $filename;
 
-                        // Csak ha még nincs ilyen fájl, akkor mentjük
                         if (!Storage::disk('local')->exists($storagePath)) {
+                            // Mentés a storage/app/worksheet_images alá
                             $photo->storeAs('worksheet_images', $filename, 'local');
+
+                            // Teljes fájlút, amit az optimizáló használ
+                            $fullImagePath = Storage::disk('local')->path($storagePath);
+
+                            // Kép optimalizálása
+                            ImageOptimizer::optimize($fullImagePath);
+
                             $photos[] = [
-                                'image_path' => $filename, // Csak a fájlnév, nem az elérési út
+                                'image_path' => $filename,
                                 'image_type' => $imageType,
                             ];
                         }
@@ -418,8 +427,6 @@ class WorksheetController extends Controller
                     }
                 }
             }
-
-
 
             DB::commit();
 
