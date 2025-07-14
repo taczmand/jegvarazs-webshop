@@ -10,9 +10,44 @@ use Illuminate\Http\Request;
 
 class ProductController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $products = Product::with('category')->paginate(12);
+        // Query paraméterek
+        $tags = $request->query('tag');
+        $sortBy = $request->query('sortBy');
+
+        // Alap query
+        $query = Product::with('category')
+            ->where('status', 'active');
+
+        // 🔍 Tag szűrés, ha van
+        if ($tags) {
+            $tagArray = explode(',', $tags);
+            $query->whereHas('tags', function ($q) use ($tagArray) {
+                $q->whereIn('tag_id', $tagArray);
+            });
+        }
+
+        // 🔃 Rendezés
+        switch ($sortBy) {
+            case 'productDesc':
+                $query->orderBy('title', 'desc');
+                break;
+            case 'priceAsc':
+                $query->orderBy('gross_price', 'asc');
+                break;
+            case 'priceDesc':
+                $query->orderBy('gross_price', 'desc');
+                break;
+            case 'productAsc':
+                $query->orderBy('title', 'asc');
+                break;
+            default:
+                $query->orderBy('title', 'asc'); // alapértelmezett
+        }
+
+        // Pagináció
+        $products = $query->paginate(12)->withQueryString();
 
         $tags = Tag::all()->pluck('id', 'name')->toArray();
 

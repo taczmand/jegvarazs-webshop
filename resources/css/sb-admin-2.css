@@ -11307,27 +11307,3 @@ body.sidebar-toggled footer.sticky-footer {
     100% { transform: rotate(360deg);}
 }
 
-.myCoolToast {
-    background-color: #333;
-    color: #fff;
-    padding: 1rem 1.5rem;
-    border-radius: 5px;
-    margin-top: 10px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-    opacity: 0;
-    transform: translateY(20px);
-    transition: all 0.4s ease;
-    max-width: 300px;
-    font-size: 0.95rem;
-}
-
-.myCoolToast.show {
-    opacity: 1;
-    transform: translateY(0);
-}
-
-.myCoolToast.success { background-color: #28a745 !important;}
-.myCoolToast.error { background-color: #dc3545 !important; }
-.myCoolToast.info { background-color: #17a2b8 !important; }
-.myCoolToast.warning { background-color: #ffc107 !important; color: #000; }
-

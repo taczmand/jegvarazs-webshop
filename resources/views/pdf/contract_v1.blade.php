@@ -458,10 +458,10 @@
             </tr>
         </thead>
         <tbody>
-            @foreach($contract['products'] as $product)
+            @foreach($products as $product)
             <tr>
                 <td>{{ $product['title'] }}</td>
-                <td>{{ $product['pivot']['product_qty'] }} db</td>
+                <td>{{ $product['product_qty'] }} db</td>
             </tr>
             @endforeach
         </tbody>

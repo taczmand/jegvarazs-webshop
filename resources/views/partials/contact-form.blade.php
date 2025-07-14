@@ -18,7 +18,7 @@
                 </div>
                 <div class="col-lg-12 text-center">
                     <textarea name="message" placeholder="Üzenet"></textarea>
-                    <button type="submit" class="site-btn">Küldés</button>
+                    <button type="submit" data-subscribe-button class="site-btn">Küldés</button>
                 </div>
             </div>
         </form>

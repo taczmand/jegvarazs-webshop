@@ -35,25 +35,7 @@
     @include('partials.contact-form')
 </main>
 
-<!--<div id="toastContainer" class="position-fixed bottom-0 end-0 p-3" style="z-index: 1055;">
-    <div id="globalToast" class="toast bg-success text-white" role="alert" aria-live="assertive" aria-atomic="true" style="display: none;">
-        <div class="d-flex">
-            <div id="globalToastMessage" class="toast-body">
-                Üzenet szövege
-            </div>
-            <button type="button" class="close text-white m-auto me-2" onclick="hideToast()">
-                <span aria-hidden="true">&times;</span>
-            </button>
-        </div>
-    </div>
-</div>-->
-
-<div id="myCoolToastContainer" style="position: fixed; bottom: 20px; right: 20px; z-index: 9999; padding: 1rem"></div>
-
-
-
-
-
+<div id="myCoolToastContainer" style="position: fixed; bottom: 20px; right: 20px; z-index: 9999;"></div>
 
 @include('partials.footer')
 

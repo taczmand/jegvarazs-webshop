@@ -249,6 +249,14 @@
                             <!-- Képek tab-->
 
                             <div class="tab-pane fade" id="images">
+                                <h5>Helyszíni felmérés képek</h5>
+                                <div class="mb-3">
+                                    <label class="form-label">Új képek feltöltése a helyszínen</label>
+                                    <input type="file" class="form-control" name="new_photos_to_local[]" multiple accept="image/*">
+                                </div>
+
+                                <div id="worksheetLocalPhotos" class="mt-3"></div>
+
                                 <h5>Adattábla képek</h5>
                                 <div class="mb-3">
                                     <label class="form-label">Új képek feltöltése adattábláról</label>
@@ -849,15 +857,18 @@
             }
 
             function renderPhotos(photos = []) {
+                const containerForLocalPhotos = $('#worksheetLocalPhotos');
                 const containerForDatatablePhotos = $('#worksheetDataTablePhotos');
                 const containerForCertificatePhotos = $('#worksheetCertificatePhotos');
                 const containerForInstallPhotos = $('#worksheetInstallPhotos');
 
+                containerForLocalPhotos.empty();
                 containerForDatatablePhotos.empty();
                 containerForCertificatePhotos.empty();
                 containerForInstallPhotos.empty();
 
                 if (!photos.length) {
+                    containerForLocalPhotos.append('<p class="text-muted">Nincs feltöltött adattábla kép.</p>');
                     containerForDatatablePhotos.append('<p class="text-muted">Nincs feltöltött adattábla kép.</p>');
                     containerForCertificatePhotos.append('<p class="text-muted">Nincs feltöltött tanúsítvány kép.</p>');
                     containerForInstallPhotos.append('<p class="text-muted">Nincs feltöltött szerelés kép.</p>');
@@ -865,12 +876,14 @@
                 }
 
                 const containers = {
+                    'Helyszíni felmérés': containerForLocalPhotos,
                     'Adattábla': containerForDatatablePhotos,
                     'Telepítési tanúsítvány': containerForCertificatePhotos,
                     'Szerelés': containerForInstallPhotos
                 };
 
                 const tables = {
+                    'Helyszíni felmérés': createPhotoTable(),
                     'Adattábla': createPhotoTable(),
                     'Telepítési tanúsítvány': createPhotoTable(),
                     'Szerelés': createPhotoTable()
@@ -980,6 +993,7 @@
                     $(form).find('input[type="file"]').val(''); // fájlmezők törlése
 
                     // Ha szeretnél, eltüntethetsz előzőleg betöltött képeket is, pl.:
+                    $('#worksheetLocalPhotos').empty();
                     $('#worksheetDataTablePhotos').empty();
                     $('#worksheetCertificatePhotos').empty();
                     $('#worksheetInstallPhotos').empty();

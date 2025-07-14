@@ -275,20 +275,6 @@ import * as bootstrap from "bootstrap";
         $button.parent().find('input').val(newVal);
     });
 
-    /*window.showToast = function(message, type = 'success') {
-        const toastEl = document.getElementById('globalToast');
-        const toastBody = document.getElementById('globalToastMessage');
-
-        // Típus alapján módosítjuk a háttér színt (Bootstrap 5)
-        toastEl.classList.remove('bg-success', 'bg-danger', 'bg-warning', 'bg-info');
-        toastEl.classList.add(`bg-${type}`);
-
-        toastBody.textContent = message;
-
-        const toast = new bootstrap.Toast(toastEl, { delay: 3000 });
-        console.log(toast);
-        toast.show();
-    };*/
 
     window.showToast = function(message, type = 'success', duration = 3000) {
         const container = document.getElementById('myCoolToastContainer');
@@ -341,7 +327,111 @@ import * as bootstrap from "bootstrap";
         return import.meta.env.VITE_BASE_URL;
     }
 
+    // ha kattint a tag-filter class-ra, akkor a href alapján szűrje a termékeket
+    $(document).on('click', '.tag-filter', function (e) {
+        e.preventDefault();
+        // figyelembe kell venni, hogy már lehet több tag is kiválasztva, ezért a href alapján kell szűrni
+        const filter = $(this).attr('href');
+        const selected_tag = $(this).val();
 
+        const currentUrl = new URL(window.location.href);
+        const searchParams = new URLSearchParams(currentUrl.search);
+        const existingTags = searchParams.get('tag');
+        let newTags = [];
+        if (existingTags) {
+            newTags = existingTags.split(',').filter(tag => tag !== filter);
+        }
+        if (!newTags.includes(selected_tag)) {
+            newTags.push(selected_tag);
+        } else {
+            // ha már benne van, akkor eltávolítjuk
+            newTags = newTags.filter(tag => tag !== selected_tag);
+        }
+        searchParams.set('tag', newTags.join(','));
+        currentUrl.search = searchParams.toString();
+        window.location.href = currentUrl.toString();
+
+    });
+
+    $(document).on('change', '#sortBy', function (e) {
+        e.preventDefault();
+        const sortBy = $(this).val();
+        const currentUrl = new URL(window.location.href);
+        const searchParams = new URLSearchParams(currentUrl.search);
+
+        // Ha már van 'sortBy' paraméter, akkor frissítjük, különben hozzáadjuk
+        if (searchParams.has('sortBy')) {
+            searchParams.set('sortBy', sortBy);
+        } else {
+            searchParams.append('sortBy', sortBy);
+        }
+
+        currentUrl.search = searchParams.toString();
+        window.location.href = currentUrl.toString();
+    })
+
+    updateTagColors();
+
+    // itt legyen egy function ami megváltoztattja tag ek színét annak függvényében, hogy mi van a URL-ben
+    function updateTagColors(){
+        const currentUrl = new URL(window.location.href);
+        const searchParams = new URLSearchParams(currentUrl.search);
+        const existingTags = searchParams.get('tag');
+
+        if (existingTags) {
+            const tags = existingTags.split(',');
+
+            $('.tag-filter').each(function() {
+                const tag = $(this).val();
+                if (tags.includes(tag)) {
+                    $('#tag_label_'+tag).css('background-color', '#007bff'); // vagy bármilyen szín, ami jelzi, hogy kiválasztott
+                } else {
+                    $('#tag_label_'+tag).css('background-color', '#f5f5f5'); // alapértelmezett szín
+                }
+            });
+        }
+    }
+
+    window.addEventListener('click', async function (event) {
+        const subscriptionBtn = event.target.closest('[data-subscribe-button]');
+
+        if (!subscriptionBtn) return;
+
+        event.preventDefault();
+
+        const emailInput = document.getElementById('subscription_email');
+
+        if (!emailInput || !emailInput.value.trim()) {
+            showToast('Kérjük, adja meg az e-mail címét!', 'error');
+            return;
+        }
+
+        try {
+            const response = await fetch(window.appConfig.APP_URL + 'newsletter/add', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                },
+                body: JSON.stringify({
+                    email: emailInput.value.trim()
+                })
+            });
+
+            const res = await response.json();
+
+            if (res.result === 'success') {
+                showToast(res.message, 'success');
+                emailInput.value = '';
+            } else {
+                showToast(res.error_message || 'Ismeretlen hiba történt.', 'error');
+            }
+
+        } catch (error) {
+            console.error('Hiba:', error);
+            showToast('Hálózati hiba történt.', 'error');
+        }
+    });
 
 })(jQuery);
 

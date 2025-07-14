@@ -27,6 +27,7 @@
     @endphp
 
     @include('partials.breadcrumbs', ['breadcrumbs' => $breadcrumbs])
+    @inject('stockHelper', 'App\Helpers\StockStatusHelper')
 
 
 
@@ -75,6 +76,7 @@
 
                         @php
                             $description = strip_tags($product->description);
+                            $status = $stockHelper::resolve($product->stock);
 
                             // Ha a szöveg 500 karakternél hosszabb
                             if (strlen($description) > 500) {
@@ -100,22 +102,66 @@
 
 
                         @auth('customer')
-                            <div class="product__details__quantity">
-                                <div class="quantity">
-                                    <div class="pro-qty">
-                                        <input type="text" value="1" min="1">
+                                @if($status['slug'] === 'in_stock')
+                                    <div class="product__details__quantity">
+                                        <div class="quantity">
+                                            <div class="pro-qty">
+                                                <input type="text" value="1" min="1">
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
-                            </div>
-                            <a onclick="addToCart({{ $product->id }})" href="#" class="primary-btn">Kosárba</a>
+
+                                    <a onclick="addToCart({{ $product->id }})" href="#" class="primary-btn">Kosárba</a>
+                                @endif
                             <!--<a href="#" class="heart-icon"><span class="icon_heart_alt"></span></a>-->
                         @else
                             <a href="{{ route('login') }}" class="primary-btn mt-3">Jelentkezz be a vásárláshoz</a>
                         @endauth
+
+                        @php
+                            $fullSlug = $product->category->getFullSlug() . '/' . $product->slug;
+                            $email = $basicdata['support_email'];
+
+                            $interesting_subject = rawurlencode('Érdeklődés: ' . $product->title);
+
+                            $interesting_bodyText = "Tisztelt Ügyfélszolgálat,\n\nSzeretnék érdeklődni a következő termékről:\n" .
+                                        "Név: {$product->title}\n" .
+                                        "Azonosító: {$product->id}";
+
+                            $interesting_body = rawurlencode($interesting_bodyText);
+
+                            $interesting_mailto = "mailto:{$email}?subject={$interesting_subject}&body={$interesting_body}";
+
+                            $offer_subject = rawurlencode('Ajánlatkérés beszereléssel: ' . $product->title);
+                            $offer_bodyText = "Tisztelt Ügyfélszolgálat,\n\nSzeretnék ajánlatot kérni a következő termékről beszereléssel együtt:\n" .
+                                        "Név: {$product->title}\n" .
+                                        "Azonosító: {$product->id}";
+                            $offer_body = rawurlencode($offer_bodyText);
+                            $offer_mailto = "mailto:{$email}?subject={$offer_subject}&body={$offer_body}";
+                        @endphp
+
+                        <a href="{{ $offer_mailto }}" class="btn btn-outline-primary mt-2">
+                            Ajánlatot szeretnék beszereléssel együtt <i class="fa fa-envelope"></i>
+                        </a>
+
                         @auth('customer')
-                        <ul>
-                            <li><b>Készlet</b> <span>{{ $product->in_stock ? 'In Stock' : 'Out of Stock' }}</span></li>
-                        </ul>
+                                @if ("backorder" === $status['slug'])
+                                    <ul>
+                                        <li><b>Készlet</b>
+                                            <a href="{{ $interesting_mailto }}" class="btn btn-sm btn-outline-primary mt-2">
+                                                {{ $status['name'] }} <i class="fa fa-envelope"></i>
+                                            </a>
+                                        </li>
+                                    </ul>
+                                @else
+                                    <ul>
+                                        <li><b>Készlet</b>
+                                            <span class="badge bg-{{ $status['color'] }}">
+                                                {{ $status['name'] }}
+                                            </span>
+                                        </li>
+                                    </ul>
+                                @endif
                         @endauth
                     </div>
                 </div>

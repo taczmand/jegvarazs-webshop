@@ -18,7 +18,7 @@
                 <div class="row">
                     <div class="col-lg-3 col-md-5">
                         <div class="sidebar">
-                            <div class="sidebar__item">
+                            <!--<div class="sidebar__item">
                                 <h4>Ár</h4>
                                 <div class="price-range-wrap">
                                     <div class="price-range ui-slider ui-corner-all ui-slider-horizontal ui-widget ui-widget-content"
@@ -34,7 +34,7 @@
                                         </div>
                                     </div>
                                 </div>
-                            </div>
+                            </div>-->
                             <!--<div class="sidebar__item sidebar__item__color--option">
                                 <h4>Colors</h4>
                                 <div class="sidebar__item__color sidebar__item__color--white">
@@ -80,9 +80,9 @@
 
                                 @foreach($tags as $label => $id)
                                     <div class="sidebar__item__size">
-                                        <label for="tag_{{ $id }}">
+                                        <label for="tag_{{ $id }}" id="tag_label_{{ $id }}" class="tag-label">
                                             {{ $label }}
-                                            <input type="radio" id="tag_{{ $id }}" name="tag_id" value="{{ $id }}">
+                                            <input type="radio" id="tag_{{ $id }}" name="tag_id" value="{{ $id }}" class="tag-filter">
                                         </label>
                                     </div>
                                 @endforeach
@@ -134,12 +134,21 @@
 
                                         <div class="filter__sort d-flex align-items-center gap-2">
                                             <span class="fw-bold">Rendezés:</span>
-                                            <select class="form-select form-select-sm" style="min-width: 220px;">
-                                                <option value="0">Terméknév szerint növekvő</option>
-                                                <option value="1">Terméknév szerint csökkenő</option>
-                                                <option value="2">Ár szerint növekvő</option>
-                                                <option value="3">Ár szerint csökkenő</option>
+                                            <select class="form-select form-select-sm" style="min-width: 220px;" id="sortBy" name="sortBy">
+                                                <option value="productAsc" {{ request('sortBy') === 'productAsc' ? 'selected' : '' }}>
+                                                    Terméknév szerint növekvő
+                                                </option>
+                                                <option value="productDesc" {{ request('sortBy') === 'productDesc' ? 'selected' : '' }}>
+                                                    Terméknév szerint csökkenő
+                                                </option>
+                                                <option value="priceAsc" {{ request('sortBy') === 'priceAsc' ? 'selected' : '' }}>
+                                                    Ár szerint növekvő
+                                                </option>
+                                                <option value="priceDesc" {{ request('sortBy') === 'priceDesc' ? 'selected' : '' }}>
+                                                    Ár szerint csökkenő
+                                                </option>
                                             </select>
+
                                         </div>
                                     </div>
                                 </div>
@@ -158,7 +167,9 @@
                                             @auth('customer')
                                                 <ul class="product__item__pic__hover">
                                                     <!--<li><a href="#"><i class="fa fa-heart"></i></a></li>-->
-                                                    <li><a href="#" onclick="addToCart({{ $product->id }})"><i class="fa fa-shopping-cart"></i></a></li>
+                                                    @if($status['slug'] === 'in_stock')
+                                                        <li><a href="#" onclick="addToCart({{ $product->id }})"><i class="fa fa-shopping-cart"></i></a></li>
+                                                    @endif
                                                 </ul>
                                             @endauth
                                         </div>
