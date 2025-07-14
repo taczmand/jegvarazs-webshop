@@ -487,7 +487,7 @@
 
                 const orderId = $('#order_id').val();
 
-                const url = `/admin/ertekesites/rendelesek/${orderId}`;
+                const url = `${window.appConfig.APP_URL}admin/ertekesites/rendelesek/${orderId}`;
                 formData.append('_method', 'PUT');
 
                 $.ajax({

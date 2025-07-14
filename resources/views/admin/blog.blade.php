@@ -182,7 +182,7 @@
                 if (!confirm('Biztosan törölni szeretnéd a borítóképet?')) return;
 
                 $.ajax({
-                    url: `/admin/blog/delete-photo`,
+                    url: `${window.appConfig.APP_URL}admin/blog/delete-photo`,
                     method: 'DELETE',
                     data: { id: blogId, _token: $('meta[name="csrf-token"]').attr('content') },
                     success: () => {
@@ -230,7 +230,7 @@
                 let method = 'POST';  // Alapértelmezett metódus
 
                 if (blogId) {
-                    url = `/admin/blog/${blogId}`;  // update URL, ha van ID
+                    url = `${window.appConfig.APP_URL}admin/blog/${blogId}`;  // update URL, ha van ID
                     formData.append('_method', 'PUT');  // PUT metódus jelzése
                 }
 

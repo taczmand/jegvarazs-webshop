@@ -197,7 +197,7 @@
                 let method = 'POST';  // Alapértelmezett metódus
 
                 if (userId) {
-                    url = `/admin/felhasznalok/${userId}`;  // update URL, ha van ID
+                    url = `${window.appConfig.APP_URL}admin/felhasznalok/${userId}`;  // update URL, ha van ID
                     formData.append('_method', 'PUT');  // PUT metódus jelzése
                 }
 

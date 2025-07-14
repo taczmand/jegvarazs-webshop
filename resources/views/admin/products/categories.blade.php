@@ -201,7 +201,7 @@
                 let method = 'POST';  // Alapértelmezett metódus
 
                 if (catId) {
-                    url = `/admin/kategoriak/${catId}`;  // update URL, ha van ID
+                    url = `${window.appConfig.APP_URL}admin/kategoriak/${catId}`;  // update URL, ha van ID
                     formData.append('_method', 'PUT');  // PUT metódus jelzése
                 }
 

@@ -918,7 +918,7 @@
                     if (!confirm('Biztosan törölni szeretnéd ezt a képet?')) return;
 
                     $.ajax({
-                        url: `/admin/munkalapok/delete-photo`,
+                        url: `${window.appConfig.APP_URL}admin/munkalapok/delete-photo`,
                         method: 'DELETE',
                         data: { id: photoId, _token: $('meta[name="csrf-token"]').attr('content') },
                         success: () => {

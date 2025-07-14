@@ -196,7 +196,7 @@
                 let method = 'POST';  // Alapértelmezett metódus
 
                 if (downloadId) {
-                    url = `/admin/letoltesek/${downloadId}`;  // update URL, ha van ID
+                    url = `${window.appConfig.APP_URL}admin/letoltesek/${downloadId}`;  // update URL, ha van ID
                     formData.append('_method', 'PUT');  // PUT metódus jelzése
                 }
 

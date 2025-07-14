@@ -59,14 +59,14 @@
             <ul class="dropdown-menu dropdown-menu-end shadow animated--grow-in"
                 aria-labelledby="userDropdown">
                 <li>
-                    <a class="dropdown-item" href="/admin/profil">
+                    <a class="dropdown-item" href="{{ url('admin/profil') }}">
                         <i class="fas fa-user fa-sm fa-fw me-2 text-gray-400"></i>
                         Profil
                     </a>
                 </li>
                 <li><hr class="dropdown-divider"></li>
                 <li>
-                    <a class="dropdown-item" href="/admin/kijelentkezes">
+                    <a class="dropdown-item" href="{{ url('admin/kijelentkezes') }}">
                         <i class="fas fa-sign-out-alt fa-sm fa-fw me-2 text-gray-400"></i>
                         Kijelentkezés
                     </a>

@@ -259,7 +259,7 @@
                 let method = 'POST';  // Alapértelmezett metódus
 
                 if (productId) {
-                    url = `/admin/termekek/${productId}`;  // update URL, ha van ID
+                    url = `${window.appConfig.APP_URL}admin/termekek/${productId}`;  // update URL, ha van ID
                     formData.append('_method', 'PUT');  // PUT metódus jelzése
                 }
 
@@ -529,7 +529,7 @@
                     const altText = $(this).val();
 
                     $.ajax({
-                        url: `/admin/termekek/update-photo-alt`,
+                        url: `${window.appConfig.APP_URL}admin/termekek/update-photo-alt`,
                         method: 'PATCH',
                         data: { id: photoId, alt: altText, _token: $('meta[name="csrf-token"]').attr('content') },
                         success: () => showToast('Alt szöveg frissítve', 'success'),
@@ -541,7 +541,7 @@
                     const photoId = $(this).data('photo-id');
 
                     $.ajax({
-                        url: `/admin/termekek/set-primary-photo`,
+                        url: `${window.appConfig.APP_URL}admin/termekek/set-primary-photo`,
                         method: 'PATCH',
                         data: { id: photoId, _token: $('meta[name="csrf-token"]').attr('content') },
                         success: () => showToast('Főkép beállítva', 'success'),
@@ -556,7 +556,7 @@
                     if (!confirm('Biztosan törölni szeretnéd ezt a képet?')) return;
 
                     $.ajax({
-                        url: `/admin/termekek/delete-photo`,
+                        url: `${window.appConfig.APP_URL}admin/termekek/delete-photo`,
                         method: 'DELETE',
                         data: { id: photoId, _token: $('meta[name="csrf-token"]').attr('content') },
                         success: () => {
