@@ -36,7 +36,18 @@
                         @auth('customer')
                             <p class="product-price">{{ number_format($product->display_gross_price, 0, ',', ' ') }} Ft</p>
                         @endif
-                        <p class="product-description">{!! Str::limit($product->description, 100) !!}</p>
+                        @php
+                            $description = strip_tags($product->description);
+
+                            // Ha a szöveg 500 karakternél hosszabb
+                            if (strlen($description) > 500) {
+                                $cutPosition = strrpos(substr($description, 0, 500), ' ');
+                                $shortDescription = substr($description, 0, $cutPosition) . '...';
+                            } else {
+                                $shortDescription = $description;
+                            }
+                        @endphp
+                        <p class="product-description">{!! $shortDescription !!}</p>
                     </div>
                 </div>
             </div>
