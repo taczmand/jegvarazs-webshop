@@ -193,13 +193,13 @@
                             <div class="tab-pane fade" id="contract">
                                 <div id="signature_area" class="d-none">
                                     <canvas id="signature-pad" width="400" height="200" style="border:1px solid #000;"></canvas>
-                                    <button id="clear_signature" class="btn btn-secondary">Aláírás újra</button>
                                     <input type="hidden" name="signature" id="signature-input">
                                 </div>
                                 <img id="show_signature" src="" class="d-none">
                                 <button type="submit" class="btn btn-primary d-none" id="generateContract">
                                     <i class="fas fa-file-pdf"></i> Szerződés generálása
                                 </button>
+                                <a href="#" id="clear_signature" class="btn btn-secondary">Aláírás újra</a>
                                 <a href="" id="contract_pdf_link" target="_blank" class="btn btn-primary d-none">Generált PDF megtekintése</a>
                             </div>
 
@@ -228,6 +228,7 @@
                 processing: true,
                 serverSide: true,
                 ajax: '{{ route('admin.contracts.data') }}',
+                order: [[0, 'desc']],
                 columns: [
                     {data: 'id'},
                     {data: 'name'},
@@ -682,7 +683,7 @@
                     let zip = $(this).val();
 
                     $.ajax({
-                        url: '/api/postal-codes/search?zip=' + zip,
+                        url: window.appConfig.APP_URL + 'api/postal-codes/search?zip=' + zip,
                         type: 'GET',
                         success: function (data) {
                             const $suggestions = $('#zip_suggestions');

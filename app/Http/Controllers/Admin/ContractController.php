@@ -96,6 +96,24 @@ class ContractController extends Controller
     public function store(Request $request)
     {
 
+        // Validáció
+        $request->validate([
+            'contract_version' => 'required|string',
+            'contact_name' => 'required|string|max:255',
+            'contact_country' => 'required|string|max:100',
+            'contact_zip_code' => 'required|string|max:20',
+            'contact_city' => 'required|string|max:100',
+            'contact_address_line' => 'required|string|max:255',
+            'installation_date' => 'required|date',
+            'contact_phone' => 'nullable|string|max:50',
+            'contact_email' => 'nullable|email|max:255',
+            'mothers_name' => 'nullable|string|max:255',
+            'place_of_birth' => 'nullable|string|max:255',
+            'date_of_birth' => 'nullable|date',
+            'id_number' => 'nullable|string|max:50',
+            'products' => 'required|array',
+        ]);
+
         DB::beginTransaction();
 
         try {

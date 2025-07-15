@@ -172,6 +172,7 @@
                 processing: true,
                 serverSide: true,
                 ajax: '{{ route('admin.offers.data') }}',
+                order: [[0, 'desc']],
                 columns: [
                     { data: 'id' },
                     { data: 'name' },

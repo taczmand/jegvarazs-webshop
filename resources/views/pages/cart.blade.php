@@ -30,6 +30,7 @@
                                 <thead>
                                 <tr>
                                     <th class="shoping__product">Termékek</th>
+                                    <th>Nettó egységár</th>
                                     <th>Bruttó egységár</th>
                                     <th>Mennyiség</th>
                                     <th>Összesen</th>
@@ -53,9 +54,10 @@
                                                     <h5>{{ $item->product->title }}</h5>
                                                 </td>
                                                 <td class="shoping__cart__price">
+                                                    {{ number_format($item->product->getNetPriceAttribute(), 0, ',', ' ') }} Ft
+                                                </td>
+                                                <td class="shoping__cart__price">
                                                     {{ number_format($item->product->gross_price, 0, ',', ' ') }} Ft
-                                                    <br>
-                                                    <i style="font-weight: normal; font-size: 10px">(nettó egységár (TODO): {{ number_format($item->product->gross_price, 0, ',', ' ') }} Ft)</i>
                                                 </td>
                                                 <td class="shoping__cart__quantity">
                                                     <div class="quantity">
@@ -81,7 +83,7 @@
             </div>
             @if($cart && $cart->items && 0 < $cart->items->count())
                 <div class="row">
-                    <div class="col-lg-6">
+                    <!--<div class="col-lg-6">
                         <div class="shoping__continue">
                             <div class="shoping__discount">
                                 <h5>Kuponkód</h5>
@@ -91,13 +93,13 @@
                                 </form>
                             </div>
                         </div>
-                    </div>
-                    <div class="col-lg-6">
+                    </div>-->
+                    <div class="col-lg-12">
                         <div class="shoping__checkout">
                             <h5>Összesítő</h5>
                             <ul>
                                 <li>Részösszeg <span>{{ number_format($total_item_amount, 0, ',', ' ') }} Ft</span></li>
-                                <li>Kupon <span>- todo</span></li>
+                                <!--<li>Kupon <span>- </span></li>-->
                                 <li>Összesen <span>{{ number_format($total_item_amount, 0, ',', ' ') }} Ft</span></li>
                             </ul>
                             <a href="{{ route('checkout') }}" class="primary-btn">Pénztár</a>

@@ -64,13 +64,6 @@ class BasicDataController extends Controller
             ->where('action', 'created')
             ->whereIn('model', [
                 'orders',
-                'coupons',
-                'customers',
-                'products',
-                'categories',
-                'attributes',
-                'tags',
-                'brands',
                 'appointments',
                 'offers',
                 'contracts',

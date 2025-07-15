@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
 use Yajra\DataTables\Facades\DataTables;
@@ -98,6 +99,7 @@ class UserController extends Controller
             if ($request->has('permissions')) {
                 $permissions = $request->input('permissions');
                 $user->syncPermissions($permissions);
+                Artisan::call('permission:cache-reset');
             }
 
 
@@ -138,6 +140,7 @@ class UserController extends Controller
             if ($request->has('permissions')) {
                 $permissions = $request->input('permissions');
                 $user->syncPermissions($permissions);
+                Artisan::call('permission:cache-reset');
             }
 
             return response()->json([
@@ -159,6 +162,7 @@ class UserController extends Controller
         try {
             $user = User::findOrFail($id);
             $user->delete();
+            Artisan::call('permission:cache-reset');
 
             return response()->json(['message' => 'Felhasználó sikeresen törölve!'], 200);
         } catch (\Exception $e) {

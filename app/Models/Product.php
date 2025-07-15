@@ -60,4 +60,14 @@ class Product extends Model
             ->withTimestamps();
     }
 
+    public function getNetPriceAttribute()
+    {
+        return $this->gross_price / (1 + $this->taxCategory->tax_value / 100);
+    }
+
+    public function getNetPartnerPriceAttribute()
+    {
+        return $this->partner_gross_price / (1 + $this->taxCategory->tax_value / 100);
+    }
+
 }
