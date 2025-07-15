@@ -255,6 +255,8 @@
 
                 $('#offer_pdf_link').removeClass('d-none').attr('href', `${offer.pdf_path}`);
 
+                sendViewRequest("offers", row_data.id);
+
                 adminModal.show();
             });
 

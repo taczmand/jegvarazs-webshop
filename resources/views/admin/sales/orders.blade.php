@@ -354,6 +354,8 @@
                 renderShippingData(order_data);
                 renderBillingData(order_data);
 
+                sendViewRequest("orders", row_data.id);
+
                 adminModal.show();
             });
 

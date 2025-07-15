@@ -32,7 +32,7 @@ class OrderController extends Controller
             return [
                 'product_id' => $item->product_id,
                 'name' => $item->product->title,
-                'gross_price' => $item->product->gross_price,
+                'gross_price' => $item->product->display_gross_price,
                 'quantity' => $item->quantity,
                 'tax_value' => $item->product->taxCategory->tax_value,
             ];

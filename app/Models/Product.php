@@ -51,7 +51,7 @@ class Product extends Model
 
     public function partnerProducts()
     {
-        return $this->hasMany(PartnerProduct::class);
+        return $this->hasMany(PartnerProduct::class, 'product_id');
     }
     public function offerProducts()
     {
@@ -68,6 +68,26 @@ class Product extends Model
     public function getNetPartnerPriceAttribute()
     {
         return $this->partner_gross_price / (1 + $this->taxCategory->tax_value / 100);
+    }
+
+    public function getPartnerSelectedPriceAttribute()
+    {
+        return $this->partnerProducts->first()->discount_gross_price ?? null;
+    }
+    public function getDisplayGrossPriceAttribute()
+    {
+        $customer = auth('customer')->user();
+        if (!$customer) {
+            return (float)$this->gross_price;
+        }
+        $is_partner = $customer->is_partner;
+        if ($is_partner) {
+            $partner_gross_price = $this->partner_selected_price ?? $this->partner_gross_price ;
+            $gross_price = $partner_gross_price ?? $this->gross_price;
+        } else {
+            $gross_price = $this->gross_price;
+        }
+        return (float)$gross_price;
     }
 
 }

@@ -35,7 +35,7 @@
         <div id="collapseSale" class="collapse">
             <div class="bg-white py-2 collapse-inner rounded">
                 <a class="collapse-item" href="{{ route('admin.orders.index') }}">Rendelések<span id="new_order_badge" class="badge badge-secondary ml-2 d-none">0</span></a>
-                <a class="collapse-item" href="{{ route('admin.coupons.index') }}">Kuponok<span id="new_coupon_badge" class="badge badge-secondary ml-2 d-none">0</span></a>
+                <!--<a class="collapse-item" href="{{ route('admin.coupons.index') }}">Kuponok<span id="new_coupon_badge" class="badge badge-secondary ml-2 d-none">0</span></a>-->
                 <a class="collapse-item" href="{{ route('admin.customers.index') }}">Vevők és partnerek<span id="new_customer_badge" class="badge badge-secondary ml-2 d-none">0</span></a>
             </div>
         </div>

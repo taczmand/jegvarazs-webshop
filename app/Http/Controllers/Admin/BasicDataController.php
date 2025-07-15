@@ -63,6 +63,7 @@ class BasicDataController extends Controller
             ->select('model', DB::raw('count(*) as count'), DB::raw('max(created_at) as latest'))
             ->where('action', 'created')
             ->whereIn('model', [
+                'customers',
                 'orders',
                 'appointments',
                 'offers',

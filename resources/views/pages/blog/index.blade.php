@@ -35,7 +35,16 @@
                                                 <li><i class="fa fa-calendar-o"></i> {{ $blog->created_at->format('Y. M d') }}</li>
                                             </ul>
                                             <h5><a href="{{ route('blog.post', $blog->slug) }}">{{ $blog->title }}</a></h5>
-                                            <p>{{ Str::limit(strip_tags($blog->content), 100) }}</p>
+                                            @php
+                                                $content = strip_tags($blog->content);
+                                                if (strlen($content) > 500) {
+                                                    $cutPosition = strrpos(substr($content, 0, 500), ' ');
+                                                    $shortContent = substr($content, 0, $cutPosition) . '...';
+                                                } else {
+                                                    $shortContent = $content;
+                                                }
+                                            @endphp
+                                            <p>{!! $shortContent !!}</p>
                                             <a href="{{ route('blog.post', $blog->slug) }}" class="blog__btn">
                                                 Tovább <span class="arrow_right"></span>
                                             </a>

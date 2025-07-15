@@ -71,7 +71,7 @@
                         @endif
                         <h3>{{ $product->title }}</h3>
                         @auth('customer')
-                            <div class="product__details__price">{{ number_format($product->gross_price, 0, ',', ' ') }} Ft</div>
+                            <div class="product__details__price">{{ number_format($product->display_gross_price, 0, ',', ' ') }} Ft</div>
                         @endauth
 
                         @php
@@ -219,7 +219,7 @@
                             </div>
                             <div class="product__item__text">
                                 <h6><a href="{{ route('products.resolve', ['slugs' => $fullSlug]) }}">{{ $related_product->title }}</a></h6>
-                                <h5>{{ number_format($related_product->gross_price, 0, ',', ' ') }} Ft</h5>
+                                <h5>{{ number_format($related_product->display_gross_price, 0, ',', ' ') }} Ft</h5>
                             </div>
                         </div>
                     </div>

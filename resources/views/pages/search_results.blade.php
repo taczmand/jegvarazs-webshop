@@ -15,7 +15,6 @@
     ]
     ])
 
-    <h1>Találatok</h1>
     <p>Összesen <strong>{{ $products->total() }}</strong> találat a(z) {{ request()->input('query') }} kifejezésre</p>
     <div class="row">
         @forelse($products as $product)
@@ -27,15 +26,17 @@
                             $mainPhoto = $product->photos->firstWhere('is_main', true);
                         @endphp
                         <a href="{{ route('products.resolve', ['slugs' => $fullSlug]) }}">
-                            <img src="{{ asset('storage/' . $mainPhoto?->path ?? 'static_media/no-image.jpg') }}" alt="{{ $product->name }}" class="img-fluid">
+                            <img src="{{ asset('storage/' . $mainPhoto?->path ?? 'static_media/no-image.jpg') }}" alt="{{ $product->title }}" class="img-fluid">
                         </a>
                     </div>
                     <div class="product-info">
                         <h5 class="product-title">
-                            <a href="{{ route('products.resolve', ['slugs' => $fullSlug]) }}">{{ $product->name }}</a>
+                            <a href="{{ route('products.resolve', ['slugs' => $fullSlug]) }}">{{ $product->title }}</a>
                         </h5>
-                        <p class="product-price">{{ number_format($product->price, 0, ',', ' ') }} Ft</p>
-                        <p class="product-description">{{ Str::limit($product->description, 100) }}</p>
+                        @auth('customer')
+                            <p class="product-price">{{ number_format($product->display_gross_price, 0, ',', ' ') }} Ft</p>
+                        @endif
+                        <p class="product-description">{!! Str::limit($product->description, 100) !!}</p>
                     </div>
                 </div>
             </div>

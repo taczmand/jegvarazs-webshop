@@ -393,6 +393,8 @@
 
                 $('#contract_pdf_link').removeClass('d-none').attr('href', `${contract.pdf_path}`);
 
+                sendViewRequest("contracts", row_data.id);
+
                 adminModal.show();
             });
 

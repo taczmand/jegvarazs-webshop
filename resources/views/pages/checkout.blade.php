@@ -329,16 +329,16 @@
                                     <ul>
                                         @foreach($cart->items as $item)
                                             @php
-                                                $subtotal = $item->product->gross_price * $item->quantity;
+                                                $subtotal = $item->product->display_gross_price * $item->quantity;
                                                 $total_item_amount += $subtotal;
                                             @endphp
                                             <li>
-                                                {{ $item->product->title }} <span>{{ number_format($item->product->gross_price * $item->quantity, 0, ',', ' ') }} Ft</span>
+                                                {{ $item->product->title }} <span>{{ number_format($item->product->display_gross_price * $item->quantity, 0, ',', ' ') }} Ft</span>
                                             </li>
                                         @endforeach
                                     </ul>
                                     <div class="checkout__order__subtotal">Részösszeg <span>{{ number_format($total_item_amount, 0, ',', ' ') }} Ft</span></div>
-                                    <div class="checkout__order__total">Kupon <span>- todo</span></div>
+                                    <!--<div class="checkout__order__total">Kupon <span></span></div>-->
                                     <div class="checkout__order__total">Összesen <span>{{ number_format($total_item_amount, 0, ',', ' ') }} Ft</span></div>
 
 

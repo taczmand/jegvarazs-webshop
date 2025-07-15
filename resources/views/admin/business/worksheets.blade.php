@@ -679,6 +679,8 @@
 
                 const row_data = $('#adminTable').DataTable().row($(this).parents('tr')).data();
 
+                sendViewRequest("worksheets", row_data.id);
+
                 editWorksheet(row_data.id);
             });
 

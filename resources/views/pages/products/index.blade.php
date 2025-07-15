@@ -107,7 +107,7 @@
                                                         <div class="latest-product__item__text">
                                                             <h6>{{ $product->title }}</h6>
                                                             @auth('customer')
-                                                                <span>{{ number_format($product->gross_price, 0, ',', ' ') }} Ft</span>
+                                                                <span>{{ number_format($product->display_gross_price, 0, ',', ' ') }} Ft</span>
                                                             @endauth
                                                         </div>
                                                     </a>
@@ -191,7 +191,7 @@
 
                                             <h6><a href="{{ route('products.resolve', ['slugs' => $fullSlug]) }}">{{ $product->title }}</a></h6>
                                             @auth('customer')
-                                                <h5>{{ number_format($product->gross_price, 0, ',', ' ') }} Ft</h5>
+                                                <h5>{{ number_format($product->display_gross_price, 0, ',', ' ') }} Ft</h5>
                                                 @if ($status)
                                                     @if ("backorder" === $status['slug'])
                                                         <a class="badge bg-{{ $status['color'] }}" href="{{ $mailto }}" class="btn btn-sm btn-outline-primary mt-2">

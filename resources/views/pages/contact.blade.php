@@ -57,7 +57,7 @@
     <div class="map">
 
         <iframe
-            src="{{ $basic_data['company_address_maps_link'] }}"
+            src="{{ $basicdata['company_address_maps_link'] }}"
             height="500"
             style="border:0;"
             allowfullscreen=""

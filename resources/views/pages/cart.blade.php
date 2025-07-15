@@ -45,7 +45,7 @@
 
                                         @foreach($cart->items as $item)
                                             @php
-                                                $subtotal = $item->product->gross_price * $item->quantity;
+                                                $subtotal = $item->product->display_gross_price * $item->quantity;
                                                 $total_item_amount += $subtotal;
                                             @endphp
                                             <tr id="cart_item_{{ $item->id }}">
@@ -57,7 +57,7 @@
                                                     {{ number_format($item->product->getNetPriceAttribute(), 0, ',', ' ') }} Ft
                                                 </td>
                                                 <td class="shoping__cart__price">
-                                                    {{ number_format($item->product->gross_price, 0, ',', ' ') }} Ft
+                                                    {{ number_format($item->product->display_gross_price, 0, ',', ' ') }} Ft
                                                 </td>
                                                 <td class="shoping__cart__quantity">
                                                     <div class="quantity">
@@ -67,7 +67,7 @@
                                                     </div>
                                                 </td>
                                                 <td class="shoping__cart__total">
-                                                    {{ number_format($item->product->gross_price * $item->quantity, 0, ',', ' ') }} Ft
+                                                    {{ number_format($item->product->display_gross_price * $item->quantity, 0, ',', ' ') }} Ft
                                                 </td>
                                                 <td class="shoping__cart__item__close">
                                                     <span class="icon_close" onclick="removeItemFromCart({{ $item->id }})"></span>

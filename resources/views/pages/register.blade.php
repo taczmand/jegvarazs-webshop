@@ -60,7 +60,7 @@
         <div class="d-none" id="only_partner_fields">
             <div class="mb-3">
                 <label for="fgaz" class="form-label">F-Gáz azonosító*</label>
-                <input type="fgaz" name="fgaz" id="fgaz" class="form-control" value="" placeholder="" required>
+                <input type="fgaz" name="fgaz" id="fgaz" class="form-control" value="" placeholder="">
             </div>
         </div>
 
