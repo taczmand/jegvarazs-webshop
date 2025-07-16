@@ -10,7 +10,7 @@ class Brand extends Model
 {
     use LogsActivity;
 
-    protected $fillable = ['title', 'slug', 'status'];
+    protected $fillable = ['title', 'slug', 'logo', 'status'];
 
     public function scopeActive(Builder $query): Builder
     {

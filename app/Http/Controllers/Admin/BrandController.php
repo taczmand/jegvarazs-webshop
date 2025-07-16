@@ -18,7 +18,7 @@ class BrandController extends Controller
 
     public function data()
     {
-        $brands = Brand::select(['id', 'title', 'status', 'created_at as created', 'updated_at as updated']);
+        $brands = Brand::select(['id', 'title', 'status', 'logo', 'created_at as created', 'updated_at as updated']);
 
         return DataTables::of($brands)
             ->addColumn('status', function ($row) {
@@ -57,11 +57,30 @@ class BrandController extends Controller
 
     public function store(BrandRequest $request)
     {
+
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'file_upload' => 'nullable|file|mimes:jpg,jpeg,png,gif|max:2048', // 2MB max méret
+        ]);
+
         try {
+
+            $originalName = pathinfo($request->file_upload->getClientOriginalName(), PATHINFO_FILENAME);
+            $extension = $request->file_upload->getClientOriginalExtension();
+            $random = substr(Str::random(6), 0, 6); // 6 karakteres random string
+            $filename = $originalName . '_' . $random . '.' . $extension;
+
+            $path = $request->file_upload->storeAs('brands', $filename, 'public');
+
             $brand = Brand::create([
                 'title' => $request['title'],
                 'slug' => Str::slug($request['title'])
             ]);
+
+            if ($request->hasFile('file_upload')) {
+                $brand->logo = $path;
+                $brand->save();
+            }
 
             return response()->json([
                 'message' => 'Sikeres mentés!',
@@ -86,6 +105,23 @@ class BrandController extends Controller
                 'slug' => Str::slug($request['title']),
                 'status' => $request['status'] ?? 'inactive'
             ]);
+
+            $originalName = pathinfo($request->file_upload->getClientOriginalName(), PATHINFO_FILENAME);
+            $extension = $request->file_upload->getClientOriginalExtension();
+            $random = substr(Str::random(6), 0, 6); // 6 karakteres random string
+            $filename = $originalName . '_' . $random . '.' . $extension;
+
+            $path = $request->file_upload->storeAs('brands', $filename, 'public');
+
+            if ($request->hasFile('file_upload')) {
+                // Ha van új fájl, akkor frissítjük a logót
+                if ($brand->logo) {
+                    // Töröljük a régi logót, ha létezik
+                    \Storage::disk('public')->delete($brand->logo);
+                }
+                $brand->logo = $path;
+                $brand->save();
+            }
 
             return response()->json([
                 'message' => 'Sikeres mentés!',
