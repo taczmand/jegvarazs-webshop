@@ -129,9 +129,10 @@ class PagesController extends Controller
 
     public function newSubscription(Request $request)
     {
-        /*$request->validate([
+        $request->validate([
             'email' => 'required|email|max:255'
-        ]);*/
+        ]);
+
         // Ellenőrizzük, hogy a felhasználó nem adta-e meg az email címét
         if (!$request->email) {
             return response()->json(['result' => 'error', 'error_message' => 'Kérjük, adja meg az email címét.'], 200);
@@ -152,6 +153,31 @@ class PagesController extends Controller
                 'email' => $request->email
             ]);
             return response()->json(['result' => 'success', 'message' => 'Sikeresen feliratkozott a hírlevélre!'], 200);
+        } catch (\Exception $e) {
+            return response()->json(['result' => 'error', 'error_message' => $e->getMessage()], 200);
+        }
+    }
+
+    public function newContactForm(Request $request)
+    {
+        $request->validate([
+            'contact_name' => 'required|string|max:255',
+            'contact_email' => 'required|email|max:255',
+            'contact_message' => 'required|string|max:65000'
+        ]);
+        // Ellenőrizzük, hogy a felhasználó nem adta-e meg az email címét
+        if (!$request->contact_email) {
+            return response()->json(['result' => 'error', 'error_message' => 'Kérjük, adja meg az email címét.'], 200);
+        }
+        // Ellenőrizzük, hogy az email cím formátuma helyes-e
+        if (!filter_var($request->contact_email, FILTER_VALIDATE_EMAIL)) {
+            return response()->json(['result' => 'error', 'error_message' => 'Kérjük, adjon meg egy érvényes email címet.'], 200);
+        }
+
+        try {
+            // email küldése a megadott címre
+            \Log::info($request->all());
+            return response()->json(['result' => 'success', 'message' => 'Sikeresen elküldve!'], 200);
         } catch (\Exception $e) {
             return response()->json(['result' => 'error', 'error_message' => $e->getMessage()], 200);
         }

@@ -11,7 +11,6 @@ import '../js/jquery.slicknav.js';
 import '../js/mixitup.min.js';
 import '../js/owl.carousel.min.js';
 import '../js/cart.js';
-import '../js/newsletter.js';
 import * as bootstrap from "bootstrap";
 
 'use strict';
@@ -431,6 +430,61 @@ import * as bootstrap from "bootstrap";
             console.error('Hiba:', error);
             showToast('Hálózati hiba történt.', 'error');
         }
+    });
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const form = document.getElementById('contact_form');
+
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            const contact_name = document.getElementById('contact_name');
+            const contact_email = document.getElementById('contact_email');
+            const contact_message = document.getElementById('contact_message');
+
+            console.log(contact_name);
+            if (!contact_name || !contact_name.value.trim()) {
+                showToast('Kérjük, adja meg a teljes nevét!', 'error');
+                return;
+            }
+
+            if (!contact_email || !contact_email.value.trim()) {
+                showToast('Kérjük, adja meg az e-mail címét!', 'error');
+                return;
+            }
+
+            const formData = new FormData(form);
+
+            fetch(window.appConfig.APP_URL + 'contact/add', {
+                method: 'POST',
+                body: JSON.stringify({
+                    contact_name: contact_name.value.trim(),
+                    contact_email: contact_email.value.trim(),
+                    contact_message: contact_message.value.trim()
+                }),
+
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                },
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Hiba történt a beküldés során.');
+                    }
+                    return response.json(); // vagy .text() ha nem JSON-t vársz vissza
+                })
+                .then(data => {
+                    if (data.result !== 'success') {
+                        throw new Error(data.error_message || 'Ismeretlen hiba történt.');
+                    }
+                    showToast(data.message, 'success');
+                    form.reset();
+                })
+                .catch(error => {
+                    showToast(error || 'Ismeretlen hiba történt.', 'error');
+                });
+        });
     });
 
 })(jQuery);

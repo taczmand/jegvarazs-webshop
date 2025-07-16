@@ -338,7 +338,10 @@ Route::get('/blog', [PagesController::class, 'blog'])->name('blog');
 Route::get('/blog/{slug}', [PagesController::class, 'blogPost'])->name('blog.post');
 
 // Új feliratkozás
-Route::post('/newsletter/add', [PagesController::class, 'newSubscription'])->name('cart.new_subscription');
+Route::post('/newsletter/add', [PagesController::class, 'newSubscription'])->name('new_subscription');
+
+// Írjon nekünk
+Route::post('/contact/add', [PagesController::class, 'newContactForm'])->name('new_contact_form');
 
 Route::middleware(['auth:customer'])->group(function () {
     // Kosár
