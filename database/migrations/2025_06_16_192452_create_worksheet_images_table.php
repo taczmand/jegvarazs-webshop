@@ -15,7 +15,7 @@ return new class extends Migration
         Schema::create('worksheet_images', function (Blueprint $table) {
             $table->id();
             $table->string('image_path');
-            $table->enum('image_type', ['Adattábla', 'Telepítési tanúsítvány', 'Szerelés', 'Helyszíni felmérés'])->default('Szerelés');
+            $table->enum('image_type', ['Adattábla', 'Telepítési tanúsítvány', 'Szerelés', 'Helyszíni felmérés', 'Számla'])->default('Szerelés');
             $table->foreignId('worksheet_id')
                 ->constrained('worksheets')
                 ->onDelete('cascade')

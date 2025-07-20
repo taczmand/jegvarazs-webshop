@@ -122,7 +122,7 @@ class OfferController extends Controller
             ];
 
             // PDF generálása
-            $pdf = Pdf::loadView('pdf.offer_20250613', $data);
+            $pdf = Pdf::loadView('pdf.offer_20250720', $data);
 
             $fileName = 'offer_' . $offer->id . '.pdf';
             Storage::put("offers/{$fileName}", $pdf->output());

@@ -131,16 +131,25 @@
                         <ul class="nav nav-tabs" id="productTab" role="tablist">
                             <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#basic" type="button">Alapadatok</button></li>
                             <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#products" type="button">Termékek</button></li>
-                            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#images" type="button">Képek</button></li>
+                            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#local_images" type="button">Helyszíni képek</button></li>
+                            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#datatable_images" type="button">Adattábla képek</button></li>
+                            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#certificate_images" type="button">Tanúsítvány képek</button></li>
+                            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#install_images" type="button">Szerelés képek</button></li>
+                            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#billing_files" type="button">Számlák</button></li>
                             <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#worksheet" type="button">Munkalap</button></li>
                         </ul>
 
                         <div class="tab-content mt-3">
+                            @php
+                                $display = auth('admin')->user()->can('view-own-worksheets') ? 'none' : '';
+                            @endphp
 
-                            <!-- Alapadatok tab -->
+
+
+                                <!-- Alapadatok tab -->
 
                             <div class="tab-pane fade show active" id="basic">
-                                <table class="table table-bordered worksheet-basic-table">
+                                <table class="table table-bordered worksheet-basic-table" style="display: {{ $display }}">
                                     <tbody>
                                     <tr>
                                         <td class="w-25">Munka megnevezése</td>
@@ -231,7 +240,7 @@
 
                             <div class="tab-pane fade" id="products">
                                 <div style="max-height: 300px; overflow-y: auto">
-                                    <table class="table table-bordered" id="productManagerTable">
+                                    <table class="table table-bordered" id="productManagerTable" style="display: {{ $display }}">
                                         <thead>
                                         <tr>
                                             <th>Kiválasztás</th>
@@ -246,9 +255,9 @@
                                 </div>
                             </div>
 
-                            <!-- Képek tab-->
+                            <!-- Helyszíni felmérés képek tab-->
 
-                            <div class="tab-pane fade" id="images">
+                            <div class="tab-pane fade" id="local_images">
                                 <h5>Helyszíni felmérés képek</h5>
                                 <div class="mb-3">
                                     <label class="form-label">Új képek feltöltése a helyszínen</label>
@@ -256,7 +265,11 @@
                                 </div>
 
                                 <div id="worksheetLocalPhotos" class="mt-3"></div>
+                            </div>
 
+                            <!-- Adattábla képek tab-->
+
+                            <div class="tab-pane fade" id="datatable_images">
                                 <h5>Adattábla képek</h5>
                                 <div class="mb-3">
                                     <label class="form-label">Új képek feltöltése adattábláról</label>
@@ -264,9 +277,11 @@
                                 </div>
 
                                 <div id="worksheetDataTablePhotos" class="mt-3"></div>
+                            </div>
 
-                                <hr>
+                            <!-- Telepítési tanúsítvány képek tab-->
 
+                            <div class="tab-pane fade" id="certificate_images">
                                 <h5>Telepítési tanúsítvány képek</h5>
                                 <div class="mb-3">
                                     <label class="form-label">Új képek feltöltése telepítési tanúsítványról</label>
@@ -274,9 +289,11 @@
                                 </div>
 
                                 <div id="worksheetCertificatePhotos" class="mt-3"></div>
+                            </div>
 
-                                <hr>
+                            <!-- Szerelés képek tab-->
 
+                            <div class="tab-pane fade" id="install_images">
                                 <h5>Szerelés képek</h5>
                                 <div class="mb-3">
                                     <label class="form-label">Új képek feltöltése szerelésről</label>
@@ -284,6 +301,18 @@
                                 </div>
 
                                 <div id="worksheetInstallPhotos" class="mt-3"></div>
+                            </div>
+
+                            <!-- Számlák tab-->
+
+                            <div class="tab-pane fade" id="billing_files">
+                                <h5>Számlák</h5>
+                                <div class="mb-3">
+                                    <label class="form-label">Új számlák feltöltése</label>
+                                    <input type="file" class="form-control" name="new_billings[]" multiple accept="*">
+                                </div>
+
+                                <div id="worksheetBillings" class="mt-3"></div>
                             </div>
 
                             <!-- Munkalap tab-->
@@ -364,8 +393,9 @@
                         <label for="work_status" class="mb-0">Állapot:</label>
 
                         <select class="form-control form-control-sm w-auto" name="work_status" id="work_status">
-                            <option value="Szerelésre vár">Szerelésre vár</option>
-                            <option value="Felszerelve">Felszerelve</option>
+                            <option value="Folyamatban">Folyamatban</option>
+                            <option value="Kész">Kész</option>
+                            <option value="Lezárva">Lezárva</option>
                         </select>
 
                         <button type="submit" class="btn btn-success btn-sm ms-auto" id="saveWorksheet">Mentés</button>
@@ -559,10 +589,12 @@
                         }
 
                         let statusIcon = '';
-                        if (w.work_status === 'Szerelésre vár') {
-                            statusIcon = '<i class="fas fa-tools text-danger me-1" title="Szerelésre vár"></i>';
-                        } else if (w.work_status === 'Felszerelve') {
-                            statusIcon = '<i class="fas fa-check-circle text-success me-1" title="Felszerelve"></i>';
+                        if (w.work_status === 'Folyamatban') {
+                            statusIcon = '<i class="fas fa-tools text-danger me-1" title="Folyamatban"></i>';
+                        } else if (w.work_status === 'Kész') {
+                            statusIcon = '<i class="fas fa-check-circle text-warning me-1" title="Kész"></i>';
+                        } else if (w.work_status === 'Lezárva') {
+                            statusIcon = '<i class="fas fa-check-double-circle text-success me-1" title="Lezárva"></i>';
                         } else {
                             statusIcon = '<i class="fas fa-question-circle text-muted me-1" title="Ismeretlen státusz"></i>';
                         }
@@ -834,6 +866,7 @@
                                     <tr>
                                         <td>
                                             <input
+                                                readonly
                                                 type="checkbox"
                                                 name="products[${item.id}][selected]"
                                                 value="1"
@@ -862,21 +895,27 @@
             }
 
             function renderPhotos(photos = []) {
+
+                const canDeletePhoto = @json(auth('admin')->user()?->can('delete-worksheet-image'));
+
                 const containerForLocalPhotos = $('#worksheetLocalPhotos');
                 const containerForDatatablePhotos = $('#worksheetDataTablePhotos');
                 const containerForCertificatePhotos = $('#worksheetCertificatePhotos');
                 const containerForInstallPhotos = $('#worksheetInstallPhotos');
+                const containerForBillings = $('#worksheetBillings');
 
                 containerForLocalPhotos.empty();
                 containerForDatatablePhotos.empty();
                 containerForCertificatePhotos.empty();
                 containerForInstallPhotos.empty();
+                containerForBillings.empty();
 
                 if (!photos.length) {
                     containerForLocalPhotos.append('<p class="text-muted">Nincs feltöltött adattábla kép.</p>');
                     containerForDatatablePhotos.append('<p class="text-muted">Nincs feltöltött adattábla kép.</p>');
                     containerForCertificatePhotos.append('<p class="text-muted">Nincs feltöltött tanúsítvány kép.</p>');
                     containerForInstallPhotos.append('<p class="text-muted">Nincs feltöltött szerelés kép.</p>');
+                    containerForBillings.append('<p class="text-muted">Nincs feltöltött számla.</p>');
                     return;
                 }
 
@@ -884,14 +923,16 @@
                     'Helyszíni felmérés': containerForLocalPhotos,
                     'Adattábla': containerForDatatablePhotos,
                     'Telepítési tanúsítvány': containerForCertificatePhotos,
-                    'Szerelés': containerForInstallPhotos
+                    'Szerelés': containerForInstallPhotos,
+                    'Számla': containerForBillings
                 };
 
                 const tables = {
                     'Helyszíni felmérés': createPhotoTable(),
                     'Adattábla': createPhotoTable(),
                     'Telepítési tanúsítvány': createPhotoTable(),
-                    'Szerelés': createPhotoTable()
+                    'Szerelés': createPhotoTable(),
+                    'Számla': createPhotoTable()
                 };
 
                 photos.forEach(photo => {
@@ -902,24 +943,70 @@
                     if (!container || !table) return;
 
                     const description = photo.description || '';
+                    const fileUrl = `${window.appConfig.APP_URL}admin/worksheets/${photo.image_path}`;
+                    const extension = photo.image_path.split('.').pop().toLowerCase();
 
-                    const row = $(`
+                    let previewHtml = '';
+
+                    if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(extension)) {
+                        // kép megjelenítése thumbnailként
+                        previewHtml = `
+                            <a href="${fileUrl}" target="_blank">
+                                <img src="${fileUrl}" alt="${description}" class="img-thumbnail" style="width: 100px;">
+                            </a>
+                        `;
+                    } else if (['pdf'].includes(extension)) {
+                        // PDF ikon vagy szöveg
+                        previewHtml = `
+                            <a href="${fileUrl}" target="_blank">
+                                <i class="fas fa-file-pdf fa-2x text-danger"></i> ${description || 'PDF fájl'}
+                            </a>
+                        `;
+                    } else if (['doc', 'docx'].includes(extension)) {
+                        // DOC ikon vagy szöveg
+                        previewHtml = `
+                            <a href="${fileUrl}" target="_blank">
+                                <i class="fas fa-file-word fa-2x text-primary"></i> ${description || 'Word dokumentum'}
+                            </a>
+                        `;
+                    } else {
+                        // Ismeretlen fájltípus – csak link
+                        previewHtml = `
+                            <a href="${fileUrl}" target="_blank">
+                                ${description || photo.image_path}
+                            </a>
+                        `;
+                    }
+
+                    /*const row = $(`
                         <tr data-photo-id="${photo.id}">
-                            <td>
-                                <a href="${window.appConfig.APP_URL}admin/worksheets/${photo.image_path}" target="_blank">
-                                    <img src="${window.appConfig.APP_URL}admin/worksheets/${photo.image_path}" alt="${description}" class="img-thumbnail" style="width: 100px;">
-                                </a>
-                            </td>
+                            <td>${previewHtml}</td>
                             <td class="text-center">
                                 <button type="button" class="btn btn-sm btn-danger delete-photo" data-photo-id="${photo.id}">
                                     <i class="fas fa-trash"></i>
                                 </button>
                             </td>
                         </tr>
-                    `);
+                    `);*/
+
+                    const deleteButton = canDeletePhoto
+                        ? `<button type="button" class="btn btn-sm btn-danger delete-photo" data-photo-id="${photo.id}">
+                                    <i class="fas fa-trash"></i>
+                               </button>`
+                        : '';
+
+                    const row = $(`
+                            <tr data-photo-id="${photo.id}">
+                                <td>${previewHtml}</td>
+                                <td class="text-center">
+                                    ${deleteButton}
+                                </td>
+                            </tr>
+                        `);
 
                     table.find('tbody').append(row);
                 });
+
 
                 Object.entries(tables).forEach(([type, table]) => {
                     const container = containers[type];
@@ -928,12 +1015,12 @@
                     }
                 });
 
-                // --- Kép törlése
+                // --- Állomány törlése
                 $('.delete-photo').off('click').on('click', function () {
                     const photoId = $(this).data('photo-id');
                     const row = $(this).closest('tr');
 
-                    if (!confirm('Biztosan törölni szeretnéd ezt a képet?')) return;
+                    if (!confirm('Biztosan törölni szeretnéd ezt az állományt?')) return;
 
                     $.ajax({
                         url: `${window.appConfig.APP_URL}admin/munkalapok/delete-photo`,
@@ -953,7 +1040,7 @@
                             <table class="table table-bordered table-sm align-middle mb-0">
                                 <thead class="table-light">
                                     <tr>
-                                        <th>Feltöltött képek</th>
+                                        <th>Feltöltött állomány</th>
                                         <th>Törlés</th>
                                     </tr>
                                 </thead>

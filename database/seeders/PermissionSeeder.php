@@ -14,8 +14,8 @@ class PermissionSeeder extends Seeder
             ['id' => 1, 'name' => 'view-orders', 'label' => 'Rendelések megtekintése', 'group' => 'Rendelések'],
             ['id' => 3, 'name' => 'view-customers', 'label' => 'Vevők és partenerek megtekintése', 'group' => 'Vevők és partnerek'],
             ['id' => 4, 'name' => 'create-customer', 'label' => 'Vevő vagy partner létrehozása', 'group' => 'Vevők és partnerek'],
-            ['id' => 5, 'name' => 'view-worksheets', 'label' => 'Munkalapok megtekintése', 'group' => 'Munkalapok'],
-            ['id' => 6, 'name' => 'view-own-worksheets', 'label' => 'Saját munkalap megtekintése', 'group' => 'Munkalapok'],
+            ['id' => 5, 'name' => 'view-worksheets', 'label' => 'Munkalapok megtekintése', 'group' => 'Ügyviteli folyamatok'],
+            ['id' => 6, 'name' => 'view-own-worksheets', 'label' => 'Csak a saját munkalapok megtekintése', 'group' => 'Ügyviteli folyamatok'],
             ['id' => 7, 'name' => 'edit-order', 'label' => 'Rendelés szerkesztése', 'group' => 'Rendelések'],
             ['id' => 8, 'name' => 'delete-order', 'label' => 'Rendelés törlése', 'group' => 'Rendelések'],
             ['id' => 9, 'name' => 'edit-customer', 'label' => 'Vevő vagy partner szerkesztése', 'group' => 'Vevők és partnerek'],
@@ -82,6 +82,7 @@ class PermissionSeeder extends Seeder
             ['id' => 70, 'name' => 'view-viewed-products', 'label' => 'Megtekintett termékek megtekintése', 'group' => 'Jelentések'],
             ['id' => 71, 'name' => 'view-admin-logs', 'label' => 'Admin tevékenységek megtekintése', 'group' => 'Jelentések'],
             ['id' => 72, 'name' => 'view-purchased-products', 'label' => 'Vásárolt termékek megtekintése', 'group' => 'Jelentések'],
+            ['id' => 73, 'name' => 'delete-worksheet-image', 'label' => 'Munkalap kép törlése', 'group' => 'Ügyviteli folyamatok'],
 
         ];
 

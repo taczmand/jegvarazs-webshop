@@ -9,6 +9,7 @@ use App\Models\Contract;
 use App\Models\ContractProduct;
 use App\Models\Product;
 use App\Models\Worksheet;
+use App\Models\WorksheetProduct;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -205,10 +206,24 @@ class ContractController extends Controller
                 'city' => $contract->city,
                 'address_line' => $contract->address_line,
                 'installation_date' => $contract->installation_date,
-                'work_status' => "Szerelésre vár",
+                'work_status' => "Folyamatban",
                 'contract_id' => $contract->id,
                 'created_by' => auth('admin')->id(),
             ]);
+
+            // Munkalap termékek hozzárendelése, ha van
+            foreach ($request->input('products') as $productId => $data) {
+                if (!isset($data['selected'])) {
+                    continue;
+                }
+
+                $item = WorksheetProduct::create([
+                    'worksheet_id' => $worksheet->id,
+                    'product_id' => $productId,
+                    'quantity' => $data['product_qty']
+                ]);
+            }
+
 
             DB::commit();
 

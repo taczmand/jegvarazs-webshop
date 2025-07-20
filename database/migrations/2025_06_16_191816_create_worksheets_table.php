@@ -30,7 +30,7 @@ return new class extends Migration
                 ->constrained('users')
                 ->onDelete('no action')
                 ->onUpdate('no action');
-            $table->enum('work_status', ['Szerelésre vár', 'Felszerelve'])->default('Szerelésre vár');
+            $table->enum('work_status', ['Folyamatban', 'Kész', 'Lezárva'])->default('Folyamatban');
             $table->json('data')->nullable(); // Mentett adatok JSON formátumban
             $table->enum('payment_method', ['cash', 'transfer']);
             $table->integer('payment_amount')->default(0);

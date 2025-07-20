@@ -80,7 +80,7 @@
     <li class="nav-item">
         <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseCustomerProcesses" aria-expanded="false">
             <i class="fa-solid fa-business-time"></i>
-            <span>Ügyfél folyamatok <span id="new_business" class="badge badge-secondary ml-2 d-none">0</span></span>
+            <span>Ügyviteli folyamatok <span id="new_business" class="badge badge-secondary ml-2 d-none">0</span></span>
         </a>
         <div id="collapseCustomerProcesses" class="collapse">
             <div class="bg-white py-2 collapse-inner rounded">
