@@ -152,10 +152,11 @@
         <!-- Main Content -->
         <div id="content">
 
-            @include('admin.partials.topbar') <!-- felső sáv -->
+            {{-- @include('admin.partials.topbar') --}}
+
 
             <!-- Begin Page Content -->
-            <div class="container-fluid">
+            <div class="container-fluid pt-3">
                 @yield('content')
                 <div id="global-loader" style="
                         display: none;
@@ -172,21 +173,21 @@
 
         </div>
 
-        @include('admin.partials.footer')
+        {{--@include('admin.partials.footer')--}}
 
-    </div>
+</div>
 
 </div>
 
 <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1100">
-    <div id="globalToast" class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
-        <div class="d-flex">
-            <div id="globalToastMessage" class="toast-body">
-                Művelet sikeres!
-            </div>
-            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Bezárás"></button>
-        </div>
+<div id="globalToast" class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+<div class="d-flex">
+    <div id="globalToastMessage" class="toast-body">
+        Művelet sikeres!
     </div>
+    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Bezárás"></button>
+</div>
+</div>
 </div>
 
 

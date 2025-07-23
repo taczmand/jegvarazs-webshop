@@ -6,6 +6,9 @@ use App\Models\Appointment;
 use App\Models\BlogPost;
 use App\Models\Brand;
 use App\Models\Category;
+use App\Models\CompanySite;
+use App\Models\Download;
+use App\Models\Employee;
 use App\Models\NewsletterSubscription;
 use App\Models\Product;
 use App\Models\Searched;
@@ -55,13 +58,14 @@ class PagesController extends Controller
     }
 
     public function contact() {
-
-        return view('pages.contact');
+        $employees = Employee::all();
+        $company_sites = CompanySite::all();
+        return view('pages.contact', compact('employees', 'company_sites'));
     }
 
     public function downloads() {
-
-        return view('pages.downloads');
+        $downloads = Download::where('status', 'active')->get();
+        return view('pages.downloads', compact('downloads'));
     }
 
     public function appointment() {

@@ -243,6 +243,10 @@ ol {
     }
 }
 
+a {
+    color: $logo-blue-color-dark !important;
+}
+
 /*---------------------
   Header
 -----------------------*/
@@ -2195,6 +2199,8 @@ ol {
 }
 
 .checkout__order {
+    position: sticky;
+    top: 20px; /* vagy amennyi hely kell a tetején */
     background: #f5f5f5;
     padding: 40px;
     padding-top: 30px;

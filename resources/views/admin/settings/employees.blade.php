@@ -6,13 +6,13 @@
     <div class="container p-0">
 
         <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
-            <h2 class="h5 text-primary mb-0"><i class="fa-solid fa-list text-primary me-2"></i> Termékek / Gyártók</h2>
-            @if(auth('admin')->user()->can('create-brand'))
-                <button class="btn btn-success" id="addButton"><i class="fas fa-plus me-1"></i> Új gyártó</button>
+            <h2 class="h5 text-primary mb-0"><i class="fa-solid fa-file-lines text-primary me-2"></i> Tartalomkezelés / Munkatársak</h2>
+            @if(auth('admin')->user()->can('create-employee'))
+                <button class="btn btn-success" id="addButton"><i class="fas fa-plus me-1"></i> Új munkatárs</button>
             @endif
         </div>
 
-        @if(auth('admin')->user()->can('view-brands'))
+        @if(auth('admin')->user()->can('view-employees'))
 
             <div class="filters d-flex flex-wrap gap-2 mb-3 align-items-center">
                 <div class="filter-group">
@@ -26,6 +26,11 @@
                 <div class="filter-group flex-grow-1 flex-md-shrink-0">
                     <input type="text" placeholder="Név" class="filter-input form-control" data-column="1">
                 </div>
+
+                <div class="filter-group flex-grow-1 flex-md-shrink-0">
+                    <input type="text" placeholder="E-mail cím" class="filter-input form-control" data-column="2">
+                </div>
+
             </div>
 
             <table class="table table-bordered display responsive nowrap" id="adminTable" style="width:100%">
@@ -33,8 +38,10 @@
                 <tr>
                     <th>ID</th>
                     <th data-priority="1">Név</th>
-                    <th>Logo</th>
-                    <th>Állapot</th>
+                    <th>E-mail</th>
+                    <th>Telefonszám</th>
+                    <th>Beosztás</th>
+                    <th>Profilkép</th>
                     <th>Létrehozva</th>
                     <th>Módosítva</th>
                     <th data-priority="2">Műveletek</th>
@@ -43,7 +50,7 @@
             </table>
         @else
             <div class="alert alert-warning" role="alert">
-                Nincs jogosultságod a gyártók megtekintésére.
+                Nincs jogosultságod a munkatársak megtekintésére.
             </div>
         @endif
     </div>
@@ -55,14 +62,26 @@
             <form id="adminForm" enctype="multipart/form-data">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="adminModalLabel">Gyártó szerkesztése</h5>
+                        <h5 class="modal-title" id="adminModalLabel">Munkatárs szerkesztése</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Bezárás"></button>
                     </div>
                     <div class="modal-body">
-                        <input type="hidden" id="brand_id" name="id">
+                        <input type="hidden" id="employee_id" name="id">
                         <div class="mb-3">
-                            <label for="name" class="form-label">Név*</label>
-                            <input type="text" class="form-control" id="title" name="title" required>
+                            <label for="employee_name" class="form-label">Név</label>
+                            <input type="text" class="form-control" id="employee_name" name="employee_name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="employee_email" class="form-label">E-mail cím</label>
+                            <input type="email" class="form-control" id="employee_email" name="employee_email" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="employee_phone" class="form-label">Telefonszám</label>
+                            <input type="text" class="form-control" id="employee_phone" name="employee_phone" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="employee_position" class="form-label">Beosztás</label>
+                            <input type="text" class="form-control" id="employee_position" name="employee_position" required>
                         </div>
                         <div class="mb-3 d-none" id="exist_image">
                             <img src="" id="exist_file_image" class="img-fluid mt-2" style="max-width: 100%; max-height: 200px;">
@@ -71,21 +90,9 @@
                             <label for="file_upload" class="form-label">Fájl feltöltése</label>
                             <input type="file" class="form-control" id="file_upload" name="file_upload">
                         </div>
-                        <div class="form-check mb-3">
-                            <input
-                                class="form-check-input"
-                                type="checkbox"
-                                id="brand_status"
-                                name="status"
-                                value="active"
-                            >
-                            <label class="form-check-label" for="brand_status">
-                                Állapot (Aktív)
-                            </label>
-                        </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="submit" class="btn btn-primary save-btn" id="saveBrand">Mentés</button>
+                        <button type="submit" class="btn btn-primary save-btn" id="saveEmployee">Mentés</button>
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Mégse</button>
                     </div>
                 </div>
@@ -108,13 +115,15 @@
                 },
                 processing: true,
                 serverSide: true,
-                ajax: '{{ route('admin.brands.data') }}',
+                ajax: '{{ route('admin.settings.employees.data') }}',
                 order: [[0, 'desc']],
                 columns: [
                     { data: 'id' },
-                    { data: 'title' },
-                    { data: 'logo' },
-                    { data: 'status' },
+                    { data: 'name' },
+                    { data: 'email' },
+                    { data: 'phone' },
+                    { data: 'position' },
+                    { data: 'profile_photo_path' },
                     { data: 'created' },
                     { data: 'updated' },
                     { data: 'action', orderable: false, searchable: false }
@@ -129,49 +138,38 @@
                 table.columns(i).search(v).draw();
             });
 
-            // Új gyártó tétel létrehozása modal megjelenítése
+            // Új tétel létrehozása modal megjelenítése
             $('#addButton').on('click', async function () {
 
-                resetForm('Új gyártó létrehozása');
+                resetForm('Új munkatárs létrehozása');
                 adminModal.show();
             });
 
-            // Gyártó szerkesztése
+            // Munkatárs szerkesztése
 
             $('#adminTable').on('click', '.edit', async function () {
 
-                resetForm('Gyártó szerkesztése');
+                resetForm('Munkatárs szerkesztése');
 
                 const row_data = $('#adminTable').DataTable().row($(this).parents('tr')).data();
-                $('#brand_id').val(row_data.id);
-                $('#title').val(row_data.title);
+                $('#employee_id').val(row_data.id);
+                $('#employee_name').val(row_data.name);
+                $('#employee_email').val(row_data.email);
+                $('#employee_phone').val(row_data.phone);
+                $('#employee_position').val(row_data.position);
 
-
-                const statusCheckbox = $('#brand_status');
-                const statusLabel = $('label[for="brand_status"]');
-
-                if (row_data.status === 'Aktív') {
-                    statusCheckbox.prop('checked', true);
-                    statusLabel.text('Állapot (Aktív)');
-                } else {
-                    statusCheckbox.prop('checked', false);
-                    statusLabel.text('Állapot (Inaktív)');
-                }
-
-                if (row_data.logo) {
+                if (row_data.profile_photo_path) {
                     $('#exist_image').removeClass('d-none');
-                    $('#exist_file_image').attr("src", window.appConfig.APP_URL + "storage/" + row_data.logo);
+                    $('#exist_file_image').attr("src", window.appConfig.APP_URL + "storage/" + row_data.profile_photo_path);
                 } else {
                     $('#exist_image').addClass('d-none');
                 }
-
-
                 adminModal.show();
             });
 
-            // Gyártó mentése
+            // Munkatárs mentése
 
-            $('#saveBrand').on('click', function (e) {
+            $('#saveEmployee').on('click', function (e) {
                 e.preventDefault();
                 const form = document.getElementById('adminForm');
                 const formData = new FormData(form);
@@ -180,13 +178,13 @@
                 const originalSaveButtonHtml = $(this).html();
                 $(this).html('Mentés...').prop('disabled', true);
 
-                const brandId = $('#brand_id').val();
+                const employeeId = $('#employee_id').val();
 
-                let url = '{{ route('admin.brands.store') }}';
+                let url = '{{ route('admin.settings.employees.store') }}';
                 let method = 'POST';  // Alapértelmezett metódus
 
-                if (brandId) {
-                    url = `${window.appConfig.APP_URL}admin/gyartok/${brandId}`;  // update URL, ha van ID
+                if (employeeId) {
+                    url = `${window.appConfig.APP_URL}admin/munkatarsak/${employeeId}`;  // update URL, ha van ID
                     formData.append('_method', 'PUT');  // PUT metódus jelzése
                 }
 
@@ -217,26 +215,26 @@
 
             });
 
-            // Gyártó törlése
+            // Munkatárs törlése
             $('#adminTable').on('click', '.delete', async function () {
                 const row_data = $('#adminTable').DataTable().row($(this).parents('tr')).data();
-                const brandId = row_data.id;
+                const downloadId = row_data.id;
 
-                if (!confirm('Biztosan törölni szeretnéd ezt a gyártót?')) return;
+                if (!confirm('Biztosan törölni szeretnéd a munkatárst?')) return;
 
                 try {
                     $.ajax({
-                        url: `{{ url('/admin/gyartok') }}/${brandId}`,
+                        url: `{{ url('/admin/munkatarsak') }}/${downloadId}`,
                         method: 'DELETE',
                         headers: {
                             'X-CSRF-TOKEN': csrfToken
                         },
                         success: function(response) {
-                            showToast('Gyártó sikeresen törölve!', 'success');
+                            showToast('Munkatárs sikeresen törölve!', 'success');
                             table.ajax.reload();
                         },
                         error: function(xhr) {
-                            let msg = 'Hiba történt a gyártó törlésekor';
+                            let msg = 'Hiba történt a munkatárs törlésekor';
                             if (xhr.responseJSON && xhr.responseJSON.message) {
                                 msg = xhr.responseJSON.message;
                             }
@@ -244,7 +242,7 @@
                         }
                     });
                 } catch (error) {
-                    showToast(error.message || 'Hiba történt a gyártó törlésekor', 'danger');
+                    showToast(error.message || 'Hiba történt a munkatárs törlésekor', 'danger');
                 }
             });
 

@@ -54,7 +54,7 @@
                                                     <h5>{{ $item->product->title }}</h5>
                                                 </td>
                                                 <td class="shoping__cart__price">
-                                                    {{ number_format($item->product->getNetPriceAttribute(), 0, ',', ' ') }} Ft
+                                                    {{ number_format($item->product->display_net_price, 0, ',', ' ') }} Ft
                                                 </td>
                                                 <td class="shoping__cart__price">
                                                     {{ number_format($item->product->display_gross_price, 0, ',', ' ') }} Ft
@@ -62,7 +62,7 @@
                                                 <td class="shoping__cart__quantity">
                                                     <div class="quantity">
                                                         <div class="pro-qty" data-item-id="{{ $item->id }}">
-                                                            <input type="text" value="{{ $item->quantity }}" min="1" onblur="changeQuantity({{ $item->id }}, this.value)">
+                                                            <input type="text" value="{{ $item->quantity }}" min="1" class="quanity_input" item-id="{{ $item->id }}">
                                                         </div>
                                                     </div>
                                                 </td>
@@ -83,24 +83,24 @@
             </div>
             @if($cart && $cart->items && 0 < $cart->items->count())
                 <div class="row">
-                    <!--<div class="col-lg-6">
-                        <div class="shoping__continue">
-                            <div class="shoping__discount">
-                                <h5>Kuponkód</h5>
-                                <form action="#">
-                                    <input type="text" placeholder="Adja meg a kuponkódot">
-                                    <button type="submit" class="site-btn">Beváltás</button>
-                                </form>
-                            </div>
+                    <div class="col-lg-8">
+                        <!--    <div class="shoping__continue">
+                                <div class="shoping__discount">
+                                    <h5>Kuponkód</h5>
+                                    <form action="#">
+                                        <input type="text" placeholder="Adja meg a kuponkódot">
+                                        <button type="submit" class="site-btn">Beváltás</button>
+                                    </form>
+                                </div>
+                            </div>-->
                         </div>
-                    </div>-->
-                    <div class="col-lg-12">
+                    <div class="col-lg-4">
                         <div class="shoping__checkout">
-                            <h5>Összesítő</h5>
+
                             <ul>
-                                <li>Részösszeg <span>{{ number_format($total_item_amount, 0, ',', ' ') }} Ft</span></li>
+                                <!--<li>Részösszeg <span>{{ number_format($total_item_amount, 0, ',', ' ') }} Ft</span></li>-->
                                 <!--<li>Kupon <span>- </span></li>-->
-                                <li>Összesen <span>{{ number_format($total_item_amount, 0, ',', ' ') }} Ft</span></li>
+                                <li>Összesen bruttó<span>{{ number_format($total_item_amount, 0, ',', ' ') }} Ft</span></li>
                             </ul>
                             <a href="{{ route('checkout') }}" class="primary-btn">Pénztár</a>
                         </div>

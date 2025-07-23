@@ -1,9 +1,9 @@
 <!-- Sidebar -->
-<ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
+<ul class="navbar-nav bg-gradient-custom sidebar sidebar-dark accordion sidebar-rounded" id="accordionSidebar">
 
     <!-- Sidebar - Brand -->
-    <a class="sidebar-brand d-flex align-items-center justify-content-center" href="/admin">
-        <img class="img-fluid" src="{{ asset('static_media/logo.jpg') }}" alt="">
+    <a class="d-flex align-items-center justify-content-center" href="/admin" style="background-color: #f8f9fc; border-radius: 1rem; margin: 0.25rem">
+        <img class="" src="{{ asset('static_media/uj_logo_szeles_transzparens.png') }}" alt="" style="max-width: 100%">
     </a>
 
     <hr class="sidebar-divider my-0">
@@ -67,6 +67,8 @@
                 <a class="collapse-item" href="{{ route('admin.blog.index') }}">Blog bejegyzések</a>
                 <a class="collapse-item" href="{{ route('admin.settings.downloads.index') }}">Letöltések</a>
                 <a class="collapse-item" href="{{ route('admin.settings.regulations.index') }}">Szabályzatok</a>
+                <a class="collapse-item" href="{{ route('admin.settings.sites.index') }}">Telephelyek</a>
+                <a class="collapse-item" href="{{ route('admin.settings.employees.index') }}">Munkatársak</a>
             </div>
         </div>
     </li>
@@ -123,7 +125,6 @@
             <div class="bg-white py-2 collapse-inner rounded">
                 <a class="collapse-item" href="{{ route('admin.settings.general.index') }}">Általános</a>
                 <a class="collapse-item" href="{{ route('admin.settings.users.index') }}">Felhasználók</a>
-                <a class="collapse-item" href="{{ route('admin.settings.sites.index') }}">Telephelyek</a>
             </div>
         </div>
     </li>

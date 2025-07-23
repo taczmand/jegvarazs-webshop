@@ -2,10 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\InterestingProductMail;
 use App\Models\Customer;
+use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 
 class ShopCustomerController extends Controller
 {
@@ -83,5 +86,58 @@ class ShopCustomerController extends Controller
 
         // Szerelő regisztráció: ne jelentkezzen be automatikusan
         return redirect()->route('customer.register.success');
+    }
+
+    public function sendEmail(Request $request)
+    {
+        $customer = auth('customer')->user();
+
+        $validated = $request->validate([
+            'email_type' => 'required|string',
+            'productID' => 'required|integer',
+            'contact_message' => 'required|string',
+        ]);
+
+        $allowedEmailTypes = ['product-interesting', 'install-interesting'];
+
+        if (!in_array($validated['email_type'], $allowedEmailTypes)) {
+            return response()->json([
+                'result' => 'error',
+                'error_message' => 'Érvénytelen e-mail típus.',
+            ], 422);
+        }
+
+        try {
+
+            $product = Product::find($validated['productID']);
+
+            if ($validated['email_type'] === "product-interesting") {
+                \Log::info('Email interesting elküldve', [$customer, $product, $validated['contact_message']]);
+                /*Mail::to($customer->email)->send(new InterestingProductMail(
+                    $customer,
+                    $product,
+                    $validated['contact_message']
+                ));*/
+            }
+
+            if ($validated['email_type'] === "install-interesting") {
+                \Log::info('Email install elküldve', [$customer, $product, $validated['contact_message']]);
+                /*Mail::to($customer->email)->send(new InterestingProductMail(
+                    $customer,
+                    $product,
+                    $validated['contact_message']
+                ));*/
+            }
+
+            return response()->json([
+                'result' => 'success',
+                'message' => 'E-mail sikeresen elküldve.'
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'result' => 'error',
+                'error_message' => 'Nem sikerült elküldeni az e-mailt. (' . $e->getMessage() . ')'
+            ], 500);
+        }
     }
 }

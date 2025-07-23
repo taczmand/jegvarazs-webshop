@@ -254,24 +254,37 @@ import * as bootstrap from "bootstrap";
     var proQty = $('.pro-qty');
     proQty.prepend('<span class="dec qtybtn" id="dec_qty">-</span>');
     proQty.append('<span class="inc qtybtn" id="inc_qty">+</span>');
-    proQty.on('click', '.qtybtn', function () {
+    proQty.on('click', '.qtybtn', async function () {
         var $button = $(this);
         var oldValue = $button.parent().find('input').val();
         let itemId = $button.parent().data('item-id');
 
         if ($button.hasClass('inc')) {
+
+            // Növelés
+
             var newVal = parseFloat(oldValue) + 1;
-            changeQuantity(itemId, newVal);
+            let isChange = await changeQuantity(itemId, newVal);
+            if (isChange) {
+                $button.parent().find('input').val(newVal);
+                location.reload();
+            } else {
+                $button.parent().find('input').val(oldValue);
+            }
         } else {
-            // Don't allow decrementing below zero
+            // Csökkentés
             if (oldValue > 1) {
                 var newVal = parseFloat(oldValue) - 1;
-                changeQuantity(itemId, newVal);
+                let isChange = await changeQuantity(itemId, newVal);
+                if (isChange) {
+                    location.reload();
+                }
             } else {
                 newVal = 1;
             }
+            $button.parent().find('input').val(newVal);
         }
-        $button.parent().find('input').val(newVal);
+
     });
 
 
@@ -352,6 +365,32 @@ import * as bootstrap from "bootstrap";
 
     });
 
+    // ha kattint a brand-filter class-ra, akkor a href alapján szűrje a termékeket
+    $(document).on('click', '.brand-filter', function (e) {
+        e.preventDefault();
+        // figyelembe kell venni, hogy már lehet több brand is kiválasztva, ezért a href alapján kell szűrni
+        const filter = $(this).attr('href');
+        const selected_brand = $(this).val();
+
+        const currentUrl = new URL(window.location.href);
+        const searchParams = new URLSearchParams(currentUrl.search);
+        const existingBrands = searchParams.get('brand');
+        let newBrands = [];
+        if (existingBrands) {
+            newBrands = existingBrands.split(',').filter(brand => brand !== filter);
+        }
+        if (!newBrands.includes(selected_brand)) {
+            newBrands.push(selected_brand);
+        } else {
+            // ha már benne van, akkor eltávolítjuk
+            newBrands = newBrands.filter(brand => brand !== selected_brand);
+        }
+        searchParams.set('brand', newBrands.join(','));
+        currentUrl.search = searchParams.toString();
+        window.location.href = currentUrl.toString();
+
+    });
+
     $(document).on('change', '#sortBy', function (e) {
         e.preventDefault();
         const sortBy = $(this).val();
@@ -371,7 +410,8 @@ import * as bootstrap from "bootstrap";
 
     updateTagColors();
 
-    // itt legyen egy function ami megváltoztattja tag ek színét annak függvényében, hogy mi van a URL-ben
+    updateBrandColors();
+
     function updateTagColors(){
         const currentUrl = new URL(window.location.href);
         const searchParams = new URLSearchParams(currentUrl.search);
@@ -386,6 +426,25 @@ import * as bootstrap from "bootstrap";
                     $('#tag_label_'+tag).css('background-color', '#007bff'); // vagy bármilyen szín, ami jelzi, hogy kiválasztott
                 } else {
                     $('#tag_label_'+tag).css('background-color', '#f5f5f5'); // alapértelmezett szín
+                }
+            });
+        }
+    }
+
+    function updateBrandColors(){
+        const currentUrl = new URL(window.location.href);
+        const searchParams = new URLSearchParams(currentUrl.search);
+        const existingBrands = searchParams.get('brand');
+
+        if (existingBrands) {
+            const brands = existingBrands.split(',');
+
+            $('.brand-filter').each(function() {
+                const brand = $(this).val();
+                if (brands.includes(brand)) {
+                    $('#brand_label_'+brand).css('background-color', '#007bff'); // vagy bármilyen szín, ami jelzi, hogy kiválasztott
+                } else {
+                    $('#brand_label_'+brand).css('background-color', '#f5f5f5'); // alapértelmezett szín
                 }
             });
         }

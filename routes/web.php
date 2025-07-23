@@ -13,6 +13,7 @@ use App\Http\Controllers\Admin\CouponController;
 use App\Http\Controllers\Admin\CustomerController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\DownloadsController;
+use App\Http\Controllers\Admin\EmployeeController;
 use App\Http\Controllers\Admin\OfferController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\OrderStatusesController;
@@ -234,6 +235,15 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::put('/telephelyek/{id}', [CompanySiteController::class, 'update'])->name('settings.sites.update');
         Route::delete('/telephelyek/{id}', [CompanySiteController::class, 'destroy'])->name('settings.sites.destroy');
 
+        // Munkatársak
+
+        Route::get('/munkatarsak', [EmployeeController::class, 'index'])->name('settings.employees.index');
+        Route::get('/munkatarsak/data', [EmployeeController::class, 'data'])->name('settings.employees.data');
+        Route::post('/munkatarsak', [EmployeeController::class, 'store'])->name('settings.employees.store');
+        Route::put('/munkatarsak/{id}', [EmployeeController::class, 'update'])->name('settings.employees.update');
+        Route::delete('/munkatarsak/{id}', [EmployeeController::class, 'destroy'])->name('settings.employees.destroy');
+
+
         /* Beállítások - Rendelés */
 
         //Szállítási módok configból
@@ -350,6 +360,9 @@ Route::middleware(['auth:customer'])->group(function () {
     Route::get('/kosar/osszesito', [CartController::class, 'fetchSummary'])->name('cart.summary');
     Route::post('/kosar/torles', [CartController::class, 'removeItemFromCart'])->name('cart.item.delete');
     Route::post('/kosar/mennyiseg-valtoztatas', [CartController::class, 'changeItemQty'])->name('cart.item.change_qty');
+
+    // E-mail küldés
+    Route::post('/email/send', [ShopCustomerController::class, 'sendEmail'])->name('email.send');
 
 
 

@@ -31,7 +31,7 @@ class Product extends Model
     {
         return $this->hasMany(ProductPhoto::class);
     }
-    public function brand()
+    public function brands()
     {
         return $this->belongsTo(Brand::class, 'brand_id');
     }
@@ -89,5 +89,62 @@ class Product extends Model
         }
         return (float)$gross_price;
     }
+
+    public function getDisplayNetPriceAttribute()
+    {
+        $customer = auth('customer')->user();
+
+        // ÁFA kulcs lekérése (pl. 27, ha 27%)
+        $vat_percent = $this->taxCategory->tax_value ?? 0;
+
+        if (!$customer) {
+            return round((float)$this->gross_price / (1 + $vat_percent / 100), 2);
+        }
+
+        $is_partner = $customer->is_partner;
+
+        if ($is_partner) {
+            $partner_gross_price = $this->partner_selected_price ?? $this->partner_gross_price;
+            $gross_price = $partner_gross_price ?? $this->gross_price;
+        } else {
+            $gross_price = $this->gross_price;
+        }
+
+        $net_price = $gross_price / (1 + $vat_percent / 100);
+
+        return round((float)$net_price, 2);
+    }
+
+    public function getDisplayAllPricesAttribute()
+    {
+        $customer = auth('customer')->user();
+
+        $output = '';
+
+        // Végfelhasználói bruttó ár
+        $gross_price = (float) $this->gross_price;
+        $output .= '<div class="price-block">';
+        $output .= '<div><strong>Bruttó ár:</strong> ' . number_format($gross_price, 0, ',', ' ') . ' Ft</div>';
+
+        // Nettó ár számítása (feltételezve, hogy van ilyen meződ)
+        if ($this->net_price) {
+            $output .= '<div><strong>Nettó ár:</strong> ' . number_format($this->net_price, 0, ',', ' ') . ' Ft</div>';
+        }
+
+        // Ha partner, és van beállított partner ár
+        if ($customer && $customer->is_partner) {
+            $partner_price = $this->partner_selected_price ?? $this->partner_gross_price;
+
+            if ($partner_price !== null && $gross_price != $partner_price) {
+                $partner_price = (float) $partner_price;
+                $output .= '<div><strong>Partner bruttó ár:</strong> ' . number_format($partner_price, 0, ',', ' ') . ' Ft</div>';
+            }
+        }
+
+        $output .= '</div>';
+
+        return $output;
+    }
+
 
 }

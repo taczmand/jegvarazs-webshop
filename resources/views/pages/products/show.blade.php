@@ -71,7 +71,7 @@
                         @endif
                         <h3>{{ $product->title }}</h3>
                         @auth('customer')
-                            <div class="product__details__price">{{ number_format($product->display_gross_price, 0, ',', ' ') }} Ft</div>
+                            {!! $product->display_all_prices !!}
                         @endauth
 
                         @php
@@ -87,7 +87,7 @@
                             }
                         @endphp
 
-                        <p>
+                        <p class="mt-5">
                             {!! $shortDescription !!}
                             <a href="#tabs-1">Tovább olvasom</a>
                         </p>
@@ -140,7 +140,7 @@
                             $offer_mailto = "mailto:{$email}?subject={$offer_subject}&body={$offer_body}";
                         @endphp
 
-                        <a href="{{ $offer_mailto }}" class="btn btn-outline-primary mt-2">
+                        <a href="" class="btn btn-outline-primary mt-2 interesting-badge" product-id="{{ $product->id }}" interesting_type="install-interesting" product-title="{{ $product->title }}">
                             Ajánlatot szeretnék beszereléssel együtt <i class="fa fa-envelope"></i>
                         </a>
 
@@ -148,7 +148,7 @@
                                 @if ("backorder" === $status['slug'])
                                     <ul>
                                         <li><b>Készlet</b>
-                                            <a href="{{ $interesting_mailto }}" class="btn btn-sm btn-outline-primary mt-2">
+                                            <a href="" class="btn btn-sm btn-outline-primary mt-2 interesting-badge" interesting_type="product-interesting" product-id="{{ $product->id }}" product-title="{{ $product->title }}">
                                                 {{ $status['name'] }} <i class="fa fa-envelope"></i>
                                             </a>
                                         </li>
@@ -219,7 +219,7 @@
                             </div>
                             <div class="product__item__text">
                                 <h6><a href="{{ route('products.resolve', ['slugs' => $fullSlug]) }}">{{ $related_product->title }}</a></h6>
-                                <h5>{{ number_format($related_product->display_gross_price, 0, ',', ' ') }} Ft</h5>
+                                {!! $product->display_all_prices !!}
                             </div>
                         </div>
                     </div>
@@ -230,6 +230,102 @@
     </section>
     <!-- Related Product Section End -->
 
+    <!-- Modális ablak -->
+    <div class="modal fade" id="modal" tabindex="-1" role="dialog" aria-labelledby="modalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <form id="modalForm">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modalLabel">Ajánlatot szeretnék beépítéssel együtt</h5>
+                        <button type="button" class="close cancelModalButton" data-dismiss="modal" aria-label="Bezárás">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            @php
+                                $customer = auth('customer')->user();
+                            @endphp
+                            @if ($customer)
+                                <label class="form-label">Név</label>
+                                <p>{{ $customer->last_name }} {{ $customer->first_name }}</p>
+                                <label class="form-label">E-mail cím</label>
+                                <p>{{ $customer->email }}</p>
+                                <label for="" class="form-label">Termék</label>
+                                <p id="interesting_product"></p>
+                            @endif
+
+                        </div>
+                        <div class="mb-3">
+                            <label for="interesting_message" class="form-label">Megjegyzés</label>
+                            <textarea class="form-control" id="interesting_message" name="interesting_message"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary" id="sendInteresting" interesting_type="">Küldés</button>
+                        <button type="button" class="btn btn-secondary cancelModalButton" data-dismiss="modal">Mégse</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+@endsection
+
+@section('scripts')
+    <script>
+        $(document).ready(function() {
+
+            $('.interesting-badge').click(function(event) {
+                event.preventDefault();
+                $('#interesting_product').text($(this).attr('product-title'));
+                $('#sendInteresting').attr('interesting_type', $(this).attr('interesting_type'));
+                $('#modal').modal('show');
+            });
+
+            $('#sendInteresting').click(function(event) {
+
+                event.preventDefault();
+
+                fetch(window.appConfig.APP_URL + 'email/send', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        email_type: $(this).attr('interesting_type'),
+                        productID: $('.interesting-badge').attr('product-id'),
+                        contact_message: $('#interesting_message').val()
+                    }),
+
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                    },
+                })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Hiba történt a beküldés során.');
+                        }
+                        return response.json(); // vagy .text() ha nem JSON-t vársz vissza
+                    })
+                    .then(data => {
+                        if (data.result !== 'success') {
+                            throw new Error(data.error_message || 'Ismeretlen hiba történt.');
+                        }
+                        showToast(data.message, 'success');
+                        $('#interesting_message').val("");
+                        $('#modal').modal('hide');
+                    })
+                    .catch(error => {
+                        showToast(error || 'Ismeretlen hiba történt.', 'error');
+                    });
+            });
+
+            $('.cancelModalButton').click(function () {
+                $('#modal').modal('hide'); // Itt "#modal" a modál ablak ID-je
+            });
+
+
+        });
+    </script>
 @endsection
 
 

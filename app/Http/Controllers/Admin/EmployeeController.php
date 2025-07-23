@@ -3,48 +3,39 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\BrandRequest;
-use App\Models\Brand;
+use App\Models\Employee;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Yajra\DataTables\Facades\DataTables;
 
-class BrandController extends Controller
+class EmployeeController extends Controller
 {
     public function index()
     {
-        return view('admin.products.brands');
+        return view('admin.settings.employees');
     }
 
     public function data()
     {
-        $brands = Brand::select(['id', 'title', 'status', 'logo', 'created_at as created', 'updated_at as updated']);
+        $employees = Employee::select(['id', 'name', 'email', 'phone', 'position', 'profile_photo_path', 'created_at as created', 'updated_at as updated']);
 
-        return DataTables::of($brands)
-            ->addColumn('status', function ($row) {
-                $translations = [
-                    'active' => 'Aktív',
-                    'inactive' => 'Inaktív'
-                ];
-
-                return $translations[$row->status] ?? ucfirst($row->status);
-            })
-            ->addColumn('action', function ($brand) {
+        return DataTables::of($employees)
+            ->addColumn('action', function ($employee) {
                 $user = auth('admin')->user();
                 $buttons = '';
 
-                if ($user && $user->can('edit-brand')) {
+                if ($user && $user->can('edit-employee')) {
                     $buttons .= '
-                        <button class="btn btn-sm btn-primary edit" data-id="' . $brand->id . '" title="Szerkesztés">
+                        <button class="btn btn-sm btn-primary edit" data-id="' . $employee->id . '" title="Szerkesztés">
                             <i class="fas fa-edit"></i>
                         </button>
                     ';
                 }
 
-                if ($user && $user->can('delete-brand')) {
+                if ($user && $user->can('delete-employee')) {
                     $buttons .= '
-                        <button class="btn btn-sm btn-danger delete" data-id="' . $brand->id . '" title="Törlés">
+                        <button class="btn btn-sm btn-danger delete" data-id="' . $employee->id . '" title="Törlés">
                             <i class="fas fa-trash"></i>
                         </button>
                     ';
@@ -56,11 +47,12 @@ class BrandController extends Controller
             ->make(true);
     }
 
-    public function store(BrandRequest $request)
+    public function store(Request $request)
     {
 
         $request->validate([
-            'title' => 'required|string|max:255',
+            'employee_name' => 'required|string|max:255',
+            'employee_email' => 'required|string|max:255',
             'file_upload' => 'nullable|file|mimes:jpg,jpeg,png,gif|max:2048', // 2MB max méret
         ]);
 
@@ -68,9 +60,11 @@ class BrandController extends Controller
 
 
 
-            $brand = Brand::create([
-                'title' => $request['title'],
-                'slug' => Str::slug($request['title'])
+            $employee = Employee::create([
+                'name' => $request['employee_name'],
+                'email' => $request['employee_email'],
+                'phone' => $request['employee_phone'],
+                'position' => $request['employee_position']
             ]);
 
             if ($request->hasFile('file_upload')) {
@@ -80,17 +74,18 @@ class BrandController extends Controller
                 $random = substr(Str::random(6), 0, 6); // 6 karakteres random string
                 $filename = $originalName . '_' . $random . '.' . $extension;
 
-                $path = $request->file_upload->storeAs('brands', $filename, 'public');
-                $brand->logo = $path;
-                $brand->save();
+                $path = $request->file_upload->storeAs('employees', $filename, 'public');
+
+                $employee->profile_photo_path = $path;
+                $employee->save();
             }
 
             return response()->json([
                 'message' => 'Sikeres mentés!',
-                'brand' => $brand,
+                'employee' => $employee,
             ], 200);
         } catch (\Exception $e) {
-            \Log::error('Gyártó mentési hiba: ' . $e->getMessage());
+            \Log::error('Munkatárs mentési hiba: ' . $e->getMessage());
 
             return response()->json([
                 'message' => 'Hiba történt a mentés során.',
@@ -98,16 +93,19 @@ class BrandController extends Controller
             ], 500);
         }
     }
-    public function update(BrandRequest $request)
+    public function update(Request $request)
     {
         try {
-            $brand = Brand::findOrFail($request['id']);
+            $employee = Employee::findOrFail($request['id']);
 
-            $brand->update([
-                'title' => $request['title'],
-                'slug' => Str::slug($request['title']),
-                'status' => $request['status'] ?? 'inactive'
+            $employee->update([
+                'name' => $request['employee_name'],
+                'email' => $request['employee_email'],
+                'phone' => $request['employee_phone'],
+                'position' => $request['employee_position']
             ]);
+
+
 
             if ($request->hasFile('file_upload')) {
 
@@ -116,23 +114,24 @@ class BrandController extends Controller
                 $random = substr(Str::random(6), 0, 6); // 6 karakteres random string
                 $filename = $originalName . '_' . $random . '.' . $extension;
 
-                $path = $request->file_upload->storeAs('brands', $filename, 'public');
+                $path = $request->file_upload->storeAs('employees', $filename, 'public');
+
 
                 // Ha van új fájl, akkor frissítjük a logót
-                if ($brand->logo) {
+                if ($employee->profile_photo_path) {
                     // Töröljük a régi logót, ha létezik
-                    \Storage::disk('public')->delete($brand->logo);
+                    \Storage::disk('public')->delete($employee->profile_photo_path);
                 }
-                $brand->logo = $path;
-                $brand->save();
+                $employee->profile_photo_path = $path;
+                $employee->save();
             }
 
             return response()->json([
                 'message' => 'Sikeres mentés!',
-                'brand' => $brand,
+                'employee' => $employee,
             ], 200);
         } catch (\Exception $e) {
-            \Log::error('Gyártó mentési hiba: ' . $e->getMessage());
+            \Log::error('Munkatárs mentési hiba: ' . $e->getMessage());
 
             return response()->json([
                 'message' => 'Hiba történt a mentés során.',
@@ -143,11 +142,11 @@ class BrandController extends Controller
 
     public function destroy(Request $request) {
 
-        $brand = Brand::findOrFail($request->id);
+        $employee = Employee::findOrFail($request->id);
 
         try {
-            Storage::disk('public')->delete($brand->logo);
-            $brand->delete();
+            Storage::disk('public')->delete($employee->profile_photo_path);
+            $employee->delete();
 
             return response()->json([
                 'message' => 'Sikeres törlés!',
@@ -155,7 +154,7 @@ class BrandController extends Controller
 
         } catch (\Exception $e) {
 
-            \Log::error('Gyártó törlési hiba: ' . $e->getMessage());
+            \Log::error('Munkatárs törlési hiba: ' . $e->getMessage());
 
             return response()->json([
                 'message' => 'Hiba történt a törlés során.',

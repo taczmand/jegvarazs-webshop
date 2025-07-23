@@ -87,6 +87,21 @@
                                     </div>
                                 @endforeach
                             </div>
+
+                            <div class="sidebar__item">
+                                <h4>Márkák</h4>
+
+
+                                @foreach($brands as $label => $id)
+                                    <div class="sidebar__item__size">
+                                        <label for="brand_{{ $id }}" id="brand_label_{{ $id }}" class="brand-label">
+                                            {{ $label }}
+                                            <input type="radio" id="brand_{{ $id }}" name="brand_id" value="{{ $id }}" class="brand-filter">
+                                        </label>
+                                    </div>
+                                @endforeach
+                            </div>
+
                             <div class="sidebar__item">
                                 <div class="latest-product__text">
                                     <h4>Legújabb termékek</h4>
@@ -191,10 +206,11 @@
 
                                             <h6><a href="{{ route('products.resolve', ['slugs' => $fullSlug]) }}">{{ $product->title }}</a></h6>
                                             @auth('customer')
-                                                <h5>{{ number_format($product->display_gross_price, 0, ',', ' ') }} Ft</h5>
+                                                <!--<h5>{{ number_format($product->display_gross_price, 0, ',', ' ') }} Ft</h5>-->
+                                                {!! $product->display_all_prices !!}
                                                 @if ($status)
                                                     @if ("backorder" === $status['slug'])
-                                                        <a class="badge bg-{{ $status['color'] }}" href="{{ $mailto }}" class="btn btn-sm btn-outline-primary mt-2">
+                                                        <a class="badge bg-{{ $status['color'] }} interesting-badge" href="#" product-id="{{ $product->id }}" product-title="{{ $product->title }}" >
                                                             {{ $status['name'] }} <i class="fa fa-envelope"></i>
                                                         </a>
                                                     @else
@@ -224,4 +240,100 @@
 
 
     </div>
+
+    <!-- Modális ablak -->
+    <div class="modal fade" id="modal" tabindex="-1" role="dialog" aria-labelledby="modalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <form id="modalForm">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modalLabel">Termék érdeklődés elküldése</h5>
+                        <button type="button" class="close cancelModalButton" data-dismiss="modal" aria-label="Bezárás">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            @php
+                                $customer = auth('customer')->user();
+                            @endphp
+                            @if ($customer)
+                                <label class="form-label">Név</label>
+                                <p>{{ $customer->last_name }} {{ $customer->first_name }}</p>
+                                <label class="form-label">E-mail cím</label>
+                                <p>{{ $customer->email }}</p>
+                                <label for="" class="form-label">Termék</label>
+                                <p id="interesting_product"></p>
+                            @endif
+
+                        </div>
+                        <div class="mb-3">
+                            <label for="interesting_message" class="form-label">Megjegyzés</label>
+                            <textarea class="form-control" id="interesting_message" name="interesting_message"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary" id="sendInteresting">Küldés</button>
+                        <button type="button" class="btn btn-secondary cancelModalButton" data-dismiss="modal">Mégse</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+@endsection
+
+@section('scripts')
+    <script>
+        $(document).ready(function() {
+
+            $('.interesting-badge').click(function(event) {
+                event.preventDefault();
+                $('#interesting_product').text($(this).attr('product-title'));
+
+                $('#modal').modal('show');
+            });
+
+            $('#sendInteresting').click(function(event) {
+
+                event.preventDefault();
+                fetch(window.appConfig.APP_URL + 'email/send', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        email_type: 'product-interesting',
+                        productID: $('.interesting-badge').attr('product-id'),
+                        contact_message: $('#interesting_message').val()
+                    }),
+
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                    },
+                })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Hiba történt a beküldés során.');
+                        }
+                        return response.json(); // vagy .text() ha nem JSON-t vársz vissza
+                    })
+                    .then(data => {
+                        if (data.result !== 'success') {
+                            throw new Error(data.error_message || 'Ismeretlen hiba történt.');
+                        }
+                        showToast(data.message, 'success');
+                        $('#interesting_message').val("");
+                        $('#modal').modal('hide');
+                    })
+                    .catch(error => {
+                        showToast(error || 'Ismeretlen hiba történt.', 'error');
+                    });
+            });
+
+            $('.cancelModalButton').click(function () {
+                $('#modal').modal('hide'); // Itt "#modal" a modál ablak ID-je
+            });
+
+
+        });
+    </script>
 @endsection

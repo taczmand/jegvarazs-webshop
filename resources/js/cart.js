@@ -62,7 +62,7 @@ async function changeQuantity(itemId, quantity) {
         const res = await response.json();
         if (res.result === 'success') {
             showToast('A mennyiség frissítve!', 'success');
-            location.reload(); // Refresh the cart summary
+            return 'success';
         } else if (res.result === 'error') {
             showToast(res.message, 'error');
         }
@@ -71,6 +71,57 @@ async function changeQuantity(itemId, quantity) {
         showToast(error, 'error');
     }
 }
+
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.quanity_input').forEach(function (input) {
+        let previousValue = input.value;
+
+        input.addEventListener('focus', function () {
+            previousValue = this.value;
+        });
+
+        input.addEventListener('keydown', async function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const itemId = this.getAttribute('item-id');
+                const value = this.value;
+
+                if (value === previousValue) {
+                    return; // nincs változás
+                }
+
+                const result = await changeQuantity(itemId, value);
+                if (!result) {
+                    this.value = previousValue;
+                } else {
+                    previousValue = value;
+                    location.reload();
+                }
+            }
+        });
+
+        input.addEventListener('blur', async function () {
+            const itemId = this.getAttribute('item-id');
+            const value = this.value;
+
+            if (value === previousValue) {
+                return; // nincs változás
+            }
+
+            const result = await changeQuantity(itemId, value);
+            if (!result) {
+                this.value = previousValue;
+            } else {
+                previousValue = value;
+                location.reload();
+            }
+        });
+    });
+});
+
+
+
+
 
 window.addToCart = addToCart;
 window.removeItemFromCart = removeItemFromCart;

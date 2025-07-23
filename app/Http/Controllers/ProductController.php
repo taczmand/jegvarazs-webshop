@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\Tag;
@@ -14,6 +15,7 @@ class ProductController extends Controller
     {
         // Query paraméterek
         $tags = $request->query('tag');
+        $brands = $request->query('brand');
         $sortBy = $request->query('sortBy');
 
         // Alap query
@@ -25,6 +27,14 @@ class ProductController extends Controller
             $tagArray = explode(',', $tags);
             $query->whereHas('tags', function ($q) use ($tagArray) {
                 $q->whereIn('tag_id', $tagArray);
+            });
+        }
+
+        // 🔍 Brand szűrés, ha van
+        if ($brands) {
+            $brandArray = explode(',', $brands);
+            $query->whereHas('brands', function ($q) use ($brandArray) {
+                $q->whereIn('brand_id', $brandArray);
             });
         }
 
@@ -50,6 +60,7 @@ class ProductController extends Controller
         $products = $query->paginate(12)->withQueryString();
 
         $tags = Tag::all()->pluck('id', 'name')->toArray();
+        $brands = Brand::where('status', 'active')->pluck('id', 'title')->toArray();
 
         $latest_products = Product::with(['photos'])
             ->where('status', 'active')
@@ -81,6 +92,7 @@ class ProductController extends Controller
                 'cover_image' => null,
             ],
             'tags' => $tags,
+            'brands' => $brands,
             'minPrice' => $minPrice,
             'maxPrice' => $maxPrice,
             'latest_products' => $latest_products,
@@ -106,6 +118,8 @@ class ProductController extends Controller
         $products = Product::whereIn('cat_id', $categoryIds)->where('status', 'active')->paginate(12);
 
         $tags = Tag::all()->pluck('id', 'name')->toArray();
+
+        $brands = Brand::where('status', 'active')->pluck('id', 'title')->toArray();
 
         $latest_products = Product::whereIn('cat_id', $categoryIds)->where('status', 'active')
             ->orderBy('created_at', 'desc')
@@ -140,6 +154,7 @@ class ProductController extends Controller
             'products' => $products,
             'category' => $parent,
             'tags' => $tags,
+            'brands' => $brands,
             'minPrice' => $minPrice,
             'maxPrice' => $maxPrice,
             'latest_products' => $latest_products,

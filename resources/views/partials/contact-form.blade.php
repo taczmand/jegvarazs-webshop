@@ -1,13 +1,15 @@
 <!-- Contact Form Begin -->
 <div class="contact-form spad">
     <div class="container">
+
         <div class="row">
             <div class="col-lg-12">
-                <div class="contact__form__title">
+                <div class="section-title">
                     <h2>Írjon nekünk!</h2>
                 </div>
             </div>
         </div>
+
         <form id="contact_form">
             <div class="row">
                 <div class="col-lg-6 col-md-6">

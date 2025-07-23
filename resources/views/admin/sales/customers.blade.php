@@ -5,68 +5,70 @@
 
     <div class="container p-0">
 
-        <div class="d-flex align-items-center mb-3 pb-2 border-bottom">
-            <i class="fa-solid fa-money-bill-transfer text-primary me-2"></i>
-            <h2 class="h5 text-primary mb-0">Értékesítés / Vevők és partnerek</h2>
+        <div class="d-flex align-items-center mb-3 pb-2">
+            <h2 class="color-dark-blue mb-0">Értékesítés / Vevők és partnerek</h2>
         </div>
 
-        @if(auth('admin')->user()->can('view-customers'))
+        <div class="rounded-xl bg-white shadow-lg p-4">
 
-            <div class="filters d-flex flex-wrap gap-2 mb-3 align-items-center">
-                <div class="filter-group">
-                    <i class="fa-solid fa-filter text-gray-500"></i>
+            @if(auth('admin')->user()->can('view-customers'))
+
+                <div class="filters d-flex flex-wrap gap-2 mb-3 align-items-center">
+                    <div class="filter-group">
+                        <i class="fa-solid fa-filter text-gray-500"></i>
+                    </div>
+
+                    <div class="filter-group flex-grow-1 flex-md-shrink-0">
+                        <input type="text" placeholder="ID" class="filter-input form-control" data-column="0">
+                    </div>
+
+                    <div class="filter-group flex-grow-1 flex-md-shrink-0">
+                        <input type="text" placeholder="Név" class="filter-input form-control" data-column="1">
+                    </div>
+
+                    <div class="filter-group flex-grow-1 flex-md-shrink-0">
+                        <input type="text" placeholder="Email" class="filter-input form-control" data-column="3">
+                    </div>
+
+                    <div class="filter-group flex-grow-1 flex-md-shrink-0">
+                        <select class="form-select filter-input" data-column="4">
+                            <option value="">Partner (összes)</option>
+                            <option value="1">Igen</option>
+                            <option value="0">Nem</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group flex-grow-1 flex-md-shrink-0">
+                        <select class="form-select filter-input" data-column="5">
+                            <option value="">Állapot (összes)</option>
+                            <option value="active">Aktív</option>
+                            <option value="inactive">Inaktív</option>
+                        </select>
+                    </div>
                 </div>
 
-                <div class="filter-group flex-grow-1 flex-md-shrink-0">
-                    <input type="text" placeholder="ID" class="filter-input form-control" data-column="0">
+
+                <table class="table table-bordered display responsive nowrap" id="adminTable" style="width:100%">
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th data-priority="1">Név</th>
+                        <th>Telefonszám</th>
+                        <th>Email</th>
+                        <th>Partner?</th>
+                        <th>Állapot</th>
+                        <th>Létrehozva</th>
+                        <th>Módosítva</th>
+                        <th data-priority="2">Műveletek</th>
+                    </tr>
+                    </thead>
+                </table>
+            @else
+                <div class="alert alert-danger">
+                    Nincs jogosultságod a vevők és partnerek megtekintésére.
                 </div>
-
-                <div class="filter-group flex-grow-1 flex-md-shrink-0">
-                    <input type="text" placeholder="Név" class="filter-input form-control" data-column="1">
-                </div>
-
-                <div class="filter-group flex-grow-1 flex-md-shrink-0">
-                    <input type="text" placeholder="Email" class="filter-input form-control" data-column="3">
-                </div>
-
-                <div class="filter-group flex-grow-1 flex-md-shrink-0">
-                    <select class="form-select filter-input" data-column="4">
-                        <option value="">Partner (összes)</option>
-                        <option value="1">Igen</option>
-                        <option value="0">Nem</option>
-                    </select>
-                </div>
-
-                <div class="filter-group flex-grow-1 flex-md-shrink-0">
-                    <select class="form-select filter-input" data-column="5">
-                        <option value="">Állapot (összes)</option>
-                        <option value="active">Aktív</option>
-                        <option value="inactive">Inaktív</option>
-                    </select>
-                </div>
-            </div>
-
-
-            <table class="table table-bordered display responsive nowrap" id="adminTable" style="width:100%">
-                <thead>
-                <tr>
-                    <th>ID</th>
-                    <th data-priority="1">Név</th>
-                    <th>Telefonszám</th>
-                    <th>Email</th>
-                    <th>Partner?</th>
-                    <th>Állapot</th>
-                    <th>Létrehozva</th>
-                    <th>Módosítva</th>
-                    <th data-priority="2">Műveletek</th>
-                </tr>
-                </thead>
-            </table>
-        @else
-            <div class="alert alert-danger">
-                Nincs jogosultságod a vevők és partnerek megtekintésére.
-            </div>
-        @endif
+            @endif
+        </div>
     </div>
 
     <!-- Modális ablak -->

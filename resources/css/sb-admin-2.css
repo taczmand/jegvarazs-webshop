@@ -11307,3 +11307,10 @@ body.sidebar-toggled footer.sticky-footer {
     100% { transform: rotate(360deg);}
 }
 
+.rounded-xl {
+    border-radius: 1rem !important;
+}
+.sidebar-rounded {
+    border-top-right-radius: 1rem !important;
+    border-bottom-right-radius: 1rem !important;
+}

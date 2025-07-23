@@ -44,5 +44,6 @@
 
 <!-- Custom Scripts with Vite load -->
 @vite('resources/js/shop.js')
+@yield('scripts')
 </body>
 </html>

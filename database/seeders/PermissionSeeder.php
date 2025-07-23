@@ -52,10 +52,10 @@ class PermissionSeeder extends Seeder
             ['id' => 40, 'name' => 'create-regulation', 'label' => 'Szabályzat létrehozása', 'group' => 'Tartalomkezelés'],
             ['id' => 41, 'name' => 'edit-regulation', 'label' => 'Szabályzat szerkesztése', 'group' => 'Tartalomkezelés'],
             ['id' => 42, 'name' => 'delete-regulation', 'label' => 'Szabályzat törlése', 'group' => 'Tartalomkezelés'],
-            ['id' => 43, 'name' => 'view-sites', 'label' => 'Telephelyek megtekintése', 'group' => 'Webshop'],
-            ['id' => 44, 'name' => 'edit-site', 'label' => 'Telephely szerkesztése', 'group' => 'Webshop'],
-            ['id' => 45, 'name' => 'create-site', 'label' => 'Telephely létrehozása', 'group' => 'Webshop'],
-            ['id' => 46, 'name' => 'delete-site', 'label' => 'Telephely törlése', 'group' => 'Webshop'],
+            ['id' => 43, 'name' => 'view-sites', 'label' => 'Telephelyek megtekintése', 'group' => 'Tartalomkezelés'],
+            ['id' => 44, 'name' => 'edit-site', 'label' => 'Telephely szerkesztése', 'group' => 'Tartalomkezelés'],
+            ['id' => 45, 'name' => 'create-site', 'label' => 'Telephely létrehozása', 'group' => 'Tartalomkezelés'],
+            ['id' => 46, 'name' => 'delete-site', 'label' => 'Telephely törlése', 'group' => 'Tartalomkezelés'],
             ['id' => 47, 'name' => 'edit-settings', 'label' => 'Rendszer beállítások szerkesztése', 'group' => 'Rendszer'],
             ['id' => 48, 'name' => 'view-users', 'label' => 'Felhasználók megtekintése', 'group' => 'Rendszer'],
             ['id' => 49, 'name' => 'edit-user', 'label' => 'Felhasználó szerkesztése', 'group' => 'Rendszer'],
@@ -83,6 +83,10 @@ class PermissionSeeder extends Seeder
             ['id' => 71, 'name' => 'view-admin-logs', 'label' => 'Admin tevékenységek megtekintése', 'group' => 'Jelentések'],
             ['id' => 72, 'name' => 'view-purchased-products', 'label' => 'Vásárolt termékek megtekintése', 'group' => 'Jelentések'],
             ['id' => 73, 'name' => 'delete-worksheet-image', 'label' => 'Munkalap kép törlése', 'group' => 'Ügyviteli folyamatok'],
+            ['id' => 74, 'name' => 'view-employees', 'label' => 'Munkatársak megtekintése', 'group' => 'Tartalomkezelés'],
+            ['id' => 75, 'name' => 'edit-employee', 'label' => 'Munkatárs szerkesztése', 'group' => 'Tartalomkezelés'],
+            ['id' => 76, 'name' => 'create-employee', 'label' => 'Munkatárs létrehozása', 'group' => 'Tartalomkezelés'],
+            ['id' => 77, 'name' => 'delete-employee', 'label' => 'Munkatárs törlése', 'group' => 'Tartalomkezelés'],
 
         ];
 

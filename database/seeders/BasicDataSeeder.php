@@ -54,6 +54,8 @@ class BasicDataSeeder extends Seeder
             ['key' => 'maintenance_message'],
             ['key' => 'cart_expiration_days'],
             ['key' => 'about_description'],
+            ['key' => 'company_open'],
+            ['key' => 'company_email']
         ];
 
         foreach ($data as &$item) {

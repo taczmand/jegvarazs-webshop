@@ -5,3 +5,24 @@
 
 @import 'bootstrap/scss/bootstrap';
 @import 'variables';
+
+.color-light-blue {
+    color: $logo-blue-color-light;
+}
+.bg-light-blue {
+    background-color: $logo-blue-color-light;
+}
+.color-mid-blue {
+    color: $logo-blue-color-mid;
+}
+.color-dark-blue {
+    color: $logo-blue-color-dark !important;
+}
+.jv-grey-color {
+    color: $logo-grey-color;
+}
+
+.bg-gradient-custom {
+    background: linear-gradient(to bottom, $logo-blue-color-dark, $logo-blue-color-mid) !important;
+    color: #fff;
+}

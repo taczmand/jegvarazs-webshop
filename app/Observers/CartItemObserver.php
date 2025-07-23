@@ -86,8 +86,12 @@ class CartItemObserver
             throw new \Exception("A termék nem található.");
         }
 
-        if ($cartItem->quantity > $product->stock) {
-            throw new OutOfStockException("Nincs elég készlet a(z) {$product->name} termékből.");
+        $oldQty = $cartItem->getOriginal('quantity');
+        $newQty = $cartItem->quantity;
+        $diff = $newQty - $oldQty;
+
+        if ($cartItem->product->stock < $diff) {
+            throw new OutOfStockException("Nincs elég készlet a(z) {$product->title} termékből.");
         }
 
         if ($cartItem->quantity < 0) {
