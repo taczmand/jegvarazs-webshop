@@ -65,9 +65,10 @@ jobs:
           server-dir: 'jegvarazsbolt.hu/laravel/'
           local-dir: './'
           exclude: |
-            .git**
+            **/.git*
+            **/.git*/**
+            **/node_modules/**
             .DS_Store
-            node_modules/**
             vendor/**
             public/**
             tests/**
