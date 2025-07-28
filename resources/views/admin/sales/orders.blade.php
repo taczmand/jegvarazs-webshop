@@ -5,56 +5,58 @@
 
     <div class="container p-0">
 
-        <div class="d-flex align-items-center mb-3 pb-2 border-bottom">
-            <i class="fa-solid fa-money-bill-transfer text-primary me-2"></i>
-            <h2 class="h5 text-primary mb-0">Értékesítés / Rendelések</h2>
+        <div class="d-flex align-items-center mb-3 pb-2">
+            <h2 class="color-dark-blue mb-0">Értékesítés / Rendelések</h2>
         </div>
 
-        @if(auth('admin')->user()->can('view-orders'))
+        <div class="rounded-xl bg-white shadow-lg p-4">
 
-            <div class="filters d-flex flex-wrap gap-2 mb-3 align-items-center">
-                <div class="filter-group">
-                    <i class="fa-solid fa-filter text-gray-500"></i>
+            @if(auth('admin')->user()->can('view-orders'))
+
+                <div class="filters d-flex flex-wrap gap-2 mb-3 align-items-center">
+                    <div class="filter-group">
+                        <i class="fa-solid fa-filter text-gray-500"></i>
+                    </div>
+
+                    <div class="filter-group flex-grow-1 flex-md-shrink-0">
+                        <input type="text" placeholder="ID" class="filter-input form-control" data-column="0">
+                    </div>
+
+                    <div class="filter-group flex-grow-1 flex-md-shrink-0">
+                        <input type="text" placeholder="Vásárló" class="filter-input form-control" data-column="2">
+                    </div>
+
+                    <div class="filter-group flex-grow-1 flex-md-shrink-0">
+                        <select class="form-select filter-input" data-column="4">
+                            <option value="">Állapot (összes)</option>
+                            <option value="pending">Függőben</option>
+                            <option value="processing">Feldolgozás alatt</option>
+                            <option value="completed">Befejezve</option>
+                            <option value="cancelled">Törölve</option>
+                        </select>
+                    </div>
                 </div>
 
-                <div class="filter-group flex-grow-1 flex-md-shrink-0">
-                    <input type="text" placeholder="ID" class="filter-input form-control" data-column="0">
+
+                <table class="table table-bordered display responsive nowrap" id="adminTable" style="width:100%">
+                    <thead>
+                    <tr>
+                        <th data-priority="1">ID</th>
+                        <th>Dátum</th>
+                        <th data-priority="2">Vásárló</th>
+                        <th>Teljes összeg</th>
+                        <th>Állapot</th>
+                        <th>Termékek száma</th>
+                        <th data-priority="3">Műveletek</th>
+                    </tr>
+                    </thead>
+                </table>
+            @else
+                <div class="alert alert-warning">
+                    <i class="fa-solid fa-exclamation-triangle me-2"></i> Nincs jogosultságod a rendelések megtekintésére!
                 </div>
-
-                <div class="filter-group flex-grow-1 flex-md-shrink-0">
-                    <input type="text" placeholder="Vásárló" class="filter-input form-control" data-column="2">
-                </div>
-
-                <div class="filter-group flex-grow-1 flex-md-shrink-0">
-                    <select class="form-select filter-input" data-column="4">
-                        <option value="">Állapot (összes)</option>
-                        <option value="pending">Függőben</option>
-                        <option value="processing">Feldolgozás alatt</option>
-                        <option value="completed">Befejezve</option>
-                        <option value="cancelled">Törölve</option>
-                    </select>
-                </div>
-            </div>
-
-
-            <table class="table table-bordered display responsive nowrap" id="adminTable" style="width:100%">
-                <thead>
-                <tr>
-                    <th data-priority="1">ID</th>
-                    <th>Dátum</th>
-                    <th data-priority="2">Vásárló</th>
-                    <th>Teljes összeg</th>
-                    <th>Állapot</th>
-                    <th>Termékek száma</th>
-                    <th data-priority="3">Műveletek</th>
-                </tr>
-                </thead>
-            </table>
-        @else
-            <div class="alert alert-danger">
-                Nincs jogosultságod a rendelések megtekintésére!
-            </div>
-        @endif
+            @endif
+        </div>
     </div>
 
     <!-- Modális ablak -->

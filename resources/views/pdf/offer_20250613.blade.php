@@ -4,90 +4,73 @@
     <meta charset="UTF-8">
     <title>Ajánlat PDF</title>
     <style>
+        @page {
+            margin: 0;
+        }
         body {
             font-family: DejaVu Sans, sans-serif;
             font-size: 12px;
-            margin: 20px;
+            margin: 0;
+            padding: 0;
+            background-color: white;
+            background-image: url("{{ public_path('static_media/offer_bg_image.jpeg') }}");
+            background-position: center center;
+            background-repeat: no-repeat;
+            background-size: contain;
         }
-        h1, h2 {
-            text-align: center;
-            margin-bottom: 20px;
+        .content {
+            display: block;
+            padding: 20mm;
+            box-sizing: border-box;
+            width: 170mm;
         }
-        .contact-info, .products {
+        table {
             width: 100%;
-            margin-bottom: 30px;
+            border-collapse: collapse;
+            margin-top: 10mm;
         }
-        .contact-info td {
-            padding: 5px 10px;
+        table td {
+            border-bottom: 1px solid #999;
+            padding: 4px 0;
+            vertical-align: bottom;
         }
-        .products th, .products td {
-            border: 1px solid #333;
-            padding: 8px 12px;
+        .product-name {
             text-align: left;
         }
-        .products th {
-            background-color: #eee;
-        }
-        .products {
-            border-collapse: collapse;
+        .product-price {
+            text-align: right;
+            white-space: nowrap;
         }
     </style>
 </head>
 <body>
-<h1>Ajánlat</h1>
+    <div class="content">
+        <p style="margin-top: 50mm">{{ $offer->name }} részére</p>
+        <p style="margin-top: 20mm">Örömmel vettük érdeklődését szolgáltatásunk iránt, melyről üzleti feltételeink szerint és az Ön által
+            megadott paraméterek alapján az alábbi árajánlatot adja ki a
+            <b>Gál-Ker Jégvarázs Klíma és Biztonságtechnikai Kft.</b></p>
+        <h2 style="margin-top: 20mm; font-weight: bold; font-style: italic; text-decoration: underline">{{ $offer->title }}</h2>
+        <table style="margin-top: 20mm">
 
-<h2>Kapcsolati adatok</h2>
-<table class="contact-info">
-    <tr>
-        <td><strong>Név:</strong></td>
-        <td>{{ $offer->name }}</td>
-    </tr>
-    <tr>
-        <td><strong>Ország:</strong></td>
-        <td>{{ $offer->country }}</td>
-    </tr>
-    <tr>
-        <td><strong>Irányítószám:</strong></td>
-        <td>{{ $offer->zip_code }}</td>
-    </tr>
-    <tr>
-        <td><strong>Város:</strong></td>
-        <td>{{ $offer->city }}</td>
-    </tr>
-    <tr>
-        <td><strong>Cím:</strong></td>
-        <td>{{ $offer->address_line }}</td>
-    </tr>
-    <tr>
-        <td><strong>Telefon:</strong></td>
-        <td>{{ $offer->phone }}</td>
-    </tr>
-    <tr>
-        <td><strong>Email:</strong></td>
-        <td>{{ $offer->email }}</td>
-    </tr>
-    <tr>
-        <td><strong>Megjegyzés:</strong></td>
-        <td>{{ $offer->description }}</td>
-    </tr>
-</table>
+            @php
+                $total_gross = 0;
+            @endphp
+            @foreach ($products as $product)
+                <tr>
+                    <td class="product-name">{{ $product['title'] }}</td>
+                    <td class="product-price">{{ number_format($product['gross_price'], 0, ',', ' ') }} Ft</td>
+                </tr>
+                @php
+                    $total_gross += $product['gross_price'];
+                @endphp
+            @endforeach
 
-<h2>Termékek</h2>
-<table class="products">
-    <thead>
-    <tr>
-        <th>Termék neve</th>
-        <th>Bruttó ár (Ft)</th>
-    </tr>
-    </thead>
-    <tbody>
-    @foreach ($products as $product)
-        <tr>
-            <td>{{ $product['title'] }}</td>
-            <td>{{ number_format($product['gross_price'], 2, ',', ' ') }}</td>
-        </tr>
-    @endforeach
-    </tbody>
-</table>
+        </table>
+        <div style="margin-top: 15mm; text-align: right; float: right; display: block; font-style: italic">
+            <b style="text-decoration: underline">Összesen: {{ number_format($total_gross, 0, ',', ' ') }} Ft</b>
+            <p>Az árak forintban értendők és tartalmazzák az ÁFÁT!</p>
+        </div>
+
+    </div>
 </body>
 </html>

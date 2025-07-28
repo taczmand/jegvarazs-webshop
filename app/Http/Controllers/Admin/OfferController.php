@@ -24,6 +24,7 @@ class OfferController extends Controller
     {
         $offers = Offer::select([
             'offers.id',
+            'offers.title',
             'offers.name',
             'offers.country',
             'offers.zip_code',
@@ -85,6 +86,7 @@ class OfferController extends Controller
 
         try {
             $offer = Offer::create([
+                'title' => $request->input('title'),
                 'name' => $request->input('contact_name'),
                 'country' => $request->input('contact_country'),
                 'zip_code' => $request->input('contact_zip_code'),
@@ -122,7 +124,7 @@ class OfferController extends Controller
             ];
 
             // PDF generálása
-            $pdf = Pdf::loadView('pdf.offer_20250720', $data);
+            $pdf = Pdf::loadView('pdf.offer_20250613', $data);
 
             $fileName = 'offer_' . $offer->id . '.pdf';
             Storage::put("offers/{$fileName}", $pdf->output());

@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('tax_categories', function (Blueprint $table) {
             $table->id();
-            $table->decimal('tax_value', 8, 4)->unique();
+            $table->decimal('tax_value', 8, 2)->unique();
             $table->string('tax_name');
             $table->string('tax_description')->nullable();
             $table->timestamp('created_at')->default(DB::raw('CURRENT_TIMESTAMP'));

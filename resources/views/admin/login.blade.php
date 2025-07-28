@@ -8,7 +8,7 @@
     @vite('resources/sass/admin.scss')
 </head>
 
-<body class="bg-gradient-primary">
+<body class="bg-gradient-custom">
 
     <div class="container">
 

@@ -5,44 +5,46 @@
 @section('content')
     <div class="container p-0">
 
-        <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
-            <h2 class="h5 text-primary mb-0"><i class="fa-solid fa-user text-primary me-2"></i> Profil</h2>
+        <div class="d-flex justify-content-between align-items-center mb-3 pb-2">
+            <h2 class="color-dark-blue mb-0">Profil</h2>
         </div>
 
-        <form id="profileForm">
-            @csrf
-            @method('PUT')
+        <div class="rounded-xl bg-white shadow-lg p-4">
+            <form id="profileForm">
+                @csrf
+                @method('PUT')
 
-            <input type="hidden" name="id" value="{{ $profil->id }}">
+                <input type="hidden" name="id" value="{{ $profil->id }}">
 
-            <div class="mb-3">
-                <label for="name" class="form-label">Név</label>
-                <input type="text" class="form-control" id="name" name="name"
-                       value="{{ $profil->name }}" required>
-            </div>
+                <div class="mb-3">
+                    <label for="name" class="form-label">Név</label>
+                    <input type="text" class="form-control" id="name" name="name"
+                           value="{{ $profil->name }}" required>
+                </div>
 
-            <div class="mb-3">
-                <label for="email" class="form-label">Email cím</label>
-                <input type="email" class="form-control" id="email" name="email"
-                       value="{{ $profil->email }}" required>
-            </div>
+                <div class="mb-3">
+                    <label for="email" class="form-label">Email cím</label>
+                    <input type="email" class="form-control" id="email" name="email"
+                           value="{{ $profil->email }}" required>
+                </div>
 
-            <div class="mb-3">
-                <label for="password" class="form-label">Új jelszó <small>(nem kötelező)</small></label>
-                <input type="password" class="form-control" id="password" name="password"
-                       placeholder="Új jelszó">
-            </div>
+                <div class="mb-3">
+                    <label for="password" class="form-label">Új jelszó <small>(nem kötelező)</small></label>
+                    <input type="password" class="form-control" id="password" name="password"
+                           placeholder="Új jelszó">
+                </div>
 
-            <div class="mb-3">
-                <label for="password_confirmation" class="form-label">Jelszó megerősítése</label>
-                <input type="password" class="form-control" id="password_confirmation"
-                       name="password_confirmation" placeholder="Új jelszó újra">
-            </div>
+                <div class="mb-3">
+                    <label for="password_confirmation" class="form-label">Jelszó megerősítése</label>
+                    <input type="password" class="form-control" id="password_confirmation"
+                           name="password_confirmation" placeholder="Új jelszó újra">
+                </div>
 
-            <button type="submit" class="btn btn-primary">
-                <i class="fa-solid fa-save me-1"></i> Mentés
-            </button>
-        </form>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fa-solid fa-save me-1"></i> Mentés
+                </button>
+            </form>
+        </div>
 
         <div id="formMessage" class="mt-3"></div>
 

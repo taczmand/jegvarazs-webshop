@@ -5,58 +5,64 @@
 
     <div class="container p-0">
 
-        <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
-            <h2 class="h5 text-primary mb-0"><i class="fa-solid fa-business-time text-primary me-2"></i> Ügyfél folyamatok / Ajánlatok</h2>
+        <div class="d-flex justify-content-between align-items-center mb-3 pb-2">
+            <h2 class="color-dark-blue mb-0">Ügyviteli folyamatok / Ajánlatok</h2>
             @if(auth('admin')->user()->can('create-offer'))
                 <button class="btn btn-success" id="addButton"><i class="fas fa-plus me-1"></i> Új ajánlat</button>
             @endif
         </div>
 
-        @if(auth('admin')->user()->can('view-offers'))
+        <div class="rounded-xl bg-white shadow-lg p-4">
 
-            <div class="filters d-flex flex-wrap gap-2 mb-3 align-items-center">
-                <div class="filter-group">
-                    <i class="fa-solid fa-filter text-gray-500"></i>
+            @if(auth('admin')->user()->can('view-offers'))
+
+                <div class="filters d-flex flex-wrap gap-2 mb-3 align-items-center">
+                    <div class="filter-group">
+                        <i class="fa-solid fa-filter text-gray-500"></i>
+                    </div>
+
+                    <div class="filter-group flex-grow-1 flex-md-shrink-0">
+                        <input type="text" placeholder="ID" class="filter-input form-control" data-column="0">
+                    </div>
+                    <div class="filter-group flex-grow-1 flex-md-shrink-0">
+                        <input type="text" placeholder="Cím" class="filter-input form-control" data-column="1">
+                    </div>
+                    <div class="filter-group flex-grow-1 flex-md-shrink-0">
+                        <input type="text" placeholder="Név" class="filter-input form-control" data-column="2">
+                    </div>
+                    <div class="filter-group flex-grow-1 flex-md-shrink-0">
+                        <input type="text" placeholder="Irányítószám" class="filter-input form-control" data-column="4">
+                    </div>
+                    <div class="filter-group flex-grow-1 flex-md-shrink-0">
+                        <input type="text" placeholder="Város" class="filter-input form-control" data-column="5">
+                    </div>
+                    <div class="filter-group flex-grow-1 flex-md-shrink-0">
+                        <input type="text" placeholder="Cím" class="filter-input form-control" data-column="6">
+                    </div>
                 </div>
 
-                <div class="filter-group flex-grow-1 flex-md-shrink-0">
-                    <input type="text" placeholder="ID" class="filter-input form-control" data-column="0">
+                <table class="table table-bordered display responsive nowrap" id="adminTable" style="width:100%">
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th data-priority="3">Cím</th>
+                        <th data-priority="1">Név</th>
+                        <th>Ország</th>
+                        <th>Irányítószám</th>
+                        <th>Város</th>
+                        <th>Cím</th>
+                        <th>Készítette</th>
+                        <th>Létrehozva</th>
+                        <th data-priority="2">Műveletek</th>
+                    </tr>
+                    </thead>
+                </table>
+            @else
+                <div class="alert alert-warning">
+                    <i class="fa-solid fa-exclamation-triangle me-2"></i> Nincs jogosultságod az ajánlatok megtekintésére.
                 </div>
-
-                <div class="filter-group flex-grow-1 flex-md-shrink-0">
-                    <input type="text" placeholder="Név" class="filter-input form-control" data-column="1">
-                </div>
-                <div class="filter-group flex-grow-1 flex-md-shrink-0">
-                    <input type="text" placeholder="Irányítószám" class="filter-input form-control" data-column="3">
-                </div>
-                <div class="filter-group flex-grow-1 flex-md-shrink-0">
-                    <input type="text" placeholder="Város" class="filter-input form-control" data-column="4">
-                </div>
-                <div class="filter-group flex-grow-1 flex-md-shrink-0">
-                    <input type="text" placeholder="Cím" class="filter-input form-control" data-column="5">
-                </div>
-            </div>
-
-            <table class="table table-bordered display responsive nowrap" id="adminTable" style="width:100%">
-                <thead>
-                <tr>
-                    <th>ID</th>
-                    <th data-priority="1">Név</th>
-                    <th>Ország</th>
-                    <th>Irányítószám</th>
-                    <th>Város</th>
-                    <th>Cím</th>
-                    <th>Készítette</th>
-                    <th>Létrehozva</th>
-                    <th data-priority="2">Műveletek</th>
-                </tr>
-                </thead>
-            </table>
-        @else
-            <div class="alert alert-warning">
-                Nincs jogosultságod az ajánlatok megtekintésére.
-            </div>
-        @endif
+            @endif
+        </div>
     </div>
 
 
@@ -87,11 +93,15 @@
                                 <table class="table table-bordered offer-contact-table">
                                     <tbody>
                                     <tr>
-                                        <td class="w-25">Név</td>
+                                        <td class="w-25">Cím*</td>
+                                        <td><input type="text" class="form-control" id="title" name="title" required></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="w-25">Név*</td>
                                         <td><input type="text" class="form-control" id="contact_name" name="contact_name" required></td>
                                     </tr>
                                     <tr>
-                                        <td>Ország</td>
+                                        <td>Ország*</td>
                                         <td>
                                             <select name="contact_country" class="form-control w-100" id="contact_country">
                                                 @foreach(config('countries') as $code => $name)
@@ -101,16 +111,20 @@
                                         </td>
                                     </tr>
                                     <tr>
-                                        <td>Irányítószám</td>
-                                        <td><input type="text" class="form-control" id="contact_zip_code" name="contact_zip_code"></td>
+                                        <td>Irányítószám*</td>
+                                        <td><input type="text" class="form-control" id="contact_zip_code" name="contact_zip_code" required></td>
                                     </tr>
                                     <tr>
-                                        <td>Város</td>
-                                        <td><input type="text" class="form-control" id="contact_city" name="contact_city"></td>
+                                        <td>Város*</td>
+                                        <td>
+                                            <input type="text" class="form-control" id="contact_city" name="contact_city" required>
+                                            <div id="zip_suggestions" class="list-group position-absolute w-100" style="z-index: 1000;"></div>
+                                        </td>
+
                                     </tr>
                                     <tr>
-                                        <td>Cím</td>
-                                        <td><input type="text" class="form-control" id="contact_address_line" name="contact_address_line"></td>
+                                        <td>Cím*</td>
+                                        <td><input type="text" class="form-control" id="contact_address_line" name="contact_address_line" required></td>
                                     </tr>
                                     <tr>
                                         <td>Telefonszám</td>
@@ -175,6 +189,7 @@
                 order: [[0, 'desc']],
                 columns: [
                     { data: 'id' },
+                    { data: 'title' },
                     { data: 'name' },
                     { data: 'country' },
                     { data: 'zip_code' },
@@ -207,6 +222,47 @@
                 table.columns(i).search(v).draw();
             });
 
+            let debounceTimeout;
+
+            $('#contact_zip_code').on('input', function () {
+                clearTimeout(debounceTimeout);
+
+                debounceTimeout = setTimeout(() => {
+                    let zip = $(this).val();
+
+                    $.ajax({
+                        url: window.appConfig.APP_URL + 'api/postal-codes/search?zip=' + zip,
+                        type: 'GET',
+                        success: function (data) {
+                            const $suggestions = $('#zip_suggestions');
+                            $suggestions.empty();
+
+                            if (data.length > 0) {
+                                data.forEach(row => {
+                                    $suggestions.append(`
+                                        <button type="button" class="list-group-item list-group-item-action city-item" data_zip="${row.zip}">
+                                            ${row.city}
+                                        </button>
+                                    `);
+                                });
+
+                                $suggestions.show();
+                            } else {
+                                $suggestions.hide();
+                            }
+                        }
+                    });
+
+                }, 300); // 300 ms debounce
+            });
+
+            // Ha rákattintanak egy ajánlásra
+            $('#zip_suggestions').on('click', 'button', function () {
+                $('#contact_zip_code').val($(this).attr('data_zip'));
+                $('#contact_city').val($(this).text().trim());
+                $('#zip_suggestions').hide();
+            });
+
             // Ajánlat megtekintése
 
             $('#adminTable').on('click', '.view', async function () {
@@ -228,6 +284,7 @@
                 // Kapcsolati adatok
 
                 $('#offer_id').val(offer.id);
+                $('#title').val(offer.title);
                 $('#contact_name').val(offer.name);
                 $('#contact_country').val(offer.country);
                 $('#contact_zip_code').val(offer.zip_code);

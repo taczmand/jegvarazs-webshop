@@ -4,7 +4,15 @@
     <title></title>
     <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
     <style>
-        body {padding:0; margin:0; text-align:center; background-color:#777}
+        body {
+            padding:0;
+            margin:0;
+            text-align:center;
+            background-image: url("{{ public_path('static_media/offer_bg_image.png') }}");
+            background-position: center center;
+            background-repeat: no-repeat;
+            background-size: contain;
+        }
         .page {margin:5px 0}
         .page svg {background-color:#fff}
     </style>

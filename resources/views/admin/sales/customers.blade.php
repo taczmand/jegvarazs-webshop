@@ -64,8 +64,8 @@
                     </thead>
                 </table>
             @else
-                <div class="alert alert-danger">
-                    Nincs jogosultságod a vevők és partnerek megtekintésére.
+                <div class="alert alert-warning">
+                    <i class="fa-solid fa-exclamation-triangle me-2"></i> Nincs jogosultságod a vevők és partnerek megtekintésére!
                 </div>
             @endif
         </div>

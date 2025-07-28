@@ -5,60 +5,63 @@
 
     <div class="container p-0">
 
-        <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
-            <h2 class="h5 text-primary mb-0"><i class="fa-solid fa-list text-primary me-2"></i> Termékek / Kategóriák</h2>
+        <div class="d-flex justify-content-between align-items-center mb-3 pb-2">
+            <h2 class="color-dark-blue mb-0">Termékek / Kategóriák</h2>
             @if(auth('admin')->user()->can('create-category'))
                 <button class="btn btn-success" id="addButton"><i class="fas fa-plus me-1"></i> Új kategória</button>
             @endif
         </div>
 
-        @if(auth('admin')->user()->can('view-categories'))
+        <div class="rounded-xl bg-white shadow-lg p-4">
 
-            <div class="filters d-flex flex-wrap gap-2 mb-3 align-items-center">
-                <div class="filter-group">
-                    <i class="fa-solid fa-filter text-gray-500"></i>
+            @if(auth('admin')->user()->can('view-categories'))
+
+                <div class="filters d-flex flex-wrap gap-2 mb-3 align-items-center">
+                    <div class="filter-group">
+                        <i class="fa-solid fa-filter text-gray-500"></i>
+                    </div>
+
+                    <div class="filter-group flex-grow-1 flex-md-shrink-0">
+                        <input type="text" placeholder="ID" class="filter-input form-control" data-column="0">
+                    </div>
+
+                    <div class="filter-group flex-grow-1 flex-md-shrink-0">
+                        <input type="text" placeholder="Kategórianév" class="filter-input form-control" data-column="1">
+                    </div>
+
+                    <div class="filter-group flex-grow-1 flex-md-shrink-0">
+                        <input type="text" placeholder="Leírás" class="filter-input form-control" data-column="2">
+                    </div>
+
+                    <div class="filter-group flex-grow-1 flex-md-shrink-0">
+                        <select class="form-select filter-input" data-column="4">
+                            <option value="">Állapot (összes)</option>
+                            <option value="active">Aktív</option>
+                            <option value="inactive">Inaktív</option>
+                        </select>
+                    </div>
                 </div>
 
-                <div class="filter-group flex-grow-1 flex-md-shrink-0">
-                    <input type="text" placeholder="ID" class="filter-input form-control" data-column="0">
+                <table class="table table-bordered display responsive nowrap" id="adminTable" style="width:100%">
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th data-priority="1">Kategórianév</th>
+                        <th>Leírás</th>
+                        <th>Szülőkategória</th>
+                        <th>Állapot</th>
+                        <th>Létrehozva</th>
+                        <th>Módosítva</th>
+                        <th data-priority="2">Műveletek</th>
+                    </tr>
+                    </thead>
+                </table>
+            @else
+                <div class="alert alert-warning">
+                    <i class="fa-solid fa-exclamation-triangle me-2"></i> Nincs jogosultságod a termékkategóriák megtekintéséhez.
                 </div>
-
-                <div class="filter-group flex-grow-1 flex-md-shrink-0">
-                    <input type="text" placeholder="Kategórianév" class="filter-input form-control" data-column="1">
-                </div>
-
-                <div class="filter-group flex-grow-1 flex-md-shrink-0">
-                    <input type="text" placeholder="Leírás" class="filter-input form-control" data-column="2">
-                </div>
-
-                <div class="filter-group flex-grow-1 flex-md-shrink-0">
-                    <select class="form-select filter-input" data-column="4">
-                        <option value="">Állapot (összes)</option>
-                        <option value="active">Aktív</option>
-                        <option value="inactive">Inaktív</option>
-                    </select>
-                </div>
-            </div>
-
-            <table class="table table-bordered display responsive nowrap" id="adminTable" style="width:100%">
-                <thead>
-                <tr>
-                    <th>ID</th>
-                    <th data-priority="1">Kategórianév</th>
-                    <th>Leírás</th>
-                    <th>Szülőkategória</th>
-                    <th>Állapot</th>
-                    <th>Létrehozva</th>
-                    <th>Módosítva</th>
-                    <th data-priority="2">Műveletek</th>
-                </tr>
-                </thead>
-            </table>
-        @else
-            <div class="alert alert-warning">
-                Nincs jogosultságod a termékkategóriák megtekintéséhez.
-            </div>
-        @endif
+            @endif
+        </div>
     </div>
 
 

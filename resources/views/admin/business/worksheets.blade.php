@@ -3,8 +3,8 @@
 @section('content')
     <div class="container p-0">
 
-        <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
-            <h2 class="h5 text-primary mb-0"><i class="fa-solid fa-business-time text-primary me-2"></i> Ügyviteli folyamatok / Munkalapok</h2>
+        <div class="d-flex justify-content-between align-items-center mb-3 pb-2">
+            <h2 class="color-dark-blue mb-0">Ügyviteli folyamatok / Munkalapok</h2>
             <div>
                 <button class="btn btn-dark" id="showCalendar"><i class="fas fa-calendar me-1"></i> Naptár</button>
                 <button class="btn btn-dark d-none" id="hideCalendar"><i class="fa-solid fa-table"></i> Táblázat</button>
@@ -15,11 +15,11 @@
         </div>
 
 
-        <div class="d-none" id="calendarContainer">
+        <div class="d-none rounded-xl bg-white shadow-lg p-4" id="calendarContainer">
 
             <div class="calendar-nav">
                 <button class="btn btn-light" id="prevWeek">⬅ Előző hét</button>
-                <h2 id="weekLabel">Heti naptár</h2>
+                <h5 id="weekLabel">Heti naptár</h5>
                 <button class="btn btn-light" id="nextWeek">Következő hét ➡</button>
             </div>
             <table id="calendar">
@@ -57,61 +57,63 @@
             </div>
         </div>
 
-        @if(auth('admin')->user()->can('view-worksheets'))
+        <div class="rounded-xl bg-white shadow-lg p-4" id="worksheetTableArea">
+            @if(auth('admin')->user()->can('view-worksheets'))
 
-            <div class="filters d-flex flex-wrap gap-2 mb-3 align-items-center" id="worksheetFilters">
-                <div class="filter-group">
-                    <i class="fa-solid fa-filter text-gray-500"></i>
+                <div class="filters d-flex flex-wrap gap-2 mb-3 align-items-center" id="worksheetFilters">
+                    <div class="filter-group">
+                        <i class="fa-solid fa-filter text-gray-500"></i>
+                    </div>
+
+                    <div class="filter-group flex-grow-1 flex-md-shrink-0">
+                        <input type="text" placeholder="ID" class="filter-input form-control" data-column="0">
+                    </div>
+
+                    <div class="filter-group flex-grow-1 flex-md-shrink-0">
+                        <input type="text" placeholder="Ügyfélnév" class="filter-input form-control" data-column="2">
+                    </div>
+
+                    <div class="filter-group flex-grow-1 flex-md-shrink-0">
+                        <select class="form-select filter-input" data-column="4">
+                            <option value="">Összes típus</option>
+                            <option value="Karbantartás">Karbantartás</option>
+                            <option value="Szerelés">Szerelés</option>
+                            <option value="Felmérés">Felmérés</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group flex-grow-1 flex-md-shrink-0">
+                        <input type="text" placeholder="Munkalap adatok pl.: hitelre" class="filter-input form-control" data-column="5">
+                    </div>
+
                 </div>
 
-                <div class="filter-group flex-grow-1 flex-md-shrink-0">
-                    <input type="text" placeholder="ID" class="filter-input form-control" data-column="0">
+                <div id="worksheet_table">
+                    <table class="table table-bordered display responsive nowrap" id="adminTable" style="width:100%">
+                        <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th data-priority="0">Dátum</th>
+                            <th data-priority="1">Ügyfélnév</th>
+                            <th data-priority="3">Város</th>
+                            <th data-priority="4">Munka típusa</th>
+                            <th>Munkalap adatok</th>
+                            <th>Szerelő</th>
+                            <th data-priority="5">Állapot</th>
+                            <th>Szerződés</th>
+                            <th>Készítette</th>
+                            <th>Létrehozva</th>
+                            <th data-priority="2">Műveletek</th>
+                        </tr>
+                        </thead>
+                    </table>
                 </div>
-
-                <div class="filter-group flex-grow-1 flex-md-shrink-0">
-                    <input type="text" placeholder="Ügyfélnév" class="filter-input form-control" data-column="2">
+            @else
+                <div class="alert alert-warning">
+                    <i class="fa-solid fa-exclamation-triangle me-2"></i> Nincs jogosultságod a munkalapok megtekintésére.
                 </div>
-
-                <div class="filter-group flex-grow-1 flex-md-shrink-0">
-                    <select class="form-select filter-input" data-column="4">
-                        <option value="">Összes típus</option>
-                        <option value="Karbantartás">Karbantartás</option>
-                        <option value="Szerelés">Szerelés</option>
-                        <option value="Felmérés">Felmérés</option>
-                    </select>
-                </div>
-
-                <div class="filter-group flex-grow-1 flex-md-shrink-0">
-                    <input type="text" placeholder="Munkalap adatok pl.: hitelre" class="filter-input form-control" data-column="5">
-                </div>
-
-            </div>
-
-            <div id="worksheet_table">
-                <table class="table table-bordered display responsive nowrap" id="adminTable" style="width:100%">
-                    <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th data-priority="0">Dátum</th>
-                        <th data-priority="1">Ügyfélnév</th>
-                        <th data-priority="3">Város</th>
-                        <th data-priority="4">Munka típusa</th>
-                        <th>Munkalap adatok</th>
-                        <th>Szerelő</th>
-                        <th data-priority="5">Állapot</th>
-                        <th>Szerződés</th>
-                        <th>Készítette</th>
-                        <th>Létrehozva</th>
-                        <th data-priority="2">Műveletek</th>
-                    </tr>
-                    </thead>
-                </table>
-            </div>
-        @else
-            <div class="alert alert-warning">
-                Nincs jogosultságod a munkalapok megtekintésére.
-            </div>
-        @endif
+            @endif
+        </div>
     </div>
 
 
@@ -665,16 +667,14 @@
                 $('#hideCalendar').removeClass('d-none');
                 $('#calendarContainer').removeClass('d-none');
                 $('#showCalendar').addClass('d-none');
-                $('#worksheet_table').addClass('d-none');
-                $('#worksheetFilters').addClass('d-none');
+                $('#worksheetTableArea').addClass('d-none');
                 renderCalendar();
             });
 
             $('#hideCalendar').click(function() {
                 $('#hideCalendar').addClass('d-none');
                 $('#calendarContainer').addClass('d-none');
-                $('#worksheet_table').removeClass('d-none');
-                $('#worksheetFilters').removeClass('d-none');
+                $('#worksheetTableArea').removeClass('d-none');
                 $('#showCalendar').removeClass('d-none');
             });
 

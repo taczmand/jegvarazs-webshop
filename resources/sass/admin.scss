@@ -6,11 +6,10 @@
 @import 'bootstrap/scss/bootstrap';
 @import 'variables';
 
+
+/* Colors */
 .color-light-blue {
     color: $logo-blue-color-light;
-}
-.bg-light-blue {
-    background-color: $logo-blue-color-light;
 }
 .color-mid-blue {
     color: $logo-blue-color-mid;
@@ -18,8 +17,19 @@
 .color-dark-blue {
     color: $logo-blue-color-dark !important;
 }
-.jv-grey-color {
+.color-grey {
     color: $logo-grey-color;
+}
+
+/* Bacground colors */
+.bgcolor-light-blue {
+    background-color: $logo-blue-color-light;
+}
+.bgcolor-mid-blue {
+    background-color: $logo-blue-color-mid;
+}
+.bgcolor-dark-blue {
+    background-color: $logo-blue-color-dark;
 }
 
 .bg-gradient-custom {

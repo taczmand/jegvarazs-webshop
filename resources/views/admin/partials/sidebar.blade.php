@@ -2,17 +2,24 @@
 <ul class="navbar-nav bg-gradient-custom sidebar sidebar-dark accordion sidebar-rounded" id="accordionSidebar">
 
     <!-- Sidebar - Brand -->
-    <a class="d-flex align-items-center justify-content-center" href="/admin" style="background-color: #f8f9fc; border-radius: 1rem; margin: 0.25rem">
+    <a class="d-flex align-items-center justify-content-center" href="{{ route('index') }}" target="_blank" style="background-color: #f8f9fc; border-radius: 1rem; margin: 0.25rem">
         <img class="" src="{{ asset('static_media/uj_logo_szeles_transzparens.png') }}" alt="" style="max-width: 100%">
     </a>
 
-    <hr class="sidebar-divider my-0">
-
     <li class="nav-item">
-        <a class="nav-link" href="{{ route('index') }}" target="_blank">
-            <i class="fa-solid fa-arrow-up-right-from-square"></i>
-            <span>Ugrás a boltra</span></a>
+        <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseProfil" aria-expanded="false">
+            <i class="fa-solid fa-user"></i>
+            <span>{{ optional(Auth::guard('admin')->user())->name }}</span>
+        </a>
+        <div id="collapseProfil" class="collapse">
+            <div class="bg-white py-2 collapse-inner rounded">
+                <a class="collapse-item" href="{{ url('admin/profil') }}">Profil</a>
+                <a class="collapse-item" href="{{ url('admin/kijelentkezes') }}">Kijelentkezés</a>
+            </div>
+        </div>
     </li>
+
+    <hr class="sidebar-divider my-0">
 
     <li class="nav-item">
         <a class="nav-link" href="{{ route('admin.dashboard') }}">
@@ -30,7 +37,7 @@
     <li class="nav-item">
         <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseSale" aria-expanded="false">
             <i class="fa-solid fa-money-bill-transfer"></i>
-            <span>Értékesítés <span id="new_sale" class="badge badge-secondary ml-2 d-none">0</span></span></span>
+            <span>Értékesítés <span id="new_sale" class="badge badge-secondary ml-2 d-none">0</span></span>
         </a>
         <div id="collapseSale" class="collapse">
             <div class="bg-white py-2 collapse-inner rounded">
@@ -44,7 +51,7 @@
     <li class="nav-item">
         <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseProducts" aria-expanded="false">
             <i class="fa-solid fa-list"></i>
-            <span>Termékek <span id="new_product" class="badge badge-secondary ml-2 d-none">0</span></span></span>
+            <span>Termékek <span id="new_product" class="badge badge-secondary ml-2 d-none">0</span></span>
         </a>
         <div id="collapseProducts" class="collapse">
             <div class="bg-white py-2 collapse-inner rounded">
@@ -60,7 +67,7 @@
     <li class="nav-item">
         <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseCMS" aria-expanded="false">
             <i class="fa-solid fa-file-lines"></i>
-            <span>Tartalomkezelés <span id="new_product" class="badge badge-secondary ml-2 d-none">0</span></span></span>
+            <span>Tartalomkezelés <span id="new_product" class="badge badge-secondary ml-2 d-none">0</span></span>
         </a>
         <div id="collapseCMS" class="collapse">
             <div class="bg-white py-2 collapse-inner rounded">

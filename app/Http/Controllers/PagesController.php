@@ -13,6 +13,7 @@ use App\Models\NewsletterSubscription;
 use App\Models\Product;
 use App\Models\Searched;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cookie;
 
 class PagesController extends Controller
 {
@@ -185,5 +186,10 @@ class PagesController extends Controller
         } catch (\Exception $e) {
             return response()->json(['result' => 'error', 'error_message' => $e->getMessage()], 200);
         }
+    }
+
+    public function incognito() {
+        Cookie::queue('incognito_mode', 'jegvarazs', 60 * 24 * 60);
+        return redirect('/');
     }
 }
