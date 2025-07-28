@@ -64,7 +64,15 @@ jobs:
           password: ${{ secrets.JEGVARAZS_PROD_FTP_PASSWORD }}
           server-dir: '/jegvarazsbolt.hu/laravel/'
           local-dir: './'
-          exclude: ".git,.DS_Store,**/node_modules,public,tests,storage/*.key,storage/logs/*,vendor"
+          exclude: |
+            .git*
+            .DS_Store
+            **/node_modules*
+            public
+            tests
+            storage/*.key
+            storage/logs/*
+            vendor
 
       - name: Upload public folder separately (including build)
         uses: SamKirkland/FTP-Deploy-Action@v4.3.4
@@ -74,4 +82,5 @@ jobs:
           password: ${{ secrets.JEGVARAZS_PROD_FTP_PASSWORD }}
           server-dir: '/jegvarazsbolt.hu/'
           local-dir: './public'
-          exclude: ".DS_Store"
+          exclude: |
+            .DS_Store
