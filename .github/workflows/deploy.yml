@@ -81,6 +81,6 @@ jobs:
           username: ${{ secrets.JEGVARAZS_PROD_FTP_USERNAME }}
           password: ${{ secrets.JEGVARAZS_PROD_FTP_PASSWORD }}
           server-dir: 'jegvarazsbolt.hu/'
-          local-dir: './public'
+          local-dir: './public/'
           exclude: |
             .DS_Store
