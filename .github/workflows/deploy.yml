@@ -65,14 +65,14 @@ jobs:
           server-dir: '/jegvarazsbolt.hu/laravel/'
           local-dir: './'
           exclude: |
-            .git*
-            .DS_Store
-            **/node_modules*
-            public
-            tests
+            **/.git*
+            **/.DS_Store
+            node_modules/**
+            vendor/**
+            public/**
+            tests/**
             storage/*.key
-            storage/logs/*
-            vendor
+            storage/logs/**
 
       - name: Upload public folder separately (including build)
         uses: SamKirkland/FTP-Deploy-Action@v4.3.4
