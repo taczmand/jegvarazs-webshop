@@ -62,7 +62,7 @@ jobs:
           server: ${{ secrets.JEGVARAZS_PROD_FTP_HOST }}
           username: ${{ secrets.JEGVARAZS_PROD_FTP_USERNAME }}
           password: ${{ secrets.JEGVARAZS_PROD_FTP_PASSWORD }}
-          server-dir: '/jegvarazsbolt.hu/laravel/'
+          server-dir: 'jegvarazsbolt.hu/laravel/'
           local-dir: './'
           exclude: |
             .git**
@@ -79,7 +79,7 @@ jobs:
           server: ${{ secrets.JEGVARAZS_PROD_FTP_HOST }}
           username: ${{ secrets.JEGVARAZS_PROD_FTP_USERNAME }}
           password: ${{ secrets.JEGVARAZS_PROD_FTP_PASSWORD }}
-          server-dir: '/jegvarazsbolt.hu/'
+          server-dir: 'jegvarazsbolt.hu/'
           local-dir: './public'
           exclude: |
             .DS_Store
