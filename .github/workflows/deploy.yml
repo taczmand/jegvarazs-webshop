@@ -57,23 +57,21 @@ jobs:
       #    exclude: ".DS_Store"
 
       - name: Upload Laravel to production server (excluding public)
-        uses: wangyucode/sftp-upload-action@v2.0.4
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
         with:
-          host: ${{ secrets.JEGVARAZS_PROD_FTP_HOST }}
-          port: 21
+          server: ${{ secrets.JEGVARAZS_PROD_FTP_HOST }}
           username: ${{ secrets.JEGVARAZS_PROD_FTP_USERNAME }}
           password: ${{ secrets.JEGVARAZS_PROD_FTP_PASSWORD }}
-          localDir: './'
-          remoteDir: '/jegvarazsbolt.hu/laravel'
+          server-dir: '/jegvarazsbolt.hu/laravel'
+          local-dir: './'
           exclude: ".git,.DS_Store,**/node_modules,public,tests,storage/*.key,storage/logs/*,vendor"
 
       - name: Upload public folder separately (including build)
-        uses: wangyucode/sftp-upload-action@v2.0.4
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
         with:
-          host: ${{ secrets.JEGVARAZS_PROD_FTP_HOST }}
-          port: 21
+          server: ${{ secrets.JEGVARAZS_PROD_FTP_HOST }}
           username: ${{ secrets.JEGVARAZS_PROD_FTP_USERNAME }}
           password: ${{ secrets.JEGVARAZS_PROD_FTP_PASSWORD }}
-          localDir: './public'
-          remoteDir: '/jegvarazsbolt.hu'
+          server-dir: '/jegvarazsbolt.hu'
+          local-dir: './public'
           exclude: ".DS_Store"
