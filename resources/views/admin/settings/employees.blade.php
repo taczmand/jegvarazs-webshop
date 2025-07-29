@@ -114,7 +114,7 @@
         $(document).ready(function() {
             const table = $('#adminTable').DataTable({
                 language: {
-                    url: 'https://cdn.datatables.net/plug-ins/2.3.2/i18n/hu.json'
+                    url: '/lang/datatables/hu.json'
                 },
                 processing: true,
                 serverSide: true,
