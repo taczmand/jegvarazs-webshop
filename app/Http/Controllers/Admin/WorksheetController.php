@@ -158,20 +158,23 @@ class WorksheetController extends Controller
                     $q->where('worksheets.data', 'like', '%' . $keyword . '%');
                 });
             })
+            ->filterColumn('work_status', function ($query, $keyword) {
+                $query->where('worksheets.work_status', '=', "{$keyword}");
+            })
             ->addColumn('contract_id', function ($worksheet) {
                 if ($worksheet->contract_id) {
                     return '<a class="btn btn-sm btn-info" target="_blank" href="' . route('admin.contracts.index', ['modal' => true, 'id' => $worksheet->contract_id]) . '"><i class="fa-solid fa-link"></i></a>';
                 }
                 return "-";
             })
-            ->addColumn('work_status_icon', function ($worksheet) {
+            /*->addColumn('work_status_icon', function ($worksheet) {
                 return match($worksheet->work_status) {
                     'Folyamatban' => '<i class="fas fa-tools text-danger" title="Folyamatban"></i>',
                     'Kész' => '<i class="fas fa-check text-warning" title="Kész"></i>',
                     'Lezárva' => '<i class="fas fa-check-double text-success" title="Lezárva"></i>',
                     default => '<i class="fas fa-question-circle text-muted" title="Ismeretlen státusz"></i>',
                 };
-            })
+            })*/
             ->addColumn('creator_name', fn($worksheet) => $worksheet->creator_name ?? '-')
             ->addColumn('worker_name', fn($worksheet) => $worksheet->worker_name ?? '-')
             ->addColumn('action', function ($worksheet) {

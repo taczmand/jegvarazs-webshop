@@ -21,7 +21,7 @@ return new class extends Migration
             $table->string('city')->nullable();
             $table->string('address_line')->nullable();
             $table->date('appointment_date')->nullable();
-            $table->enum('appointment_type', ['Karbantartás', 'Felmérés'])->default('Karbantartás');
+            $table->enum('appointment_type', ['Karbantartás', 'Felmérés', 'Egyéb'])->default('Karbantartás');
             $table->text('message')->nullable();
             $table->enum('status', ['Függőben', 'Folyamatban', 'Törölve', 'Kész'])->default('Függőben');
             $table->timestamp('created_at')->default(DB::raw('CURRENT_TIMESTAMP'));

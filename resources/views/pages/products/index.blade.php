@@ -268,7 +268,7 @@
 
                         </div>
                         <div class="mb-3">
-                            <label for="interesting_message" class="form-label">Megjegyzés</label>
+                            <label for="interesting_message" class="form-label">Üzenet</label>
                             <textarea class="form-control" id="interesting_message" name="interesting_message"></textarea>
                         </div>
                     </div>

@@ -86,6 +86,15 @@
                         <input type="text" placeholder="Munkalap adatok pl.: hitelre" class="filter-input form-control" data-column="5">
                     </div>
 
+                    <div class="filter-group flex-grow-1 flex-md-shrink-0">
+                        <select class="form-select filter-input" data-column="7">
+                            <option value="">Állapot (összes)</option>
+                            <option value="Folyamatban">Folyamatban</option>
+                            <option value="Kész">Kész</option>
+                            <option value="Lezárva">Lezárva</option>
+                        </select>
+                    </div>
+
                 </div>
 
                 <div id="worksheet_table">
@@ -438,7 +447,8 @@
                     { data: 'work_type' },
                     { data: 'data' },
                     { data: 'worker_name' },
-                    { data: 'work_status_icon', name: 'work_status_icon', orderable: false, searchable: false  },
+                    { data: 'work_status' },
+                    //{ data: 'work_status_icon', name: 'work_status_icon', orderable: false, searchable: false  },
                     { data: 'contract_id' },
                     { data: 'creator_name' },
                     { data: 'created' },

@@ -43,6 +43,9 @@ class AppointmentController extends Controller
             ->addColumn('viewed_by', function ($item) {
                 return $item->viewed_by_name ?? '-';
             })
+            ->filterColumn('status', function ($query, $keyword) {
+                $query->where('appointments.status', '=', "{$keyword}");
+            })
             ->addColumn('action', function ($item) {
                 $user = auth('admin')->user();
                 $actions = '';

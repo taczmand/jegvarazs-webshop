@@ -37,6 +37,15 @@
                     <div class="filter-group flex-grow-1 flex-md-shrink-0">
                         <input type="text" placeholder="Cím" class="filter-input form-control" data-column="5">
                     </div>
+                    <div class="filter-group flex-grow-1 flex-md-shrink-0">
+                        <select class="form-select filter-input" data-column="11">
+                            <option value="">Állapot (összes)</option>
+                            <option value="Függőben">Függőben</option>
+                            <option value="Folyamatban">Folyamatban</option>
+                            <option value="Kész">Kész</option>
+                            <option value="Törölve">Törölve</option>
+                        </select>
+                    </div>
                 </div>
 
                 <table class="table table-bordered display responsive nowrap" id="appointmentsTable" style="width:100%">
@@ -116,6 +125,7 @@
                                 <select id="appointment_type" name="appointment_type" class="form-control">
                                     <option value="Karbantartás">Karbantartás</option>
                                     <option value="Felmérés">Felmérés</option>
+                                    <option value="Egyéb">Egyéb</option>
                                 </select>
                             </div>
 

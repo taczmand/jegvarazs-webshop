@@ -70,6 +70,7 @@
                 <option value="" disabled selected>Válasszon típust</option>
                 <option value="Karbantartás">Karbantartás</option>
                 <option value="Felmérés">Ingyenes helyszíni felmérés</option>
+                <option value="Egyéb">Egyéb</option>
             </select>
         </div>
 
