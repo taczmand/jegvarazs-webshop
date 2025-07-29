@@ -5,11 +5,6 @@ import laravel from 'laravel-vite-plugin';
 
 export default defineConfig({
     base: '/jegvarazsbolt.hu/build/',
-    build: {
-        outDir: '../jegvarazsbolt.hu/build',
-        emptyOutDir: true,
-        manifest: true,
-    },
     plugins: [
         laravel({
             input: [
