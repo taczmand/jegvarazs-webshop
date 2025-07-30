@@ -546,6 +546,17 @@ import * as bootstrap from "bootstrap";
         });
     });
 
+    document.querySelectorAll('.category-link').forEach(link => {
+        link.addEventListener('click', function (e) {
+            // csak mobilon működjön
+            if (window.innerWidth < 992) {
+                e.preventDefault();
+                const parent = this.closest('.category-item');
+                parent.classList.toggle('active');
+            }
+        });
+    });
+
 })(jQuery);
 
 

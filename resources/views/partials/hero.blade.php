@@ -8,11 +8,34 @@
                         <i class="fa fa-bars"></i>
                         <span>Termékek</span>
                     </div>
-                    <ul class="categories-list">
-                        @foreach($categories as $category)
-                            @include('partials.category-item', ['category' => $category])
+                    <ul class="category-menu list-unstyled">
+                        @foreach ($categories as $category)
+                            <li class="category-item">
+                                <a href="{{ route('products.resolve', ['slugs' => $category->getFullSlug()]) }}" class="category-link">{{ $category->title }}</a>
+                                @if($category->children->count())
+                                    <div class="subcategory-container">
+                                        <div class="subcategory-grid">
+                                            @foreach ($category->children as $sub)
+                                                <div class="subcategory-item">
+                                                    <a href="{{ route('products.resolve', ['slugs' => $sub->getFullSlug()]) }}" class="subcategory-link level-1">{{ $sub->title }}</a>
+                                                    @if($sub->children->count())
+                                                        <div class="subcategory-sublist">
+                                                            @foreach ($sub->children as $child)
+                                                                <a href="{{ route('products.resolve', ['slugs' => $child->getFullSlug()]) }}" class="subcategory-link level-2">{{ $child->title }}</a>
+                                                            @endforeach
+                                                        </div>
+                                                    @endif
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                @endif
+                            </li>
                         @endforeach
                     </ul>
+
+
+
                 </div>
             </div>
             <div class="col-lg-9">
