@@ -5,7 +5,7 @@
             <div class="col-lg-3 col-md-6 col-sm-6">
                 <div class="footer__about">
                     <div class="footer__about__logo">
-                        <a href="{{ route('index') }}"><img src="{{ asset('static_media/logo.jpg') }}" alt=""></a>
+                        <a href="{{ route('index') }}"><img src="{{ asset('static_media/uj_logo_szeles_transzparens.png') }}" alt=""></a>
                     </div>
                     <ul>
                         <li>Cím: <a href="{{ $basicdata['company_address_maps_link'] }}" target="_blank">{{ $basicdata['company_address'] }}</a></li>

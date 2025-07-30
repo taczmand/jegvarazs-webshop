@@ -409,7 +409,7 @@ a {
 }
 
 .header__logo {
-
+    max-width: 100%;
 }
 
 .header__logo a {
@@ -2952,6 +2952,9 @@ a {
 /* Tablet Device = 768px */
 
 @media only screen and (min-width: 768px) and (max-width: 991px) {
+    .header__logo {
+        max-width: 30%;
+    }
     .hero__categories {
         margin-bottom: 30px;
     }
@@ -3002,7 +3005,7 @@ a {
         position: relative;
     }
     .humberger__menu__wrapper {
-        width: 300px;
+        width: 350px;
         background: #ffffff;
         position: fixed;
         left: -300px;
@@ -3175,6 +3178,12 @@ a {
 /* Wide Mobile = 480px */
 
 @media only screen and (max-width: 767px) {
+    .header__logo {
+        max-width: 60%;
+    }
+    .hero__text h2 {
+        font-size: 32px;
+    }
     .hero__categories {
         margin-bottom: 30px;
     }
@@ -3193,6 +3202,11 @@ a {
     .hero__search__phone {
         float: left;
         margin-top: 30px;
+    }
+    .hero__item {
+        text-align: center;
+        padding: 0;
+        justify-content: center;
     }
     .categories__slider.owl-carousel .owl-nav {
         text-align: center;
@@ -3260,7 +3274,7 @@ a {
         position: relative;
     }
     .humberger__menu__wrapper {
-        width: 300px;
+        width: 350px;
         background: #ffffff;
         position: fixed;
         left: -300px;
@@ -3605,6 +3619,19 @@ a {
 .myCoolToast.error { background-color: #dc3545 !important; }
 .myCoolToast.info { background-color: #17a2b8 !important; }
 .myCoolToast.warning { background-color: #ffc107 !important; color: #000; }
+
+.brand-logo-wrapper {
+    width: 100%;
+    height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.brand-logo {
+    max-height: 60px;
+    object-fit: contain;
+}
 
 
 

@@ -62,17 +62,18 @@ import * as bootstrap from "bootstrap";
     }
 
     function renderAfterAddToCart(cartData) {
-        const cartCountElement = document.getElementById('cart_count');
-        if (cartCountElement) {
-            cartCountElement.textContent = cartData.summary.total_items ? cartData.summary.total_items : 0;
-        }
+        const cartCountElements = document.querySelectorAll('.cart_count');
+        cartCountElements.forEach(el => {
+            el.textContent = cartData.summary.total_items ?? 0;
+        });
 
-        const cartTotalElement = document.getElementById('cart_total_item_amount');
-        if (cartTotalElement) {
-            const price = cartData.summary.total_price ?? 0;
-            cartTotalElement.textContent = formatter.format(price);
-        }
+        const cartTotalElements = document.querySelectorAll('.cart_total_item_amount');
+        const price = cartData.summary.total_price ?? 0;
+        cartTotalElements.forEach(el => {
+            el.textContent = formatter.format(price);
+        });
     }
+
 
     const formatter = new Intl.NumberFormat('hu-HU', {
         style: 'currency',
