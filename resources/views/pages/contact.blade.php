@@ -108,9 +108,12 @@
                                     <i class="fas fa-phone mr-3 text-primary"></i>
                                     <a href="tel:{{ $site['phone'] }}">{{ $site['phone'] }}</a>
                                 </p>
-                                <p class="card-text">
+                                <p class="card-text mb-2">
                                     <i class="fas fa-envelope mr-3 text-primary"></i>
                                     <a href="mailto:{{ $site['email'] }}">{{ $site['email'] }}</a>
+                                </p>
+                                <p class="card-text">
+                                    {!! $site['info'] !!}
                                 </p>
                             </div>
                         </div>

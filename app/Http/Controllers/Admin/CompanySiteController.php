@@ -16,7 +16,7 @@ class CompanySiteController extends Controller
 
     public function data()
     {
-        $sites = CompanySite::select(['id', 'name', 'country', 'zip_code', 'city', 'address_line', 'phone', 'email', 'created_at as created', 'updated_at as updated']);
+        $sites = CompanySite::select(['id', 'name', 'country', 'zip_code', 'city', 'address_line', 'phone', 'email', 'info', 'created_at as created', 'updated_at as updated']);
 
         return DataTables::of($sites)
             ->addColumn('action', function ($site) {
@@ -41,7 +41,7 @@ class CompanySiteController extends Controller
 
                 return $buttons;
             })
-            ->rawColumns(['action'])
+            ->rawColumns(['action', 'info'])
             ->make(true);
     }
 
@@ -55,7 +55,8 @@ class CompanySiteController extends Controller
                 'city' => $request->site_city,
                 'address_line' => $request->site_address,
                 'phone' => $request->site_phone,
-                'email' => $request->site_email
+                'email' => $request->site_email,
+                'info' => $request->info
             ]);
 
             return response()->json([
@@ -78,7 +79,8 @@ class CompanySiteController extends Controller
                 'city' => $request->site_city,
                 'address_line' => $request->site_address,
                 'phone' => $request->site_phone,
-                'email' => $request->site_email
+                'email' => $request->site_email,
+                'info' => $request->info
             ]);
 
             return response()->json([

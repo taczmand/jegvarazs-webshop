@@ -42,6 +42,7 @@
                         <th>Cím</th>
                         <th>Telefonszám</th>
                         <th>E-mail cím</th>
+                        <th>Információ</th>
                         <th>Létrehozva</th>
                         <th>Módosítva</th>
                         <th data-priority="2">Műveletek</th>
@@ -102,6 +103,10 @@
                             <label for="site_email" class="form-label">E-mail cím</label>
                             <input type="email" class="form-control" id="site_email" name="site_email">
                         </div>
+                        <div class="mb-3">
+                            <label class="form-label">Leírás</label>
+                            <textarea class="form-control" id="info" name="info" rows="6"></textarea>
+                        </div>
                     </div>
                     <div class="modal-footer">
                         <button type="submit" class="btn btn-success save-btn" id="saveSite">Mentés</button>
@@ -114,11 +119,18 @@
 @endsection
 
 @section('scripts')
+    <script src="https://cdn.tiny.cloud/1/k486ypuedp01hfc64g7mn3t9rc5lp8h53a5korymr6qvuvb9/tinymce/7/tinymce.min.js" referrerpolicy="origin"></script>
     <script type="module">
 
         const adminModalDOM = document.getElementById('adminModal');
         const adminModal = new bootstrap.Modal(adminModalDOM);
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+        tinymce.init({
+            selector: 'textarea#info',
+            plugins: 'anchor autolink charmap codesample emoticons image link lists media searchreplace table visualblocks wordcount',
+            toolbar: 'undo redo | blocks | bold italic | alignleft aligncenter alignright | indent outdent | bullist numlist | code | table'
+        });
 
         $(document).ready(function() {
             const table = $('#adminTable').DataTable({
@@ -138,6 +150,7 @@
                     { data: 'address_line' },
                     { data: 'phone' },
                     { data: 'email' },
+                    { data: 'info' },
                     { data: 'created' },
                     { data: 'updated' },
                     { data: 'action', orderable: false, searchable: false }
@@ -173,6 +186,7 @@
                 $('#site_address').val(row_data.address_line);
                 $('#site_phone').val(row_data.phone);
                 $('#site_email').val(row_data.email);
+                tinymce.get('info').setContent(row_data.info || '');
 
 
                 adminModal.show();
@@ -182,6 +196,7 @@
 
             $('#saveSite').on('click', function (e) {
                 e.preventDefault();
+                tinymce.triggerSave();
                 const form = document.getElementById('adminModalForm');
                 const formData = new FormData(form);
                 formData.append('_token', csrfToken);
