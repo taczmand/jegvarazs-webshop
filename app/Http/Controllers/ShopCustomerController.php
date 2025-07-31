@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Mail\InterestingProductMail;
 use App\Models\Customer;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
+use App\Mail\RegistrationSuccess;
 
 class ShopCustomerController extends Controller
 {
@@ -78,6 +78,8 @@ class ShopCustomerController extends Controller
             'is_partner' => $isPartner,
             'fgaz' => $data['fgaz'] ?? null,
         ]);
+
+        Mail::to($customer->email)->send(new RegistrationSuccess($customer));
 
         if (!$isPartner) {
             Auth::guard('customer')->login($customer);

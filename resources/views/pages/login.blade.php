@@ -38,6 +38,9 @@
         <button type="submit" class="w-100 site-btn">Belépés</button>
     </form>
     <div class="text-center mt-3">
+        <a href="{{ route('registration') }}">Regisztráció</a>
+    </div>
+    <div class="text-center mt-3">
         <a href="{{ route('password.reset') }}">Elfelejtett jelszó?</a>
     </div>
 @endsection
