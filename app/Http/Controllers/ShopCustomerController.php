@@ -63,7 +63,7 @@ class ShopCustomerController extends Controller
             'email' => 'required|string|email|max:255|unique:customers',
             'password' => 'required|string|min:8|confirmed',
             'is_partner' => 'sometimes|boolean',
-            'fgaz' => 'required_if:is_partner,1|string|max:20',
+            'fgaz' => 'required_if:is_partner,1|nullable|string|max:20',
         ]);
 
         $isPartner = !empty($data['is_partner']);

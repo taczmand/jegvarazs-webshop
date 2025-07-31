@@ -22,12 +22,12 @@
         </div>
     @endif
 
-    <form method="POST" action="{{ route('login') }}" class="w-100" style="max-width: 400px; margin: auto;">
+    <form method="POST" action="{{ route('login') }}" class="w-100 p-4 bg-light rounded shadow-sm light-box">
         @csrf
 
         <div class="mb-3">
             <label for="email" class="form-label">Email cím</label>
-            <input type="email" name="email" id="email" class="form-control" value="teszt.elek@mail.com" placeholder="Email" required>
+            <input type="email" name="email" id="email" class="form-control" value="" placeholder="Email" required>
         </div>
 
         <div class="mb-3">
@@ -35,7 +35,7 @@
             <input type="password" name="password" id="password" class="form-control" placeholder="Jelszó" required>
         </div>
 
-        <button type="submit" class="btn btn-primary w-100">Belépés</button>
+        <button type="submit" class="w-100 site-btn">Belépés</button>
     </form>
     <div class="text-center mt-3">
         <a href="{{ route('password.reset') }}">Elfelejtett jelszó?</a>

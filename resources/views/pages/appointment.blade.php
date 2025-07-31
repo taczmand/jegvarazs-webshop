@@ -29,7 +29,7 @@
 
 
 
-    <form method="POST" action="{{ route('appointment.post') }}" class="w-100 p-4 bg-light rounded shadow-sm" style="max-width: 500px; margin-left: auto; margin-right: auto; margin-top: 16px;">
+    <form method="POST" action="{{ route('appointment.post') }}" class="w-100 p-4 bg-light rounded shadow-sm light-box">
         @csrf
 
         <h4 class="mb-4 text-center">Kérem, töltse ki az adatokat</h4>
@@ -65,7 +65,7 @@
         </div>
 
         <div class="mb-3">
-            <label for="appointment_type" class="form-label">Kérem, válasszon az alábbi felsorolásból*</label>
+            <label for="appointment_type" class="form-label" style="display:block">Kérem, válasszon az alábbi felsorolásból*</label>
             <select name="appointment_type" id="appointment_type" class="form-control" required>
                 <option value="" disabled selected>Válasszon típust</option>
                 <option value="Karbantartás">Karbantartás</option>
@@ -75,13 +75,11 @@
         </div>
 
         <div class="mb-3">
-            <label for="message" class="form-label">Megjegyzés</label>
+            <label for="message" class="form-label" style="display:block">Megjegyzés</label>
             <textarea name="message" id="message" class="form-control" rows="3" placeholder="Ide írja a megjegyzését..."></textarea>
         </div>
 
-        <button type="submit" class="btn btn-primary w-100">
-            <i class="fas fa-paper-plane me-2"></i> Foglalás elküldése
-        </button>
+        <button type="submit" class="site-btn w-100">Foglalás elküldése</button>
     </form>
 
 

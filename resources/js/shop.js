@@ -233,7 +233,7 @@ import * as bootstrap from "bootstrap";
     /*--------------------------
         Select
     ----------------------------*/
-    $("select").niceSelect();
+    //$("select").niceSelect();
 
     /*------------------
 		Single Product

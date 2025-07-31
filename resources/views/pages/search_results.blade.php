@@ -15,7 +15,7 @@
     ]
     ])
 
-    <p>Összesen <strong>{{ $products->total() }}</strong> találat a(z) {{ request()->input('query') }} kifejezésre</p>
+    <p class="mt-3">Összesen <strong>{{ $products->total() }}</strong> találat a(z) {{ request()->input('query') }} kifejezésre</p>
     <div class="row">
         @forelse($products as $product)
             <div class="col-lg-4 col-md-6 col-sm-12 mb-4">

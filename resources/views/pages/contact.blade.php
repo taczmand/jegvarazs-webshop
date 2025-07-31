@@ -101,15 +101,15 @@
                                     <i class="fas fa-map mr-3 text-primary"></i>{{ $site['name'] }}
                                 </h5>
                                 <p class="card-text mb-2">
-                                    <i class="fas fa-location-dot mr-3 text-secondary"></i>
+                                    <i class="fas fa-location-dot mr-3 text-primary"></i>
                                     {{ $site['zip_code'] }} {{ $site['city'] }}, {{ $site['address_line'] }}, {{ $site['country'] }}
                                 </p>
                                 <p class="card-text mb-2">
-                                    <i class="fas fa-phone mr-3 text-secondary"></i>
+                                    <i class="fas fa-phone mr-3 text-primary"></i>
                                     <a href="tel:{{ $site['phone'] }}">{{ $site['phone'] }}</a>
                                 </p>
                                 <p class="card-text">
-                                    <i class="fas fa-envelope mr-3 text-secondary"></i>
+                                    <i class="fas fa-envelope mr-3 text-primary"></i>
                                     <a href="mailto:{{ $site['email'] }}">{{ $site['email'] }}</a>
                                 </p>
                             </div>
@@ -146,12 +146,12 @@
                                 <p class="text-muted mb-2">{{ $employee['position'] }}</p>
 
                                 <p class="mb-1">
-                                    <i class="fas fa-phone mr-3 text-secondary"></i>
+                                    <i class="fas fa-phone mr-3 text-primary"></i>
                                     <a href="tel:{{ $employee['phone'] }}">{{ $employee['phone'] }}</a>
                                 </p>
 
                                 <p>
-                                    <i class="fas fa-envelope mr-3 text-secondary"></i>
+                                    <i class="fas fa-envelope mr-3 text-primary"></i>
                                     <a href="mailto:{{ $employee['email'] }}">{{ $employee['email'] }}</a>
                                 </p>
                             </div>

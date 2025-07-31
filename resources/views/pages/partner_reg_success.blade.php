@@ -9,13 +9,14 @@
     @include('partials.breadcrumbs', ['breadcrumbs' => [
         'page_title' => 'Gratulálunk!',
         'nav' => [
-            ['title' => 'Főoldal', 'url' => route('index')],
-            ['title' => 'Rólunk', 'url' => route('about')]
+            ['title' => 'Főoldal', 'url' => route('index')]
         ],
     ]
     ])
-
-    <h1>Regisztráció sikeres!</h1>
-    <p>Hamarosan ellenőrizzük és aktiváljuk fiókját.</p>
+    <div class="w-100 p-4 bg-light rounded shadow-sm light-box">
+        <h3>Regisztráció sikeres!</h3>
+        <p>Hamarosan ellenőrizzük és aktiváljuk fiókját.</p>
+        <a class="site-btn w-100" href="{{ route('index') }}">Ugrás a főoldalra</a>
+    </div>
 @endsection
 

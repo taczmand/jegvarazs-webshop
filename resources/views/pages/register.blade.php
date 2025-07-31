@@ -17,12 +17,12 @@
     ])
 
     @if($errors->any())
-        <div style="color:red;">
+        <div class="shop-validation-error">
             {{ $errors->first() }}
         </div>
     @endif
 
-    <form method="POST" action="{{ route('registration') }}" class="w-100" style="max-width: 400px; margin: auto;">
+    <form method="POST" action="{{ route('registration') }}" class="w-100 p-4 bg-light rounded shadow-sm light-box">
         @csrf
 
 
@@ -64,7 +64,7 @@
             </div>
         </div>
 
-        <button type="submit" class="btn btn-primary w-100">Regisztrálok</button>
+        <button type="submit" class="site-btn w-100">Regisztrálok</button>
     </form>
 
 @endsection

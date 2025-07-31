@@ -45,7 +45,7 @@
                                                 }
                                             @endphp
                                             <p>{!! $shortContent !!}</p>
-                                            <a href="{{ route('blog.post', $blog->slug) }}" class="blog__btn">
+                                            <a href="{{ route('blog.post', $blog->slug) }}" class="site-btn">
                                                 Tovább <span class="arrow_right"></span>
                                             </a>
                                         </div>
