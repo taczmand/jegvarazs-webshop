@@ -51,14 +51,14 @@
 
     @if ($customer->is_partner == 0)
         <p>Mostantól bejelentkezhet az oldalunkra az alábbi gombbal:</p>
-        <a href="{{ url('/login') }}" class="btn">Bejelentkezés</a>
+        <a href="{{ route('login') }}" class="btn">Bejelentkezés</a>
     @else
         <p>Partner regisztrációját fogadtuk. Jelenleg ellenőrizzük az adatait, és amint jóváhagytuk, e-mailben értesítjük Önt a hozzáférésről.</p>
     @endif
 
     <p>Ha bármilyen kérdése van, vegye fel velünk a kapcsolatot.</p>
 
-    <small style="font-style: italic">Kérjük, erre az e-mail címre ne válaszoljon</small>
+    <small style="font-style: italic">Kérjük, erre az e-mail címre ne válaszoljon!</small>
 
     <p>Üdvözlettel,<br>A {{ $basicdata['company_name'] ?? '' }} csapata</p>
 

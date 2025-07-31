@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Mail\PartnerAccessGranted;
 use App\Models\CartItem;
 use App\Models\Customer;
 use App\Models\CustomerBillingAddress;
@@ -10,6 +11,7 @@ use App\Models\CustomerShippingAddress;
 use App\Models\PartnerProduct;
 use App\Models\Product;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 use Yajra\DataTables\Facades\DataTables;
 
 class CustomerController extends Controller
@@ -255,11 +257,18 @@ class CustomerController extends Controller
     {
         $customer = Customer::findOrFail($request->input('id'));
 
+        $was_partner = $customer->is_partner; // korábbi állapot
+
         if ($request->has('password') && !empty($request->input('password'))) {
             $customer->password = bcrypt($request->input('password'));
         }
 
         $customer->update($request->only(['first_name', 'last_name', 'email', 'phone', 'is_partner', 'status']));
+
+        // Ha most lett partner
+        if ($was_partner == 0 && $customer->is_partner == 1) {
+            Mail::to($customer->email)->send(new PartnerAccessGranted($customer));
+        }
 
         return response()->json(['success' => true, 'message' => 'Customer updated successfully.', 'customer' => $customer]);
     }
