@@ -3,28 +3,23 @@
 namespace App\Mail;
 
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Mail\Mailables\Address;
 
-class InterestingProductMail extends Mailable
+class NewAppointment extends Mailable
 {
     use Queueable, SerializesModels;
-
-    public $customer;
-    public $product;
-    public $messageText;
 
     /**
      * Create a new message instance.
      */
-    public function __construct($customer, $product, $messageText)
+    public $appointment;
+    public function __construct($appointment)
     {
-        $this->customer = $customer;
-        $this->product = $product;
-        $this->messageText = $messageText;
+        $this->appointment = $appointment;
     }
 
     /**
@@ -33,9 +28,7 @@ class InterestingProductMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            from: new Address('noreply@jegvarazsbolt.hu', 'Jégvarázsbolt'),
-            replyTo: [new Address($this->customer->email, $this->customer->last_name." ".$this->customer->first_name)],
-            subject: 'Termék érdeklődés: ' . $this->product->title,
+            subject: 'Új időpontfoglalás rögzítésre került',
         );
     }
 
@@ -45,11 +38,9 @@ class InterestingProductMail extends Mailable
     public function content(): Content
     {
         return new Content(
-            view: 'emails.interesting-product',
+            view: 'emails.add-appointment',
             with: [
-                'customer' => $this->customer,
-                'product' => $this->product,
-                'messageText' => $this->messageText,
+                'appointment' => $this->appointment,
             ],
         );
     }

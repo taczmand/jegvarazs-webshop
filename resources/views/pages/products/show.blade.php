@@ -140,11 +140,11 @@
                             $offer_mailto = "mailto:{$email}?subject={$offer_subject}&body={$offer_body}";
                         @endphp
 
-                        <a href="" class="btn btn-outline-primary mt-2 interesting-badge" product-id="{{ $product->id }}" interesting_type="install-interesting" product-title="{{ $product->title }}">
-                            Ajánlatot szeretnék beszereléssel együtt <i class="fa fa-envelope"></i>
-                        </a>
 
                         @auth('customer')
+                                <a href="" class="btn btn-outline-primary mt-2 interesting-badge" product-id="{{ $product->id }}" interesting_type="install-interesting" product-title="{{ $product->title }}">
+                                    Ajánlatot szeretnék beszereléssel együtt <i class="fa fa-envelope"></i>
+                                </a>
                                 @if ("backorder" === $status['slug'])
                                     <ul>
                                         <li><b>Készlet</b>

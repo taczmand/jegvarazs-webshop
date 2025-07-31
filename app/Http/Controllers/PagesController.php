@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\NewAppointment;
 use App\Models\Appointment;
 use App\Models\BlogPost;
 use App\Models\Brand;
@@ -14,6 +15,7 @@ use App\Models\Product;
 use App\Models\Searched;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cookie;
+use Illuminate\Support\Facades\Mail;
 
 class PagesController extends Controller
 {
@@ -91,7 +93,7 @@ class PagesController extends Controller
 
         try {
 
-            Appointment::create([
+            $appointment = Appointment::create([
                 'name' => $request->name,
                 'email' => $request->email,
                 'phone' => $request->phone,
@@ -102,7 +104,7 @@ class PagesController extends Controller
                 'message' => $request->message
             ]);
 
-            // TODO: Send confirmation email to the user
+            Mail::to($request->email)->send(new NewAppointment($appointment));
 
         } catch (\Exception $e) {
             return response()->json(['result' => 'error', 'error_message' => $e->getMessage()], 200);

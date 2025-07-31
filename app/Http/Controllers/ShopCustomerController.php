@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\InterestingInstallMail;
+use App\Mail\InterestingProductMail;
+use App\Models\BasicData;
 use App\Models\Customer;
 use App\Models\Product;
 use Illuminate\Http\Request;
@@ -113,22 +116,29 @@ class ShopCustomerController extends Controller
 
             $product = Product::find($validated['productID']);
 
-            if ($validated['email_type'] === "product-interesting") {
-                \Log::info('Email interesting elküldve', [$customer, $product, $validated['contact_message']]);
-                /*Mail::to($customer->email)->send(new InterestingProductMail(
-                    $customer,
-                    $product,
-                    $validated['contact_message']
-                ));*/
-            }
+            $support_email = BasicData::where('key', 'support_email')->first();
 
-            if ($validated['email_type'] === "install-interesting") {
-                \Log::info('Email install elküldve', [$customer, $product, $validated['contact_message']]);
-                /*Mail::to($customer->email)->send(new InterestingProductMail(
-                    $customer,
-                    $product,
-                    $validated['contact_message']
-                ));*/
+            if ($support_email) {
+
+                if ($validated['email_type'] === "product-interesting") {
+                    \Log::info('Email interesting elküldve ide: '.$support_email->value, [$customer, $product, $validated['contact_message']]);
+                    Mail::to($support_email->value)->send(new InterestingProductMail(
+                        $customer,
+                        $product,
+                        $validated['contact_message']
+                    ));
+                }
+
+                if ($validated['email_type'] === "install-interesting") {
+                    \Log::info('Email install elküldve ide: '.$support_email->value, [$customer, $product, $validated['contact_message']]);
+                    Mail::to($support_email->value)->send(new InterestingInstallMail(
+                        $customer,
+                        $product,
+                        $validated['contact_message']
+                    ));
+                }
+            } else {
+                \Log::error('ShopCustomerController - sendEmail() -> Support email cím nincs beállítva');
             }
 
             return response()->json([

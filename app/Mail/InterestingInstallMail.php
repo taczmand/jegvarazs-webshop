@@ -3,13 +3,14 @@
 namespace App\Mail;
 
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Address;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Mail\Mailables\Address;
 
-class InterestingProductMail extends Mailable
+class InterestingInstallMail extends Mailable
 {
     use Queueable, SerializesModels;
 
@@ -35,7 +36,7 @@ class InterestingProductMail extends Mailable
         return new Envelope(
             from: new Address('noreply@jegvarazsbolt.hu', 'Jégvarázsbolt'),
             replyTo: [new Address($this->customer->email, $this->customer->last_name." ".$this->customer->first_name)],
-            subject: 'Termék érdeklődés: ' . $this->product->title,
+            subject: 'Telepítés iránti érdeklődés, termék: ' . $this->product->title,
         );
     }
 
@@ -45,7 +46,7 @@ class InterestingProductMail extends Mailable
     public function content(): Content
     {
         return new Content(
-            view: 'emails.interesting-product',
+            view: 'emails.interesting-install',
             with: [
                 'customer' => $this->customer,
                 'product' => $this->product,

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\CheckoutRequest;
+use App\Mail\NewOrder;
 use App\Models\CompanySite;
 use App\Models\Order;
 use App\Models\OrderedProduct;
@@ -10,6 +11,7 @@ use App\Models\OrderHistory;
 use App\Models\OrderItem;
 use App\Services\Order\PaymentHandlers\PaymentHandlerFactory;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 
 class OrderController extends Controller
 {
@@ -142,19 +144,17 @@ class OrderController extends Controller
                 return $order;
             });
 
-            // Kosár kiürítése (opcionális)
+            // Kosár kiürítése
             $cart->items()->delete();
 
             // Fizetési handler kiválasztása és feldolgozása
             $handler = PaymentHandlerFactory::make($validated['payment_method']);
 
             if ($handler && method_exists($handler, 'handleRedirect')) {
-                return $handler->handleRedirect($order);
+                return $handler->handleRedirect($order, $cartItems);
             }
 
 
-
-            return redirect()->route('checkout.success')->with('success', 'Rendelés sikeresen leadva!');
         } catch (\Throwable $e) {
             \Log::error('Hiba történt a rendelés mentésekor: ' . $e->getMessage(), [
                 'exception' => $e,

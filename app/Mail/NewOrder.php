@@ -3,28 +3,25 @@
 namespace App\Mail;
 
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Mail\Mailables\Address;
 
-class InterestingProductMail extends Mailable
+class NewOrder extends Mailable
 {
     use Queueable, SerializesModels;
-
-    public $customer;
-    public $product;
-    public $messageText;
 
     /**
      * Create a new message instance.
      */
-    public function __construct($customer, $product, $messageText)
+    protected $order;
+    protected $order_items;
+    public function __construct($order, $order_items)
     {
-        $this->customer = $customer;
-        $this->product = $product;
-        $this->messageText = $messageText;
+        $this->order = $order;
+        $this->order_items = $order_items;
     }
 
     /**
@@ -33,9 +30,7 @@ class InterestingProductMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            from: new Address('noreply@jegvarazsbolt.hu', 'Jégvarázsbolt'),
-            replyTo: [new Address($this->customer->email, $this->customer->last_name." ".$this->customer->first_name)],
-            subject: 'Termék érdeklődés: ' . $this->product->title,
+            subject: 'Megrendelés visszaigazolása',
         );
     }
 
@@ -45,11 +40,10 @@ class InterestingProductMail extends Mailable
     public function content(): Content
     {
         return new Content(
-            view: 'emails.interesting-product',
+            view: 'emails.order-confirmation',
             with: [
-                'customer' => $this->customer,
-                'product' => $this->product,
-                'messageText' => $this->messageText,
+                'order' => $this->order,
+                'order_items' => $this->order_items,
             ],
         );
     }
