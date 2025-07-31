@@ -199,8 +199,10 @@ import * as bootstrap from "bootstrap";
     /*---------------------------------
         Product Details Pic Slider
     ----------------------------------*/
+    const productImageCount = document.querySelectorAll('.owl-carousel .item').length;
     $(".product__details__pic__slider").owlCarousel({
-        loop: true,
+
+        loop: productImageCount > 1,
         margin: 20,
         items: 4,
         dots: true,

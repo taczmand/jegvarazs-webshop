@@ -36,3 +36,20 @@
     background: linear-gradient(to bottom, $logo-blue-color-dark, $logo-blue-color-mid) !important;
     color: #fff;
 }
+.bg-login-image img {
+    max-width: 80%;
+}
+.bg-login-image {
+    display: flex !important;
+    justify-content: center;
+    align-items: center;
+}
+.admin-validation-error {
+    background-color: red;
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 24px;
+    color: white;
+    padding: 16px 24px;
+}

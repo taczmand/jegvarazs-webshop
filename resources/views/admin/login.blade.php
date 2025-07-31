@@ -21,16 +21,13 @@
                     <div class="card-body p-0">
                         <!-- Nested Row within Card Body -->
                         <div class="row">
-                            <div class="col-lg-6 d-none d-lg-block bg-login-image">
-                                <img src="{{ asset('static_media/logo.jpg') }}" alt="Logo" class="img-fluid pt-5">
+                            <div class="col-lg-6 d-lg-block bg-login-image">
+                                <img src="{{ asset('static_media/logo.jpg') }}" alt="Logo" class="">
                             </div>
                             <div class="col-lg-6">
                                 <div class="p-5">
-                                    <div class="text-center">
-                                        <h1 class="h4 text-gray-900 mb-4 text-uppercase">Admin</h1>
-                                    </div>
                                     @if($errors->any())
-                                        <div style="color:red;">
+                                        <div class="admin-validation-error mb-5">
                                             {{ $errors->first() }}
                                         </div>
                                     @endif

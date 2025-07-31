@@ -148,8 +148,8 @@
                                         </div>
 
                                         <div class="filter__sort d-flex align-items-center gap-2">
-                                            <span class="fw-bold">Rendezés:</span>
-                                            <select class="form-select form-select-sm" style="min-width: 220px;" id="sortBy" name="sortBy">
+                                            <span class="fw-bold mr-3">Rendezés:</span>
+                                            <select class="form-control" style="min-width: 220px;" id="sortBy" name="sortBy">
                                                 <option value="productAsc" {{ request('sortBy') === 'productAsc' ? 'selected' : '' }}>
                                                     Terméknév szerint növekvő
                                                 </option>

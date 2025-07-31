@@ -16,7 +16,7 @@
     ])
 
     @if($errors->any())
-        <div style="color:red;">
+        <div class="shop-validation-error">
             {{ $errors->first() }}
         </div>
     @endif
