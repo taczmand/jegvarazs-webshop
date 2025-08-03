@@ -2,14 +2,17 @@
 
 namespace App\Models;
 
+use App\Notifications\CustomerResetPasswordNotification;
 use App\Traits\LogsActivity;
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Auth\Passwords\CanResetPassword;
+use Illuminate\Contracts\Auth\CanResetPassword as CanResetPasswordContract;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
 
-class Customer extends Authenticatable
+class Customer extends Authenticatable implements CanResetPasswordContract
 {
-    use LogsActivity;
+    use LogsActivity, CanResetPassword, Notifiable;
 
     protected $guarded = [];
 
@@ -30,4 +33,10 @@ class Customer extends Authenticatable
     {
         return $this->hasMany(Order::class);
     }
+
+    public function sendPasswordResetNotification($token)
+    {
+        $this->notify(new CustomerResetPasswordNotification($token));
+    }
+
 }

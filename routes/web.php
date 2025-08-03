@@ -343,6 +343,18 @@ Route::middleware([Incognito::class])->group(function () {
     Route::get('/regisztracio', [ShopCustomerController::class, 'showRegistrationForm'])->name('registration');
     Route::post('/regisztracio', [ShopCustomerController::class, 'register']);
     Route::view('/regisztracio/sikeres', 'pages.partner_reg_success')->name('customer.register.success');
+
+    Route::get('/elfelejtett-jelszo', [ShopCustomerController::class, 'showPasswordRequestForm'])->name('password.request');
+
+    // E-mail küldés
+    Route::post('password/email', [ShopCustomerController::class, 'sendResetLinkEmail'])->name('password.email');
+
+    // Új jelszó űrlap tokennel
+    Route::get('elfelejtett-jelszo/{token}', [ShopCustomerController::class, 'showResetForm'])->name('password.reset');
+
+    // Új jelszó mentése
+    Route::post('elfelejtett-jelszo/reset', [ShopCustomerController::class, 'passwordReset'])->name('password.update');
+
     Route::get('/kereses', [PagesController::class, 'search'])->name('search');
 
     Route::get('/', [PagesController::class, 'index'])->name('index');

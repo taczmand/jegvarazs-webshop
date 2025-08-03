@@ -41,7 +41,7 @@
         <a href="{{ route('registration') }}">Regisztráció</a>
     </div>
     <div class="text-center mt-3">
-        <a href="{{ route('password.reset') }}">Elfelejtett jelszó?</a>
+        <a href="{{ route('password.request') }}">Elfelejtett jelszó?</a>
     </div>
 @endsection
 

@@ -12,6 +12,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\RegistrationSuccess;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Str;
 
 class ShopCustomerController extends Controller
 {
@@ -151,5 +153,59 @@ class ShopCustomerController extends Controller
                 'error_message' => 'Nem sikerült elküldeni az e-mailt. (' . $e->getMessage() . ')'
             ], 500);
         }
+    }
+
+    public function showPasswordRequestForm()
+    {
+        return view('pages.email_reset');
+    }
+
+    public function sendResetLinkEmail(Request $request)
+    {
+        $request->validate(['email' => 'required|email']);
+
+        // Ellenőrzés, hogy létezik-e a customer ezzel az email címmel
+        $customerExists = Customer::where('email', $request->input('email'))->exists();
+
+        if (! $customerExists) {
+            return back()->withErrors(['email' => 'Ez az email cím nem található az adatbázisban.']);
+        }
+
+        $status = Password::broker('customers')->sendResetLink($request->only('email'));
+
+        if ($status === Password::RESET_LINK_SENT) {
+            return back()->with('success', 'A jelszó-visszaállító link elküldve az email címedre.');
+        } else {
+            return back()->withErrors(['email' => 'Nem sikerült elküldeni a jelszó-visszaállító linket. Kérjük, próbáld újra.']);
+        }
+    }
+
+    public function showResetForm(Request $request, $token = null)
+    {
+        return view('pages.reset', ['token' => $token, 'email' => $request->email]);
+    }
+
+    public function passwordReset(Request $request)
+    {
+        $request->validate([
+            'token' => 'required',
+            'email' => 'required|email',
+            'password' => 'required|confirmed|min:8',
+        ]);
+
+        $status = Password::broker('customers')->reset(
+            $request->only('email', 'password', 'password_confirmation', 'token'),
+            function ($customer) use ($request) {
+                $customer->forceFill([
+                    'password' => Hash::make($request->password),
+                    'remember_token' => Str::random(60),
+                ])->save();
+            }
+        );
+        \Log::info($status);
+
+        return $status === Password::PASSWORD_RESET
+            ? redirect()->route('login')->with('status', __($status))
+            : back()->withErrors(['email' => [__($status)]]);
     }
 }
