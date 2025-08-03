@@ -9,7 +9,7 @@ class ProductPhoto extends Model
 {
     use LogsActivity;
 
-    protected $fillable = ['path'];
+    protected $guarded = [];
 
     public function product()
     {

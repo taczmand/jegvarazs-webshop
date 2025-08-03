@@ -463,9 +463,6 @@
             function renderTaxes(taxes, assignedTaxId = null) {
                 const taxSelect = $('#tax-select');
                 taxSelect.empty();
-                taxSelect.append(`
-                        <option value="">Válassz a listából</option>
-                    `);
                 taxes.forEach(tax => {
                     const selected = assignedTaxId === tax.id ? 'selected' : '';
                     taxSelect.append(`

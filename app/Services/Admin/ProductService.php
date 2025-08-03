@@ -94,13 +94,16 @@ class ProductService
                 $product->tags()->sync($data['tags']);
             }
 
-            // Új képek mentése
+            // Új képek mentése, első kép lesz az is_main = 1
             if (!empty($data['new_photos'])) {
                 $photos = [];
 
-                foreach ($data['new_photos'] as $photo) {
+                foreach ($data['new_photos'] as $index => $photo) {
                     $path = $photo->store('products', 'public');
-                    $photos[] = ['path' => $path];
+                    $photos[] = [
+                        'path' => $path,
+                        'is_main' => $index === 0 ? 1 : 0
+                    ];
                 }
 
                 $product->photos()->createMany($photos);
