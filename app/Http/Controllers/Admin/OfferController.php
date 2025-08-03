@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Mail\NewOffer;
 use App\Models\Category;
 use App\Models\Offer;
 use App\Models\OfferProduct;
@@ -10,6 +11,7 @@ use App\Models\Product;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Yajra\DataTables\Facades\DataTables;
 
@@ -132,6 +134,11 @@ class OfferController extends Controller
             $offer->update(['pdf_path' => "offers/{$fileName}"]);
 
             DB::commit();
+
+            // E-mail küldése az ajánlatról
+            if ($offer->email) {
+                Mail::to($offer->email)->send(new NewOffer($offer));
+            }
 
             return response()->json([
                 'message' => 'Sikeres generálás!'
