@@ -160,8 +160,6 @@ class OrderController extends Controller
                 ]),
             ]);
 
-            \Log::info($this->items($order->id)->toArray());
-
             Mail::to($order->contact_email)->send(new UpdateOrder(
                 $order,
                 $this->items($order->id)->toArray()

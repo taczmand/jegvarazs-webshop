@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Helpers\AmountToText;
 use App\Http\Controllers\Controller;
+use App\Mail\NewContract;
 use App\Models\Category;
 use App\Models\Contract;
 use App\Models\ContractProduct;
@@ -13,6 +14,7 @@ use App\Models\WorksheetProduct;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Yajra\DataTables\Facades\DataTables;
 
@@ -184,8 +186,6 @@ class ContractController extends Controller
                 // 'company' => config('app.company_info') // opcionális
             ];
 
-            \Log::info($pdf_data);
-
             // PDF generálása
             $pdf = Pdf::loadView('pdf.contract_' . $request->get('contract_version'), $pdf_data);
 
@@ -226,6 +226,11 @@ class ContractController extends Controller
 
 
             DB::commit();
+
+            // E-mail küldése a szerződésről
+            if ($contract->email) {
+                Mail::to($contract->email)->send(new NewContract($contract));
+            }
 
             return response()->json([
                 'message' => 'Sikeres generálás!',
