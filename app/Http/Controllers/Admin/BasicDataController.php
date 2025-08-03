@@ -66,7 +66,6 @@ class BasicDataController extends Controller
                 'customers',
                 'orders',
                 'appointments',
-                'offers',
                 'contracts',
                 'worksheets'
             ])

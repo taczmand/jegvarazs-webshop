@@ -29,6 +29,7 @@ class AppointmentController extends Controller
             'appointments.status',
             'appointments.created_at',
             'users.name as viewed_by_name',
+            'actions.viewed_by',
         ])
             ->leftJoin('user_actions as actions', function ($join) {
                 $join->on('appointments.id', '=', 'actions.model_id')
@@ -41,7 +42,7 @@ class AppointmentController extends Controller
                 return $item->created_at ? $item->created_at->format('Y-m-d H:i:s') : '';
             })
             ->addColumn('viewed_by', function ($item) {
-                return $item->viewed_by_name ?? '-';
+                return $item->viewed_by_name ?? '<span class="text-warning"><i class="fa-solid fa-eye-slash"></i></span>';
             })
             ->filterColumn('status', function ($query, $keyword) {
                 $query->where('appointments.status', '=', "{$keyword}");
@@ -66,7 +67,7 @@ class AppointmentController extends Controller
 
                 return $actions;
             })
-            ->rawColumns(['action'])
+            ->rawColumns(['action', 'viewed_by'])
             ->make(true);
     }
 
