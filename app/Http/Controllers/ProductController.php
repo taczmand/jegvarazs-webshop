@@ -100,10 +100,25 @@ class ProductController extends Controller
         ]);
     }
 
+    public function resolve($slugs)
+    {
+        $parts = explode('/', $slugs);
+        $last = end($parts);
+
+        // Ellenőrizzük, hogy létezik-e ez slug-ként a termékek között
+        $product = Product::where('slug', $last)->first();
+
+        if ($product) {
+            return $this->show(implode('/', array_slice($parts, 0, -1)), $last);
+        }
+
+        // Különben: csak kategóriaútvonal
+        return $this->category($slugs);
+    }
+
     public function category($categorySlugs)
     {
         $slugs = explode('/', $categorySlugs);
-
         $parent = null;
         foreach ($slugs as $slug) {
             $parent = Category::where('slug', $slug)
@@ -112,16 +127,60 @@ class ProductController extends Controller
         }
 
         $parent->load('children');
-
         $categoryIds = $this->collectCategoryIds($parent);
 
-        $products = Product::whereIn('cat_id', $categoryIds)->where('status', 'active')->paginate(12);
+        $request = request();
+
+        // 🔍 Query paraméterek
+        $tags = $request->query('tag');
+        $brands = $request->query('brand');
+        $sortBy = $request->query('sortBy');
+
+        // 🔎 Alap lekérdezés
+        $query = Product::with('category')
+            ->whereIn('cat_id', $categoryIds)
+            ->where('status', 'active');
+
+        // 🔍 Tag szűrés
+        if ($tags) {
+            $tagArray = explode(',', $tags);
+            $query->whereHas('tags', function ($q) use ($tagArray) {
+                $q->whereIn('tag_id', $tagArray);
+            });
+        }
+
+        // 🔍 Brand szűrés
+        if ($brands) {
+            $brandArray = explode(',', $brands);
+            $query->whereHas('brands', function ($q) use ($brandArray) {
+                $q->whereIn('brand_id', $brandArray);
+            });
+        }
+
+        // 🔃 Rendezés
+        switch ($sortBy) {
+            case 'productDesc':
+                $query->orderBy('title', 'desc');
+                break;
+            case 'priceAsc':
+                $query->orderBy('gross_price', 'asc');
+                break;
+            case 'priceDesc':
+                $query->orderBy('gross_price', 'desc');
+                break;
+            case 'productAsc':
+            default:
+                $query->orderBy('title', 'asc');
+                break;
+        }
+
+        $products = $query->paginate(12)->withQueryString();
 
         $tags = Tag::all()->pluck('id', 'name')->toArray();
-
         $brands = Brand::where('status', 'active')->pluck('id', 'title')->toArray();
 
-        $latest_products = Product::whereIn('cat_id', $categoryIds)->where('status', 'active')
+        $latest_products = Product::whereIn('cat_id', $categoryIds)
+            ->where('status', 'active')
             ->orderBy('created_at', 'desc')
             ->take(5)
             ->get();
@@ -130,7 +189,7 @@ class ProductController extends Controller
         $minPrice = $allProductsQuery->min('gross_price');
         $maxPrice = $allProductsQuery->max('gross_price');
 
-        // 🔻 Breadcrumbs felépítése
+        // 🔻 Breadcrumbs
         $nav = collect();
         $current = $parent;
         while ($current) {
@@ -144,7 +203,6 @@ class ProductController extends Controller
             'title' => 'Termékek',
             'url' => route('products.index'),
         ]);
-
         $nav->prepend([
             'title' => 'Főoldal',
             'url' => route('index'),
@@ -166,6 +224,7 @@ class ProductController extends Controller
             'product_count' => $allProductsQuery->count(),
         ]);
     }
+
 
     public function show(string $categorySlugs, string $productSlug)
     {
@@ -190,22 +249,6 @@ class ProductController extends Controller
             ->get();
 
         return view('pages.products.show', compact('product', 'relatedProducts'));
-    }
-
-    public function resolve($slugs)
-    {
-        $parts = explode('/', $slugs);
-        $last = end($parts);
-
-        // Ellenőrizzük, hogy létezik-e ez slug-ként a termékek között
-        $product = Product::where('slug', $last)->first();
-
-        if ($product) {
-            return $this->show(implode('/', array_slice($parts, 0, -1)), $last);
-        }
-
-        // Különben: csak kategóriaútvonal
-        return $this->category($slugs);
     }
 
     protected function collectCategoryIds(Category $category): array

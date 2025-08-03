@@ -200,12 +200,13 @@ class ShopCustomerController extends Controller
                     'password' => Hash::make($request->password),
                     'remember_token' => Str::random(60),
                 ])->save();
+
+                Auth::guard('customer')->login($customer); // beléptetés
             }
         );
-        \Log::info($status);
 
         return $status === Password::PASSWORD_RESET
-            ? redirect()->route('login')->with('status', __($status))
+            ? redirect()->route('index')->with('status', __($status))
             : back()->withErrors(['email' => [__($status)]]);
     }
 }

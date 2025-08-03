@@ -35,8 +35,6 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ShopCustomerController;
 use App\Http\Middleware\Incognito;
 use App\Models\Order;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/incognito', [PagesController::class, 'incognito']);
