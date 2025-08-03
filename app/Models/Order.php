@@ -24,4 +24,14 @@ class Order extends Model
     {
         return $this->hasMany(OrderHistory::class);
     }
+    public function getStatusLabelAttribute()
+    {
+        return match ($this->status) {
+            'pending' => 'Függőben',
+            'processing' => 'Feldolgozás alatt',
+            'completed' => 'Teljesítve',
+            'cancelled' => 'Törölve',
+            default => ucfirst($this->status),
+        };
+    }
 }

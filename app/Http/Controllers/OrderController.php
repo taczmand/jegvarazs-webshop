@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\CheckoutRequest;
-use App\Mail\NewOrder;
 use App\Models\CompanySite;
 use App\Models\Order;
 use App\Models\OrderedProduct;
@@ -11,7 +10,6 @@ use App\Models\OrderHistory;
 use App\Models\OrderItem;
 use App\Services\Order\PaymentHandlers\PaymentHandlerFactory;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Mail;
 
 class OrderController extends Controller
 {

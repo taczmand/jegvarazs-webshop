@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Mail\UpdateOrder;
 use App\Models\Order;
 use App\Models\OrderHistory;
 use App\Models\OrderItem;
+use Illuminate\Support\Facades\Mail;
 
 class OrderController extends Controller
 {
@@ -157,6 +159,14 @@ class OrderController extends Controller
                     'order' => $order->toArray()
                 ]),
             ]);
+
+            \Log::info($this->items($order->id)->toArray());
+
+            Mail::to($order->contact_email)->send(new UpdateOrder(
+                $order,
+                $this->items($order->id)->toArray()
+            ));
+
             return response()->json([
                 'message' => 'Rendelés sikeresen frissítve.',
                 'order' => $order,
