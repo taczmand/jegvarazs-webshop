@@ -275,6 +275,7 @@
             function resetForm(title = null) {
                 $('#adminModalForm')[0].reset();
                 $('#adminModalLabel').text(title);
+                $('#site_id').val('');
             }
         });
     </script>

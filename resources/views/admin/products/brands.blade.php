@@ -255,6 +255,7 @@
                 $('#exist_image').addClass('d-none');
                 $('#adminForm')[0].reset();
                 $('#adminModalLabel').text(title);
+                $('#brand_id').val('');
             }
         });
     </script>

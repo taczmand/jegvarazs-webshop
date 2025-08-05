@@ -344,6 +344,7 @@
             }
 
             function resetForm(title = null) {
+                $('#user_id').val('');
                 $('#userForm')[0].reset();
                 $('#permission-checkboxes').empty();
                 $('#userModalLabel').text(title);

@@ -70,7 +70,6 @@
     <div class="modal fade" id="adminModal" tabindex="-1" aria-labelledby="adminModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-xl">
             <form id="adminModalForm" action="" method="POST">
-                <input type="hidden" id="customer_id" name="id">
 
                 <div class="modal-content">
                     <div class="modal-header">

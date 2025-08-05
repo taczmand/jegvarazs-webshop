@@ -253,6 +253,7 @@
                 $('#exist_image').addClass('d-none');
                 $('#adminForm')[0].reset();
                 $('#adminModalLabel').text(title);
+                $('#employee_id').val('');
             }
         });
     </script>

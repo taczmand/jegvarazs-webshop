@@ -61,7 +61,6 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Bezárás"></button>
                     </div>
                     <div class="modal-body">
-                        <input type="hidden" id="attribute_id" name="id">
                         <div class="mb-3">
                             <label for="name" class="form-label">Név</label>
                             <input type="text" class="form-control" id="name" name="name" required>

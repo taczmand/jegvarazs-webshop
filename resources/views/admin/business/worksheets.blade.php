@@ -1099,6 +1099,7 @@
                     $('#worksheetDataTablePhotos').empty();
                     $('#worksheetCertificatePhotos').empty();
                     $('#worksheetInstallPhotos').empty();
+                    $('#worksheet_id').val(''); // Munkalap ID törlése
                 }
             }
         });

@@ -266,6 +266,7 @@
                 $('#exist_file_area').addClass('d-none');
                 $('#adminModalForm')[0].reset();
                 $('#adminModalLabel').text(title);
+                $('#regulation_id').val('');
             }
         });
     </script>
