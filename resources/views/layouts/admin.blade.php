@@ -158,7 +158,7 @@
 
 
             <!-- Begin Page Content -->
-            <div class="container-fluid pt-3">
+            <div class="container-fluid pt-3 page-content">
                 @yield('content')
                 <div id="global-loader" style="
                         display: none;

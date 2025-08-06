@@ -557,6 +557,12 @@ pre code {
     margin-right: auto;
     margin-left: auto;
 }
+.page-content h2 {
+    font-size: 16px;
+}
+.btn {
+    font-size: 12px !important;
+}
 
 @media (min-width: 576px) {
     .container, .container-sm {
