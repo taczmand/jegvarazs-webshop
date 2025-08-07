@@ -13,7 +13,7 @@
             max-width: 100%;
             margin: 0;
             color: #000;
-            background-image: url("{{ public_path('static_media/uj_logo_nagy_opal.png') }}");
+            background-image: url("{{ asset('static_media/uj_logo_nagy_opal.png') }}");
             background-position: center center;
             background-repeat: no-repeat;
             background-size: contain;

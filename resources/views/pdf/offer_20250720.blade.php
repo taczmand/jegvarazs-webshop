@@ -8,7 +8,7 @@
             padding:0;
             margin:0;
             text-align:center;
-            background-image: url("{{ public_path('static_media/offer_bg_image.png') }}");
+            background-image: url("{{ asset('static_media/offer_bg_image.png') }}");
             background-position: center center;
             background-repeat: no-repeat;
             background-size: contain;

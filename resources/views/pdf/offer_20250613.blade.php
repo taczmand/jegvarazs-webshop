@@ -13,7 +13,7 @@
             margin: 0;
             padding: 0;
             background-color: white;
-            background-image: url("{{ public_path('static_media/offer_bg_image.jpeg') }}");
+            background-image: url("{{ asset('static_media/offer_bg_image.jpeg') }}");
             background-position: center center;
             background-repeat: no-repeat;
             background-size: contain;
