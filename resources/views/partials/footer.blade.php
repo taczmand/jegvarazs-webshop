@@ -20,7 +20,7 @@
 
                     <ul>
                         @foreach ($regulations as $regulation)
-                            <a href="{{ $regulation->file_path }}" target="_blank"><li>{{ $regulation->file_name }}</li></a>
+                            <a href="storage/{{ $regulation->file_path }}" target="_blank"><li>{{ $regulation->file_name }}</li></a>
                         @endforeach
                     </ul>
                 </div>
