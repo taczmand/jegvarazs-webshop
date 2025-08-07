@@ -5,7 +5,7 @@
     <title>Ajánlat PDF</title>
     <style>
         @php
-            $imagePath = env('STATIC_MEDIA_PATH') . '/offer_bg_image.jpeg';
+            $imagePath = base_path(env('STATIC_MEDIA_PATH') . '/offer_bg_image.jpeg');
             $imageData = base64_encode(file_get_contents($imagePath));
             $mimeType = mime_content_type($imagePath);
             $backgroundImage = "data:$mimeType;base64,$imageData";
