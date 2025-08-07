@@ -110,10 +110,12 @@ class OfferController extends Controller
                 $item = OfferProduct::create([
                     'offer_id' => $offer->id,
                     'product_id' => $productId,
+                    'quantity' => $data['quantity'] ?? 1,
                     'gross_price' => $data['gross_price'],
                 ]);
                 $products[] = [
                     'title' => Product::findOrFail($productId)->title ?? "N/A",
+                    'quantity' => $item->quantity,
                     'gross_price' => $item->gross_price,
                 ];
             }

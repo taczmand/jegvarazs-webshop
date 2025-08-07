@@ -147,7 +147,8 @@
                                         <tr>
                                             <th>Kiválasztás</th>
                                             <th>Termék</th>
-                                            <th>Bruttó ár</th>
+                                            <th>Darab</th>
+                                            <th>Bruttó egységár</th>
                                         </tr>
                                         </thead>
                                         <tbody>
@@ -302,6 +303,7 @@
                         <tr>
                             <td>${item.id}</td>
                             <td>${item.title}</td>
+                            <td>${item.pivot.quantity}</td>
                             <td>${item.pivot.gross_price}</td>
                         </tr>`;
                     productManagerTable.append(row);
@@ -395,7 +397,7 @@
                         data.forEach(category => {
                             const categoryRow = `
                     <tr class="table-secondary">
-                        <td colspan="3"><strong>${category.title}</strong></td>
+                        <td colspan="4"><strong>${category.title}</strong></td>
                     </tr>`;
                             productManagerTable.append(categoryRow);
 
@@ -410,6 +412,14 @@
                                 >
                             </td>
                             <td>${item.title}</td>
+                            <td>
+                                <input
+                                    type="number"
+                                    class="form-control"
+                                    name="products[${item.id}][quantity]"
+                                    value="1"
+                                    min="1"
+                                >
                             <td>
                                 <input
                                     type="number"

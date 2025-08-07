@@ -5,6 +5,14 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
     <title>Szerződés</title>
     <style>
+
+        @php
+            $imagePath = public_path('static_media/uj_logo_nagy_opal.png');
+            $imageData = base64_encode(file_get_contents($imagePath));
+            $mimeType = mime_content_type($imagePath);
+            $backgroundImage = "data:$mimeType;base64,$imageData";
+        @endphp
+
         body {
             font-family: DejaVu Sans, sans-serif;
             line-height: 1;
@@ -13,7 +21,7 @@
             max-width: 100%;
             margin: 0;
             color: #000;
-            background-image: url("{{ asset('static_media/uj_logo_nagy_opal.png') }}");
+            background-image: url("{{ $backgroundImage }}");
             background-position: center center;
             background-repeat: no-repeat;
             background-size: contain;
