@@ -263,7 +263,7 @@ class CustomerController extends Controller
             $customer->password = bcrypt($request->input('password'));
         }
 
-        $customer->update($request->only(['first_name', 'last_name', 'email', 'phone', 'is_partner', 'status']));
+        $customer->update($request->only(['first_name', 'last_name', 'email', 'phone', 'is_partner', 'fgaz', 'status']));
 
         // Ha most lett partner
         if ($was_partner == 0 && $customer->is_partner == 1) {

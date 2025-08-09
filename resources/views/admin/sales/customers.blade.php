@@ -139,6 +139,12 @@
                                     </td>
                                 </tr>
                                 <tr>
+                                    <th>F-Gáz azonosító</th>
+                                    <td>
+                                        <input type="text" class="form-control" id="customer_fgaz" name="customer_fgaz">
+                                    </td>
+                                </tr>
+                                <tr>
                                     <th>Állapot</th>
                                     <td>
                                         <select class="form-select" id="customer_status" name="customer_status">
@@ -369,6 +375,7 @@
                 $('#customer_first_name').val(customer_data.first_name);
                 $('#customer_phone').val(customer_data.phone);
                 $('#customer_email').val(customer_data.email);
+                $('#customer_fgaz').val(customer_data.fgaz || '');
                 $('#customer_is_partner').val(customer_data.is_partner ? 1 : 0);
                 $('#customer_status').val(customer_data.status === 'active' ? 'active' : 'inactive');
                 $('#customer_created_at').text(customer_data.created_at);
@@ -556,6 +563,7 @@
                 const first_name = $('#customer_first_name').val();
                 const phone = $('#customer_phone').val();
                 const email = $('#customer_email').val();
+                const fgaz = $('#customer_fgaz').val();
                 const is_partner = $('#customer_is_partner').val();
                 const customer_status = $('#customer_status').val();
                 const password = $('#customer_password').val();
@@ -578,6 +586,7 @@
                             first_name: first_name,
                             phone: phone,
                             email: email,
+                            fgaz: fgaz,
                             is_partner: is_partner,
                             status: customer_status,
                             password: password
