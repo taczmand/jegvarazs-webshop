@@ -9,6 +9,9 @@
         $category = $product->category ?? $product->categories->first();
         $categoryTrail = [];
 
+        $customer = auth('customer')->user();
+        $isPartner = $customer && $customer->is_partner;
+
         while ($category) {
             $categoryTrail[] = [
                 'title' => $category->title,
@@ -142,9 +145,12 @@
 
 
                         @auth('customer')
-                                <a href="" class="btn btn-outline-primary mt-2 interesting-badge" product-id="{{ $product->id }}" interesting_type="install-interesting" product-title="{{ $product->title }}">
-                                    Ajánlatot szeretnék beszereléssel együtt <i class="fa fa-envelope"></i>
-                                </a>
+                                @unless($isPartner)
+                                    <a href="" class="btn btn-outline-primary mt-2 interesting-badge" product-id="{{ $product->id }}" interesting_type="install-interesting" product-title="{{ $product->title }}">
+                                        Ajánlatot szeretnék beszereléssel együtt <i class="fa fa-envelope"></i>
+                                    </a>
+                                @endif
+
                                 @if ("backorder" === $status['slug'])
                                     <ul>
                                         <li><b>Készlet</b>
