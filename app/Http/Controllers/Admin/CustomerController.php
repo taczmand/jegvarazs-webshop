@@ -257,17 +257,17 @@ class CustomerController extends Controller
     {
         $customer = Customer::findOrFail($request->input('id'));
 
-        $was_partner = $customer->is_partner; // korábbi állapot
+        $was_inactive = $customer->status; // korábbi állapot
 
         if ($request->has('password') && !empty($request->input('password'))) {
             $customer->password = bcrypt($request->input('password'));
         }
 
-        $customer->update($request->only(['first_name', 'last_name', 'email', 'phone', 'is_partner', 'fgaz', 'status']));
+        $updateted_customer = $customer->update($request->only(['first_name', 'last_name', 'email', 'phone', 'is_partner', 'fgaz', 'status']));
 
         // Ha most lett partner
-        if ($was_partner == 0 && $customer->is_partner == 1) {
-            Mail::to($customer->email)->send(new PartnerAccessGranted($customer));
+        if ($was_inactive == 'inactive' && $updateted_customer->status == 'active' && $updateted_customer->is_partner == 1) {
+            Mail::to($updateted_customer->email)->send(new PartnerAccessGranted($updateted_customer));
         }
 
         return response()->json(['success' => true, 'message' => 'Customer updated successfully.', 'customer' => $customer]);
