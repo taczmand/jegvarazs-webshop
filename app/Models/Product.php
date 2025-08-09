@@ -123,10 +123,7 @@ class Product extends Model
 
         $output = '';
 
-        // Végfelhasználói bruttó ár
         $gross_price = (float) $this->gross_price;
-        $output .= '<div class="price-block">';
-        $output .= '<div><strong>'.number_format($gross_price, 0, ',', ' ') . ' Ft </strong> <span style="font-size: 10px;">(bruttó végfelhasználói ár)</span></div>';
 
         // Nettó ár számítása (feltételezve, hogy van ilyen meződ)
         /*if ($this->net_price) {
@@ -138,14 +135,22 @@ class Product extends Model
             $partner_price = $this->partner_selected_price ?? $this->partner_gross_price;
 
             if ($partner_price !== null && $gross_price != $partner_price) {
-                $partner_price = (float) $partner_price;
-                $output .= '<div><strong>' . number_format($partner_price, 0, ',', ' ') . ' Ft</strong> <span style="font-size: 10px">(partner bruttó ár)</span></div>';
 
                 // Nettó partneri ár:
                 $partner_net_price = $partner_price / (1 + $vat_percent / 100);
-                $output .= '<div><strong>' . number_format($partner_net_price, 0, ',', ' ') . ' Ft</strong> <span style="font-size: 10px">(partner nettó ár)</span></div>';
+                $output .= '<div style="color: red; font-size: 1.75rem"><strong>' . number_format($partner_net_price, 0, ',', ' ') . ' Ft</strong> <span style="font-size: 10px">(partner nettó ár)</span></div>';
+
+                $partner_price = (float) $partner_price;
+                $output .= '<div><strong>' . number_format($partner_price, 0, ',', ' ') . ' Ft</strong> <span style="font-size: 10px">(partner bruttó ár)</span></div>';
+
+
             }
         }
+
+        // Végfelhasználói bruttó ár
+        $output .= '<div class="price-block">';
+        $output .= '<div><strong>'.number_format($gross_price, 0, ',', ' ') . ' Ft </strong> <span style="font-size: 10px;">(bruttó végfelhasználói ár)</span></div>';
+
 
         $output .= '</div>';
 
