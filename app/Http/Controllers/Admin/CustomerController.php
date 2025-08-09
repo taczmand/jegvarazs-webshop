@@ -263,11 +263,21 @@ class CustomerController extends Controller
             $customer->password = bcrypt($request->input('password'));
         }
 
-        $updateted_customer = $customer->update($request->only(['first_name', 'last_name', 'email', 'phone', 'is_partner', 'fgaz', 'status']));
+        $customer->update($request->only([
+            'first_name',
+            'last_name',
+            'email',
+            'phone',
+            'is_partner',
+            'fgaz',
+            'status'
+        ]));
+
+        $updated_customer = $customer->fresh();
 
         // Ha most lett partner
-        if ($was_inactive == 'inactive' && $updateted_customer->status == 'active' && $updateted_customer->is_partner == 1) {
-            Mail::to($updateted_customer->email)->send(new PartnerAccessGranted($updateted_customer));
+        if ($was_inactive == 'inactive' && $updated_customer->status == 'active' && $updated_customer->is_partner == 1) {
+            Mail::to($updated_customer->email)->send(new PartnerAccessGranted($updated_customer));
         }
 
         return response()->json(['success' => true, 'message' => 'Customer updated successfully.', 'customer' => $customer]);
