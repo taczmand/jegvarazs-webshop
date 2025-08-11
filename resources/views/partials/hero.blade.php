@@ -11,7 +11,17 @@
                     <ul class="category-menu list-unstyled">
                         @foreach ($categories as $category)
                             <li class="category-item">
-                                <a href="{{ route('products.resolve', ['slugs' => $category->getFullSlug()]) }}" class="category-link">{{ $category->title }}</a>
+                                <div class="category-header">
+                                    <a href="{{ route('products.resolve', ['slugs' => $category->getFullSlug()]) }}" class="category-link">
+                                        {{ $category->title }}
+                                    </a>
+                                    @if($category->children->count())
+                                        <button class="subcategory-toggle" aria-label="Almenü megnyitása">
+                                            <i class="fa fa-chevron-down"></i>
+                                        </button>
+                                    @endif
+                                </div>
+
                                 @if($category->children->count())
                                     <div class="subcategory-container">
                                         <div class="subcategory-grid">
@@ -32,6 +42,7 @@
                                 @endif
                             </li>
                         @endforeach
+
                     </ul>
 
 

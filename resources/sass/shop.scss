@@ -3596,9 +3596,23 @@ a {
 .subcategory-link.level-2:hover {
     background-color: #dee2e6;
 }
-
+.category-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.subcategory-toggle {
+    background: none;
+    border: none;
+    padding: 5px;
+    cursor: pointer;
+    font-size: 14px;
+}
 /* PC - Hover mutatja jobbra háromoszlopos gridben */
 @media (min-width: 992px) {
+    .subcategory-toggle {
+        display: none; /* Mobilon látható */
+    }
     .category-item:hover .subcategory-container {
         display: block;
         position: absolute;
