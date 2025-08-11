@@ -23,6 +23,11 @@ class UserController extends Controller
         return view('admin.profil', compact('profil'));
     }
 
+    public function fetchUsers() {
+        $users = User::all();
+        return response()->json($users);
+    }
+
     public function data()
     {
         $users = User::with('roles')

@@ -197,6 +197,7 @@ Route::middleware([Incognito::class])->group(function () {
             Route::put('/beallitasok/altalanos/{id}', [BasicDataController::class, 'update'])->name('settings.general.update');
 
             // Rendszer - Felhasználók
+            Route::get('/fetch-felhasznalok', [UserController::class, 'fetchUsers'])->name('settings.users.fetch');
             Route::get('/felhasznalok', [UserController::class, 'index'])->name('settings.users.index');
             Route::get('/felhasznalo/{id}', [UserController::class, 'fetchWithPermissions'])->name('settings.users.fetch');
             Route::get('/felhasznalok/data', [UserController::class, 'data'])->name('settings.users.data');

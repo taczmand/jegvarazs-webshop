@@ -30,15 +30,15 @@ class Worksheet extends Model
         return $this->belongsTo(Contract::class, 'contract_id');
     }
 
-    public function worker()
-    {
-        return $this->belongsTo(User::class, 'worker_id');
-    }
-
     public function products()
     {
         return $this->belongsToMany(Product::class, 'worksheet_products')
             ->withPivot('quantity')
+            ->withTimestamps();
+    }
+    public function workers()
+    {
+        return $this->belongsToMany(User::class, 'worksheet_workers', 'worksheet_id', 'worker_id')
             ->withTimestamps();
     }
 

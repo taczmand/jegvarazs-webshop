@@ -107,7 +107,7 @@
                             <th data-priority="3">Város</th>
                             <th data-priority="4">Munka típusa</th>
                             <th>Munkalap adatok</th>
-                            <th>Szerelő</th>
+                            <th data-priority="6">Szerelők</th>
                             <th data-priority="5">Állapot</th>
                             <th>Szerződés</th>
                             <th>Készítette</th>
@@ -141,6 +141,7 @@
 
                         <ul class="nav nav-tabs" id="productTab" role="tablist">
                             <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#basic" type="button">Alapadatok</button></li>
+                            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#workers" type="button">Szerelők</button></li>
                             <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#products" type="button">Termékek</button></li>
                             <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#local_images" type="button">Helyszíni képek</button></li>
                             <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#datatable_images" type="button">Adattábla képek</button></li>
@@ -215,19 +216,6 @@
                                         <td><input type="email" class="form-control" id="contact_email" name="contact_email"></td>
                                     </tr>
                                     <tr>
-                                        <td>Szerelő hozzárendelése</td>
-                                        <td>
-                                            <select name="worker_id" class="form-control w-100" id="worker_id" name="worker_id">
-                                                <option value=""></option>
-                                                @foreach($users as $user)
-                                                    <option value="{{ $user->id }}">
-                                                        {{ $user->name }}
-                                                    </option>
-                                                @endforeach
-                                            </select>
-                                        </td>
-                                    </tr>
-                                    <tr>
                                         <td>Szerződés hozzárendelése</td>
                                         <td>
                                             <select name="contract_id" class="form-control w-100" id="contract_id" name="contract_id">
@@ -245,6 +233,24 @@
                                         <td><textarea class="form-control" id="contact_description" name="contact_description" rows="3"></textarea></td>
                                     </tbody>
                                 </table>
+                            </div>
+
+                            <!-- Szerelők tab-->
+
+                            <div class="tab-pane fade" id="workers">
+                                <div style="max-height: 300px; overflow-y: auto">
+                                    <table class="table table-bordered" id="workerManagerTable" style="display: {{ $display }}">
+                                        <thead>
+                                        <tr>
+                                            <th>Kiválasztás</th>
+                                            <th>Szerelő neve</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        <!-- Szerelők betöltése itt -->
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
 
                             <!-- Termékek tab-->
@@ -731,6 +737,7 @@
 
                 const worksheet = worksheet_data || {};
                 const worksheet_products = worksheet.products || [];
+                const worksheet_workers = worksheet.workers || [];
 
                 // Alapadatok
 
@@ -746,7 +753,6 @@
                 $('#contact_description').val(worksheet.description);
                 $('#contact_phone').val(worksheet.phone);
                 $('#contact_email').val(worksheet.email);
-                $('#worker_id').val(worksheet.worker_id);
                 $('#contract_id').val(worksheet.contract_id);
                 $('#work_status').val(worksheet.work_status);
                 $('#payment_method').val(worksheet.payment_method);
@@ -761,6 +767,8 @@
                     }
                 });
 
+                // Szerelők
+                loadWorkers(worksheet_workers);
 
                 // Termékek
                 loadProducts(worksheet_products);
@@ -799,6 +807,7 @@
                         showToast(response.message || 'Sikeres!', 'success');
                         table.ajax.reload();
                         adminModal.hide();
+                        renderCalendar();
                     },
                     error(xhr) {
                         let msg = 'Hiba!';
@@ -846,6 +855,43 @@
                     showToast(error.message || 'Hiba történt a kategória törlésekor', 'danger');
                 }
             });
+
+            function loadWorkers(workers = []) {
+                const workerManagerTable = $('#workerManagerTable tbody');
+                workerManagerTable.empty();
+
+                fetch(`${window.appConfig.APP_URL}admin/fetch-felhasznalok`)
+                    .then(response => response.json())
+                    .then(data => {
+                        // Átalakítjuk a meglévő workers tömböt egy gyors lookup objektummá
+                        const selectedWorkers = {};
+                        workers.forEach(w => {
+                            selectedWorkers[w.id] = true; // csak a kiválasztottakat tároljuk
+                        });
+
+                        data.forEach(worker => {
+                            const isChecked = selectedWorkers.hasOwnProperty(worker.id);
+                            const row = `
+                                <tr>
+                                    <td>
+                                        <input
+                                            readonly
+                                            type="checkbox"
+                                            name="workers[${worker.id}][selected]"
+                                            value="1"
+                                            ${isChecked ? 'checked' : ''}
+                                        >
+                                    </td>
+                                    <td>${worker.name}</td>
+                                </tr>
+                            `;
+                            workerManagerTable.append(row);
+                        });
+                    })
+                    .catch(error => {
+                        console.error('Hiba a szerelők betöltésekor:', error);
+                    });
+            }
 
             function loadProducts(products = []) {
                 const productManagerTable = $('#productManagerTable tbody');

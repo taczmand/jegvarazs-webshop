@@ -26,10 +26,6 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->text('worker_report')->nullable();
             $table->date('installation_date')->comment('Szerelés dátuma');
-            $table->foreignId('worker_id')
-                ->constrained('users')
-                ->onDelete('no action')
-                ->onUpdate('no action');
             $table->enum('work_status', ['Folyamatban', 'Kész', 'Lezárva'])->default('Folyamatban');
             $table->json('data')->nullable(); // Mentett adatok JSON formátumban
             $table->enum('payment_method', ['cash', 'transfer']);

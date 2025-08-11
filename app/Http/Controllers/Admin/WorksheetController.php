@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Models\Contract;
 use App\Models\WorksheetImage;
 use App\Models\WorksheetProduct;
+use App\Models\WorksheetWorker;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Spatie\LaravelImageOptimizer\Facades\ImageOptimizer;
@@ -44,16 +45,16 @@ class WorksheetController extends Controller
             return response()->json(['error' => 'Missing date range'], 400);
         }
 
-        $user = auth('admin')->user(); // vagy auth()->user(), ha nincs guard
-        //dd($user);
+        $user = auth('admin')->user();
 
-        // Jogosultságellenőrzés
         if ($user->can('view-worksheets')) {
-            $query = Worksheet::with(['worker:id,name'])
+            $query = Worksheet::with(['workers:id,name'])
                 ->whereBetween('installation_date', [$startDate, $endDate]);
         } elseif ($user->can('view-own-worksheets')) {
-            $query = Worksheet::with(['worker:id,name'])
-                ->where('worker_id', $user->id)
+            $query = Worksheet::with(['workers:id,name'])
+                ->whereHas('workers', function ($q) use ($user) {
+                    $q->where('users.id', $user->id);
+                })
                 ->whereBetween('installation_date', [$startDate, $endDate]);
         } else {
             return response()->json(['error' => 'Nincs jogosultság'], 403);
@@ -69,7 +70,7 @@ class WorksheetController extends Controller
                 'work_name' => $worksheet->work_name,
                 'work_status' => $worksheet->work_status,
                 'installation_date' => $worksheet->installation_date,
-                'worker_name' => optional($worksheet->worker)->name,
+                'worker_name' => $worksheet->workers->pluck('name')->implode(', '), // több dolgozó összevonása
             ];
         });
 
@@ -80,11 +81,11 @@ class WorksheetController extends Controller
 
 
 
+
     public function data()
     {
         $user = $this->user;
 
-        // Jogosultságellenőrzés
         if ($user->can('view-worksheets')) {
             $worksheets = Worksheet::select([
                 'worksheets.id',
@@ -97,28 +98,31 @@ class WorksheetController extends Controller
                 'worksheets.contract_id',
                 'worksheets.created_at as created',
                 'creator.name as creator_name',
-                'worker.name as worker_name',
+                DB::raw('GROUP_CONCAT(worker.name SEPARATOR ", ") as worker_name')
             ])
                 ->leftJoin('users as creator', 'worksheets.created_by', '=', 'creator.id')
-                ->leftJoin('users as worker', 'worksheets.worker_id', '=', 'worker.id');
+                ->leftJoin('worksheet_workers', 'worksheets.id', '=', 'worksheet_workers.worksheet_id')
+                ->leftJoin('users as worker', 'worksheet_workers.worker_id', '=', 'worker.id')
+                ->groupBy('worksheets.id');
         } elseif ($user->can('view-own-worksheets')) {
             $worksheets = Worksheet::select([
                 'worksheets.id',
                 'worksheets.installation_date',
                 'worksheets.name',
                 'worksheets.city',
-                'worksheets.work_name',
                 'worksheets.work_type',
                 'worksheets.work_status',
                 'worksheets.data',
                 'worksheets.contract_id',
                 'worksheets.created_at as created',
                 'creator.name as creator_name',
-                'worker.name as worker_name',
+                DB::raw('GROUP_CONCAT(worker.name SEPARATOR ", ") as worker_name')
             ])
                 ->leftJoin('users as creator', 'worksheets.created_by', '=', 'creator.id')
-                ->leftJoin('users as worker', 'worksheets.worker_id', '=', 'worker.id')
-                ->where('worksheets.worker_id', $user->id);
+                ->leftJoin('worksheet_workers', 'worksheets.id', '=', 'worksheet_workers.worksheet_id')
+                ->leftJoin('users as worker', 'worksheet_workers.worker_id', '=', 'worker.id')
+                ->where('worksheet_workers.worker_id', $user->id)
+                ->groupBy('worksheets.id');
         } else {
             return response()->json(['error' => 'Nincs jogosultság'], 403);
         }
@@ -131,16 +135,9 @@ class WorksheetController extends Controller
             })
             ->addColumn('data', function ($worksheet) {
                 $data = $worksheet->data;
+                $json = is_string($data) ? json_decode($data, true) : (is_array($data) ? $data : []);
 
-                if (is_string($data)) {
-                    $json = json_decode($data, true);
-                } elseif (is_array($data)) {
-                    $json = $data;
-                } else {
-                    $json = [];
-                }
-
-                if (!is_array($json) || empty($json)) {
+                if (empty($json)) {
                     return '-';
                 }
 
@@ -152,29 +149,20 @@ class WorksheetController extends Controller
 
                 return $html;
             })
-
             ->filterColumn('data', function ($query, $keyword) {
-                $query->where(function ($q) use ($keyword) {
-                    $q->where('worksheets.data', 'like', '%' . $keyword . '%');
-                });
+                $query->where('worksheets.data', 'like', '%' . $keyword . '%');
             })
             ->filterColumn('work_status', function ($query, $keyword) {
                 $query->where('worksheets.work_status', '=', "{$keyword}");
             })
             ->addColumn('contract_id', function ($worksheet) {
                 if ($worksheet->contract_id) {
-                    return '<a class="btn btn-sm btn-info" target="_blank" href="' . route('admin.contracts.index', ['modal' => true, 'id' => $worksheet->contract_id]) . '"><i class="fa-solid fa-link"></i></a>';
+                    return '<a class="btn btn-sm btn-info" target="_blank" href="' .
+                        route('admin.contracts.index', ['modal' => true, 'id' => $worksheet->contract_id]) .
+                        '"><i class="fa-solid fa-link"></i></a>';
                 }
                 return "-";
             })
-            /*->addColumn('work_status_icon', function ($worksheet) {
-                return match($worksheet->work_status) {
-                    'Folyamatban' => '<i class="fas fa-tools text-danger" title="Folyamatban"></i>',
-                    'Kész' => '<i class="fas fa-check text-warning" title="Kész"></i>',
-                    'Lezárva' => '<i class="fas fa-check-double text-success" title="Lezárva"></i>',
-                    default => '<i class="fas fa-question-circle text-muted" title="Ismeretlen státusz"></i>',
-                };
-            })*/
             ->addColumn('creator_name', fn($worksheet) => $worksheet->creator_name ?? '-')
             ->addColumn('worker_name', fn($worksheet) => $worksheet->worker_name ?? '-')
             ->addColumn('action', function ($worksheet) {
@@ -182,19 +170,10 @@ class WorksheetController extends Controller
                 $buttons = '';
 
                 if ($user && $user->can('edit-worksheet')) {
-                    $buttons .= '
-                        <button class="btn btn-sm btn-primary edit" data-id="' . $worksheet->id . '" title="Szerkesztés">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                    ';
+                    $buttons .= '<button class="btn btn-sm btn-primary edit" data-id="' . $worksheet->id . '" title="Szerkesztés"><i class="fas fa-edit"></i></button>';
                 }
-
                 if ($user && $user->can('delete-worksheet')) {
-                    $buttons .= '
-                        <button class="btn btn-sm btn-danger delete" data-id="' . $worksheet->id . '" title="Törlés">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    ';
+                    $buttons .= '<button class="btn btn-sm btn-danger delete" data-id="' . $worksheet->id . '" title="Törlés"><i class="fas fa-trash"></i></button>';
                 }
 
                 return $buttons;
@@ -202,6 +181,7 @@ class WorksheetController extends Controller
             ->rawColumns(['contract_id', 'action', 'work_status_icon', 'data'])
             ->make(true);
     }
+
 
     protected function translateDataEntry(string $key, $value): array
     {
@@ -278,7 +258,6 @@ class WorksheetController extends Controller
                 'description'       => $request->input('contact_description') ?? null,
                 'worker_report'     => $request->input('worker_report') ?? null,
                 'installation_date' => $request->input('installation_date'),
-                'worker_id'         => $request->input('worker_id') ?? null,
                 'data'              => array_filter($request->input('extra_data') ?? [], fn($value) => !is_null($value)),
                 'payment_method'    => $request->input('payment_method') ?? null,
                 'payment_amount'    => $request->input('payment_amount') ?? 0,
@@ -432,6 +411,8 @@ class WorksheetController extends Controller
                 }
 
                 $worksheet->update($data);
+
+                $worksheet->workers()->detach(); // előző dolgozók törlése
                 $worksheet->products()->detach(); // előző termékek törlése
             } else {
                 if ($request->input('work_status') === "Folyamatban") {
@@ -443,6 +424,16 @@ class WorksheetController extends Controller
                         'message' => 'Csak "Folyamatban" állapottal hozható létre munkalap',
                     ], 422);
                 }
+            }
+
+            // Munkalap munkások hozzárendelése
+            foreach ($request->input('workers', []) as $workerId => $data) {
+                if (!isset($data['selected'])) continue;
+
+                WorksheetWorker::create([
+                    'worksheet_id' => $worksheet->id,
+                    'worker_id'   => $workerId
+                ]);
             }
 
             // Termékek mentése
@@ -534,7 +525,7 @@ class WorksheetController extends Controller
 
     public function showDataToWorksheet($id)
     {
-        $worksheet = Worksheet::with(['products', 'photos'])->findOrFail($id);
+        $worksheet = Worksheet::with(['products', 'photos', 'workers'])->findOrFail($id);
 
         // Átalakítjuk a kapcsolódó product adatokat, hogy pivot helyett a quantity direktben legyen benne
         $worksheet->products = $worksheet->products->map(function ($product) {
