@@ -7,7 +7,7 @@
     <style>
 
         @php
-            $imagePath = base_path(env('STATIC_MEDIA_PATH') . '/uj_logo_nagy_opal.jpeg');
+            $imagePath = base_path(env('STATIC_MEDIA_PATH') . '/uj_logo_nagy_opal.png');
             $imageData = base64_encode(file_get_contents($imagePath));
             $mimeType = mime_content_type($imagePath);
             $backgroundImage = "data:$mimeType;base64,$imageData";
