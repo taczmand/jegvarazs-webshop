@@ -86,43 +86,55 @@ class WorksheetController extends Controller
     {
         $user = $this->user;
 
+        $select = [
+            'worksheets.id',
+            'worksheets.installation_date',
+            'worksheets.name',
+            'worksheets.city',
+            'worksheets.work_type',
+            'worksheets.work_status',
+            'worksheets.data',
+            'worksheets.contract_id',
+            'worksheets.created_at as created',
+            'creator.name as creator_name',
+            DB::raw('GROUP_CONCAT(DISTINCT worker.name ORDER BY worker.name SEPARATOR ", ") as worker_name')
+        ];
+
         if ($user->can('view-worksheets')) {
-            $worksheets = Worksheet::select([
-                'worksheets.id',
-                'worksheets.installation_date',
-                'worksheets.name',
-                'worksheets.city',
-                'worksheets.work_type',
-                'worksheets.work_status',
-                'worksheets.data',
-                'worksheets.contract_id',
-                'worksheets.created_at as created',
-                'creator.name as creator_name',
-                DB::raw('GROUP_CONCAT(worker.name SEPARATOR ", ") as worker_name')
-            ])
+            $worksheets = Worksheet::select($select)
                 ->leftJoin('users as creator', 'worksheets.created_by', '=', 'creator.id')
                 ->leftJoin('worksheet_workers', 'worksheets.id', '=', 'worksheet_workers.worksheet_id')
                 ->leftJoin('users as worker', 'worksheet_workers.worker_id', '=', 'worker.id')
-                ->groupBy('worksheets.id');
+                ->groupBy(
+                    'worksheets.id',
+                    'worksheets.installation_date',
+                    'worksheets.name',
+                    'worksheets.city',
+                    'worksheets.work_type',
+                    'worksheets.work_status',
+                    'worksheets.data',
+                    'worksheets.contract_id',
+                    'worksheets.created_at',
+                    'creator.name'
+                );
         } elseif ($user->can('view-own-worksheets')) {
-            $worksheets = Worksheet::select([
-                'worksheets.id',
-                'worksheets.installation_date',
-                'worksheets.name',
-                'worksheets.city',
-                'worksheets.work_type',
-                'worksheets.work_status',
-                'worksheets.data',
-                'worksheets.contract_id',
-                'worksheets.created_at as created',
-                'creator.name as creator_name',
-                DB::raw('GROUP_CONCAT(worker.name SEPARATOR ", ") as worker_name')
-            ])
+            $worksheets = Worksheet::select($select)
                 ->leftJoin('users as creator', 'worksheets.created_by', '=', 'creator.id')
                 ->leftJoin('worksheet_workers', 'worksheets.id', '=', 'worksheet_workers.worksheet_id')
                 ->leftJoin('users as worker', 'worksheet_workers.worker_id', '=', 'worker.id')
                 ->where('worksheet_workers.worker_id', $user->id)
-                ->groupBy('worksheets.id');
+                ->groupBy(
+                    'worksheets.id',
+                    'worksheets.installation_date',
+                    'worksheets.name',
+                    'worksheets.city',
+                    'worksheets.work_type',
+                    'worksheets.work_status',
+                    'worksheets.data',
+                    'worksheets.contract_id',
+                    'worksheets.created_at',
+                    'creator.name'
+                );
         } else {
             return response()->json(['error' => 'Nincs jogosultság'], 403);
         }
