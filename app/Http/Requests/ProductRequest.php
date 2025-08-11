@@ -24,9 +24,7 @@ class ProductRequest extends FormRequest
 
         return [
             'title' => ['required', 'string', 'max:255'],
-            'gross_price' => ['required', 'numeric'],
             'tax_id' => ['required', 'numeric', 'exists:tax_categories,id'],
-            'stock' => ['required', 'numeric'],
             'status' => ['required', 'string', 'in:active,inactive'],
             'category_id' => ['required', 'numeric', 'exists:categories,id'],
         ];
