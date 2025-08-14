@@ -204,7 +204,7 @@
                 order: [[0, 'desc']],
                 columns: [
                     { data: 'id' },
-                    { data: 'title' },
+                    { data: 'title', className: 'no-ellipsis' },
                     { data: 'stock' },
                     { data: 'gross_price' },
                     { data: 'partner_gross_price' },

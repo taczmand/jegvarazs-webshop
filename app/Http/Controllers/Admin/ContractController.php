@@ -114,7 +114,32 @@ class ContractController extends Controller
             'place_of_birth' => 'nullable|string|max:255',
             'date_of_birth' => 'nullable|date',
             'id_number' => 'nullable|string|max:50',
-            'products' => 'required|array',
+            'contract_data.price' => ['required', 'numeric', 'min:0'],
+            'products' => [
+                'required',
+                'array',
+                function ($attribute, $value, $fail) {
+                    if (!collect($value)->contains(fn($p) => isset($p['selected']) && $p['selected'] == 1)) {
+                        $fail('Legalább egy terméket ki kell választanod.');
+                    }
+                }
+            ],
+            'products.*.selected' => ['in:1'],
+        ], [
+            'contract_version.required' => 'A szerződés verzió megadása kötelező.',
+            'contact_name.required' => 'A kapcsolattartó nevét kötelező megadni.',
+            'contact_country.required' => 'A kapcsolattartó országát kötelező megadni.',
+            'contact_zip_code.required' => 'Az irányítószám megadása kötelező.',
+            'contact_city.required' => 'A város megadása kötelező.',
+            'contact_address_line.required' => 'A pontos cím megadása kötelező.',
+            'installation_date.required' => 'A telepítés dátumát kötelező megadni.',
+            'contact_email.email' => 'Kérlek, érvényes e-mail címet adj meg.',
+            'contract_data.price.required' => 'Az ár megadása kötelező.',
+            'contract_data.price.numeric' => 'Az árnak számnak kell lennie.',
+            'contract_data.price.min' => 'Az ár nem lehet negatív.',
+            'products.required' => 'Legalább egy termék adatát meg kell adni.',
+            'products.array' => 'A termékeknek tömb formátumban kell érkezniük.',
+            'products.*.selected.in' => 'Csak a kijelölt termékek lehetnek érvényesek.',
         ]);
 
         DB::beginTransaction();
@@ -187,20 +212,21 @@ class ContractController extends Controller
             ];
 
             // PDF generálása
-            $pdf = Pdf::loadView('pdf.contract_' . $request->get('contract_version'), $pdf_data);
+            //$pdf = Pdf::loadView('pdf.contract_' . $request->get('contract_version'), $pdf_data);
 
-            $file_name = 'contract_' . $contract->id . '.pdf';
-            Storage::put("contracts/{$file_name}", $pdf->output());
+            //$file_name = 'contract_' . $contract->id . '.pdf';
+            //Storage::put("contracts/{$file_name}", $pdf->output());
 
-            $contract->update(['pdf_path' => "contracts/{$file_name}"]);
+            //$contract->update(['pdf_path' => "contracts/{$file_name}"]);
+
 
             // Munkalap létrehozása
             $worksheet = Worksheet::create([
                 'work_name' => "Szerződéses munkalap - {$contract->name}",
                 'work_type' => "Szerelés",
                 'name' => $contract->name,
-                'email' => $contract->email || '',
-                'phone' => $contract->phone || '',
+                'email' => $contract->email,
+                'phone' => $contract->phone,
                 'country' => $contract->country,
                 'zip_code' => $contract->zip_code,
                 'city' => $contract->city,
@@ -228,9 +254,9 @@ class ContractController extends Controller
             DB::commit();
 
             // E-mail küldése a szerződésről
-            if ($contract->email) {
+            /*if ($contract->email) {
                 Mail::to($contract->email)->send(new NewContract($contract));
-            }
+            }*/
 
             return response()->json([
                 'message' => 'Sikeres generálás!',

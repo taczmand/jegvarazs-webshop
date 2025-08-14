@@ -1785,6 +1785,9 @@ pre code {
     .table-responsive-sm > .table-bordered {
         border: 0;
     }
+    .dataTable td.no-ellipsis {
+        white-space: normal !important; /* ha több sorba is törhet */
+    }
 }
 
 @media (max-width: 767.98px) {
@@ -11297,6 +11300,12 @@ body.sidebar-toggled footer.sticky-footer {
     text-overflow: ellipsis;
     max-width: 200px;
 }
+
+.dataTable td.no-ellipsis {
+    max-width: none !important;
+    text-overflow: clip !important; /* három pont helyett teljes szöveg */
+}
+
 
 .dt-search {
     display: none;
