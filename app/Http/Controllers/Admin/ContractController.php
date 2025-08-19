@@ -212,12 +212,12 @@ class ContractController extends Controller
             ];
 
             // PDF generálása
-            //$pdf = Pdf::loadView('pdf.contract_' . $request->get('contract_version'), $pdf_data);
+            $pdf = Pdf::loadView('pdf.contract_' . $request->get('contract_version'), $pdf_data);
 
-            //$file_name = 'contract_' . $contract->id . '.pdf';
-            //Storage::put("contracts/{$file_name}", $pdf->output());
+            $file_name = 'contract_' . $contract->id . '.pdf';
+            Storage::put("contracts/{$file_name}", $pdf->output());
 
-            //$contract->update(['pdf_path' => "contracts/{$file_name}"]);
+            $contract->update(['pdf_path' => "contracts/{$file_name}"]);
 
 
             // Munkalap létrehozása
@@ -254,9 +254,9 @@ class ContractController extends Controller
             DB::commit();
 
             // E-mail küldése a szerződésről
-            /*if ($contract->email) {
+            if ($contract->email) {
                 Mail::to($contract->email)->send(new NewContract($contract));
-            }*/
+            }
 
             return response()->json([
                 'message' => 'Sikeres generálás!',
