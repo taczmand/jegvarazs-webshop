@@ -51,7 +51,7 @@ export function initCrud(options) {
 
     document.querySelectorAll('[data-bs-dismiss="modal"]').forEach(function (btn) {
         btn.addEventListener('click', function () {
-            table.ajax.reload();
+            table.ajax.reload(null, false);
         });
     });
 
@@ -131,7 +131,7 @@ export function initCrud(options) {
                 contentType: false,
                 success: (res) => {
                     showToast(res.message || 'Sikeres!', 'success');
-                    table.ajax.reload();
+                    table.ajax.reload(null, false);
                     modal.hide();
                 },
                 error: (xhr) => {
@@ -159,7 +159,7 @@ export function initCrud(options) {
             data: { _token: csrfToken },
             success: (res) =>{
                 showToast(res.message || 'Sikeres!', 'success');
-                table.ajax.reload();
+                table.ajax.reload(null, false);
                 modal.hide();
             },
             error: (xhr) => {
