@@ -39,6 +39,16 @@ class CartController extends Controller
             $item = $cart->items()->where('product_id', $request->product_id)->first();
 
             if ($item) {
+
+                // Mennyiségi egység ellenőrzése
+                $unit_qty = $item->product->unit_qty ?? 1;
+                if ($request->quantity % $unit_qty !== 0) {
+                    return response()->json([
+                        'result' => 'error',
+                        'message' => "A mennyiségnek {$unit_qty} egységenként kell lennie."
+                    ], 200);
+                }
+
                 $item->quantity += $request->quantity;
                 $item->save();
             } else {
@@ -136,6 +146,15 @@ class CartController extends Controller
                     'result' => 'error',
                     'message' => 'Kosár elem nem található.'
                 ], 404);
+            }
+
+            // Mennyiségi egység ellenőrzése
+            $unit_qty = $item->product->unit_qty ?? 1;
+            if ($request->quantity % $unit_qty !== 0) {
+                return response()->json([
+                    'result' => 'error',
+                    'message' => "A mennyiségnek {$unit_qty} egységenként kell lennie."
+                ], 422);
             }
 
             $item->quantity = $request->quantity;

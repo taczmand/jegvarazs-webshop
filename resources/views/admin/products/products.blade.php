@@ -110,16 +110,22 @@
                                             <select class="form-select" id="brands-select" name="brand_id">
                                             </select>
                                         </div>
-                                        <div class="mb-3">
-                                            <label class="form-label">Szerződés és ajánlat generálásnál megjelenik?</label>
-                                            <input type="checkbox" name="is_offerable" id="is_offerable" class="" value="1">
+                                        <div class="mb-3 form-check">
+                                            <input type="checkbox" name="is_offerable" id="is_offerable" class="form-check-input" value="1">
+                                            <label for="is_offerable" class="form-check-label">Szerződés és ajánlat generálásnál megjelenik?</label>
                                         </div>
                                     </div>
 
                                     <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label class="form-label">Készlet*</label>
-                                            <input type="number" class="form-control" name="stock" id="stock" name="stock" required>
+                                        <div class="row mb-3">
+                                            <div class="col-md-6">
+                                                <label class="form-label">Készlet*</label>
+                                                <input type="number" class="form-control" name="stock" id="stock" required>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label">Kiszerelési mennyiség*</label>
+                                                <input type="number" class="form-control" name="unit_qty" id="unit_qty" value="1" required>
+                                            </div>
                                         </div>
                                         <div class="mb-3">
                                             <label class="form-label">Partner bruttó ár (Ft)</label>
@@ -137,9 +143,9 @@
                                                 <option value="active">Aktív</option>
                                             </select>
                                         </div>
-                                        <div class="mb-3">
-                                            <label class="form-label">Munkalapnál megjelenik?</label>
-                                            <input type="checkbox" name="is_selectable_by_installer" id="is_selectable_by_installer" class="" value="1">
+                                        <div class="mb-3 form-check">
+                                            <input type="checkbox" name="is_selectable_by_installer" id="is_selectable_by_installer" class="form-check-input" value="1">
+                                            <label for="is_selectable_by_installer" class="form-check-label">Munkalapnál megjelenik?</label>
                                         </div>
                                     </div>
 
@@ -316,6 +322,7 @@
                     $('#gross_price').val(product.gross_price);
                     $('#partner_gross_price').val(product.partner_gross_price);
                     $('#stock').val(product.stock);
+                    $('#unit_qty').val(product.unit_qty);
                     $('#status').val(product.status);
                     $('#is_offerable').prop('checked', product.is_offerable);
                     $('#is_selectable_by_installer').prop('checked', product.is_selectable_by_installer);

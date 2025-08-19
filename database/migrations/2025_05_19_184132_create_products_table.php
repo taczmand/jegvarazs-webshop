@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('slug')->unique();
             $table->longText('description')->nullable();
             $table->integer('stock')->default(1);
+            $table->integer('unit_qty')->default(1);
             $table->enum('status',['active','inactive'])->default('inactive');
             $table->float('gross_price');
             $table->unsignedBigInteger('tax_id');

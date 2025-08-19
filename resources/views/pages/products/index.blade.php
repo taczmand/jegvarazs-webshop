@@ -190,41 +190,44 @@
                                     $mailto = "mailto:{$email}?subject={$subject}&body={$body}";
                                 @endphp
                                 <div class="col-6 col-sm-6 col-md-6 col-lg-4">
-                                    <div class="product__item">
-                                        <a href="{{ route('products.resolve', ['slugs' => $fullSlug]) }}">
-                                            <div class="product__item__pic set-bg" data-setbg="{{ asset('storage/' . $mainPhoto?->path ?? 'static_media/no-image.jpg') }}">
-                                                @auth('customer')
-                                                    <ul class="product__item__pic__hover">
-                                                        <!--<li><a href="#"><i class="fa fa-heart"></i></a></li>-->
-                                                        @if($status['slug'] === 'in_stock')
-                                                            <li><a href="#" onclick="addToCart({{ $product->id }})"><i class="fa fa-shopping-cart"></i></a></li>
+
+                                        <div class="product__item" onclick="window.location.href='{{ route('products.resolve', ['slugs' => $fullSlug]) }}'">
+
+                                                <div class="product__item__pic set-bg" data-setbg="{{ asset('storage/' . $mainPhoto?->path ?? 'static_media/no-image.jpg') }}">
+                                                    @auth('customer')
+                                                        <ul class="product__item__pic__hover">
+                                                            <!--<li><a href="#"><i class="fa fa-heart"></i></a></li>-->
+                                                            @if($status['slug'] === 'in_stock')
+                                                                <li><a href="#" onclick="event.stopPropagation(); addToCart({{ $product->id }}, {{ $product->unit_qty }}); return false;"><i class="fa fa-shopping-cart"></i></a></li>
+                                                            @endif
+                                                        </ul>
+                                                    @endauth
+                                                </div>
+                                            <a href="{{ route('products.resolve', ['slugs' => $fullSlug]) }}">
+                                                <div class="product__item__text">
+
+
+                                                    <h6><a href="{{ route('products.resolve', ['slugs' => $fullSlug]) }}">{{ $product->title }}</a></h6>
+                                                    @auth('customer')
+                                                        <!--<h5>{{ number_format($product->display_gross_price, 0, ',', ' ') }} Ft</h5>-->
+                                                        {!! $product->display_all_prices !!}
+                                                        @if ($status)
+                                                            @if ("backorder" === $status['slug'])
+                                                                <a class="badge bg-{{ $status['color'] }} interesting-badge" href="#" product-id="{{ $product->id }}" product-title="{{ $product->title }}" >
+                                                                    {{ $status['name'] }} <i class="fa fa-envelope"></i>
+                                                                </a>
+                                                            @else
+                                                                <span class="badge bg-{{ $status['color'] }}">
+                                                                    {{ $status['name'] }}
+                                                                </span>
+                                                            @endif
+
                                                         @endif
-                                                    </ul>
-                                                @endauth
-                                            </div>
-                                        </a>
-                                        <div class="product__item__text">
-
-
-                                            <h6><a href="{{ route('products.resolve', ['slugs' => $fullSlug]) }}">{{ $product->title }}</a></h6>
-                                            @auth('customer')
-                                                <!--<h5>{{ number_format($product->display_gross_price, 0, ',', ' ') }} Ft</h5>-->
-                                                {!! $product->display_all_prices !!}
-                                                @if ($status)
-                                                    @if ("backorder" === $status['slug'])
-                                                        <a class="badge bg-{{ $status['color'] }} interesting-badge" href="#" product-id="{{ $product->id }}" product-title="{{ $product->title }}" >
-                                                            {{ $status['name'] }} <i class="fa fa-envelope"></i>
-                                                        </a>
-                                                    @else
-                                                        <span class="badge bg-{{ $status['color'] }}">
-                                                            {{ $status['name'] }}
-                                                        </span>
-                                                    @endif
-
-                                                @endif
-                                            @endauth
+                                                    @endauth
+                                                </div>
+                                            </a>
                                         </div>
-                                    </div>
+
                                 </div>
                             @empty
                                 <p>Nincs elérhető termék.</p>

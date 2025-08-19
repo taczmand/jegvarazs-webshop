@@ -108,13 +108,13 @@
                                 @if($status['slug'] === 'in_stock')
                                     <div class="product__details__quantity">
                                         <div class="quantity">
-                                            <div class="pro-qty">
-                                                <input type="text" value="1" min="1">
+                                            <div class="pro-qty" data-unit-qty="{{ $product->unit_qty }}">
+                                                <input type="text" value="{{ $product->unit_qty }}" min="{{ $product->unit_qty }}">
                                             </div>
                                         </div>
                                     </div>
 
-                                    <a onclick="addToCart({{ $product->id }})" href="#" class="primary-btn">Kosárba</a>
+                                    <a onclick="addToCart({{ $product->id }}, this.previousElementSibling.querySelector('input').value)" href="#" class="primary-btn">Kosárba</a>
                                 @endif
                             <!--<a href="#" class="heart-icon"><span class="icon_heart_alt"></span></a>-->
                         @else
@@ -219,7 +219,7 @@
                                     <!--<li><a href="#"><i class="fa fa-heart"></i></a></li>
                                     <li><a href="#"><i class="fa fa-retweet"></i></a></li>-->
                                     @auth('customer')
-                                        <li><a href="#" onclick="addToCart({{ $related_product->id }})"><i class="fa fa-shopping-cart"></i></a></li>
+                                        <li><a href="#" onclick="addToCart({{ $related_product->id }}, {{ $related_product->unit_qty }})"><i class="fa fa-shopping-cart"></i></a></li>
                                     @endauth
                                 </ul>
                             </div>

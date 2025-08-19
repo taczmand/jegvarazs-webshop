@@ -18,11 +18,14 @@ async function addToCart(productId, quantity = 1) {
             showToast('A termék kosárba került!', 'success');
             fetchCartSummary();
         } else if (res.result === 'error') {
-            showToast(res.result, 'error');
+            showToast(res.message, 'error');
         }
     } catch (error) {
         console.error('Hiba:', error);
     }
+}
+async function goToProductPage(productId) {
+
 }
 
 async function removeItemFromCart(itemId) {

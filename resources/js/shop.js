@@ -252,21 +252,22 @@ import * as bootstrap from "bootstrap";
     });
 
     /*-------------------
-		Quantity change
+		Quantity change in cart
 	--------------------- */
-    var proQty = $('.pro-qty');
+    var proQty = $('.shoping__cart__quantity .pro-qty');
     proQty.prepend('<span class="dec qtybtn" id="dec_qty">-</span>');
     proQty.append('<span class="inc qtybtn" id="inc_qty">+</span>');
     proQty.on('click', '.qtybtn', async function () {
         var $button = $(this);
         var oldValue = $button.parent().find('input').val();
         let itemId = $button.parent().data('item-id');
+        let unitQty = $button.parent().data('unit-qty');
 
         if ($button.hasClass('inc')) {
 
             // Növelés
 
-            var newVal = parseFloat(oldValue) + 1;
+            var newVal = parseFloat(oldValue) + unitQty;
             let isChange = await changeQuantity(itemId, newVal);
             if (isChange) {
                 $button.parent().find('input').val(newVal);
@@ -276,14 +277,44 @@ import * as bootstrap from "bootstrap";
             }
         } else {
             // Csökkentés
-            if (oldValue > 1) {
-                var newVal = parseFloat(oldValue) - 1;
+            if (oldValue > unitQty) {
+                var newVal = parseFloat(oldValue) - unitQty;
                 let isChange = await changeQuantity(itemId, newVal);
                 if (isChange) {
                     location.reload();
                 }
             } else {
-                newVal = 1;
+                newVal = unitQty;
+            }
+            $button.parent().find('input').val(newVal);
+        }
+
+    });
+
+    /*-------------------
+		Quantity change in product details
+	--------------------- */
+    var proQty = $('.product__details__quantity .pro-qty');
+    proQty.prepend('<span class="dec qtybtn" id="dec_qty">-</span>');
+    proQty.append('<span class="inc qtybtn" id="inc_qty">+</span>');
+    proQty.on('click', '.qtybtn', async function () {
+        var $button = $(this);
+        var oldValue = $button.parent().find('input').val();
+        let unitQty = $button.parent().data('unit-qty');
+
+        if ($button.hasClass('inc')) {
+
+            // Növelés
+
+            var newVal = parseFloat(oldValue) + unitQty;
+            $button.parent().find('input').val(newVal);
+
+        } else {
+            // Csökkentés
+            if (oldValue > unitQty) {
+                var newVal = parseFloat(oldValue) - unitQty;
+            } else {
+                newVal = unitQty;
             }
             $button.parent().find('input').val(newVal);
         }
@@ -485,11 +516,10 @@ import * as bootstrap from "bootstrap";
                 showToast(res.message, 'success');
                 emailInput.value = '';
             } else {
-                showToast(res.error_message || 'Ismeretlen hiba történt.', 'error');
+                showToast(res.message || 'Ismeretlen hiba történt.', 'error');
             }
 
         } catch (error) {
-            console.error('Hiba:', error);
             showToast('Hálózati hiba történt.', 'error');
         }
     });
@@ -504,7 +534,6 @@ import * as bootstrap from "bootstrap";
             const contact_email = document.getElementById('contact_email');
             const contact_message = document.getElementById('contact_message');
 
-            console.log(contact_name);
             if (!contact_name || !contact_name.value.trim()) {
                 showToast('Kérjük, adja meg a teljes nevét!', 'error');
                 return;

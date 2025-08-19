@@ -61,8 +61,8 @@
                                                 </td>
                                                 <td class="shoping__cart__quantity">
                                                     <div class="quantity">
-                                                        <div class="pro-qty" data-item-id="{{ $item->id }}">
-                                                            <input type="text" value="{{ $item->quantity }}" min="1" class="quanity_input" item-id="{{ $item->id }}">
+                                                        <div class="pro-qty" data-item-id="{{ $item->id }}" data-unit-qty="{{ $item->product->unit_qty }}">
+                                                            <input type="text" value="{{ $item->quantity }}" min="{{ $item->product->unit_qty }}" class="quanity_input" item-id="{{ $item->id }}">
                                                         </div>
                                                     </div>
                                                 </td>
