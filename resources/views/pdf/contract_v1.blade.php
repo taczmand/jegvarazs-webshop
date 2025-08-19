@@ -220,7 +220,7 @@
 
             $due_date = '…………év …………….hónap …………..nap';
 
-            $amount = $contract['data']['deposit_amount'] ?? null;
+            $deposit_amount = $contract['data']['deposit_amount'] ?? null;
 
             if ($contract['data']['deposit_due_date']) {
                 $carbon = \Carbon\Carbon::parse($contract['data']['deposit_due_date']);
@@ -228,16 +228,16 @@
             }
 
             if ($contract['data']['deposit_payment_method'] === "Készpénz") {
-                if (!empty($amount)) {
-                    $cash_amount_text = $convertHelper->convert($amount);
-                    $cash_amount = number_format($amount, 0, ',', ' ');
+                if (!empty($deposit_amount)) {
+                    $cash_amount_text = $convertHelper->convert($deposit_amount);
+                    $cash_amount = number_format($deposit_amount, 0, ',', ' ');
                 }
             }
 
             if ($contract['data']['deposit_payment_method'] === "Átutalás") {
-                if (!empty($amount)) {
-                    $transfer_amount_text = $convertHelper->convert($amount);
-                    $transfer_amount = number_format($amount, 0, ',', ' ');
+                if (!empty($deposit_amount)) {
+                    $transfer_amount_text = $convertHelper->convert($deposit_amount);
+                    $transfer_amount = number_format($deposit_amount, 0, ',', ' ');
                 }
             }
         @endphp
@@ -261,25 +261,23 @@
 
             $due_date = '…………év …………….hónap …………napjáig';
 
-            $amount = $contract['data']['refund_amount'] ?? null;
-
-            if (is_numeric($amount) && is_numeric($total_gross) && $amount < $total_gross) {
-                $amount = $total_gross - $amount;
+            if (is_numeric($total_gross) && $deposit_amount < $total_gross) {
+                $amount = $total_gross - $deposit_amount;
             }
 
-            if ($contract['data']['refund_due_date']) {
-                $carbon = \Carbon\Carbon::parse($contract['data']['refund_due_date']);
+            if ($contract['data']['transfer_payment_due_date']) {
+                $carbon = \Carbon\Carbon::parse($contract['data']['transfer_payment_due_date']);
                 $due_date = '<b style="border-bottom: 1px dotted black">'.$carbon->year . '</b> év <b style="border-bottom: 1px dotted black">' . $carbon->translatedFormat('F') . '</b> hónap <b style="border-bottom: 1px dotted black">' . $carbon->day . '</b> napjáig';
             }
 
-            if ($contract['data']['refund_payment_method'] === "Készpénz") {
+            if ($contract['data']['purchase_price_payment_method'] === "Készpénz") {
                 if (!empty($amount)) {
                     $cash_amount_text = $convertHelper->convert($amount);
                     $cash_amount = number_format($amount, 0, ',', ' ');
                 }
             }
 
-            if ($contract['data']['refund_payment_method'] === "Átutalás") {
+            if ($contract['data']['purchase_price_payment_method'] === "Átutalás") {
                 if (!empty($amount)) {
                     $transfer_amount_text = $convertHelper->convert($amount);
                     $transfer_amount = number_format($amount, 0, ',', ' ');

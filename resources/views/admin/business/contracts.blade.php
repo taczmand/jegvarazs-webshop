@@ -533,7 +533,7 @@
 
                 fields.forEach(field => {
                     let input = '';
-                    let wrapperClass = 'col-md-6'; // Két oszlopos elrendezés
+                    let wrapperClass = 'col-md-3'; // Négy oszlopos elrendezés
 
                     const inputName = `contract_data[${field.key}]`;
 
