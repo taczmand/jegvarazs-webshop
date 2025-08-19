@@ -175,34 +175,36 @@
                                 @php
                                     $status = $stockHelper::resolve($product->stock);
                                     $mainPhoto = $product->photos->firstWhere('is_main', true);
+
+                                    $fullSlug = $product->category->getFullSlug() . '/' . $product->slug;
+                                    $email = $basicdata['support_email'];
+
+                                    $subject = rawurlencode('Érdeklődés: ' . $product->title);
+
+                                    $bodyText = "Tisztelt Ügyfélszolgálat,\n\nSzeretnék érdeklődni a következő termékről:\n" .
+                                                "Név: {$product->title}\n" .
+                                                "Azonosító: {$product->id}";
+
+                                    $body = rawurlencode($bodyText);
+
+                                    $mailto = "mailto:{$email}?subject={$subject}&body={$body}";
                                 @endphp
                                 <div class="col-6 col-sm-6 col-md-6 col-lg-4">
                                     <div class="product__item">
-                                        <div class="product__item__pic set-bg" data-setbg="{{ asset('storage/' . $mainPhoto?->path ?? 'static_media/no-image.jpg') }}">
-                                            @auth('customer')
-                                                <ul class="product__item__pic__hover">
-                                                    <!--<li><a href="#"><i class="fa fa-heart"></i></a></li>-->
-                                                    @if($status['slug'] === 'in_stock')
-                                                        <li><a href="#" onclick="addToCart({{ $product->id }})"><i class="fa fa-shopping-cart"></i></a></li>
-                                                    @endif
-                                                </ul>
-                                            @endauth
-                                        </div>
+                                        <a href="{{ route('products.resolve', ['slugs' => $fullSlug]) }}">
+                                            <div class="product__item__pic set-bg" data-setbg="{{ asset('storage/' . $mainPhoto?->path ?? 'static_media/no-image.jpg') }}">
+                                                @auth('customer')
+                                                    <ul class="product__item__pic__hover">
+                                                        <!--<li><a href="#"><i class="fa fa-heart"></i></a></li>-->
+                                                        @if($status['slug'] === 'in_stock')
+                                                            <li><a href="#" onclick="addToCart({{ $product->id }})"><i class="fa fa-shopping-cart"></i></a></li>
+                                                        @endif
+                                                    </ul>
+                                                @endauth
+                                            </div>
+                                        </a>
                                         <div class="product__item__text">
-                                            @php
-                                                $fullSlug = $product->category->getFullSlug() . '/' . $product->slug;
-                                                $email = $basicdata['support_email'];
 
-                                                $subject = rawurlencode('Érdeklődés: ' . $product->title);
-
-                                                $bodyText = "Tisztelt Ügyfélszolgálat,\n\nSzeretnék érdeklődni a következő termékről:\n" .
-                                                            "Név: {$product->title}\n" .
-                                                            "Azonosító: {$product->id}";
-
-                                                $body = rawurlencode($bodyText);
-
-                                                $mailto = "mailto:{$email}?subject={$subject}&body={$body}";
-                                            @endphp
 
                                             <h6><a href="{{ route('products.resolve', ['slugs' => $fullSlug]) }}">{{ $product->title }}</a></h6>
                                             @auth('customer')
