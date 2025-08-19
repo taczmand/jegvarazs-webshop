@@ -16,7 +16,7 @@ class BankTransferHandler implements PaymentHandlerInterface
         ));
 
         // Banki átutalásnál nem kell redirect, csak vissza a siker oldalra, vagy rendelés visszaigazolás
-        return redirect()->route('order.success', ['order' => $order->id])
+        return redirect()->route('order.success', ['order' => $order])
             ->with('message', 'Kérjük, utalja el a vételárat a megadott bankszámlaszámra.');
     }
 }

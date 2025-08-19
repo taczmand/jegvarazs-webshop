@@ -33,6 +33,7 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PagesController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ShopCustomerController;
+use App\Http\Controllers\SimplePayController;
 use App\Http\Middleware\Incognito;
 use App\Models\Order;
 use Illuminate\Support\Facades\Route;
@@ -379,6 +380,17 @@ Route::middleware([Incognito::class])->group(function () {
         Route::post('/kosar/torles', [CartController::class, 'removeItemFromCart'])->name('cart.item.delete');
         Route::post('/kosar/mennyiseg-valtoztatas', [CartController::class, 'changeItemQty'])->name('cart.item.change_qty');
 
+        // Rendelések
+        Route::get('/rendelesek', [ShopCustomerController::class, 'orders'])->name('customer.orders');
+        Route::get('/rendelesek/{id}', [ShopCustomerController::class, 'orderShow'])->name('customer.order.show');
+
+        // Fizetés újrapróbálása
+        Route::get('/rendelesek/fizetes-ujraproba/{id}', [ShopCustomerController::class, 'retryPayment'])->name('customer.order.retry_payment');
+        Route::post('/rendelesek/fizetes-ujraproba', [ShopCustomerController::class, 'processRetryPayment'])->name('customer.order.process_retry_payment');
+
+        // Rendelés törlése
+        Route::delete('/rendelesek/{id}', [ShopCustomerController::class, 'orderDestroy'])->name('customer.order.destroy');
+
         // E-mail küldés
         Route::post('/email/send', [ShopCustomerController::class, 'sendEmail'])->name('email.send');
 
@@ -392,12 +404,14 @@ Route::middleware([Incognito::class])->group(function () {
             return view('pages.order_success', compact('order'));
         })->name('order.success');
 
-        // Fizetési módok
-        Route::get('/simplepay/redirect/{order}', function (Order $order) {
-            // Itt jönne a SimplePay redirect logika
-            return "Redirecting to SimplePay for order #" . $order->id;
-        })->name('simplepay.redirect');
     });
+
+    // SimplePay hívja, amikor a fizetés megtörtént (rendelés mentése)
+    Route::post('/payment/simplepay/callback', [SimplePayController::class, 'callback'])
+        ->name('simplepay.callback');
+
+    // SimplePay visszatérési oldal (ez már a felhasználó böngészőjében történik)
+    Route::get('/payment/simplepay/return', [SimplePayController::class, 'return'])->name('simplepay.return');
 
     Route::get('/termekek', [ProductController::class, 'index'])->name('products.index');
     Route::get('/termekek/{slugs}', [ProductController::class, 'resolve'])

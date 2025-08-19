@@ -19,6 +19,16 @@
         $customer = auth('customer')->user();
     @endphp
 
+    @if ($errors->any())
+        <div class="alert alert-danger">
+            <ul>
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
     <!-- Checkout Section Begin -->
     <section class="checkout spad">
         <div class="container">
@@ -33,7 +43,7 @@
                                 <div class="col-lg-6">
                                     <div class="checkout__input">
                                         <p>Vezetéknév<span>*</span></p>
-                                        <input type="text" name="customer_last_name" value="{{ $customer->last_name }}" required>
+                                        <input type="text" name="customer_last_name" maxlength="255" value="{{ $customer->last_name }}" required>
                                         @error('customer_last_name')
                                             <div class="text-red-600 text-sm">{{ $message }}</div>
                                         @enderror
@@ -42,7 +52,7 @@
                                 <div class="col-lg-6">
                                     <div class="checkout__input">
                                         <p>Keresztnév<span>*</span></p>
-                                        <input type="text" name="customer_first_name" value="{{ $customer->first_name }}" required>
+                                        <input type="text" name="customer_first_name" maxlength="255" value="{{ $customer->first_name }}" required>
                                         @error('customer_first_name')
                                             <div class="text-red-600 text-sm">{{ $message }}</div>
                                         @enderror
@@ -53,7 +63,7 @@
                                 <div class="col-lg-6">
                                     <div class="checkout__input">
                                         <p>Email cím<span>*</span></p>
-                                        <input type="text" name="customer_email" value="{{ $customer->email }}" required>
+                                        <input type="text" name="customer_email" maxlength="255" value="{{ $customer->email }}" required>
                                         @error('customer_email')
                                             <div class="text-red-600 text-sm">{{ $message }}</div>
                                         @enderror
@@ -62,7 +72,7 @@
                                 <div class="col-lg-6">
                                     <div class="checkout__input">
                                         <p>Telefonszám<span>*</span></p>
-                                        <input type="text" name="customer_phone" value="{{ $customer->phone }}" required>
+                                        <input type="text" name="customer_phone" maxlength="20" value="{{ $customer->phone }}" required>
                                         @error('customer_phone')
                                             <div class="text-red-600 text-sm">{{ $message }}</div>
                                         @enderror
@@ -78,27 +88,28 @@
                             </h4>
 
                             <div class="collapse" id="billingData">
+                                @if(!$billing_addresses->isEmpty())
+                                    <div class="row">
+                                        <div class="col-lg-12">
 
-                                <div class="row">
-                                    <div class="col-lg-12">
+                                            <div class="checkout__input__checkbox">
+                                                <label for="use_existing_billing">
+                                                    Az alábbi címet szeretném használni számlázási címként
+                                                    <input type="radio" id="use_existing_billing" name="billing_choice" value="exist" checked>
+                                                    <span class="checkmark"></span>
+                                                </label>
+                                            </div>
 
-                                        <div class="checkout__input__checkbox">
-                                            <label for="use_existing_billing">
-                                                Az alábbi címet szeretném használni számlázási címként
-                                                <input type="radio" id="use_existing_billing" name="billing_choice" value="exist" checked>
-                                                <span class="checkmark"></span>
-                                            </label>
+                                            <select class="form-control w-100" name="selected_billing_address">
+                                                @foreach ($billing_addresses as $billing_address)
+                                                    <option value="{{ $billing_address->id }}">
+                                                        {{ $billing_address->name }} ({{ $billing_address->country }} - {{ $billing_address->postal_code }} {{ $billing_address->city }}, {{ $billing_address->address_line }})
+                                                    </option>
+                                                @endforeach
+                                            </select>
                                         </div>
-
-                                        <select class="form-control w-100" name="selected_billing_address">
-                                            @foreach ($billing_addresses as $billing_address)
-                                                <option value="{{ $billing_address->id }}">
-                                                    {{ $billing_address->name }} ({{ $billing_address->country }} - {{ $billing_address->postal_code }} {{ $billing_address->city }}, {{ $billing_address->address_line }})
-                                                </option>
-                                            @endforeach
-                                        </select>
                                     </div>
-                                </div>
+                                @endif
 
                                 <div class="row mt-2">
                                     <div class="col-lg-12">
@@ -174,26 +185,27 @@
 
 
                             <div class="collapse" id="shippingData">
+                                @if(!$shipping_addresses->isEmpty())
+                                    <div class="row">
+                                        <div class="col-lg-12">
+                                            <div class="checkout__input__checkbox">
+                                                <label for="use_existing_shipping">
+                                                    Az alábbi címet szeretném használni szállítási címként
+                                                    <input type="radio" id="use_existing_shipping" name="shipping_choice" value="exist" checked>
+                                                    <span class="checkmark"></span>
+                                                </label>
+                                            </div>
 
-                                <div class="row">
-                                    <div class="col-lg-12">
-                                        <div class="checkout__input__checkbox">
-                                            <label for="use_existing_shipping">
-                                                Az alábbi címet szeretném használni szállítási címként
-                                                <input type="radio" id="use_existing_shipping" name="shipping_choice" value="exist" checked>
-                                                <span class="checkmark"></span>
-                                            </label>
+                                            <select class="form-control w-100" name="selected_shipping_address">
+                                                @foreach ($shipping_addresses as $shipping_address)
+                                                    <option value="{{ $shipping_address->id }}">
+                                                        {{ $shipping_address->name }} ({{ $shipping_address->country }} - {{ $shipping_address->postal_code }} {{ $shipping_address->city }}, {{ $shipping_address->address_line }})
+                                                    </option>
+                                                @endforeach
+                                            </select>
                                         </div>
-
-                                        <select class="form-control w-100" name="selected_shipping_address">
-                                            @foreach ($shipping_addresses as $shipping_address)
-                                                <option value="{{ $shipping_address->id }}">
-                                                    {{ $shipping_address->name }} ({{ $shipping_address->country }} - {{ $shipping_address->postal_code }} {{ $shipping_address->city }}, {{ $shipping_address->address_line }})
-                                                </option>
-                                            @endforeach
-                                        </select>
                                     </div>
-                                </div>
+                                @endif
 
                                 <div class="row mt-2">
                                     <div class="col-lg-12">
@@ -205,7 +217,7 @@
                                             </label>
                                         </div>
 
-                                        <select class="form-control w-100" name="selected_shipping_address">
+                                        <select class="form-control w-100" name="selected_local_shipping_address">
                                             @foreach ($company_sites as $site)
                                                 <option value="{{ $site->id }}">
                                                     {{ $site->name }} ({{ $site->country }} - {{ $site->zip_code }} {{ $site->city }}, {{ $site->address_line }})
@@ -384,9 +396,13 @@
                 }
             }
 
-            existingBillingRadio.addEventListener('change', toggleBillingFields);
+            if (existingBillingRadio) {
+                existingBillingRadio.addEventListener('change', toggleBillingFields);
+            }
             localShippingRadio.addEventListener('change', toggleShippingFields);
-            existingShippingRadio.addEventListener('change', toggleShippingFields);
+            if (existingShippingRadio) {
+                existingShippingRadio.addEventListener('change', toggleShippingFields);
+            }
             newBillingRadio.addEventListener('change', toggleBillingFields);
             newShippingRadio.addEventListener('change', toggleShippingFields);
         });

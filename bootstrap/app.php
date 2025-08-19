@@ -18,6 +18,11 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin.auth' => AdminAuth::class,
             'customer.auth' => CustomerAuth::class,
         ]);
+        // CSRF kivétel az adott route-okhoz
+        $middleware->validateCsrfTokens(except: [
+            '/payment/simplepay/callback', // SimplePay callback
+        ]);
+
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

@@ -6,7 +6,9 @@ use App\Mail\InterestingInstallMail;
 use App\Mail\InterestingProductMail;
 use App\Models\BasicData;
 use App\Models\Customer;
+use App\Models\Order;
 use App\Models\Product;
+use App\Services\Order\PaymentHandlers\PaymentHandlerFactory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -208,5 +210,107 @@ class ShopCustomerController extends Controller
         return $status === Password::PASSWORD_RESET
             ? redirect()->route('index')->with('status', __($status))
             : back()->withErrors(['email' => [__($status)]]);
+    }
+
+    public function orders()
+    {
+        $customer = auth('customer')->user();
+        if (!$customer) {
+            return redirect()->route('login')->withErrors(['login' => 'Kérjük, jelentkezz be a rendeléseid megtekintéséhez.']);
+        }
+
+        $orders = $customer->orders()->with('items')->orderBy('created_at', 'desc')->get();
+
+        return view('pages.orders.index', compact('orders'));
+    }
+
+    public function orderShow()
+    {
+        $customer = auth('customer')->user();
+        if (!$customer) {
+            return redirect()->route('login')->withErrors(['login' => 'Kérjük, jelentkezz be a rendeléseid megtekintéséhez.']);
+        }
+
+        $orderId = request()->route('id');
+        $order = $customer->orders()->with('items')->find($orderId);
+
+        if (!$order) {
+            return redirect()->route('customer.orders')->withErrors(['order' => 'A kiválasztott rendelés nem található.']);
+        }
+
+        return view('pages.orders.show', compact('order'));
+    }
+
+    public function orderDestroy()
+    {
+        $customer = auth('customer')->user();
+        if (!$customer) {
+            return redirect()->route('login')->withErrors(['login' => 'Kérjük, jelentkezz be a rendeléseid megtekintéséhez.']);
+        }
+
+        $orderId = request()->route('id');
+        $order = $customer->orders()->find($orderId);
+
+        if (!$order) {
+            return redirect()->route('customer.orders')->withErrors(['order' => 'A kiválasztott rendelés nem található.']);
+        }
+
+        // Rendelés törlése
+        $order->delete();
+
+        return redirect()->route('customer.orders')->with('success', 'Rendelés sikeresen törölve.');
+    }
+
+    public function retryPayment()
+    {
+        $customer = auth('customer')->user();
+        if (!$customer) {
+            return redirect()->route('login')->withErrors(['login' => 'Kérjük, jelentkezz be a rendelésed újrafizetéséhez.']);
+        }
+        $orderId = request()->route('id');
+
+        $order = Order::with('items')->find($orderId);
+
+        return view('pages.orders.retry', compact('order'));
+    }
+
+    public function processRetryPayment(Request $request)
+    {
+        $customer = auth('customer')->user();
+        if (!$customer) {
+            return redirect()->route('login')->withErrors(['login' => 'Kérjük, jelentkezz be a rendelésed újrafizetéséhez.']);
+        }
+
+        $orderId = $request->input('order_id');
+        $order = Order::find($orderId);
+        $cartItems = $order->items->map(function ($item) {
+            return [
+                'product_id' => $item->product_id,
+                'name' => $item->product->title,
+                'gross_price' => $item->product->display_gross_price,
+                'quantity' => $item->quantity,
+                'tax_value' => $item->product->taxCategory->tax_value,
+            ];
+        });
+
+        if (!$order || $order->customer_id !== $customer->id) {
+            return redirect()->route('customer.orders')->withErrors(['order' => 'A kiválasztott rendelés nem található vagy nem a tiéd.']);
+        }
+
+        try {
+            // Fizetési handler kiválasztása és feldolgozása
+            $handler = PaymentHandlerFactory::make($request['payment_method']);
+
+            if ($handler && method_exists($handler, 'handleRedirect')) {
+                return $handler->handleRedirect($order, $cartItems);
+            }
+        } catch (\Exception $e) {
+            \Log::error('Hiba történt a fizetés újrapróbálásakor: ' . $e->getMessage(), [
+                'exception' => $e,
+                'request' => $request->all(),
+            ]);
+            return redirect()->route('customer.orders')->withErrors(['payment' => 'Hibás fizetési mód vagy a fizetési folyamat sikertelen.']);
+        }
+
     }
 }

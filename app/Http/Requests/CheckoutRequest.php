@@ -27,8 +27,7 @@ class CheckoutRequest extends FormRequest
             'customer_phone' => 'required|string|max:20',
             'customer_email' => 'required|email|max:255',
             'payment_method' => 'required|string|max:255',
-            'comment' => 'string|max:1000|nullable',
-
+            'comment' => 'string|max:1000|nullable'
         ];
     }
 }

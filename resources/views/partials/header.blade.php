@@ -59,6 +59,11 @@
                                 </a>
                                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
                                     <li>
+                                        <a class="dropdown-item" href="{{ route('customer.orders') }}">
+                                            <i class="fa fa-solid fa-list me-2"></i> Rendelések
+                                        </a>
+                                    </li>
+                                    <li>
                                         <a class="dropdown-item" href="{{ route('logout') }}"
                                            onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
                                             <i class="fa fa-sign-out-alt me-2"></i> Kijelentkezés

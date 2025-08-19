@@ -9,6 +9,7 @@ use App\Models\OrderedProduct;
 use App\Models\OrderHistory;
 use App\Models\OrderItem;
 use App\Services\Order\PaymentHandlers\PaymentHandlerFactory;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class OrderController extends Controller
@@ -18,14 +19,12 @@ class OrderController extends Controller
         $customer = auth('customer')->user();
         $cart = $customer->cart;
 
+
         if (!$cart || $cart->items->isEmpty()) {
             return redirect()->back()
                 ->withErrors(['Hiba történt a rendelés mentésekor.'])
                 ->withInput();
         }
-
-        // Validált adatok kinyerése a requestből
-        $validated = $request->validated();
 
         // Kosár termékek előkészítése
         $cartItems = $cart->items->map(function ($item) {
@@ -47,20 +46,23 @@ class OrderController extends Controller
                 $billingAddress = [
                     'name' => $billing->name,
                     'country' => $billing->country,
-                    'postal_code' => $billing->postal_code,
+                    'zip_code' => $billing->zip_code,
                     'city' => $billing->city,
                     'address_line' => $billing->address_line,
                     'tax_number' => $billing->tax_number,
                 ];
             } else {
                 $billingAddress = [
-                    'name' => $validated['billing_name'],
-                    'country' => $validated['billing_country'],
-                    'postal_code' => $validated['billing_postal_code'],
-                    'city' => $validated['billing_city'],
-                    'address_line' => $validated['billing_address_line'],
-                    'tax_number' => $validated['billing_tax_number'] ?? null,
+                    'name' => $request['billing_name'],
+                    'country' => $request['billing_country'],
+                    'zip_code' => $request['billing_postal_code'],
+                    'city' => $request['billing_city'],
+                    'address_line' => $request['billing_address'],
+                    'tax_number' => $request['billing_tax_number'] ?? null,
                 ];
+
+                // Új számlázási cím mentése
+                $customer->billingAddresses()->create($billingAddress);
             }
 
             // Szállítási cím kiválasztása
@@ -75,7 +77,7 @@ class OrderController extends Controller
                     'address_line' => $shipping->address_line
                 ];
             } elseif($request->input('shipping_choice') === 'local') {
-                $selected_site_id = $request->input('selected_shipping_address');
+                $selected_site_id = $request->input('selected_local_shipping_address');
                 $site = CompanySite::findOrFail($selected_site_id);
                 $shippingAddress = [
                     'name' => $site->name,
@@ -87,24 +89,65 @@ class OrderController extends Controller
             } else {
 
                 $shippingAddress = [
-                    'name' => $validated['shipping_name'],
-                    'country' => $validated['shipping_country'],
-                    'zip_code' => $validated['shipping_zip_code'],
-                    'city' => $validated['shipping_city'],
-                    'address_line' => $validated['shipping_address_line'],
+                    'name' => $request['shipping_name'],
+                    'country' => $request['shipping_country'],
+                    'zip_code' => $request['shipping_zip'],
+                    'city' => $request['shipping_city'],
+                    'address_line' => $request['shipping_address_line'],
                 ];
+
+                // Új szállítási cím mentése
+                $customer->shippingAddresses()->create($shippingAddress);
             }
 
-            $order = DB::transaction(function () use ($validated, $cartItems, $billingAddress, $shippingAddress) {
+            $required_fields = ['name', 'country', 'zip_code', 'city', 'address_line'];
+
+            $billing_field_names = [
+                'name' => 'Számlázási adatoknál név',
+                'country' => 'Számlázási adatoknál ország',
+                'zip_code' => 'Számlázási adatoknál irányítószám',
+                'city' => 'Számlázási adatoknál város',
+                'address_line' => 'Számlázási adatoknál cím',
+            ];
+
+            // Számlázási cím ellenőrzése
+            foreach ($required_fields as $field) {
+                if (empty($billingAddress[$field])) {
+                    return redirect()->back()
+                        ->withErrors([$field => $billing_field_names[$field] . ' mező kitöltése kötelező.'])
+                        ->withInput();
+                }
+            }
+
+            $shipping_field_names = [
+                'name' => 'Szállítási adatoknál név',
+                'country' => 'Szállítási adatoknál ország',
+                'zip_code' => 'Szállítási adatoknál irányítószám',
+                'city' => 'Szállítási adatoknál város',
+                'address_line' => 'Szállítási adatoknál cím',
+            ];
+
+            // Szállítási cím ellenőrzése
+            foreach ($required_fields as $field) {
+                if (empty($shippingAddress[$field])) {
+                    return redirect()->back()
+                        ->withErrors([$field => $shipping_field_names[$field] . ' mező kitöltése kötelező.'])
+                        ->withInput();
+                }
+            }
+
+            // Rendelés mentési folyamat adatbázisba
+
+            $order = DB::transaction(function () use ($cart, $request, $cartItems, $billingAddress, $shippingAddress) {
                 $order = Order::create([
                     'customer_id' => auth('customer')->id(),
-                    'contact_first_name' => $validated['customer_first_name'],
-                    'contact_last_name' => $validated['customer_last_name'],
-                    'contact_email' => $validated['customer_email'],
-                    'contact_phone' => $validated['customer_phone'],
+                    'contact_first_name' => $request['customer_first_name'],
+                    'contact_last_name' => $request['customer_last_name'],
+                    'contact_email' => $request['customer_email'],
+                    'contact_phone' => $request['customer_phone'],
                     'billing_name' => $billingAddress['name'],
                     'billing_country' => $billingAddress['country'],
-                    'billing_postal_code' => $billingAddress['postal_code'],
+                    'billing_postal_code' => $billingAddress['zip_code'],
                     'billing_city' => $billingAddress['city'],
                     'billing_address_line' => $billingAddress['address_line'],
                     'billing_tax_number' => $billingAddress['tax_number'] ?? null,
@@ -113,8 +156,8 @@ class OrderController extends Controller
                     'shipping_postal_code' => $shippingAddress['zip_code'],
                     'shipping_city' => $shippingAddress['city'],
                     'shipping_address_line' => $shippingAddress['address_line'],
-                    'payment_method' => $validated['payment_method'],
-                    'comment' => $validated['comment'] ?? null,
+                    'payment_method' => $request['payment_method'],
+                    'comment' => $request['comment'] ?? null,
                     'status' => 'pending',
                 ]);
 
@@ -142,11 +185,8 @@ class OrderController extends Controller
                 return $order;
             });
 
-            // Kosár kiürítése
-            $cart->items()->delete();
-
             // Fizetési handler kiválasztása és feldolgozása
-            $handler = PaymentHandlerFactory::make($validated['payment_method']);
+            $handler = PaymentHandlerFactory::make($request['payment_method']);
 
             if ($handler && method_exists($handler, 'handleRedirect')) {
                 return $handler->handleRedirect($order, $cartItems);

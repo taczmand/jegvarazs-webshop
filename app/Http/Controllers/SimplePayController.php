@@ -1,0 +1,142 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Mail\NewOrder;
+use App\Mail\UpdateOrder;
+use App\Models\Order;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Mail;
+
+class SimplePayController extends Controller
+{
+    public function callback(Request $request)
+    {
+        try {
+            $rawContent = $request->getContent();
+            $signature = $request->header('Signature');
+
+            //\Log::info('SimplePay callback raw', ['body' => $rawContent, 'signature' => $signature]);
+
+            $expectedSignature = base64_encode(
+                hash_hmac(
+                    'sha384', // a SimplePay V2 default hash algoritmusa
+                    $rawContent,
+                    env('SIMPLEPAY_SECRET_KEY'),
+                    true
+                )
+            );
+
+            if (!hash_equals($expectedSignature, $signature)) {
+                \Log::warning('SimplePay signature mismatch', [
+                    'expected' => $expectedSignature,
+                    'received' => $signature
+                ]);
+                return response('Invalid signature', 400);
+            }
+
+            $payload = json_decode($rawContent, true);
+
+            $orderRef = $payload['orderRef'] ?? null;
+            $status = $payload['status'] ?? null;
+
+            if (!$orderRef) {
+                return response()->json(['status' => 'error', 'message' => 'Missing orderRef'], 400);
+            }
+
+            $order = Order::find($orderRef);
+            if (!$order) {
+                return response()->json(['status' => 'error', 'message' => 'Order not found'], 404);
+            }
+
+            switch ($status) {
+                case 'FINISHED':
+                    $order->status = 'paid';
+                    break;
+                case 'FAILED':
+                    $order->status = 'failed';
+                    break;
+                case 'CANCELED':
+                    $order->status = 'canceled';
+                    break;
+                case 'PENDING':
+                    $order->status = 'pending';
+                    break;
+                default:
+                    $order->status = 'unknown';
+                    break;
+            }
+
+            $order->save();
+
+            // Sikeres fizetés után küldünk egy e-mailt a vásárlónak
+            $order_items = $order->items;
+            Mail::to($order->contact_email)->send(new UpdateOrder(
+                $order,
+                $order_items
+            ));
+
+            return response('OK');
+        } catch (\Exception $e) {
+            \Log::error('SimplePay callback error', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'request' => $request->all(),
+            ]);
+            return response()->json(['status' => 'error', 'message' => 'Internal server error'], 500);
+        }
+    }
+    public function return (Request $request)
+    {
+        \Log::info('SimplePay return', $request->all());
+
+        //$customer = auth('customer')->user();
+        //$cart = $customer->cart;
+
+        $encoded = $request->input('r');
+        $json = base64_decode($encoded);
+        $data = json_decode($json, true);
+
+        $order_id = $data['o'];
+        $transaction_id = $data['t'];
+        $status = $data['e'];
+
+        if (!$order_id) {
+            return redirect()->route('checkout')->with('error', 'Hibás fizetési visszatérés.');
+        }
+
+        $order = Order::find($order_id);
+
+        if (!$order) {
+            return redirect()->route('checkout')->with('error', 'Nincs megkezdett rendelése.');
+        }
+
+        $order_total = $order->items->sum(function ($item) {
+            return $item->gross_price * $item->quantity;
+        });
+
+        if ("SUCCESS" !== $status) {
+
+            $order->status = 'payment_failed';
+            $order->save();
+
+            $order_items = $order->items;
+            Mail::to($order->contact_email)->send(new UpdateOrder(
+                $order,
+                $order_items
+            ));
+            return view('simplepay.failed', compact('order', 'transaction_id', 'status'));
+
+        } else {
+            //$cart->items()->delete();
+
+            $order_items = $order->items;
+            Mail::to($order->contact_email)->send(new NewOrder(
+                $order,
+                $order_items
+            ));
+            return view('simplepay.success', compact('order', 'order_total'));
+        }
+    }
+}

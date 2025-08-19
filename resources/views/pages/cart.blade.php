@@ -7,7 +7,7 @@
 
 @section('content')
     @include('partials.breadcrumbs', ['breadcrumbs' => [
-        'page_title' => 'Rólunk',
+        'page_title' => 'Kosár',
         'nav' => [
             ['title' => 'Főoldal', 'url' => route('index')],
             ['title' => 'Kosár', 'url' => route('cart')]

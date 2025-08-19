@@ -30,8 +30,21 @@ class Order extends Model
             'pending' => 'Függőben',
             'processing' => 'Feldolgozás alatt',
             'completed' => 'Teljesítve',
-            'cancelled' => 'Törölve',
+            'canceled' => 'Törölve',
+            'paid' => 'Fizetve',
+            'payment_failed' => 'Sikertelen fizetés, próbálja újra',
             default => ucfirst($this->status),
+        };
+    }
+
+    public function getPaymentLabelAttribute()
+    {
+        return match ($this->payment_method) {
+            'simplepay' => 'Bankkártyás fizetés az SimplePay rendszerén keresztül',
+            'bank_transfer' => 'Banki átutalás',
+            'cod' => 'Utánvét',
+            'cash' => 'Készpénzes fizetés',
+            default => ucfirst($this->payment_method),
         };
     }
 }
