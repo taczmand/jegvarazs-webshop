@@ -194,13 +194,13 @@
         @php
             $total_gross = $contract['data']['price'] ?? null;
             if (is_numeric($total_gross)) {
-                $total_gross_amount = number_format($total_gross, 0, ',', ' ');
+                $teljes_vetelar_formazva = number_format($total_gross, 0, ',', ' ');
             } else {
-                $total_gross_amount = "?";
+                $teljes_vetelar_formazva = "?";
             }
             $total_gross_text = $convertHelper->convert($total_gross);
         @endphp
-        <span class="szam">2.</span> A szerződő felek által kölcsönösen kialkudott vételár <b style="display: inline-block; border-bottom: 1px dotted #000;">{!! $total_gross_amount !!} Ft</b>, azaz <b style="display: inline-block; border-bottom: 1px dotted #000;">{!! $total_gross_text !!}</b> forint, mely munkadíjjal együtt értendő.
+        <span class="szam">2.</span> A szerződő felek által kölcsönösen kialkudott vételár <b style="display: inline-block; border-bottom: 1px dotted #000;">{!! $teljes_vetelar_formazva !!} Ft</b>, azaz <b style="display: inline-block; border-bottom: 1px dotted #000;">{!! $total_gross_text !!}</b> forint, mely munkadíjjal együtt értendő.
     </div>
 
     <div class="pont">
@@ -262,6 +262,10 @@
             $due_date = '…………év …………….hónap …………napjáig';
 
             $amount = $contract['data']['refund_amount'] ?? null;
+
+            if (is_numeric($amount) && is_numeric($total_gross) && $amount < $total_gross) {
+                $amount = $total_gross - $amount;
+            }
 
             if ($contract['data']['refund_due_date']) {
                 $carbon = \Carbon\Carbon::parse($contract['data']['refund_due_date']);
@@ -416,7 +420,7 @@
 <div class="section">
     <h2>Nyilatkozat foglaló megfizetéséről</h2>
     <p>Mint kivitelező felelősségem teljes tudatában nyilatkozom, hogy az általam elvállalt munka ellenértéke :
-        <b style="display: inline-block; border-bottom: 1px dotted #000;">{!! $total_gross_amount !!}</b> Ft, melyből </p>
+        <b style="display: inline-block; border-bottom: 1px dotted #000;">{!! $teljes_vetelar_formazva !!}</b> Ft, melyből </p>
     @php
         $cash_amount = $spaces;
         $transfer_amount = $spaces;
