@@ -176,7 +176,7 @@
                                     $status = $stockHelper::resolve($product->stock);
                                     $mainPhoto = $product->photos->firstWhere('is_main', true);
                                 @endphp
-                                <div class="col-lg-4 col-md-6 col-sm-6">
+                                <div class="col-6 col-sm-6 col-md-6 col-lg-4">
                                     <div class="product__item">
                                         <div class="product__item__pic set-bg" data-setbg="{{ asset('storage/' . $mainPhoto?->path ?? 'static_media/no-image.jpg') }}">
                                             @auth('customer')
