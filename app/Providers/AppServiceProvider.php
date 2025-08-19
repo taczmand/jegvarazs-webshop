@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Models\BasicData;
 use App\Models\Category;
 use App\Models\Regulation;
+use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\Vite;
@@ -32,6 +33,8 @@ class AppServiceProvider extends ServiceProvider
                 $query->time
             );
         });*/
+
+        Paginator::useBootstrap();
 
 
         if (!request()->is('admin/*')) {

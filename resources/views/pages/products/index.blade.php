@@ -229,9 +229,9 @@
                             @endforelse
 
                         </div>
-                        <div class="product__pagination_">
+                        <!--<div class="product__pagination">-->
                             {{ $products->links() }}
-                        </div>
+                        <!--</div>-->
                     </div>
                 </div>
             </div>

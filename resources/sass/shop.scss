@@ -3705,6 +3705,52 @@ a {
     padding: 16px 24px;
 }
 
+/* A teljes paginációs blokk */
+.pagination {
+    justify-content: center;   /* középre igazítás */
+    margin-top: 1.5rem;
+}
+
+/* Linkek */
+.page-link {
+    color: #111827;           /* szöveg szín */
+    border-radius: .5rem;     /* lekerekítés */
+    padding: .5rem .9rem;
+    border: 1px solid #dee2e6;
+    transition: all .2s ease-in-out;
+}
+
+.page-link:hover {
+    background-color: #f3f4f6;
+    border-color: #d1d5db;
+    color: #111827;
+}
+
+/* Aktív oldal */
+.page-item.active .page-link {
+    background-color: $logo-blue-color-mid;
+    border-color: #111827;
+    color: #fff;
+    box-shadow: 0 0 0 4px rgba(17,24,39,.15);
+}
+
+/* Disabled */
+.page-item.disabled .page-link {
+    color: #9ca3af;
+    background-color: #f9fafb;
+    border-color: #e5e7eb;
+    pointer-events: none;
+}
+
+/* Mobilbarát (szorosabb spacing) */
+@media (max-width: 576px) {
+    .page-link {
+        padding: .4rem .65rem;
+        font-size: 0.9rem;
+    }
+}
+
+
 
 
 
