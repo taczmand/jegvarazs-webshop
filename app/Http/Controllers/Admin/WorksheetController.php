@@ -486,7 +486,27 @@ class WorksheetController extends Controller
 
                             // Csak képek optimalizálása (ne pdf/doc)
                             if (!in_array($extension, ['pdf', 'doc', 'docx'])) {
-                                ImageOptimizer::optimize($fullPath);
+                                try {
+                                    $imagick = new \Imagick($fullPath);
+
+                                    // Tömörítési beállítások
+                                    if (in_array($extension, ['jpg', 'jpeg'])) {
+                                        $imagick->setImageCompression(\Imagick::COMPRESSION_JPEG);
+                                        $imagick->setImageCompressionQuality(75);
+                                    } elseif ($extension === 'png') {
+                                        $imagick->setImageCompression(\Imagick::COMPRESSION_ZIP);
+                                        $imagick->setImageCompressionQuality(75);
+                                    }
+
+                                    // Metaadatok törlése
+                                    $imagick->stripImage();
+
+                                    // Felülírás optimalizált változattal
+                                    $imagick->writeImage($fullPath);
+                                    $imagick->destroy();
+                                } catch (\Exception $e) {
+                                    \Log::error("Kép optimalizálás sikertelen: {$fullPath} - {$e->getMessage()}");
+                                }
                             }
 
                             $photos[] = [
