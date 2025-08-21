@@ -186,7 +186,7 @@
                 ],
                 model: 'appointments',
                 fillFormFn: (row) => {
-                    document.getElementById('tax_id').value = row.id ?? '';
+                    document.getElementById('id').value = row.id ?? '';
                     document.getElementById('name').value = row.name ?? '';
                     document.getElementById('email').value = row.email ?? '';
                     document.getElementById('phone').value = row.phone ?? '';
