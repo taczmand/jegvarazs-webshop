@@ -10,6 +10,7 @@ use App\Models\Tag;
 use App\Models\TaxCategory;
 use Exception;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class ProductService
@@ -100,7 +101,34 @@ class ProductService
                 $photos = [];
 
                 foreach ($data['new_photos'] as $index => $photo) {
+
+                    $extension = strtolower($photo->getClientOriginalExtension());
+
                     $path = $photo->store('products', 'public');
+
+                    $fullPath = Storage::disk('public')->path($path);
+
+                    // Csak képeknél optimalizálunk
+                    if (in_array($extension, ['jpg', 'jpeg', 'png'])) {
+                        try {
+                            $imagick = new \Imagick($fullPath);
+
+                            if (in_array($extension, ['jpg', 'jpeg'])) {
+                                $imagick->setImageCompression(\Imagick::COMPRESSION_JPEG);
+                                $imagick->setImageCompressionQuality(75);
+                            } elseif ($extension === 'png') {
+                                $imagick->setImageCompression(\Imagick::COMPRESSION_ZIP);
+                                $imagick->setImageCompressionQuality(75);
+                            }
+
+                            $imagick->stripImage();
+                            $imagick->writeImage($fullPath);
+                            $imagick->destroy();
+                        } catch (\Exception $e) {
+                            \Log::error("Kép optimalizálás sikertelen: {$fullPath} - {$e->getMessage()}");
+                        }
+                    }
+
                     $photos[] = [
                         'path' => $path,
                         'is_main' => $index === 0 ? 1 : 0
@@ -159,7 +187,34 @@ class ProductService
                 $photos = [];
 
                 foreach ($data['new_photos'] as $photo) {
+
+                    $extension = strtolower($photo->getClientOriginalExtension());
+
                     $path = $photo->store('products', 'public');
+
+                    $fullPath = Storage::disk('public')->path($path);
+
+                    // Csak képeknél optimalizálunk
+                    if (in_array($extension, ['jpg', 'jpeg', 'png'])) {
+                        try {
+                            $imagick = new \Imagick($fullPath);
+
+                            if (in_array($extension, ['jpg', 'jpeg'])) {
+                                $imagick->setImageCompression(\Imagick::COMPRESSION_JPEG);
+                                $imagick->setImageCompressionQuality(75);
+                            } elseif ($extension === 'png') {
+                                $imagick->setImageCompression(\Imagick::COMPRESSION_ZIP);
+                                $imagick->setImageCompressionQuality(75);
+                            }
+
+                            $imagick->stripImage();
+                            $imagick->writeImage($fullPath);
+                            $imagick->destroy();
+                        } catch (\Exception $e) {
+                            \Log::error("Kép optimalizálás sikertelen: {$fullPath} - {$e->getMessage()}");
+                        }
+                    }
+
                     $photos[] = ['path' => $path];
                 }
 
