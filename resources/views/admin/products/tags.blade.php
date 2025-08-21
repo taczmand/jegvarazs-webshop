@@ -12,6 +12,7 @@
             @endif
         </div>
 
+        
         <div class="rounded-xl bg-white shadow-lg p-4">
 
             @if(auth('admin')->user()->can('view-tags'))
