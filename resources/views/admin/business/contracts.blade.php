@@ -652,7 +652,7 @@
                                     >
                                 </td>
                                 <td>${item.title}</td>
-                                <td>
+                                <td style="width: 200px">
                                     <input
                                         type="number"
                                         class="form-control"
