@@ -51,44 +51,34 @@
                                 <a href="{{ $basicdata['social_twitch'] }}" target="_blank"><i class="fab fa-twitch"></i></a>
                             @endif
                         </div>
+                        @php
 
+                        @endphp
                         <div class="header__top__right__auth dropdown">
                             @auth('customer')
-                                <a class="dropdown-toggle" href="#" role="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                                    <i class="fa fa-user"></i> {{ auth('customer')->user()->name ?? 'Fiók' }}
+                                <a class="" href="{{ route('customer.orders') }}">
+                                    <i class="fa fa-solid fa-list me-2"></i> Rendelések
                                 </a>
-                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                                    <li>
-                                        <a class="dropdown-item" href="{{ route('customer.orders') }}">
-                                            <i class="fa fa-solid fa-list me-2"></i> Rendelések
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item" href="{{ route('logout') }}"
-                                           onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-                                            <i class="fa fa-sign-out-alt me-2"></i> Kijelentkezés
-                                        </a>
-                                        <form id="logout-form" action="{{ route('logout') }}" method="GET" class="d-none">
-                                            @csrf
-                                        </form>
-                                    </li>
-                                </ul>
+
+                                <a class="ml-2" href="" title="Profil szerkesztése">
+                                    <i class="fa fa-solid fa-user me-2"></i> {{ auth('customer')->user()->first_name }}
+                                </a>
+
+                                <a class="ml-2" href="{{ route('logout') }}"
+                                   onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                                    <i class="fa fa-sign-out-alt me-2"></i>Kijelentkezés
+                                </a>
+                                <form id="logout-form" action="{{ route('logout') }}" method="GET" class="d-none">
+                                    @csrf
+                                </form>
                             @else
-                                <a class="dropdown-toggle" href="#" role="button" id="guestDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                                    <i class="fa fa-user"></i> Fiók
+                                <a class="" href="{{ route('login') }}">
+                                    <i class="fa fa-sign-in-alt me-2"></i>Bejelentkezés
                                 </a>
-                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="guestDropdown">
-                                    <li>
-                                        <a class="dropdown-item" href="{{ route('login') }}">
-                                            <i class="fa fa-sign-in-alt me-2"></i> Bejelentkezés
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item" href="{{ route('registration') }}">
-                                            <i class="fa fa-user-plus me-2"></i> Regisztráció
-                                        </a>
-                                    </li>
-                                </ul>
+
+                                <a class="ml-2" href="{{ route('registration') }}">
+                                    <i class="fa fa-user-plus me-2"></i>Regisztráció
+                                </a>
                             @endauth
                         </div>
 

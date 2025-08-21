@@ -411,7 +411,7 @@ a {
 }
 
 .header__top__right__auth a {
-    display: block;
+    display: inline-block;
     font-size: 14px;
     color: #1c1c1c;
 }
@@ -3200,7 +3200,7 @@ a {
 @media only screen and (max-width: 767px) {
     .header__top__right__auth a {
         width: 100%;
-        display: inline-block;
+        display: block;
         font-size: 16px;
     }
     .header__logo {
