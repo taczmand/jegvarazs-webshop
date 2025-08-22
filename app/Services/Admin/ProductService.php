@@ -124,7 +124,7 @@ class ProductService
                             $imagick->stripImage();
 
                             // Vízjel betöltése
-                            $watermark = new \Imagick(public_path('static_media/uj_logo_szeles_transzparens.png'));
+                            $watermark = new \Imagick(env('STATIC_MEDIA_PATH') . '/uj_logo_szeles_transzparens.png');
 
                             // Csak az alpha csatorna átlátszóságát csökkentjük
                             $watermark->evaluateImage(\Imagick::EVALUATE_MULTIPLY, 0.2, \Imagick::CHANNEL_ALPHA);
@@ -231,7 +231,7 @@ class ProductService
                             $imagick->stripImage();
 
                             // Vízjel betöltése
-                            $watermark = new \Imagick(public_path('static_media/uj_logo_szeles_transzparens.png'));
+                            $watermark = new \Imagick(env('STATIC_MEDIA_PATH') . '/uj_logo_szeles_transzparens.png');
 
                             // Csak az alpha csatorna átlátszóságát csökkentjük
                             $watermark->evaluateImage(\Imagick::EVALUATE_MULTIPLY, 0.2, \Imagick::CHANNEL_ALPHA);
