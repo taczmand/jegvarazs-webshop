@@ -384,6 +384,10 @@ Route::middleware([Incognito::class])->group(function () {
         Route::get('/rendelesek', [ShopCustomerController::class, 'orders'])->name('customer.orders');
         Route::get('/rendelesek/{id}', [ShopCustomerController::class, 'orderShow'])->name('customer.order.show');
 
+        // Vásárló profilja
+        Route::get('/profil', [ShopCustomerController::class, 'profile'])->name('customer.profile');
+        Route::post('/profil', [ShopCustomerController::class, 'profileUpdate'])->name('customer.profile.update');
+
         // Fizetés újrapróbálása
         Route::get('/rendelesek/fizetes-ujraproba/{id}', [ShopCustomerController::class, 'retryPayment'])->name('customer.order.retry_payment');
         Route::post('/rendelesek/fizetes-ujraproba', [ShopCustomerController::class, 'processRetryPayment'])->name('customer.order.process_retry_payment');

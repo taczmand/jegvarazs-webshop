@@ -131,7 +131,7 @@
         checkForNewRecords();
 
         // Ismétlés 10 másodpercenként
-        setInterval(checkForNewRecords, 10000);
+        setInterval(checkForNewRecords, 30000);
 
 
     </script>

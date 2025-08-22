@@ -313,4 +313,166 @@ class ShopCustomerController extends Controller
         }
 
     }
+
+    public function profile()
+    {
+        $customer = auth('customer')->user();
+        if (!$customer) {
+            return redirect()->route('login')->withErrors(['login' => 'Kérjük, jelentkezz be a profilod megtekintéséhez.']);
+        }
+
+        $billingAddress = $customer->billingAddresses;
+        $shippingAddress = $customer->shippingAddresses;
+
+        return view('pages.profile', compact('customer', 'billingAddress', 'shippingAddress'));
+    }
+    public function profileUpdate(Request $request)
+    {
+        $customer = auth('customer')->user();
+        if (!$customer) {
+            return redirect()->route('login')->withErrors(['login' => 'Kérjük, jelentkezz be a profilod frissítéséhez.']);
+        }
+
+        // Profil frissítése
+
+        if ($request->has('profile_save')) {
+
+            $data = $request->validate([
+                'first_name' => 'required|string|max:255',
+                'last_name' => 'required|string|max:255',
+                'phone' => 'required|string|max:20',
+                'email' => 'required|string|email|max:255|unique:customers,email,' . $customer->id,
+            ]);
+
+            // Ellenőrizzük, hogy a jelszó mező üres-e
+            if ($request->filled('password')) {
+                $request->validate([
+                    'password' => 'required|string|min:8|confirmed',
+                ]);
+                // Csak akkor frissítjük a jelszót, ha a mező nem üres
+
+                $data['password'] = Hash::make($request->input('password'));
+            }
+
+            try {
+                $customer->update($data);
+                return redirect()->route('customer.profile')
+                    ->with('success', 'Profil sikeresen frissítve.');
+            } catch (\Exception $e) {
+                \Log::error('Profil mentés hiba: ' . $e->getMessage());
+
+                return redirect()->back()
+                    ->withErrors(['db' => 'A profil mentése közben hiba történt. Kérjük, próbáld újra.'])
+                    ->withInput();
+            }
+        }
+
+        // Számlázási cím frissítése
+
+        if ($request->has('billing_save_id')) {
+            $id = $request->input('billing_save_id');
+            $addresses = $request->input('billing_addresses') ?? [];
+
+            if (!isset($addresses[$id])) {
+                return redirect()->back()->withErrors(['billing' => 'Hibás sor adatok.'])->withInput();
+            }
+
+            $data = $addresses[$id];
+
+            // Validáció
+            $validated = \Validator::make($data, [
+                'billing_name' => 'required|string|max:255',
+                'billing_tax_number' => 'required|string|max:20',
+                'billing_country' => 'required|string|max:100',
+                'billing_zip' => 'required|string|max:20',
+                'billing_city' => 'required|string|max:100',
+                'billing_address' => 'required|string|max:255',
+            ])->validate();
+
+            $updateData = [
+                'name' => $validated['billing_name'],
+                'tax_number' => $validated['billing_tax_number'],
+                'country' => $validated['billing_country'],
+                'zip' => $validated['billing_zip'],
+                'city' => $validated['billing_city'],
+                'address' => $validated['billing_address'],
+            ];
+
+            $billing = $customer->billingAddresses()->find($id);
+            if ($billing) {
+                $billing->update($updateData);
+                return redirect()->back()->with('success', 'Számlázási cím sikeresen frissítve.');
+            } else {
+                return redirect()->back()->withErrors(['billing' => 'A számlázási cím nem található.']);
+            }
+        }
+
+        // Számlázási cím törlése
+
+        if ($request->has('billing_delete_id')) {
+            $id = $request->input('billing_delete_id');
+            $billing = $customer->billingAddresses()->find($id);
+            if ($billing) {
+                $billing->delete();
+                return redirect()->back()->with('success', 'Számlázási cím törölve.');
+            } else {
+                return redirect()->back()->withErrors(['billing' => 'A számlázási cím nem található.']);
+            }
+        }
+
+        // Szállítási cím frissítése
+
+        if ($request->has('shipping_save_id')) {
+            $id = $request->input('shipping_save_id');
+            $addresses = $request->input('shipping_addresses') ?? [];
+
+            if (!isset($addresses[$id])) {
+                return redirect()->back()->withErrors(['billing' => 'Hibás sor adatok.'])->withInput();
+            }
+
+            $data = $addresses[$id];
+
+            // Validáció
+            $validated = \Validator::make($data, [
+                'shipping_name' => 'required|string|max:255',
+                'shipping_email' => 'required|string|max:255|email',
+                'shipping_phone' => 'required|string|max:20',
+                'shipping_country' => 'required|string|max:100',
+                'shipping_zip' => 'required|string|max:20',
+                'shipping_city' => 'required|string|max:100',
+                'shipping_address' => 'required|string|max:255',
+            ])->validate();
+
+            $updateData = [
+                'name' => $validated['shipping_name'],
+                'email' => $validated['shipping_email'],
+                'phone' => $validated['shipping_phone'],
+                'country' => $validated['shipping_country'],
+                'zip_code' => $validated['shipping_zip'],
+                'city' => $validated['shipping_city'],
+                'address_line' => $validated['shipping_address']
+            ];
+
+            $shipping = $customer->shippingAddresses()->find($id);
+            if ($shipping) {
+                $shipping->update($updateData);
+                return redirect()->back()->with('success', 'Szállítási cím sikeresen frissítve.');
+            } else {
+                return redirect()->back()->withErrors(['shipping' => 'A szállítási cím nem található.']);
+            }
+        }
+
+        // Szállítási cím törlése
+
+        if ($request->has('shipping_delete_id')) {
+            $id = $request->input('shipping_delete_id');
+            $shipping = $customer->shippingAddresses()->find($id);
+            if ($shipping) {
+                $shipping->delete();
+                return redirect()->back()->with('success', 'Szállítási cím törölve.');
+            } else {
+                return redirect()->back()->withErrors(['shipping' => 'A szállítási cím nem található.']);
+            }
+        }
+    }
 }

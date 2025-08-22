@@ -60,7 +60,7 @@
                                     <i class="fa fa-solid fa-list me-2"></i> Rendelések
                                 </a>
 
-                                <a class="ml-2" href="" title="Profil szerkesztése">
+                                <a class="ml-2" href="{{ route('customer.profile') }}" title="Profil szerkesztése">
                                     <i class="fa fa-solid fa-user me-2"></i> {{ auth('customer')->user()->first_name }}
                                 </a>
 
