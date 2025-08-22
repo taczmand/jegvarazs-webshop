@@ -122,6 +122,27 @@ class ProductService
                             }
 
                             $imagick->stripImage();
+
+                            // Vízjel betöltése
+                            $watermark = new \Imagick(public_path('static_media/uj_logo_szeles_transzparens.png'));
+
+                            // Csak az alpha csatorna átlátszóságát csökkentjük
+                            $watermark->evaluateImage(\Imagick::EVALUATE_MULTIPLY, 0.2, \Imagick::CHANNEL_ALPHA);
+
+                            // Méretezés a fő képhez
+                            $watermark->thumbnailImage($imagick->getImageWidth() / 1.5, 0);
+
+                            // Középre helyezés
+                            $x = ($imagick->getImageWidth() - $watermark->getImageWidth()) / 2;
+                            $y = ($imagick->getImageHeight() - $watermark->getImageHeight()) / 2;
+
+                            // Biztos alpha csatorna a fő képen
+                            $imagick->setImageAlphaChannel(\Imagick::ALPHACHANNEL_SET);
+
+                            // Kompozitálás
+                            $imagick->compositeImage($watermark, \Imagick::COMPOSITE_OVER, $x, $y);
+
+                            // Mentés
                             $imagick->writeImage($fullPath);
                             $imagick->destroy();
                         } catch (\Exception $e) {
@@ -208,6 +229,26 @@ class ProductService
                             }
 
                             $imagick->stripImage();
+
+                            // Vízjel betöltése
+                            $watermark = new \Imagick(public_path('static_media/uj_logo_szeles_transzparens.png'));
+
+                            // Csak az alpha csatorna átlátszóságát csökkentjük
+                            $watermark->evaluateImage(\Imagick::EVALUATE_MULTIPLY, 0.2, \Imagick::CHANNEL_ALPHA);
+
+                            // Méretezés a fő képhez
+                            $watermark->thumbnailImage($imagick->getImageWidth() / 1.5, 0);
+
+                            // Középre helyezés
+                            $x = ($imagick->getImageWidth() - $watermark->getImageWidth()) / 2;
+                            $y = ($imagick->getImageHeight() - $watermark->getImageHeight()) / 2;
+
+                            // Biztos alpha csatorna a fő képen
+                            $imagick->setImageAlphaChannel(\Imagick::ALPHACHANNEL_SET);
+
+                            // Kompozitálás
+                            $imagick->compositeImage($watermark, \Imagick::COMPOSITE_OVER, $x, $y);
+
                             $imagick->writeImage($fullPath);
                             $imagick->destroy();
                         } catch (\Exception $e) {
