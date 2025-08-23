@@ -48,7 +48,6 @@ class BasicDataSeeder extends Seeder
             ['key' => 'hero_top_title'],
             ['key' => 'hero_main_title'],
             ['key' => 'hero_subtitle'],
-            ['key' => 'hero_button_text'],
             ['key' => 'items_per_page'],
             ['key' => 'maintenance_mode'],
             ['key' => 'maintenance_message'],

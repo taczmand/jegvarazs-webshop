@@ -11,7 +11,7 @@
 
         <div class="rounded-xl bg-white shadow-lg p-4">
 
-            @if(auth('admin')->user()->can('view-regulations'))
+            @if(auth('admin')->user()->can('view-settings'))
 
                 <div class="filters d-flex flex-wrap gap-2 mb-3 align-items-center">
                     <div class="filter-group">
@@ -32,9 +32,9 @@
                     <thead>
                     <tr>
                         <th>ID</th>
-                        <th  data-priority="1">Kulcs</th>
+                        <th data-priority="1">Kulcs</th>
                         <th>Érték</th>
-                        <th  data-priority="2">Műveletek</th>
+                        <th data-priority="2">Műveletek</th>
                     </tr>
                     </thead>
                 </table>

@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Models\BasicData;
+use App\Models\BasicMedia;
 use App\Models\Category;
 use App\Models\Regulation;
 use Illuminate\Pagination\Paginator;
@@ -43,6 +44,7 @@ class AppServiceProvider extends ServiceProvider
             }])->whereNull('parent_id')->where('status', 'active')->get());
 
             View::share('basicdata', BasicData::all()->pluck('value', 'key')->toArray());
+            View::share('basicmedia', BasicMedia::all()->pluck('file_path', 'key')->toArray());
             View::share('regulations', Regulation::active()->get());
         }
     }

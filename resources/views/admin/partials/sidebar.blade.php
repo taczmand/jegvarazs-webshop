@@ -76,6 +76,7 @@
                 <a class="collapse-item" href="{{ route('admin.settings.regulations.index') }}">Szabályzatok</a>
                 <a class="collapse-item" href="{{ route('admin.settings.sites.index') }}">Telephelyek</a>
                 <a class="collapse-item" href="{{ route('admin.settings.employees.index') }}">Munkatársak</a>
+                <a class="collapse-item" href="{{ route('admin.settings.media.index') }}">Média</a>
             </div>
         </div>
     </li>

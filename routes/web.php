@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\AppointmentController;
 use App\Http\Controllers\Admin\AttributeController;
 use App\Http\Controllers\Admin\Auth\AdminLoginController;
 use App\Http\Controllers\Admin\BasicDataController;
+use App\Http\Controllers\Admin\BasicMediaController;
 use App\Http\Controllers\Admin\BlogsController;
 use App\Http\Controllers\Admin\BrandController;
 use App\Http\Controllers\Admin\CategoryController;
@@ -196,6 +197,13 @@ Route::middleware([Incognito::class])->group(function () {
             Route::get('/beallitasok/altalanos', [BasicDataController::class, 'index'])->name('settings.general.index');
             Route::get('/beallitasok/altalanos/data', [BasicDataController::class, 'data'])->name('settings.general.data');
             Route::put('/beallitasok/altalanos/{id}', [BasicDataController::class, 'update'])->name('settings.general.update');
+
+            // Média
+            Route::get('/beallitasok/media', [BasicMediaController::class, 'index'])->name('settings.media.index');
+            Route::get('/beallitasok/media/data', [BasicMediaController::class, 'data'])->name('settings.media.data');
+            Route::post('/beallitasok/media', [BasicMediaController::class, 'store'])->name('settings.media.store');
+            Route::put('/beallitasok/media/{id}', [BasicMediaController::class, 'update'])->name('settings.media.update');
+            Route::delete('/beallitasok/media/{id}', [BasicMediaController::class, 'destroy'])->name('settings.media.destroy');
 
             // Rendszer - Felhasználók
             Route::get('/fetch-felhasznalok', [UserController::class, 'fetchUsers'])->name('settings.users.fetch');

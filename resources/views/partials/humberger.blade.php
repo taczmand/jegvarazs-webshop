@@ -17,7 +17,7 @@
                 <a class="" href="{{ route('customer.orders') }}">
                     <i class="fa fa-solid fa-list me-2"></i> Rendelések
                 </a>
-                <a class="" href="" title="Profil szerkesztése">
+                <a class="" href="{{ route('customer.profile') }}" title="Profil szerkesztése">
                     <i class="fa fa-solid fa-user me-2"></i> {{ auth('customer')->user()->first_name }}
                 </a>
                 <a class="" href="{{ route('logout') }}"

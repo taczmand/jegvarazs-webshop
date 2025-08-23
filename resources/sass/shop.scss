@@ -166,6 +166,22 @@ ol {
 }
 
 /* buttons */
+.cta-btn {
+    display: inline-block;
+    font-size: 14px;
+    padding: 10px 28px 10px;
+    color: #ffffff !important;
+    text-transform: uppercase;
+    font-weight: 700;
+    background: $logo-blue-color-mid;
+    letter-spacing: 2px;
+    position: absolute;
+    bottom: 3rem;
+    transition: background-color .25s ease, color .25s ease;
+}
+.cta-btn:hover {
+    background: $logo-blue-color-dark;
+}
 
 .primary-btn {
     display: inline-block;
