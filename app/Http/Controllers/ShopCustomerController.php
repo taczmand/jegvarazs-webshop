@@ -342,6 +342,7 @@ class ShopCustomerController extends Controller
                 'last_name' => 'required|string|max:255',
                 'phone' => 'required|string|max:20',
                 'email' => 'required|string|email|max:255|unique:customers,email,' . $customer->id,
+                'fgaz' => 'nullable|string|max:20',
             ]);
 
             // Ellenőrizzük, hogy a jelszó mező üres-e

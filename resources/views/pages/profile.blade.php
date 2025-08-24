@@ -74,6 +74,15 @@
                                 <input type="password" class="form-control" id="password_confirmation" name="password_confirmation" placeholder="Jelszó megerősítése">
                             </div>
                         </div>
+                        @if(auth('customer')->user()->is_partner)
+                            <div class="col-md-6 mb-3">
+                                <div class="mb-3">
+                                    <label for="fgaz" class="form-label">F-Gáz azonosító</label>
+                                    <input type="text" class="form-control" id="fgaz" name="fgaz" value="{{ old('fgaz', auth('customer')->user()->fgaz) }}">
+                                </div>
+                            </div>
+                        @endif
+
                         <div class="col-md-12 mb-3">
                             <button type="submit" name="profile_save" class="site-btn"><i class="fa-solid fa-floppy-disk"></i> Profil mentése</button>
                         </div>
