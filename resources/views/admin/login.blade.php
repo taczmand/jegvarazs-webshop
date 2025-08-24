@@ -22,7 +22,7 @@
                         <!-- Nested Row within Card Body -->
                         <div class="row">
                             <div class="col-lg-6 d-lg-block bg-login-image">
-                                <img src="{{ asset('static_media/logo.jpg') }}" alt="Logo" class="">
+                                <img src="{{ asset('storage/' . $basicmedia['default_logo']) }}" alt="Logo" class="">
                             </div>
                             <div class="col-lg-6">
                                 <div class="p-5">

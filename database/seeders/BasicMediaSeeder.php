@@ -18,8 +18,7 @@ class BasicMediaSeeder extends Seeder
             ['id' => 1, 'key' => 'hero_image', 'comment' => 'Főképernyő nagy kép'],
             ['id' => 2, 'key' => 'default_logo', 'comment' => 'Fő logó (ez szerepel a felső és alsó sávban és még sok helyen)'],
             ['id' => 3, 'key' => 'favicon', 'comment' => 'Böngészőfül kis kép'],
-            ['id' => 4, 'key' => 'no_image', 'comment' => 'Ez jelenik meg mindenhol, ahol nincs kép feltöltve'],
-            ['id' => 5, 'key' => 'default_breadcrumb', 'comment' => 'Oldalak tetején lévő kép (kivéve blog)'],
+            ['id' => 4, 'key' => 'default_breadcrumb', 'comment' => 'Oldalak tetején lévő kép (kivéve blog)'],
         ];
 
         foreach ($media as $media_item) {

@@ -1,5 +1,5 @@
 <!-- Breadcrumb Section Begin -->
-<section class="breadcrumb-section set-bg" data-setbg="{{ asset(data_get($breadcrumbs, 'cover_image', 'static_media/default_breadcrumb.jpg')) }}">
+<section class="breadcrumb-section set-bg" data-setbg="{{ asset(data_get($breadcrumbs, 'cover_image', 'storage/' . $basicmedia['default_breadcrumb'] )) }}">
     <div class="container">
         <div class="row">
             <div class="col-lg-12 text-center">

@@ -91,7 +91,7 @@
         <div class="row">
             <div class="col-lg-3">
                 <div class="header__logo">
-                    <a href="{{ route('index') }}"><img src="{{ asset('static_media/logo.jpg') }}" alt=""></a>
+                    <a href="{{ route('index') }}"><img src="{{ asset('storage/' . $basicmedia['default_logo']) }}" alt=""></a>
                 </div>
             </div>
             <div class="col-lg-6 d-flex align-items-center">

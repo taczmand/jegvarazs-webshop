@@ -3,7 +3,7 @@
 
     <!-- Sidebar - Brand -->
     <a class="d-flex align-items-center justify-content-center" href="{{ route('index') }}" target="_blank" style="background-color: #f8f9fc; border-radius: 1rem; margin: 0.25rem">
-        <img class="" src="{{ asset('static_media/uj_logo_szeles_transzparens.png') }}" alt="" style="max-width: 100%">
+        <img class="" src="{{ asset('storage/' . $basicmedia['default_logo']) }}" alt="" style="max-width: 100%">
     </a>
 
     <li class="nav-item">

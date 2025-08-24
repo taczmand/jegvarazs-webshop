@@ -2,7 +2,7 @@
 <div class="humberger__menu__overlay"></div>
 <div class="humberger__menu__wrapper">
     <div class="humberger__menu__logo">
-        <a href="#"><img src="{{ asset('static_media/logo.jpg') }}" alt=""></a>
+        <a href="#"><img src="{{ asset('storage/' . $basicmedia['default_logo']) }}" alt=""></a>
     </div>
     <div class="humberger__menu__cart">
         <ul>

@@ -88,8 +88,7 @@ class ProductController extends Controller
             'products' => $products,
             'breadcrumbs' => [
                 'page_title' => 'Termékek',
-                'nav' => $nav,
-                'cover_image' => null,
+                'nav' => $nav
             ],
             'tags' => $tags,
             'brands' => $brands,
@@ -218,8 +217,7 @@ class ProductController extends Controller
             'latest_products' => $latest_products,
             'breadcrumbs' => [
                 'page_title' => $parent->title,
-                'nav' => $nav,
-                'cover_image' => $parent->cover_image ?? null,
+                'nav' => $nav
             ],
             'product_count' => $allProductsQuery->count(),
         ]);
