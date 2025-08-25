@@ -1,4 +1,4 @@
-<section class="about-section py-5 bg-light mt-5">
+<section class="about-section py-5 mt-5">
     <div class="container">
         <div class="row justify-content-center">
             <div class="col-lg-12 text-center section-title">

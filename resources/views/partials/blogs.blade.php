@@ -1,5 +1,5 @@
 <!-- Blog Section Begin -->
-    <section class="from-blog spad">
+    <section class="from-blog bg-light spad mt-5">
         <div class="container">
 
             <div class="row">

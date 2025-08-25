@@ -6,8 +6,8 @@
 
 @section('content')
     @include('partials.categories')
-    @include('partials.about')
     @include('partials.blogs')
+    @include('partials.about')
     @include('partials.brands')
 @endsection
 
