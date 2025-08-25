@@ -29,6 +29,25 @@
         </div>
     @endif
 
+    @php
+        $total_item_amount = 0;
+        $subtotal = 0;
+        if(0 < $cart_items->items->count()) {
+            foreach($cart_items->items as $item) {
+                $subtotal = $item->product->display_gross_price * $item->quantity;
+                $total_item_amount += $subtotal;
+            }
+        }
+
+        // Amíg 1 szabály és futárszolgálat van, addig fix a szállítási költség
+        $shipping_cost = 0;
+        if ($total_item_amount < 1000000) {
+            $shipping_cost = 1990;
+        }
+
+    @endphp
+
+
     <!-- Checkout Section Begin -->
     <section class="checkout spad">
         <div class="container">
@@ -176,22 +195,43 @@
 
                             </div>
 
-                            <!-- Szállítási adatok -->
+                            <!-- Szállítási módok -->
 
                             <h4 class="mt-5 d-flex justify-content-between align-items-center toggle-header" data-bs-toggle="collapse" data-bs-target="#shippingData" aria-expanded="true" aria-controls="shippingData" style="cursor: pointer;">
-                                Szállítási adatok
+                                Szállítási módok
                                 <span class="toggle-arrow">▼</span>
                             </h4>
 
 
                             <div class="collapse" id="shippingData">
+
+                                <div class="row mt-2">
+                                    <div class="col-lg-12">
+                                        <div class="checkout__input__checkbox">
+                                            <label for="use_local_shipping">
+                                                Személyesen szeretném átvenni a termékeket (0 Ft)
+                                                <input type="radio" id="use_local_shipping" name="shipping_choice" shipping_cost="0" value="local" checked>
+                                                <span class="checkmark"></span>
+                                            </label>
+                                        </div>
+
+                                        <select class="form-control w-100" name="selected_local_shipping_address">
+                                            @foreach ($company_sites as $site)
+                                                <option value="{{ $site->id }}">
+                                                    {{ $site->name }} ({{ $site->country }} - {{ $site->zip_code }} {{ $site->city }}, {{ $site->address_line }})
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
+
                                 @if(!$shipping_addresses->isEmpty())
-                                    <div class="row">
+                                    <div class="row mt-2">
                                         <div class="col-lg-12">
                                             <div class="checkout__input__checkbox">
                                                 <label for="use_existing_shipping">
-                                                    Az alábbi címet szeretném használni szállítási címként
-                                                    <input type="radio" id="use_existing_shipping" name="shipping_choice" value="exist" checked>
+                                                    Futárszolgálattal szeretném kérni a termékeket a kiválasztott címre ({{ $shipping_cost }} Ft)
+                                                    <input type="radio" id="use_existing_shipping" name="shipping_choice" shipping_cost="{{ $shipping_cost }}" value="exist">
                                                     <span class="checkmark"></span>
                                                 </label>
                                             </div>
@@ -209,31 +249,11 @@
 
                                 <div class="row mt-2">
                                     <div class="col-lg-12">
-                                        <div class="checkout__input__checkbox">
-                                            <label for="use_local_shipping">
-                                                Személyesen szeretném átvenni a termékeket
-                                                <input type="radio" id="use_local_shipping" name="shipping_choice" value="local" checked>
-                                                <span class="checkmark"></span>
-                                            </label>
-                                        </div>
-
-                                        <select class="form-control w-100" name="selected_local_shipping_address">
-                                            @foreach ($company_sites as $site)
-                                                <option value="{{ $site->id }}">
-                                                    {{ $site->name }} ({{ $site->country }} - {{ $site->zip_code }} {{ $site->city }}, {{ $site->address_line }})
-                                                </option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                </div>
-
-                                <div class="row mt-2">
-                                    <div class="col-lg-12">
 
                                         <div class="checkout__input__checkbox">
                                             <label for="new_shipping_address">
-                                                Új szállítási címet szeretnék megadni
-                                                <input type="radio" id="new_shipping_address" name="shipping_choice" value="new">
+                                                Futárszolgálattal szeretném kérni a termékeket egy új címre ({{ $shipping_cost }} Ft)
+                                                <input type="radio" id="new_shipping_address" name="shipping_choice" shipping_cost="{{ $shipping_cost }}" value="new">
                                                 <span class="checkmark"></span>
                                             </label>
                                         </div>
@@ -350,8 +370,8 @@
                                         @endforeach
                                     </ul>
                                     <div class="checkout__order__subtotal">Részösszeg <span>{{ number_format($total_item_amount, 0, ',', ' ') }} Ft</span></div>
-                                    <!--<div class="checkout__order__total">Kupon <span></span></div>-->
-                                    <div class="checkout__order__total">Összesen <span>{{ number_format($total_item_amount, 0, ',', ' ') }} Ft</span></div>
+                                    <div class="checkout__order__subtotal">Szállítás <span id="shipping_cost_display">{{ number_format(0, 0, ',', ' ') }} Ft</span></div>
+                                    <div class="checkout__order__total">Összesen <span id="total_item_amount_display">{{ number_format($total_item_amount, 0, ',', ' ') }} Ft</span></div>
 
 
                                     <button type="submit" class="site-btn">Megrendelés</button>
@@ -405,6 +425,29 @@
             }
             newBillingRadio.addEventListener('change', toggleBillingFields);
             newShippingRadio.addEventListener('change', toggleShippingFields);
+
+            document.querySelectorAll('input[name="shipping_choice"]').forEach(radio => {
+                radio.addEventListener('change', function() {
+                    const cost = parseInt(this.getAttribute('shipping_cost'), 10) || 0;
+
+                    const costDisplay = document.getElementById('shipping_cost_display');
+                    if (costDisplay) costDisplay.textContent = formatNumber(cost) + " Ft";
+
+                    const totalAmountDisplay = document.getElementById('total_item_amount_display');
+                    if (totalAmountDisplay) totalAmountDisplay.textContent = formatNumber(calculatedTotalAmount(cost)) + " Ft";
+                });
+            });
+
+            function formatNumber(num) {
+                return num.toLocaleString('hu-HU', { minimumFractionDigits: 0 });
+            }
+
+            function calculatedTotalAmount(shipping_cost) {
+                const totalItemAmount = {{ $total_item_amount }};
+                return totalItemAmount + shipping_cost;
+            }
+
+
         });
     </script>
 

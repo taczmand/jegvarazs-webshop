@@ -26,6 +26,15 @@ class OrderController extends Controller
                 ->withInput();
         }
 
+        if ($request->input('shipping_choice') !== 'local') {
+            $cart->items()->create([
+                'product_id' => 1,
+                'quantity' => 1,
+            ]);
+        }
+
+        $cart->refresh();
+
         // Kosár termékek előkészítése
         $cartItems = $cart->items->map(function ($item) {
             return [

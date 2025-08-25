@@ -57,7 +57,7 @@
                 <tbody>
                 @foreach($order->items as $item)
                     <tr>
-                        <td>{{ $item->name }}</td>
+                        <td>{{ $item->product_name }}</td>
                         <td>{{ $item->quantity }}</td>
                         <td>{{ number_format($item->gross_price, 0, ',', ' ') }} Ft</td>
                         <td>{{ number_format($item->gross_price * $item->quantity, 0, ',', ' ') }} Ft</td>
