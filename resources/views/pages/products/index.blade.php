@@ -16,7 +16,7 @@
         <section class="product spad">
             <div class="container">
                 <div class="row">
-                    <div class="col-lg-3 col-md-5">
+                    <div class="col-lg-3 col-md-5 order-2 order-md-1">
                         <div class="sidebar">
                             <!--<div class="sidebar__item">
                                 <h4>Ár</h4>
@@ -137,7 +137,7 @@
                     </div>
 
                     <!-- Main Product Section Begin -->
-                    <div class="col-lg-9 col-md-7">
+                    <div class="col-lg-9 col-md-7 order-1 order-md-2">
 
                         <div class="filter__item">
                             <div class="row mb-4">
