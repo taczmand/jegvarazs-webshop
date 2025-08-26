@@ -10,32 +10,36 @@
                     </div>
                     <ul class="category-menu list-unstyled">
                         @foreach ($categories as $category)
-                            <li class="category-item">
-                                <div class="category-header">
-                                    <a href="{{ route('products.resolve', ['slugs' => $category->getFullSlug()]) }}" class="category-link">
-                                        {{ $category->title }}
-                                    </a>
-                                    @if($category->children->count())
-                                        <button class="subcategory-toggle" aria-label="Almenü megnyitása">
-                                            <i class="fa fa-chevron-down"></i>
-                                        </button>
-                                    @endif
-                                </div>
 
+                            <li class="category-item">
+                                <a href="{{ route('products.resolve', ['slugs' => $category->getFullSlug()]) }}" class="category-link">
+                                    <div class="category-header">
+
+                                            {{ $category->title }}
+
+                                        @if($category->children->count())
+                                            <button class="subcategory-toggle" aria-label="Almenü megnyitása">
+                                                <i class="fa fa-chevron-down"></i>
+                                            </button>
+                                        @endif
+                                    </div>
+                                </a>
                                 @if($category->children->count())
                                     <div class="subcategory-container">
                                         <div class="subcategory-grid">
                                             @foreach ($category->children as $sub)
-                                                <div class="subcategory-item">
-                                                    <a href="{{ route('products.resolve', ['slugs' => $sub->getFullSlug()]) }}" class="subcategory-link level-1">{{ $sub->title }}</a>
-                                                    @if($sub->children->count())
-                                                        <div class="subcategory-sublist">
-                                                            @foreach ($sub->children as $child)
-                                                                <a href="{{ route('products.resolve', ['slugs' => $child->getFullSlug()]) }}" class="subcategory-link level-2">{{ $child->title }}</a>
-                                                            @endforeach
-                                                        </div>
-                                                    @endif
-                                                </div>
+                                                <a href="{{ route('products.resolve', ['slugs' => $sub->getFullSlug()]) }}" class="subcategory-link level-1">
+                                                    <div class="subcategory-item">
+                                                        {{ $sub->title }}
+                                                        @if($sub->children->count())
+                                                            <div class="subcategory-sublist">
+                                                                @foreach ($sub->children as $child)
+                                                                    <a href="{{ route('products.resolve', ['slugs' => $child->getFullSlug()]) }}" class="subcategory-link level-2">{{ $child->title }}</a>
+                                                                @endforeach
+                                                            </div>
+                                                        @endif
+                                                    </div>
+                                                </a>
                                             @endforeach
                                         </div>
                                     </div>

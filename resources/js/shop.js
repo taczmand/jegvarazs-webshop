@@ -457,7 +457,7 @@ import * as bootstrap from "bootstrap";
             $('.tag-filter').each(function() {
                 const tag = $(this).val();
                 if (tags.includes(tag)) {
-                    $('#tag_label_'+tag).css('background-color', '#007bff'); // vagy bármilyen szín, ami jelzi, hogy kiválasztott
+                    $('#tag_label_'+tag).css({'background-color': '#007bff', 'color': 'white'}); // vagy bármilyen szín, ami jelzi, hogy kiválasztott
                 } else {
                     $('#tag_label_'+tag).css('background-color', '#f5f5f5'); // alapértelmezett szín
                 }

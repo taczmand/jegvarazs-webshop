@@ -537,6 +537,10 @@ a {
     display: block;
 }
 
+.header__menu ul li a:hover {
+    color: $logo-blue-color-mid !important;
+}
+
 .header__cart {
     text-align: right;
     padding: 24px 0;
@@ -822,6 +826,10 @@ a {
     padding: 12px 0 10px;
     background: #ffffff;
     display: block;
+}
+
+.categories__item h5 a:hover {
+    color: $logo-blue-color-mid !important;
 }
 
 .categories__slider .col-lg-3 {
@@ -1280,11 +1288,16 @@ a {
     content: "";
     border-radius: 50%;
 }
-
+.header__top__right__auth a:hover {
+    color: $logo-blue-color-mid !important;
+}
 .sidebar__item__size {
     display: inline-block;
     margin-right: 16px;
     margin-bottom: 10px;
+}
+.sidebar__item__size:hover {
+    background-color: $logo-blue-color-mid !important;
 }
 
 .sidebar__item__size label {
@@ -1664,11 +1677,15 @@ a {
 }
 
 .product__item__text h6 a {
-    color: #252525;
+    color: $logo-blue-color-dark;
+    transition: 0.3s all;
+}
+.product__item__text h6 a:hover {
+    color: $logo-blue-color-mid !important;
 }
 
 .product__item__text h5 {
-    color: #252525;
+    color: $logo-blue-color-dark;
     font-weight: 700;
 }
 
@@ -2364,6 +2381,9 @@ a {
     color: #1c1c1c;
     font-weight: 700;
 }
+.blog__item__text h5 a:hover {
+    color: $logo-blue-color-mid !important;
+}
 
 .blog__item__text p {
     margin-bottom: 25px;
@@ -2725,6 +2745,10 @@ a {
     line-height: 32px;
 }
 
+.footer__widget ul a:hover {
+    color: $logo-blue-color-mid !important;
+}
+
 .footer__widget p {
     font-size: 14px;
     color: #1c1c1c;
@@ -2982,7 +3006,7 @@ a {
         padding: 10px 25px 10px 20px;
     }
     .hero__categories ul {
-        padding-left: 20px;
+        /*padding-left: 20px;*/
     }
     .latest-product__slider.owl-carousel .owl-nav {
         right: 0;
@@ -3579,10 +3603,13 @@ a {
 
 .category-item {
     position: relative;
-    padding: 0.5rem 1rem;
+    padding-left: 0.5rem;
     border-bottom: 1px solid #ddd;
+    transition: all 0.4s ease;
 }
-
+.category-item:hover {
+    background-color: $light-grey-color;
+}
 .category-link {
     display: block;
     font-weight: normal;
