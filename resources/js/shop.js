@@ -425,6 +425,33 @@ import * as bootstrap from "bootstrap";
 
     });
 
+    // ha kattint a attribute-filter class-ra, akkor a href alapján szűrje a termékeket
+    $(document).on('click', '.attribute-filter', function (e) {
+        e.preventDefault();
+
+        const id = $(this).data('id');
+        const value = $(this).data('value');
+        const selectedAttr = id + ':' + value;
+
+        const currentUrl = new URL(window.location.href);
+        const searchParams = new URLSearchParams(currentUrl.search);
+        const existingAttributes = searchParams.get('attribute');
+
+        let newAttributes = existingAttributes ? existingAttributes.split(',') : [];
+
+        if (newAttributes.includes(selectedAttr)) {
+            newAttributes = newAttributes.filter(a => a !== selectedAttr);
+        } else {
+            newAttributes.push(selectedAttr);
+        }
+
+        searchParams.set('attribute', newAttributes.join(','));
+        currentUrl.search = searchParams.toString();
+        window.location.href = currentUrl.toString();
+    });
+
+
+
     $(document).on('change', '#sortBy', function (e) {
         e.preventDefault();
         const sortBy = $(this).val();
@@ -442,9 +469,26 @@ import * as bootstrap from "bootstrap";
         window.location.href = currentUrl.toString();
     })
 
-    updateTagColors();
+    $(document).on('change', '#itemsPerPage', function (e) {
+        e.preventDefault();
+        const itemsPerPage = $(this).val();
+        const currentUrl = new URL(window.location.href);
+        const searchParams = new URLSearchParams(currentUrl.search);
 
+        // Ha már van 'itemsPerPage' paraméter, akkor frissítjük, különben hozzáadjuk
+        if (searchParams.has('itemsPerPage')) {
+            searchParams.set('itemsPerPage', itemsPerPage);
+        } else {
+            searchParams.append('itemsPerPage', itemsPerPage);
+        }
+
+        currentUrl.search = searchParams.toString();
+        window.location.href = currentUrl.toString();
+    })
+
+    updateTagColors();
     updateBrandColors();
+    updateAttributeColors();
 
     function updateTagColors(){
         const currentUrl = new URL(window.location.href);
@@ -476,13 +520,37 @@ import * as bootstrap from "bootstrap";
             $('.brand-filter').each(function() {
                 const brand = $(this).val();
                 if (brands.includes(brand)) {
-                    $('#brand_label_'+brand).css('background-color', '#007bff'); // vagy bármilyen szín, ami jelzi, hogy kiválasztott
+                    $('#brand_label_'+brand).css({'background-color': '#007bff', 'color': 'white'}); // vagy bármilyen szín, ami jelzi, hogy kiválasztott
                 } else {
-                    $('#brand_label_'+brand).css('background-color', '#f5f5f5'); // alapértelmezett szín
+                    $('#brand_label_'+brand).css({'background-color': '#f5f5f5', 'color': 'white'}); // alapértelmezett szín
                 }
             });
         }
     }
+
+    function updateAttributeColors(){
+        const currentUrl = new URL(window.location.href);
+        const searchParams = new URLSearchParams(currentUrl.search);
+        const existingAttributes = searchParams.get('attribute');
+
+        if (existingAttributes) {
+            const attributes = existingAttributes.split(',');
+
+            $('.attribute-label').each(function() {
+                const attrKey = $(this).data('attrkey');
+
+                if (attributes.includes(attrKey)) {
+                    $(this).css({'background-color': '#007bff', 'color': 'white'});
+                } else {
+                    $(this).css({'background-color': '#f5f5f5', 'color': 'black'});
+                }
+            });
+        }
+    }
+
+
+
+
 
     window.addEventListener('click', async function (event) {
         const subscriptionBtn = event.target.closest('[data-subscribe-button]');

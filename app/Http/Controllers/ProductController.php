@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Attribute;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
@@ -16,7 +17,9 @@ class ProductController extends Controller
         // Query paraméterek
         $tags = $request->query('tag');
         $brands = $request->query('brand');
+        $attributes = $request->query('attribute');
         $sortBy = $request->query('sortBy');
+        $itemsPerPage = $request->query('itemsPerPage', 12);
 
         // Alap query
         $query = Product::with('category')
@@ -38,6 +41,25 @@ class ProductController extends Controller
             });
         }
 
+        // 🔍 Attribútum szűrés, ha van
+        if ($attributes) {
+            // Pl. ?attribute=3:red,5:xl
+            $attributeArray = explode(',', $attributes);
+
+            $query->whereHas('attributes', function ($q) use ($attributeArray) {
+                foreach ($attributeArray as $attr) {
+                    // "id:value" formátum
+                    [$attrId, $value] = explode(':', $attr);
+                    $q->where(function ($sub) use ($attrId, $value) {
+                        $sub->where('attribute_id', $attrId)
+                            ->where('value', $value);
+                    });
+                }
+            });
+        }
+
+
+
         // 🔃 Rendezés
         switch ($sortBy) {
             case 'productDesc':
@@ -57,10 +79,28 @@ class ProductController extends Controller
         }
 
         // Pagináció
-        $products = $query->paginate(12)->withQueryString();
+        $products = $query->paginate($itemsPerPage)->withQueryString();
 
-        $tags = Tag::all()->pluck('id', 'name')->toArray();
-        $brands = Brand::where('status', 'active')->pluck('id', 'title')->toArray();
+        $tags = Tag::whereHas('products', function ($q) use ($products) {
+            $q->whereIn('products.id', $products->pluck('id'));
+        })
+            ->pluck('id', 'name')
+            ->toArray();
+
+
+        $brands = Brand::where('status', 'active')
+            ->whereIn('id', $products->pluck('brand_id')->filter()) // kiszűri a NULL-okat
+            ->pluck('id', 'title')
+            ->toArray();
+
+        $productIds = $products->pluck('id');
+
+        $attributes = Attribute::select('attributes.id', 'attributes.name', 'product_attributes.value')
+            ->join('product_attributes', 'attributes.id', '=', 'product_attributes.attribute_id')
+            ->whereIn('product_attributes.product_id', $productIds)
+            ->distinct()
+            ->get()
+            ->groupBy('name');
 
         $latest_products = Product::with(['photos'])
             ->where('status', 'active')
@@ -92,6 +132,7 @@ class ProductController extends Controller
             ],
             'tags' => $tags,
             'brands' => $brands,
+            'attributes' => $attributes,
             'minPrice' => $minPrice,
             'maxPrice' => $maxPrice,
             'latest_products' => $latest_products,
@@ -133,7 +174,9 @@ class ProductController extends Controller
         // 🔍 Query paraméterek
         $tags = $request->query('tag');
         $brands = $request->query('brand');
+        $attributes = $request->query('attribute');
         $sortBy = $request->query('sortBy');
+        $itemsPerPage = $request->query('itemsPerPage', 12);
 
         // 🔎 Alap lekérdezés
         $query = Product::with('category')
@@ -156,6 +199,22 @@ class ProductController extends Controller
             });
         }
 
+        // 🔍 Attribútum szűrés, ha van
+        if ($attributes) {
+            $attributeArray = explode(',', $attributes);
+
+            $query->whereHas('attributes', function ($q) use ($attributeArray) {
+                foreach ($attributeArray as $attr) {
+                    // "id:value" formátum
+                    [$attrId, $value] = explode(':', $attr);
+                    $q->where(function ($sub) use ($attrId, $value) {
+                        $sub->where('attribute_id', $attrId)
+                            ->where('value', $value);
+                    });
+                }
+            });
+        }
+
         // 🔃 Rendezés
         switch ($sortBy) {
             case 'productDesc':
@@ -173,10 +232,27 @@ class ProductController extends Controller
                 break;
         }
 
-        $products = $query->paginate(12)->withQueryString();
+        $products = $query->paginate($itemsPerPage)->withQueryString();
 
-        $tags = Tag::all()->pluck('id', 'name')->toArray();
-        $brands = Brand::where('status', 'active')->pluck('id', 'title')->toArray();
+        $tags = Tag::whereHas('products', function ($q) use ($products) {
+            $q->whereIn('products.id', $products->pluck('id'));
+        })
+            ->pluck('id', 'name')
+            ->toArray();
+
+        $brands = Brand::where('status', 'active')
+            ->whereIn('id', $products->pluck('brand_id')->filter()) // kiszűri a NULL-okat
+            ->pluck('id', 'title')
+            ->toArray();
+
+        $productIds = $products->pluck('id');
+
+        $attributes = Attribute::select('attributes.id', 'attributes.name', 'product_attributes.value')
+            ->join('product_attributes', 'attributes.id', '=', 'product_attributes.attribute_id')
+            ->whereIn('product_attributes.product_id', $productIds)
+            ->distinct()
+            ->get()
+            ->groupBy('name');
 
         $latest_products = Product::whereIn('cat_id', $categoryIds)
             ->where('status', 'active')
@@ -212,6 +288,7 @@ class ProductController extends Controller
             'category' => $parent,
             'tags' => $tags,
             'brands' => $brands,
+            'attributes' => $attributes,
             'minPrice' => $minPrice,
             'maxPrice' => $maxPrice,
             'latest_products' => $latest_products,

@@ -74,33 +74,63 @@
                                     </label>
                                 </div>
                             </div>-->
-                            <div class="sidebar__item">
-                                <h4>Címkék</h4>
+
+                            @if(count($tags) > 0)
+                                <div class="sidebar__item">
+                                    <h4>Címkék</h4>
 
 
-                                @foreach($tags as $label => $id)
-                                    <div class="sidebar__item__size">
-                                        <label for="tag_{{ $id }}" id="tag_label_{{ $id }}" class="tag-label">
-                                            {{ $label }}
-                                            <input type="radio" id="tag_{{ $id }}" name="tag_id" value="{{ $id }}" class="tag-filter">
-                                        </label>
+                                    @foreach($tags as $label => $id)
+                                        <div class="sidebar__item__size">
+                                            <label for="tag_{{ $id }}" id="tag_label_{{ $id }}" class="tag-label">
+                                                {{ $label }}
+                                                <input type="radio" id="tag_{{ $id }}" name="tag_id" value="{{ $id }}" class="tag-filter">
+                                            </label>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @endif
+
+                            @if(count($brands) > 0)
+                                <div class="sidebar__item">
+                                    <h4>Márkák</h4>
+
+
+                                    @foreach($brands as $label => $id)
+                                        <div class="sidebar__item__size">
+                                            <label for="brand_{{ $id }}" id="brand_label_{{ $id }}" class="brand-label">
+                                                {{ $label }}
+                                                <input type="radio" id="brand_{{ $id }}" name="brand_id" value="{{ $id }}" class="brand-filter">
+                                            </label>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @endif
+
+                            @if($attributes->count() > 0)
+                                @foreach($attributes as $name => $items)
+                                    <div class="sidebar__item">
+                                        <h4>{{ $name }}</h4>
+                                        @foreach($items as $item)
+                                            @php
+                                                $attrKey = $item->id . ':' . $item->value;
+                                            @endphp
+                                            <div class="sidebar__item__size">
+                                                <label class="attribute-label" data-attrkey="{{ $attrKey }}">
+                                                    {{ $item->value }}
+                                                    <input type="radio"
+                                                           name="attribute_id"
+                                                           class="attribute-filter"
+                                                           data-id="{{ $item->id }}"
+                                                           data-value="{{ $item->value }}">
+                                                </label>
+                                            </div>
+                                        @endforeach
                                     </div>
                                 @endforeach
-                            </div>
-
-                            <div class="sidebar__item">
-                                <h4>Márkák</h4>
+                            @endif
 
 
-                                @foreach($brands as $label => $id)
-                                    <div class="sidebar__item__size">
-                                        <label for="brand_{{ $id }}" id="brand_label_{{ $id }}" class="brand-label">
-                                            {{ $label }}
-                                            <input type="radio" id="brand_{{ $id }}" name="brand_id" value="{{ $id }}" class="brand-filter">
-                                        </label>
-                                    </div>
-                                @endforeach
-                            </div>
 
                             <div class="sidebar__item">
                                 <div class="latest-product__text">
@@ -147,6 +177,15 @@
                                             <h6 class="mb-0"><span>{{ $product_count }}</span> termék</h6>
                                         </div>
 
+                                        <div class="filter__found">
+                                            <select class="form-control" style="min-width: 220px;" id="itemsPerPage" name="itemsPerPage">
+                                                <option value="12" {{ request('itemsPerPage', 12) == 12 ? 'selected' : '' }}>12 találat / oldal</option>
+                                                <option value="24" {{ request('itemsPerPage') == 24 ? 'selected' : '' }}>24 találat / oldal</option>
+                                                <option value="36" {{ request('itemsPerPage') == 36 ? 'selected' : '' }}>36 találat / oldal</option>
+                                                <option value="48" {{ request('itemsPerPage') == 48 ? 'selected' : '' }}>48 találat / oldal</option>
+                                                <option value="60" {{ request('itemsPerPage') == 60 ? 'selected' : '' }}>60 találat / oldal</option>
+                                            </select>
+                                        </div>
                                         <div class="filter__sort d-flex align-items-center gap-2">
                                             <span class="fw-bold mr-3">Rendezés:</span>
                                             <select class="form-control" style="min-width: 220px;" id="sortBy" name="sortBy">
