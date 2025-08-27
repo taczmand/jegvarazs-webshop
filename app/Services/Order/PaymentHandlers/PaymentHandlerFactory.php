@@ -9,6 +9,7 @@ class PaymentHandlerFactory
             'bank_transfer' => new BankTransferHandler(),
             'cod' => new CodHandler(),
             'simplepay' => new SimplePayHandler(),
+            'cash' => new CashHandler(),
             default => null,
         };
     }
