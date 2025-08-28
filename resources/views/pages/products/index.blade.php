@@ -249,7 +249,7 @@
                                                     <h6><a href="{{ route('products.resolve', ['slugs' => $fullSlug]) }}">{{ $product->title }}</a></h6>
                                                     @auth('customer')
                                                         <!--<h5>{{ number_format($product->display_gross_price, 0, ',', ' ') }} Ft</h5>-->
-                                                        {!! $product->display_all_prices !!}
+                                                        {!! $product->display_all_prices_on_list !!}
                                                         @if ($status)
                                                             @if ("backorder" === $status['slug'])
                                                                 <a class="badge bg-{{ $status['color'] }} interesting-badge" href="#" product-id="{{ $product->id }}" product-title="{{ $product->title }}" >

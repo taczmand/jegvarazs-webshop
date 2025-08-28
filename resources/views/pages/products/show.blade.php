@@ -225,7 +225,7 @@
                             </div>
                             <div class="product__item__text">
                                 <h6><a href="{{ route('products.resolve', ['slugs' => $fullSlug]) }}">{{ $related_product->title }}</a></h6>
-                                {!! $product->display_all_prices !!}
+                                {!! $related_product->display_all_prices_on_list !!}
                             </div>
                         </div>
                     </div>

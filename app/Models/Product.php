@@ -125,10 +125,7 @@ class Product extends Model
 
         $gross_price = (float) $this->gross_price;
 
-        // Nettó ár számítása (feltételezve, hogy van ilyen meződ)
-        /*if ($this->net_price) {
-            $output .= '<div><strong>Nettó ár:</strong> ' . number_format($this->net_price, 0, ',', ' ') . ' Ft</div>';
-        }*/
+        $output .= '<div class="price-block">';
 
         // Ha partner, és van beállított partner ár
         if ($customer && $customer->is_partner) {
@@ -138,20 +135,71 @@ class Product extends Model
 
                 // Nettó partneri ár:
                 $partner_net_price = $partner_price / (1 + $vat_percent / 100);
-                $output .= '<div style="color: red; font-size: 1.75rem"><strong>' . number_format($partner_net_price, 0, ',', ' ') . ' Ft</strong> <span style="font-size: 10px">(partner nettó ár)</span></div>';
+                $output .= '<div style="color: #19ACE2; font-size: 1.75rem"><strong>' . number_format($partner_net_price, 0, ',', ' ') . ' Ft</strong> <span style="font-size: 10px">(+ÁFA)</span></div>';
 
                 $partner_price = (float) $partner_price;
-                $output .= '<div><strong>' . number_format($partner_price, 0, ',', ' ') . ' Ft</strong> <span style="font-size: 10px">(partner bruttó ár)</span></div>';
+                $output .= '<div><strong>' . number_format($partner_price, 0, ',', ' ') . ' Ft</strong> <span style="font-size: 10px"></span></div>';
+            }
 
+            if ($gross_price > 0) {
+                // Végfelhasználói bruttó ár
+                $output .= '<div style="margin-top: 2rem; color: #6f6f6f">Végfelhasználói bruttó ár: ' . number_format($gross_price, 0, ',', ' ') . ' Ft </div>';
+            }
+        } else {
 
+            // Nem partner, végfelhasználói ár
+            if ($gross_price > 0) {
+                // Végfelhasználói bruttó ár
+                $output .= '<div style="color: #19ACE2; font-size: 1.75rem"><strong>' . number_format($gross_price, 0, ',', ' ') . ' Ft</strong> <span style="font-size: 10px"></span></div>';
+                $net_price = $gross_price / (1 + $vat_percent / 100);
+                $output .= '<div>' . number_format($net_price, 0, ',', ' ') . ' Ft</> <span style="font-size: 10px">(+ÁFA)</span></div>';
             }
         }
 
-        if ($gross_price > 0) {
-            // Végfelhasználói bruttó ár
-            $output .= '<div class="price-block">';
-            $output .= '<div><strong>' . number_format($gross_price, 0, ',', ' ') . ' Ft </strong> <span style="font-size: 10px;">(bruttó végfelhasználói ár)</span></div>';
+
+
+        $output .= '</div>';
+
+        return $output;
+    }
+
+    public function getDisplayAllPricesOnListAttribute()
+    {
+        $customer = auth('customer')->user();
+
+        $vat_percent = $this->taxCategory->tax_value ?? 0;
+
+        $output = '';
+
+        $gross_price = (float) $this->gross_price;
+
+        $output .= '<div class="price-block">';
+
+        // Ha partner, és van beállított partner ár
+        if ($customer && $customer->is_partner) {
+            $partner_price = $this->partner_selected_price ?? $this->partner_gross_price;
+
+            if ($partner_price !== null && $gross_price != $partner_price) {
+
+                // Nettó partneri ár:
+                $partner_net_price = $partner_price / (1 + $vat_percent / 100);
+                $output .= '<div style="color: #19ACE2; font-size: 1.75rem"><strong>' . number_format($partner_net_price, 0, ',', ' ') . ' Ft</strong></div>';
+
+                $partner_price = (float) $partner_price;
+                $output .= '<div>' . number_format($partner_price, 0, ',', ' ') . ' Ft</> <span style="font-size: 10px">(ÁFA-val)</span></div>';
+            }
+        } else {
+
+            // Nem partner, végfelhasználói ár
+            if ($gross_price > 0) {
+                // Végfelhasználói bruttó ár
+                $output .= '<div style="color: #19ACE2; font-size: 1.75rem"><strong>' . number_format($gross_price, 0, ',', ' ') . ' Ft</strong> <span style="font-size: 10px"></span></div>';
+                //$net_price = $gross_price / (1 + $vat_percent / 100);
+                //$output .= '<div><strong>' . number_format($net_price, 0, ',', ' ') . ' Ft</strong> <span style="font-size: 10px">(+ÁFA)</span></div>';
+            }
         }
+
+
 
         $output .= '</div>';
 
