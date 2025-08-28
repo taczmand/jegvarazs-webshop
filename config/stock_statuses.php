@@ -10,7 +10,7 @@ return [
         'description' => 'készlet < 0',
     ],
     [
-        'name' => 'Rendelhető, kérem érdeklődjön',
+        'name' => 'Rendelhető, érdeklődjön',
         'slug' => 'backorder',
         'color' => 'warning',
         'active' => true,
