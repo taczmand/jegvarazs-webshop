@@ -147,10 +147,11 @@ class Product extends Model
             }
         }
 
-        // Végfelhasználói bruttó ár
-        $output .= '<div class="price-block">';
-        $output .= '<div><strong>'.number_format($gross_price, 0, ',', ' ') . ' Ft </strong> <span style="font-size: 10px;">(bruttó végfelhasználói ár)</span></div>';
-
+        if ($gross_price > 0) {
+            // Végfelhasználói bruttó ár
+            $output .= '<div class="price-block">';
+            $output .= '<div><strong>' . number_format($gross_price, 0, ',', ' ') . ' Ft </strong> <span style="font-size: 10px;">(bruttó végfelhasználói ár)</span></div>';
+        }
 
         $output .= '</div>';
 
