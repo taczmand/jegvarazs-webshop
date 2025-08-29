@@ -173,14 +173,15 @@
                             <!-- Termékek tab -->
 
                             <div class="tab-pane fade" id="productManager">
+                                <input type="text" class="form-control mb-3" id="productSearch" placeholder="Keresés a termékek között...">
                                 <div style="max-height: 300px; overflow-y: auto">
                                     <table class="table table-bordered" id="productManagerTable">
                                         <thead>
                                         <tr>
-                                            <th>Kiválasztás</th>
+                                            <th></th>
                                             <th>Termék</th>
-                                            <th>Bruttó egységár</th>
-                                            <th>Darabszám</th>
+                                            <th>Br. ár</th>
+                                            <th>Db</th>
                                         </tr>
                                         </thead>
                                         <tbody>
@@ -422,6 +423,25 @@
                 await showModalToCreate();
             });
 
+            $(document).on('input', '#productSearch', function () {
+                const searchValue = $(this).val().toLowerCase();
+
+                $('#productManagerTable tbody tr').each(function () {
+                    const row = $(this);
+
+                    // csak a termék sorokra keresünk, a kategória sort meghagyjuk
+                    if (!row.hasClass('table-secondary')) {
+                        const productName = row.find('label').text().toLowerCase();
+
+                        if (productName.includes(searchValue)) {
+                            row.show();
+                        } else {
+                            row.hide();
+                        }
+                    }
+                });
+            });
+
             async function showModalToCreate(installationDate = null) {
                 try {
                     resetForm('Új szerződés létrehozása');
@@ -649,9 +669,10 @@
                                         type="checkbox"
                                         name="products[${item.id}][selected]"
                                         value="1"
+                                        id="product_${item.id}"
                                     >
                                 </td>
-                                <td>${item.title}</td>
+                                <td><label for="product_${item.id}">${item.title}</label></td>
                                 <td style="width: 200px">
                                     <input
                                         type="number"
@@ -661,7 +682,7 @@
                                         step="1"
                                     >
                                 </td>
-                                <td>
+                                <td style="width: 100px">
                                     <input type="number" min="1" name="products[${item.id}][product_qty]" step="1" value="1" class="form-control">
                                 </td>
                             </tr>`;
