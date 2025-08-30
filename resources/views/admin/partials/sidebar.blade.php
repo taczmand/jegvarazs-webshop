@@ -11,7 +11,7 @@
             <i class="fa-solid fa-user"></i>
             <span>{{ optional(Auth::guard('admin')->user())->name }}</span>
         </a>
-        <div id="collapseProfil" class="collapse">
+        <div id="collapseProfil" class="collapse" data-bs-parent="#accordionSidebar">
             <div class="bg-white py-2 collapse-inner rounded">
                 <a class="collapse-item" href="{{ url('admin/profil') }}">Profil</a>
                 <a class="collapse-item" href="{{ url('admin/kijelentkezes') }}">Kijelentkezés</a>
@@ -27,7 +27,6 @@
             <span>Vezérlőpult</span></a>
     </li>
 
-
     <hr class="sidebar-divider">
 
     <div class="sidebar-heading">
@@ -39,10 +38,9 @@
             <i class="fa-solid fa-money-bill-transfer"></i>
             <span>Értékesítés <span id="new_sale" class="badge badge-secondary ml-2 d-none">0</span></span>
         </a>
-        <div id="collapseSale" class="collapse">
+        <div id="collapseSale" class="collapse" data-bs-parent="#accordionSidebar">
             <div class="bg-white py-2 collapse-inner rounded">
                 <a class="collapse-item" href="{{ route('admin.orders.index') }}">Rendelések<span id="new_order_badge" class="badge badge-secondary ml-2 d-none">0</span></a>
-                <!--<a class="collapse-item" href="{{ route('admin.coupons.index') }}">Kuponok<span id="new_coupon_badge" class="badge badge-secondary ml-2 d-none">0</span></a>-->
                 <a class="collapse-item" href="{{ route('admin.customers.index') }}">Vevők és partnerek<span id="new_customer_badge" class="badge badge-secondary ml-2 d-none">0</span></a>
             </div>
         </div>
@@ -53,7 +51,7 @@
             <i class="fa-solid fa-list"></i>
             <span>Termékek <span id="new_product" class="badge badge-secondary ml-2 d-none">0</span></span>
         </a>
-        <div id="collapseProducts" class="collapse">
+        <div id="collapseProducts" class="collapse" data-bs-parent="#accordionSidebar">
             <div class="bg-white py-2 collapse-inner rounded">
                 <a class="collapse-item" href="{{ route('admin.products.index') }}">Összes termék<span id="new_product_badge" class="badge badge-secondary ml-2 d-none">0</span></a>
                 <a class="collapse-item" href="{{ route('admin.categories.index') }}">Kategóriák<span id="new_product_category_badge" class="badge badge-secondary ml-2 d-none">0</span></a>
@@ -67,9 +65,9 @@
     <li class="nav-item">
         <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseCMS" aria-expanded="false">
             <i class="fa-solid fa-file-lines"></i>
-            <span>Tartalomkezelés <span id="new_product" class="badge badge-secondary ml-2 d-none">0</span></span>
+            <span>Tartalomkezelés</span>
         </a>
-        <div id="collapseCMS" class="collapse">
+        <div id="collapseCMS" class="collapse" data-bs-parent="#accordionSidebar">
             <div class="bg-white py-2 collapse-inner rounded">
                 <a class="collapse-item" href="{{ route('admin.blog.index') }}">Blog bejegyzések</a>
                 <a class="collapse-item" href="{{ route('admin.settings.downloads.index') }}">Letöltések</a>
@@ -92,7 +90,7 @@
             <i class="fa-solid fa-business-time"></i>
             <span>Ügyviteli folyamatok <span id="new_business" class="badge badge-secondary ml-2 d-none">0</span></span>
         </a>
-        <div id="collapseCustomerProcesses" class="collapse">
+        <div id="collapseCustomerProcesses" class="collapse" data-bs-parent="#accordionSidebar">
             <div class="bg-white py-2 collapse-inner rounded">
                 <a class="collapse-item" href="{{ route('admin.offers.index') }}">Ajánlatok<span id="new_offer_badge" class="badge badge-secondary ml-2 d-none">0</span></a>
                 <a class="collapse-item" href="{{ route('admin.contracts.index') }}">Szerződések<span id="new_contract_badge" class="badge badge-secondary ml-2 d-none">0</span></a>
@@ -113,7 +111,7 @@
             <i class="fa-solid fa-gears"></i>
             <span>Webshop</span>
         </a>
-        <div id="collapseWebshopSettings" class="collapse">
+        <div id="collapseWebshopSettings" class="collapse" data-bs-parent="#accordionSidebar">
             <div class="bg-white py-2 collapse-inner rounded">
                 <a class="collapse-item" href="{{ route('admin.shipping-methods.index') }}">Szállítási módok</a>
                 <a class="collapse-item" href="{{ route('admin.payment-methods.index') }}">Fizetési módok</a>
@@ -129,7 +127,7 @@
             <i class="fa-solid fa-screwdriver-wrench"></i>
             <span>Rendszer</span>
         </a>
-        <div id="collapseSystemSettings" class="collapse">
+        <div id="collapseSystemSettings" class="collapse" data-bs-parent="#accordionSidebar">
             <div class="bg-white py-2 collapse-inner rounded">
                 <a class="collapse-item" href="{{ route('admin.settings.general.index') }}">Általános</a>
                 <a class="collapse-item" href="{{ route('admin.settings.users.index') }}">Felhasználók</a>
@@ -148,7 +146,7 @@
             <i class="fa-solid fa-chart-simple"></i>
             <span>Aktivitás</span>
         </a>
-        <div id="collapseAnalytics" class="collapse">
+        <div id="collapseAnalytics" class="collapse" data-bs-parent="#accordionSidebar">
             <div class="bg-white py-2 collapse-inner rounded">
                 <a class="collapse-item" href="{{ route('admin.stats.watched_products') }}">Megtekintett termékek</a>
                 <a class="collapse-item" href="{{ route('admin.stats.purchased_products') }}">Vásárolt termékek</a>
