@@ -198,7 +198,7 @@
 
                                 <div id="fullscreen_signature" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 1060; background-color: white">
 
-                                    <canvas id="signature-pad"></canvas>
+                                    <canvas id="signature-pad" style="flex: 1; width: 100%; height: calc(100% - 80px); border: 1px solid #ccc;"></canvas>
                                     <input type="hidden" name="signature" id="signature-input">
 
                                     <div style="padding: 1rem; display: flex; gap: 10px;">
@@ -304,8 +304,12 @@
 
             function resizeCanvas() {
                 const ratio = Math.max(window.devicePixelRatio || 1, 1);
-                signature_canvas.width = window.innerWidth * ratio;
-                signature_canvas.height = (window.innerHeight - 100) * ratio;
+
+
+                const rect = signature_canvas.getBoundingClientRect(); // a tényleges megjelenített méret
+
+                signature_canvas.width = rect.width * ratio;
+                signature_canvas.height = rect.height * ratio;
                 signature_canvas.getContext("2d").scale(ratio, ratio);
             }
 
@@ -322,7 +326,6 @@
                 document.getElementById('fullscreen_signature').style.display = 'flex';
             });
 
-            $('#clear_signature').removeClass('d-none');
 
             $("#close-fullscreen-signature").on("click", function () {
                 $("#fullscreen_signature").hide(); // bezárás
@@ -499,6 +502,7 @@
                     $('.contract-contact').find('input, select, textarea').prop('disabled', false);
 
                     $('#generateContract').removeClass('d-none');
+                    $('#clear_signature').removeClass('d-none');
                     $('#contract_pdf_link').addClass('d-none').removeAttr('href');
                 } catch (error) {
                     showToast(error, 'danger');
