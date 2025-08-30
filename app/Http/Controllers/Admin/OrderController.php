@@ -24,6 +24,8 @@ class OrderController extends Controller
             'orders.customer_id',
             'customers.last_name',
             'customers.first_name',
+            'orders.viewed_by',
+            'orders.viewed_at'
         ])->leftJoin('customers', 'orders.customer_id', '=', 'customers.id')
             ->with('items', 'customer');
 
@@ -54,6 +56,7 @@ class OrderController extends Controller
             })
             ->addColumn('status', function ($order) {
                 $translations = [
+                    'paid'   => 'Fizetve',
                     'pending'   => 'Függőben',
                     'completed' => 'Teljesítve',
                     'cancelled' => 'Törölve',
@@ -77,6 +80,14 @@ class OrderController extends Controller
             ->editColumn('created_at', function ($order) {
                 return $order->created_at ? $order->created_at->format('Y-m-d H:i:s') : '';
             })
+            ->addColumn('viewed_by', function ($order) {
+                if ($order->viewed_by) {
+                    return '<span title="Megtekintve: '
+                        . ($order->viewed_at ? \Carbon\Carbon::parse($order->viewed_at)->format('Y-m-d H:i:s') : '-')
+                        . '">' . e($order->viewed_by) . '</span>';
+                }
+                return '<span class="text-warning"><i class="fa-solid fa-eye-slash"></i></span>';
+            })
             ->addColumn('action', function ($order) {
                 $user = auth('admin')->user();
                 $buttons = '';
@@ -99,7 +110,8 @@ class OrderController extends Controller
 
                 return $buttons;
             })
-            ->rawColumns(['action'])
+            ->setRowClass(fn($order) => $order->viewed_by ? '' : 'fw-bold')
+            ->rawColumns(['action', 'viewed_by'])
             ->make(true);
     }
 

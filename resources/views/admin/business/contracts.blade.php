@@ -50,6 +50,7 @@
                         <th>Szerelés dátuma</th>
                         <th>Készítette</th>
                         <th>Létrehozva</th>
+                        <th>Látta</th>
                         <th data-priority="2">Műveletek</th>
                     </tr>
                     </thead>
@@ -242,6 +243,7 @@
                     {data: 'installation_date'},
                     {data: 'creator_name'},
                     {data: 'created'},
+                    {data: 'viewed_by'},
                     {data: 'action', orderable: false, searchable: false}
                 ],
             });
@@ -396,7 +398,9 @@
 
                 $('#contract_pdf_link').removeClass('d-none').attr('href', `${contract.pdf_path}`);
 
-                sendViewRequest("contracts", row_data.id);
+                sendViewRequest("contract", row_data.id);
+
+                table.ajax.reload(null, false);
 
                 adminModal.show();
             });

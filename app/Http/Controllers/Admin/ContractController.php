@@ -45,10 +45,23 @@ class ContractController extends Controller
             'contracts.address_line',
             'contracts.installation_date',
             'contracts.created_at as created',
-            'users.name as creator_name'])
+            'users.name as creator_name',
+            'contracts.viewed_by',
+            'contracts.viewed_at',
+        ])
             ->leftJoin('users', 'contracts.created_by', '=', 'users.id');
 
         return DataTables::of($contracts)
+            ->editColumn('created_at', function ($contract) {
+                return $contract->created_at
+                    ? \Carbon\Carbon::parse($contract->created_at)->format('Y-m-d H:i:s')
+                    : '';
+            })
+            ->editColumn('installation_date', function ($contract) {
+                return $contract->installation_date
+                    ? \Carbon\Carbon::parse($contract->installation_date)->format('Y-m-d')
+                    : '';
+            })
             ->filterColumn('id', function ($query, $keyword) {
                 if (is_numeric($keyword)) {
                     $query->where('contracts.id', '=', $keyword);
@@ -57,29 +70,40 @@ class ContractController extends Controller
             ->addColumn('creator_name', function ($contract) {
                 return $contract->creator_name ?? 'Ismeretlen';
             })
+            ->addColumn('viewed_by', function ($contract) {
+                if ($contract->viewed_by) {
+                    return '<span title="Megtekintve: '
+                        . ($contract->viewed_at ? \Carbon\Carbon::parse($contract->viewed_at)->format('Y-m-d H:i:s') : '-')
+                        . '">' . e($contract->viewed_by) . '</span>';
+                }
+                return '<span class="text-warning"><i class="fa-solid fa-eye-slash"></i></span>';
+            })
             ->addColumn('action', function ($contract) {
                 $user = auth('admin')->user();
 
                 $buttons = '
-                    <button class="btn btn-sm btn-primary view" data-id="' . $contract->id . '" title="Megtekintés">
-                        <i class="fas fa-eye"></i>
-                    </button>
-                ';
-
+                <button class="btn btn-sm btn-primary view" data-id="' . $contract->id . '" title="Megtekintés">
+                    <i class="fas fa-eye"></i>
+                </button>
+            ';
 
                 if ($user && $user->can('delete-contract')) {
                     $buttons .= '
-                        <button class="btn btn-sm btn-danger delete" data-id="' . $contract->id . '" title="Törlés">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    ';
+                    <button class="btn btn-sm btn-danger delete" data-id="' . $contract->id . '" title="Törlés">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                ';
                 }
 
                 return $buttons;
             })
-            ->rawColumns(['action'])
+            ->setRowClass(function ($contract) {
+                return $contract->viewed_by ? '' : 'fw-bold';
+            })
+            ->rawColumns(['action', 'viewed_by'])
             ->make(true);
     }
+
 
     public function getVersionJson($version)
     {

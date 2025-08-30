@@ -184,7 +184,7 @@
                     { data: 'created_at' },
                     { data: 'action', orderable: false, searchable: false }
                 ],
-                model: 'appointments',
+                model: 'appointment',
                 fillFormFn: (row) => {
                     document.getElementById('id').value = row.id ?? '';
                     document.getElementById('name').value = row.name ?? '';

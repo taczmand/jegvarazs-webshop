@@ -33,26 +33,46 @@ class OfferController extends Controller
             'offers.city',
             'offers.address_line',
             'offers.created_at as created',
-            'users.name as creator_name'])
+            'users.name as creator_name',   // 👉 innen jön a creator neve
+            'offers.viewed_by',
+            'offers.viewed_at',
+        ])
             ->leftJoin('users', 'offers.created_by', '=', 'users.id');
 
         return DataTables::of($offers)
+            ->editColumn('created_at', function ($offer) {
+                return $offer->created_at
+                    ? \Carbon\Carbon::parse($offer->created_at)->format('Y-m-d H:i:s')
+                    : '';
+            })
             ->addColumn('creator_name', function ($offer) {
                 return $offer->creator_name ?? 'Ismeretlen';
             })
+            ->addColumn('viewed_by', function ($offer) {
+                if ($offer->viewed_by) {
+                    return '<span title="Megtekintve: '
+                        . ($offer->viewed_at ? \Carbon\Carbon::parse($offer->viewed_at)->format('Y-m-d H:i:s') : '-')
+                        . '">' . e($offer->viewed_by) . '</span>';
+                }
+                return '<span class="text-warning"><i class="fa-solid fa-eye-slash"></i></span>';
+            })
             ->addColumn('action', function ($offer) {
                 return '
-                    <button class="btn btn-sm btn-primary view" data-id="'.$offer->id.'" title="Megtekintés">
-                        <i class="fas fa-eye"></i>
-                    </button>
-                    <button class="btn btn-sm btn-danger delete" data-id="'.$offer->id.'" title="Törlés">
-                        <i class="fas fa-trash-alt"></i>
-                    </button>
-                ';
+                <button class="btn btn-sm btn-primary view" data-id="'.$offer->id.'" title="Megtekintés">
+                    <i class="fas fa-eye"></i>
+                </button>
+                <button class="btn btn-sm btn-danger delete" data-id="'.$offer->id.'" title="Törlés">
+                    <i class="fas fa-trash-alt"></i>
+                </button>
+            ';
             })
-            ->rawColumns(['action'])
+            ->setRowClass(function ($offer) {
+                return $offer->viewed_by ? '' : 'fw-bold';
+            })
+            ->rawColumns(['action', 'viewed_by'])
             ->make(true);
     }
+
 
     public function showProductsToOffer($id)
     {

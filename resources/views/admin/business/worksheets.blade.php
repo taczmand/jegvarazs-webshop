@@ -112,6 +112,7 @@
                             <th>Szerződés</th>
                             <th>Készítette</th>
                             <th>Létrehozva</th>
+                            <th>Látta</th>
                             <th data-priority="2">Műveletek</th>
                         </tr>
                         </thead>
@@ -458,6 +459,7 @@
                     { data: 'contract_id' },
                     { data: 'creator_name' },
                     { data: 'created' },
+                    { data: 'viewed_by' },
                     { data: 'action', orderable: false, searchable: false }
                 ],
             });
@@ -727,7 +729,8 @@
 
                 const row_data = $('#adminTable').DataTable().row($(this).parents('tr')).data();
 
-                sendViewRequest("worksheets", row_data.id);
+                sendViewRequest("worksheet", row_data.id);
+                table.ajax.reload(null, false);
 
                 editWorksheet(row_data.id);
             });

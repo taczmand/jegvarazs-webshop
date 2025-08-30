@@ -59,6 +59,7 @@
                         <th>Állapot</th>
                         <th>Létrehozva</th>
                         <th>Módosítva</th>
+                        <th>Látta</th>
                         <th data-priority="2">Műveletek</th>
                     </tr>
                     </thead>
@@ -343,6 +344,7 @@
                     }},
                     {data: 'created'},
                     {data: 'updated'},
+                    {data: 'viewed_by'},
                     {data: 'action', orderable: false, searchable: false}
                 ],
             });
@@ -381,7 +383,8 @@
                 $('#customer_created_at').text(customer_data.created_at);
                 $('#customer_updated_at').text(customer_data.updated_at);
 
-                sendViewRequest("customers", row_data.id);
+                sendViewRequest("customer", row_data.id);
+                table.ajax.reload(null, false);
 
                 adminModal.show();
             });

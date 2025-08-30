@@ -49,11 +49,11 @@ export function initCrud(options) {
         }
     }
 
-    document.querySelectorAll('[data-bs-dismiss="modal"]').forEach(function (btn) {
+    /*document.querySelectorAll('[data-bs-dismiss="modal"]').forEach(function (btn) {
         btn.addEventListener('click', function () {
             table.ajax.reload(null, false);
         });
-    });
+    });*/
 
     const addButton = document.getElementById(addButtonId);
     if (addButton) {
@@ -102,7 +102,7 @@ export function initCrud(options) {
                     console.error('Hiba a megtekintés mentésében:', err);
                 });
         }
-
+        table.ajax.reload(null, false);
         modal.show();
     });
 

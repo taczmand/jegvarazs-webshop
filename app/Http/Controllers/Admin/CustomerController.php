@@ -32,7 +32,9 @@ class CustomerController extends Controller
             'is_partner',
             'status',
             'created_at as created',
-            'updated_at as updated'
+            'updated_at as updated',
+            'viewed_by',
+            'viewed_at'
         ]);
 
         return DataTables::of($customers)
@@ -59,6 +61,14 @@ class CustomerController extends Controller
             ->editColumn('created_at', function ($customer) {
                 return $customer->created ? \Carbon\Carbon::parse($customer->created)->format('Y-m-d H:i:s') : '';
             })
+            ->addColumn('viewed_by', function ($customer) {
+                if ($customer->viewed_by) {
+                    return '<span title="Megtekintve: '
+                        . ($customer->viewed_at ? \Carbon\Carbon::parse($customer->viewed_at)->format('Y-m-d H:i:s') : '-')
+                        . '">' . e($customer->viewed_by) . '</span>';
+                }
+                return '<span class="text-warning"><i class="fa-solid fa-eye-slash"></i></span>';
+            })
             ->addColumn('action', function ($customer) {
                 $user = auth('admin')->user();
                 $actions = '';
@@ -79,8 +89,8 @@ class CustomerController extends Controller
 
                 return $actions;
             })
-
-            ->rawColumns(['action'])
+            ->setRowClass(fn($customer) => $customer->viewed_by ? '' : 'fw-bold')
+            ->rawColumns(['action', 'viewed_by'])
             ->make(true);
     }
 

@@ -47,6 +47,7 @@
                         <th>Teljes összeg</th>
                         <th>Állapot</th>
                         <th>Termékek száma</th>
+                        <th>Látta</th>
                         <th data-priority="3">Műveletek</th>
                     </tr>
                     </thead>
@@ -323,6 +324,7 @@
                     {data: 'total_amount'},
                     {data: 'status'},
                     {data: 'items_count'},
+                    {data: 'viewed_by'},
                     {data: 'action', orderable: false, searchable: false}
                 ],
             });
@@ -356,7 +358,8 @@
                 renderShippingData(order_data);
                 renderBillingData(order_data);
 
-                sendViewRequest("orders", row_data.id);
+                sendViewRequest("order", row_data.id);
+                table.ajax.reload(null, false);
 
                 adminModal.show();
             });

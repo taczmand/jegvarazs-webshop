@@ -53,6 +53,7 @@
                         <th>Cím</th>
                         <th>Készítette</th>
                         <th>Létrehozva</th>
+                        <th>Látta</th>
                         <th data-priority="2">Műveletek</th>
                     </tr>
                     </thead>
@@ -197,6 +198,7 @@
                     { data: 'address_line' },
                     { data: 'creator_name' },
                     { data: 'created' },
+                    { data: 'viewed_by' },
                     { data: 'action', orderable: false, searchable: false }
                 ],
             });
@@ -313,7 +315,9 @@
 
                 $('#offer_pdf_link').removeClass('d-none').attr('href', `${offer.pdf_path}`);
 
-                sendViewRequest("offers", row_data.id);
+                sendViewRequest("offer", row_data.id);
+
+                table.ajax.reload(null, false);
 
                 adminModal.show();
             });

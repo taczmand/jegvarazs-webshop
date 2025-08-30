@@ -16,36 +16,37 @@ class AppointmentController extends Controller
     public function data()
     {
         $appointments = Appointment::select([
-            'appointments.id',
-            'appointments.name',
-            'appointments.email',
-            'appointments.phone',
-            'appointments.zip_code',
-            'appointments.city',
-            'appointments.address_line',
-            'appointments.appointment_date',
-            'appointments.appointment_type',
-            'appointments.message',
-            'appointments.status',
-            'appointments.created_at',
-            'users.name as viewed_by_name',
-            'actions.viewed_by',
-        ])
-            ->leftJoin('user_actions as actions', function ($join) {
-                $join->on('appointments.id', '=', 'actions.model_id')
-                    ->where('actions.model', '=', 'appointments');
-            })
-            ->leftJoin('users', 'actions.viewed_by', '=', 'users.id');
+            'id',
+            'name',
+            'email',
+            'phone',
+            'zip_code',
+            'city',
+            'address_line',
+            'appointment_date',
+            'appointment_type',
+            'message',
+            'status',
+            'created_at',
+            'viewed_by',
+            'viewed_at',
+        ]);
 
         return DataTables::of($appointments)
             ->editColumn('created_at', function ($item) {
                 return $item->created_at ? $item->created_at->format('Y-m-d H:i:s') : '';
             })
             ->addColumn('viewed_by', function ($item) {
-                return $item->viewed_by_name ?? '<span class="text-warning"><i class="fa-solid fa-eye-slash"></i></span>';
+                if ($item->viewed_by) {
+                    $tooltip = $item->viewed_at
+                        ? \Carbon\Carbon::parse($item->viewed_at)->format('Y-m-d H:i:s')
+                        : '';
+                    return '<span title="' . e($tooltip) . '">' . e($item->viewed_by) . '</span>';
+                }
+                return '<span class="text-warning"><i class="fa-solid fa-eye-slash"></i></span>';
             })
             ->filterColumn('status', function ($query, $keyword) {
-                $query->where('appointments.status', '=', "{$keyword}");
+                $query->where('status', '=', "{$keyword}");
             })
             ->addColumn('action', function ($item) {
                 $user = auth('admin')->user();
@@ -53,23 +54,29 @@ class AppointmentController extends Controller
 
                 if ($user && $user->can('edit-appointment')) {
                     $actions .= '
-                        <button class="btn btn-sm btn-primary edit" data-id="' . $item->id . '" title="Szerkesztés">
-                            <i class="fas fa-edit"></i>
-                        </button>';
+                <button class="btn btn-sm btn-primary edit" data-id="' . $item->id . '" title="Szerkesztés">
+                    <i class="fas fa-edit"></i>
+                </button>';
                 }
 
                 if ($user && $user->can('delete-appointment')) {
                     $actions .= '
-                        <button class="btn btn-sm btn-danger delete" data-id="' . $item->id . '" title="Törlés">
-                            <i class="fas fa-trash"></i>
-                        </button>';
+                <button class="btn btn-sm btn-danger delete" data-id="' . $item->id . '" title="Törlés">
+                    <i class="fas fa-trash"></i>
+                </button>';
                 }
 
                 return $actions;
             })
+            ->setRowClass(function ($item) {
+                return $item->viewed_by ? '' : 'fw-bold'; // ha nincs viewed_by → vastag
+            })
             ->rawColumns(['action', 'viewed_by'])
             ->make(true);
     }
+
+
+
 
 
     public function store(Request $request)

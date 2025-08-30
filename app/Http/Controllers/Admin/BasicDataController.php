@@ -59,44 +59,71 @@ class BasicDataController extends Controller
 
     public function getNewRecords(): JsonResponse
     {
-        $newRecords = UserAction::query()
-            ->select('model', DB::raw('count(*) as count'), DB::raw('max(created_at) as latest'))
-            ->where('action', 'created')
-            ->whereIn('model', [
-                'customers',
-                'orders',
-                'appointments',
-                'contracts',
-                'worksheets'
-            ])
-            ->whereNull('viewed_by')
-            ->groupBy('model')
-            ->orderByDesc('latest')
-            ->get();
+        $tables = [
+            'customers',
+            'orders',
+            'appointments',
+            'contracts',
+            'worksheets',
+        ];
 
-        return response()->json($newRecords);
+        $queries = [];
+
+        foreach ($tables as $table) {
+            $queries[] = \DB::table($table)
+                ->select(
+                    \DB::raw("'{$table}' as model"),
+                    \DB::raw('COUNT(*) as count'),
+                    \DB::raw('MAX(created_at) as latest')
+                )
+                ->whereNull('viewed_by');
+        }
+
+        // UNION ALL az összes lekérdezés között
+        $unionQuery = array_shift($queries);
+        foreach ($queries as $query) {
+            $unionQuery = $unionQuery->unionAll($query);
+        }
+
+        $results = $unionQuery->orderByDesc('latest')->get()->map(function($item) {
+            $item->latest = $item->latest ? \Carbon\Carbon::parse($item->latest)->format('Y-m-d H:i:s') : null;
+            return $item;
+        });
+
+        return response()->json($results);
     }
+
 
     public function markAsViewed(Request $request)
     {
         $data = $request->validate([
             'model' => 'required|string',
-            'id' => 'required|integer',
+            'id'    => 'required|integer',
         ]);
 
         try {
-            UserAction::where('model', $data['model'])
-                ->where('model_id', $data['id'])
-                ->where('action', 'created')
-                ->update([
-                    'viewed_by' => auth('admin')->id(),
-                    'viewed_at' => now(),
-                ]);
+            $modelClass = '\\App\\Models\\' . ucfirst($data['model']);
+
+            if (!class_exists($modelClass)) {
+                return response()->json(['message' => 'Érvénytelen modell típus'], 400);
+            }
+
+            $record = $modelClass::findOrFail($data['id']);
+
+            $user = auth('admin')->user();
+
+            $record->update([
+                'viewed_by' => $user ? $user->name : null,
+                'viewed_at' => now(),
+            ]);
 
             return response()->json(['message' => 'A rekord megjelölve mint megtekintett']);
         } catch (\Exception $e) {
-            return response()->json(['message' => 'Hiba történt: ' . $e->getMessage()], 500);
+            return response()->json([
+                'message' => 'Hiba történt: ' . $e->getMessage()
+            ], 500);
         }
     }
+
 
 }

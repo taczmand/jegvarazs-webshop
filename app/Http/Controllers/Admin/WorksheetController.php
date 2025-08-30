@@ -86,7 +86,7 @@ class WorksheetController extends Controller
     {
         $user = $this->user;
 
-        $select = [
+        $worksheetsQuery = Worksheet::select([
             'worksheets.id',
             'worksheets.installation_date',
             'worksheets.name',
@@ -96,55 +96,37 @@ class WorksheetController extends Controller
             'worksheets.data',
             'worksheets.contract_id',
             'worksheets.created_at as created',
+            'worksheets.viewed_by',
+            'worksheets.viewed_at',
             'creator.name as creator_name',
             DB::raw('GROUP_CONCAT(DISTINCT worker.name ORDER BY worker.name SEPARATOR ", ") as worker_name')
-        ];
+        ])
+            ->leftJoin('users as creator', 'worksheets.created_by', '=', 'creator.id')
+            ->leftJoin('worksheet_workers', 'worksheets.id', '=', 'worksheet_workers.worksheet_id')
+            ->leftJoin('users as worker', 'worksheet_workers.worker_id', '=', 'worker.id');
 
-        if ($user->can('view-worksheets')) {
-            $worksheets = Worksheet::select($select)
-                ->leftJoin('users as creator', 'worksheets.created_by', '=', 'creator.id')
-                ->leftJoin('worksheet_workers', 'worksheets.id', '=', 'worksheet_workers.worksheet_id')
-                ->leftJoin('users as worker', 'worksheet_workers.worker_id', '=', 'worker.id')
-                ->groupBy(
-                    'worksheets.id',
-                    'worksheets.installation_date',
-                    'worksheets.name',
-                    'worksheets.city',
-                    'worksheets.work_type',
-                    'worksheets.work_status',
-                    'worksheets.data',
-                    'worksheets.contract_id',
-                    'worksheets.created_at',
-                    'creator.name'
-                );
-        } elseif ($user->can('view-own-worksheets')) {
-            $worksheets = Worksheet::select($select)
-                ->leftJoin('users as creator', 'worksheets.created_by', '=', 'creator.id')
-                ->leftJoin('worksheet_workers', 'worksheets.id', '=', 'worksheet_workers.worksheet_id')
-                ->leftJoin('users as worker', 'worksheet_workers.worker_id', '=', 'worker.id')
-                ->where('worksheet_workers.worker_id', $user->id)
-                ->groupBy(
-                    'worksheets.id',
-                    'worksheets.installation_date',
-                    'worksheets.name',
-                    'worksheets.city',
-                    'worksheets.work_type',
-                    'worksheets.work_status',
-                    'worksheets.data',
-                    'worksheets.contract_id',
-                    'worksheets.created_at',
-                    'creator.name'
-                );
-        } else {
-            return response()->json(['error' => 'Nincs jogosultság'], 403);
+        if ($user->can('view-own-worksheets') && !$user->can('view-worksheets')) {
+            $worksheetsQuery->where('worksheet_workers.worker_id', $user->id);
         }
 
-        return DataTables::of($worksheets)
-            ->filterColumn('id', function ($query, $keyword) {
-                if (is_numeric($keyword)) {
-                    $query->where('worksheets.id', '=', $keyword);
-                }
-            })
+        $worksheetsQuery->groupBy(
+            'worksheets.id',
+            'worksheets.installation_date',
+            'worksheets.name',
+            'worksheets.city',
+            'worksheets.work_type',
+            'worksheets.work_status',
+            'worksheets.data',
+            'worksheets.contract_id',
+            'worksheets.created_at',
+            'worksheets.viewed_by',
+            'worksheets.viewed_at',
+            'creator.name'
+        );
+
+        return DataTables::of($worksheetsQuery)
+            ->editColumn('created_at', fn($worksheet) => $worksheet->created_at ? \Carbon\Carbon::parse($worksheet->created_at)->format('Y-m-d H:i:s') : '')
+            ->editColumn('installation_date', fn($worksheet) => $worksheet->installation_date ? \Carbon\Carbon::parse($worksheet->installation_date)->format('Y-m-d') : '')
             ->addColumn('data', function ($worksheet) {
                 $data = $worksheet->data;
                 $json = is_string($data) ? json_decode($data, true) : (is_array($data) ? $data : []);
@@ -161,12 +143,6 @@ class WorksheetController extends Controller
 
                 return $html;
             })
-            ->filterColumn('data', function ($query, $keyword) {
-                $query->where('worksheets.data', 'like', '%' . $keyword . '%');
-            })
-            ->filterColumn('work_status', function ($query, $keyword) {
-                $query->where('worksheets.work_status', '=', "{$keyword}");
-            })
             ->addColumn('contract_id', function ($worksheet) {
                 if ($worksheet->contract_id) {
                     return '<a class="btn btn-sm btn-info" target="_blank" href="' .
@@ -177,6 +153,14 @@ class WorksheetController extends Controller
             })
             ->addColumn('creator_name', fn($worksheet) => $worksheet->creator_name ?? '-')
             ->addColumn('worker_name', fn($worksheet) => $worksheet->worker_name ?? '-')
+            ->addColumn('viewed_by', function ($worksheet) {
+                if ($worksheet->viewed_by) {
+                    return '<span title="Megtekintve: '
+                        . ($worksheet->viewed_at ? \Carbon\Carbon::parse($worksheet->viewed_at)->format('Y-m-d H:i:s') : '-')
+                        . '">' . e($worksheet->viewed_by) . '</span>';
+                }
+                return '<span class="text-warning"><i class="fa-solid fa-eye-slash"></i></span>';
+            })
             ->addColumn('action', function ($worksheet) {
                 $user = auth('admin')->user();
                 $buttons = '';
@@ -190,9 +174,11 @@ class WorksheetController extends Controller
 
                 return $buttons;
             })
-            ->rawColumns(['contract_id', 'action', 'work_status_icon', 'data'])
+            ->setRowClass(fn($worksheet) => $worksheet->viewed_by ? '' : 'fw-bold')
+            ->rawColumns(['contract_id', 'action', 'data', 'viewed_by'])
             ->make(true);
     }
+
 
 
     protected function translateDataEntry(string $key, $value): array
