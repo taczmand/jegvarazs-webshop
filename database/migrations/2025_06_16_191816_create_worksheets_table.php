@@ -34,6 +34,8 @@ return new class extends Migration
                 ->constrained('contracts')
                 ->onDelete('no action')
                 ->onUpdate('no action');
+            $table->string('viewed_by')->nullable();
+            $table->dateTime('viewed_at')->nullable();
             $table->foreignId('created_by')
                 ->constrained('users')
                 ->onDelete('no action')

@@ -42,7 +42,8 @@ return new class extends Migration
             // Egyéb mezők
             $table->text('comment')->nullable();
             $table->enum('status', ['pending', 'processing', 'completed', 'canceled', 'paid', 'payment_failed'])->default('pending');
-
+            $table->string('viewed_by')->nullable();
+            $table->dateTime('viewed_at')->nullable();
             $table->timestamp('created_at')->default(DB::raw('CURRENT_TIMESTAMP'));
             $table->timestamp('updated_at')->default(DB::raw('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'));
         });

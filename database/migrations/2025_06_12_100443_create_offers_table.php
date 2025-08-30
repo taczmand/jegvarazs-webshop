@@ -24,6 +24,8 @@ return new class extends Migration
             $table->string('email');
             $table->text('description')->nullable();
             $table->string('pdf_path')->nullable();
+            $table->string('viewed_by')->nullable();
+            $table->dateTime('viewed_at')->nullable();
             $table->foreignId('created_by')
                 ->constrained('users')
                 ->onDelete('cascade')

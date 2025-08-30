@@ -18,6 +18,8 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->rememberToken()->nullable();
             $table->string('password');
+            $table->string('viewed_by')->nullable();
+            $table->dateTime('viewed_at')->nullable();
             $table->timestamp('created_at')->default(DB::raw('CURRENT_TIMESTAMP'));
             $table->timestamp('updated_at')->default(DB::raw('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'));
 
