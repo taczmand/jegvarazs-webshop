@@ -205,6 +205,9 @@
                                         <button type="submit" class="btn btn-primary" id="generateContract">
                                             <i class="fas fa-file-pdf"></i> Szerződés generálása
                                         </button>
+                                        <button type="button" id="clear-signature-pad" class="btn btn-secondary">
+                                            <i class="fas fa-eraser"></i> Újra
+                                        </button>
                                         <button id="close-fullscreen-signature" class="btn btn-danger">
                                             Bezárás
                                         </button>
@@ -300,13 +303,14 @@
             });
 
             const signature_canvas = document.getElementById('signature-pad');
+            const fullscreenDiv = document.getElementById('fullscreen_signature');
 
 
             function resizeCanvas() {
                 const ratio = Math.max(window.devicePixelRatio || 1, 1);
+                const rect = signature_canvas.getBoundingClientRect();
 
-
-                const rect = signature_canvas.getBoundingClientRect(); // a tényleges megjelenített méret
+                if(rect.width === 0 || rect.height === 0) return; // még nem látható, ne skálázz
 
                 signature_canvas.width = rect.width * ratio;
                 signature_canvas.height = rect.height * ratio;
@@ -321,9 +325,15 @@
                 penColor: 'rgb(0, 0, 0)'
             });
 
+
             document.getElementById('clear_signature').addEventListener('click', function() {
                 signaturePad.clear();
                 document.getElementById('fullscreen_signature').style.display = 'flex';
+                resizeCanvas();
+            });
+            
+            document.getElementById('clear-signature-pad').addEventListener('click', function() {
+                signaturePad.clear();
             });
 
 
