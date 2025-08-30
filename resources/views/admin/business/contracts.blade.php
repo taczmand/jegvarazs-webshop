@@ -195,15 +195,25 @@
                             <!-- Szerződés generálás tab -->
 
                             <div class="tab-pane fade" id="contract">
-                                <div id="signature_area" class="d-none">
-                                    <canvas id="signature-pad" width="400" height="200" style="border:1px solid #000;"></canvas>
+
+                                <div id="fullscreen_signature" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 1060; background-color: white">
+
+                                    <canvas id="signature-pad"></canvas>
                                     <input type="hidden" name="signature" id="signature-input">
+
+                                    <div style="padding: 1rem; display: flex; gap: 10px;">
+                                        <button type="submit" class="btn btn-primary" id="generateContract">
+                                            <i class="fas fa-file-pdf"></i> Szerződés generálása
+                                        </button>
+                                        <button id="close-fullscreen-signature" class="btn btn-danger">
+                                            Bezárás
+                                        </button>
+                                    </div>
                                 </div>
+
                                 <img id="show_signature" src="" class="d-none">
-                                <button type="submit" class="btn btn-primary d-none" id="generateContract">
-                                    <i class="fas fa-file-pdf"></i> Szerződés generálása
-                                </button>
-                                <a href="#" id="clear_signature" class="btn btn-secondary">Aláírás újra</a>
+
+                                <a href="#" id="clear_signature" class="btn btn-secondary">Aláírás</a>
                                 <a href="" id="contract_pdf_link" target="_blank" class="btn btn-primary d-none">Generált PDF megtekintése</a>
                             </div>
 
@@ -213,6 +223,8 @@
             </form>
         </div>
     </div>
+
+
 
 @endsection
 
@@ -288,9 +300,33 @@
             });
 
             const signature_canvas = document.getElementById('signature-pad');
-            const signaturePad = new SignaturePad(signature_canvas);
 
-            document.getElementById('clear_signature').addEventListener('click', () => signaturePad.clear());
+
+            function resizeCanvas() {
+                const ratio = Math.max(window.devicePixelRatio || 1, 1);
+                signature_canvas.width = window.innerWidth * ratio;
+                signature_canvas.height = (window.innerHeight - 100) * ratio;
+                signature_canvas.getContext("2d").scale(ratio, ratio);
+            }
+
+            window.addEventListener("resize", resizeCanvas);
+            resizeCanvas();
+
+            const signaturePad = new SignaturePad(signature_canvas, {
+                backgroundColor: 'rgb(255, 255, 255)',
+                penColor: 'rgb(0, 0, 0)'
+            });
+
+            document.getElementById('clear_signature').addEventListener('click', function() {
+                signaturePad.clear();
+                document.getElementById('fullscreen_signature').style.display = 'flex';
+            });
+
+            $('#clear_signature').removeClass('d-none');
+
+            $("#close-fullscreen-signature").on("click", function () {
+                $("#fullscreen_signature").hide(); // bezárás
+            });
 
             // Szerződés megtekintése
 
@@ -392,6 +428,7 @@
                 // Alárás
                 $('#show_signature').attr("src", "szerzodes/alairas/" + contract.signature_path);
                 $('#show_signature').removeClass('d-none');
+                $('#clear_signature').addClass('d-none');
                 $('#signature_area').addClass('d-none');
 
                 // Generált PDF link
