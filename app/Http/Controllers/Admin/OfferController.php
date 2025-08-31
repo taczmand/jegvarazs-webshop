@@ -187,7 +187,7 @@ class OfferController extends Controller
             }
 
             // Töröljük az ajánlatot és a hozzá tartozó termékeket
-            $offer->products()->delete();
+            $offer->offerProducts()->delete();
             $offer->delete();
 
             return response()->json([

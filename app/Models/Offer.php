@@ -20,4 +20,8 @@ class Offer extends Model
     {
         return $this->belongsTo(User::class, 'created_by');
     }
+    public function offerProducts()
+    {
+        return $this->hasMany(OfferProduct::class);
+    }
 }
