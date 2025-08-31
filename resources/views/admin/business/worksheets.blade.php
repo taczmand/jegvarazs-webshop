@@ -102,13 +102,13 @@
                         <thead>
                         <tr>
                             <th>ID</th>
-                            <th data-priority="0">Dátum</th>
-                            <th data-priority="1">Ügyfélnév</th>
-                            <th data-priority="3">Város</th>
-                            <th data-priority="4">Munka típusa</th>
+                            <th data-priority="1">Dátum</th>
+                            <th data-priority="0">Ügyfélnév</th>
+                            <th data-priority="2">Város</th>
+                            <th data-priority="3">Munka típusa</th>
                             <th>Munkalap adatok</th>
-                            <th data-priority="6">Szerelők</th>
-                            <th data-priority="5">Állapot</th>
+                            <th data-priority="5">Szerelők</th>
+                            <th data-priority="4">Állapot</th>
                             <th>Szerződés</th>
                             <th>Készítette</th>
                             <th>Létrehozva</th>
