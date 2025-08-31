@@ -60,6 +60,7 @@ class BasicDataController extends Controller
     public function getNewRecords(): JsonResponse
     {
         $tables = [
+            'offers',
             'customers',
             'orders',
             'appointments',

@@ -43,10 +43,12 @@
             vertical-align: bottom;
         }
         .product-name {
+            border-left: 1px solid #999;
             text-align: left;
         }
         .product-price {
-            text-align: right;
+            text-align: left;
+            border-left: 1px solid #999;
             white-space: nowrap;
         }
     </style>
@@ -65,8 +67,8 @@
             @endphp
             <tr>
                 <th class="product-name">Termék</th>
-                <th class="product-name">Mennyiség</th>
-                <th class="product-price">Bruttó egységár</th>
+                <th class="product-name">Menny.</th>
+                <th class="product-price">Br. egységár</th>
             </tr>
             @foreach ($products as $product)
                 <tr>
@@ -85,9 +87,9 @@
             <p>Az árak forintban értendők és tartalmazzák az ÁFÁT!</p>
         </div>
         <div style="clear: both;"></div>
-        <h2 style="font-style: italic">Az árváltozás jogát fenntartjuk.</h2>
-        <h2 style="font-style: italic">Árajánlatunk a kiadástól számítva 14 napig érvényes!</h2>
-        <h2 style="font-style: italic">Jászberény, {{ date('Y.m.d') }}.</h2>
+        <h5 style="font-style: italic; margin-top: 30mm">Az árváltozás jogát fenntartjuk.</h5>
+        <h5 style="font-style: italic">Árajánlatunk a kiadástól számítva 14 napig érvényes!</h5>
+        <h5 style="font-style: italic">Jászberény, {{ date('Y.m.d') }}.</h5>
 
     </div>
 </body>
