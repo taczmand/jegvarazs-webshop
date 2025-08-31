@@ -39,10 +39,13 @@
         }
         table td {
             border-bottom: 1px solid #999;
-            padding: 4px 0;
+            padding: 4px 1px;
             vertical-align: bottom;
         }
         .product-name {
+            text-align: left;
+        }
+        .product-qty {
             border-left: 1px solid #999;
             text-align: left;
         }
@@ -67,13 +70,13 @@
             @endphp
             <tr>
                 <th class="product-name">Termék</th>
-                <th class="product-name">Menny.</th>
+                <th class="product-qty">Menny.</th>
                 <th class="product-price">Br. egységár</th>
             </tr>
             @foreach ($products as $product)
                 <tr>
                     <td class="product-name">{{ $product['title'] }}</td>
-                    <td class="product-name">{{ $product['quantity'] }} db</td>
+                    <td class="product-qty">{{ $product['quantity'] }} db</td>
                     <td class="product-price">{{ number_format($product['gross_price'], 0, ',', ' ') }} Ft</td>
                 </tr>
                 @php
@@ -87,9 +90,9 @@
             <p>Az árak forintban értendők és tartalmazzák az ÁFÁT!</p>
         </div>
         <div style="clear: both;"></div>
-        <h5 style="font-style: italic; margin-top: 30mm">Az árváltozás jogát fenntartjuk.</h5>
-        <h5 style="font-style: italic">Árajánlatunk a kiadástól számítva 14 napig érvényes!</h5>
-        <h5 style="font-style: italic">Jászberény, {{ date('Y.m.d') }}.</h5>
+        <h4 style="font-style: italic; margin-top: 30mm">Az árváltozás jogát fenntartjuk.</h4>
+        <h4 style="font-style: italic">Árajánlatunk a kiadástól számítva 14 napig érvényes!</h4>
+        <h4 style="font-style: italic">Jászberény, {{ date('Y.m.d') }}.</h4>
 
     </div>
 </body>
