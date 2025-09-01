@@ -1,6 +1,6 @@
 @extends('layouts.admin')
 
-@section('title', 'Vezérlőpult')
+@section('title', 'Profil')
 
 @section('content')
     <div class="container p-0">

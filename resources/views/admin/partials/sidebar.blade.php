@@ -23,8 +23,8 @@
 
     <li class="nav-item">
         <a class="nav-link" href="{{ route('admin.dashboard') }}">
-            <i class="fas fa-fw fa-tachometer-alt"></i>
-            <span>Vezérlőpult</span></a>
+            <i class="fas fa-fw fa-calendar"></i>
+            <span>Naptár</span></a>
     </li>
 
     <hr class="sidebar-divider">

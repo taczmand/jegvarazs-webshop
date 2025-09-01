@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Appointment;
 use App\Models\Category;
 use App\Models\Worksheet;
 use App\Models\User;
@@ -36,7 +37,7 @@ class WorksheetController extends Controller
         ]);
     }
 
-    public function getWorksheetsByWeek(Request $request)
+    public function getDataToCalendarByWeek(Request $request)
     {
         $startDate = $request->query('start_date');
         $endDate = $request->query('end_date');
@@ -47,6 +48,7 @@ class WorksheetController extends Controller
 
         $user = auth('admin')->user();
 
+        // WORKSHEETS
         if ($user->can('view-worksheets')) {
             $query = Worksheet::with(['workers:id,name'])
                 ->whereBetween('installation_date', [$startDate, $endDate]);
@@ -71,8 +73,33 @@ class WorksheetController extends Controller
                 'work_status' => $worksheet->work_status,
                 'installation_date' => $worksheet->installation_date,
                 'worker_name' => $worksheet->workers->pluck('name')->implode(', '), // több dolgozó összevonása
+                'model' => 'worksheet',
+                'type' => $worksheet->work_type,
             ];
         });
+
+        // APPOINTMENTS
+        if ($user->can('view-appointments')) {
+
+            $appointments = Appointment::whereBetween('appointment_date', [$startDate, $endDate])->get();
+
+            $appointment_results = $appointments->map(function ($appointment) {
+                return [
+                    'id' => $appointment->id,
+                    'name' => $appointment->name,
+                    'city' => $appointment->city,
+                    'work_name' => null,
+                    'work_status' => $appointment->status,
+                    'installation_date' => $appointment->appointment_date,
+                    'worker_name' => null,
+                    'model' => 'appointment',
+                    'type' => $appointment->appointment_type,
+                ];
+            });
+
+            // összefűzés
+            $result = $result->merge($appointment_results);
+        }
 
         return response()->json($result);
     }

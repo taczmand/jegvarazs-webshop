@@ -6,7 +6,7 @@
         <div class="d-flex justify-content-between align-items-center mb-3 pb-2">
             <h2 class="color-dark-blue mb-0">Ügyviteli folyamatok / Munkalapok</h2>
             <div>
-                <button class="btn btn-dark" id="showCalendar"><i class="fas fa-calendar me-1"></i> Naptár</button>
+                <!--<button class="btn btn-dark" id="showCalendar"><i class="fas fa-calendar me-1"></i> Naptár</button>-->
                 <button class="btn btn-dark d-none" id="hideCalendar"><i class="fa-solid fa-table"></i> Táblázat</button>
                 @if(auth('admin')->user()->can('create-worksheet'))
                     <button class="btn btn-success" id="addButton"><i class="fas fa-plus me-1"></i> Új munkalap</button>
@@ -15,7 +15,7 @@
         </div>
 
 
-        <div class="d-none rounded-xl bg-white shadow-lg p-4" id="calendarContainer">
+        <!--<div class="d-none rounded-xl bg-white shadow-lg p-4" id="calendarContainer">
 
             <div class="calendar-nav">
                 <button class="btn btn-light" id="prevWeek">⬅ Előző hét</button>
@@ -47,7 +47,7 @@
                 </tr>
                 </thead>
                 <tbody>
-                <!-- JavaScript tölti ki -->
+
                 </tbody>
             </table>
             <div id="calendarLoader" style="display: none; text-align: center; margin: 1rem 0;">
@@ -55,7 +55,7 @@
                     <span class="visually-hidden">Betöltés...</span>
                 </div>
             </div>
-        </div>
+        </div>-->
 
         <div class="rounded-xl bg-white shadow-lg p-4" id="worksheetTableArea">
             @if(auth('admin')->user()->can('view-worksheets'))
@@ -433,6 +433,8 @@
 
             const urlParams = new URLSearchParams(window.location.search);
             const searchId = urlParams.get('id');
+            const makeWorksheet = urlParams.get('make_worksheet');
+            const installationDate = urlParams.get('installation_date');
 
             const adminModalDOM = document.getElementById('adminModal');
             const adminModal = new bootstrap.Modal(adminModalDOM);
@@ -474,6 +476,10 @@
                 editWorksheet(searchId);
             }
 
+            if (makeWorksheet) {
+                showCreateForm(installationDate);
+            }
+
             // Szűrők beállítása
 
             $('.filter-input').on('change keyup', function () {
@@ -503,200 +509,6 @@
                     $('#worksheet_felmeres').removeClass('d-none');
                 }
             }
-
-            const calendarBody = document.querySelector('#calendar tbody');
-            const weekLabel = document.getElementById('weekLabel');
-
-            let currentMonday = new Date();
-            currentMonday.setDate(currentMonday.getDate() - (currentMonday.getDay() + 6) % 7); // hétfőre igazítás
-
-            function formatDate(date) {
-                return date.toISOString().split('T')[0];
-            }
-
-            function getWeekDays(monday) {
-                const days = [];
-                for (let i = 0; i < 7; i++) {
-                    const d = new Date(monday);
-                    d.setDate(monday.getDate() + i);
-                    days.push(d);
-                }
-                return days;
-            }
-
-            async function fetchWorksheets(startDate, endDate) {
-                const url = new URL('{{ route("admin.worksheets.byweek") }}', window.location.origin);
-                url.searchParams.append('start_date', startDate);
-                url.searchParams.append('end_date', endDate);
-
-                try {
-                    const response = await fetch(url);
-                    if (!response.ok) {
-                        console.error('Hiba az adatok betöltésekor:', response.statusText);
-                        return [];
-                    }
-                    return await response.json();
-                } catch (error) {
-                    console.error('Fetch error:', error);
-                    return [];
-                }
-            }
-
-            async function renderCalendar() {
-
-                // 🔹 Loader megjelenítése
-                document.getElementById('calendarLoader').style.display = 'block';
-
-                calendarBody.innerHTML = '';
-
-                const days = getWeekDays(currentMonday);
-                const startStr = formatDate(days[0]);
-                const endStr = formatDate(days[6]);
-
-                if (weekLabel) {
-                    weekLabel.textContent = `Heti naptár: ${startStr} - ${endStr}`;
-                }
-
-                const worksheets = await fetchWorksheets(startStr, endStr);
-
-                // 🔹 Loader elrejtése
-                document.getElementById('calendarLoader').style.display = 'none';
-
-                // 🔸 Meglévő <th>-ek dátum hozzárendelése (Blade-ből jöttek)
-                const headerThs = document.querySelectorAll('#calendar thead tr:nth-child(2) th');
-                headerThs.forEach((th, i) => {
-                    const dateStr = formatDate(days[i]);
-                    th.dataset.date = dateStr;
-
-                    // 🔹 Előző dátumcímke eltávolítása, ha van
-                    const oldLabel = th.querySelector('.calendar-date-label');
-                    if (oldLabel) {
-                        oldLabel.remove();
-                    }
-
-                    // 🔹 Új címke hozzáadása
-                    const dateLabel = document.createElement('div');
-                    dateLabel.textContent = formatDayLabel(days[i]);
-                    dateLabel.classList.add('calendar-date-label');
-                    th.prepend(dateLabel);
-
-                    // Gombokra is rátesszük a dátumot
-                    const contractBtn = th.querySelector('.new_contract_from_calendar');
-                    const worksheetBtn = th.querySelector('.new_worksheet_from_calendar');
-
-                    if (contractBtn) contractBtn.dataset.date = dateStr;
-                    if (worksheetBtn) worksheetBtn.dataset.date = dateStr;
-                });
-
-                // 🔸 Tartalom cellák
-                const tr = document.createElement('tr');
-                days.forEach(day => {
-                    const td = document.createElement('td');
-                    td.dataset.date = formatDate(day);
-
-
-                    const dayWorksheets = worksheets.filter(w => w.installation_date === td.dataset.date);
-
-                    dayWorksheets.forEach((w, index) => {
-                        const div = document.createElement('div');
-                        div.dataset.id = w.id;
-                        if (w.worker_name) {
-                            div.innerHTML += `
-                                <i class="fa-solid fa-users-gear"></i>
-                                ${w.worker_name}
-                                <br>
-                            `;
-                        }
-
-                        let statusIcon = '';
-                        if (w.work_status === 'Folyamatban') {
-                            statusIcon = '<i class="fas fa-tools text-danger me-1" title="Folyamatban"></i>';
-                        } else if (w.work_status === 'Kész') {
-                            statusIcon = '<i class="fas fa-check-circle text-warning me-1" title="Kész"></i>';
-                        } else if (w.work_status === 'Lezárva') {
-                            statusIcon = '<i class="fas fa-check-double-circle text-success me-1" title="Lezárva"></i>';
-                        } else {
-                            statusIcon = '<i class="fas fa-question-circle text-muted me-1" title="Ismeretlen státusz"></i>';
-                        }
-
-                        div.innerHTML += `
-                            ${statusIcon}<strong>${w.work_name}</strong><br>
-                            ${w.name}<br>
-                            ${w.city}
-                        `;
-
-                        div.classList.add('worksheet-entry');
-
-                        if (index < dayWorksheets.length - 1) {
-                            const separator = document.createElement('hr');
-                            separator.classList.add('worksheet-separator');
-                            td.appendChild(div);
-                            td.appendChild(separator);
-                        } else {
-                            td.appendChild(div);
-                        }
-                    });
-
-
-                    tr.appendChild(td);
-                });
-
-                calendarBody.appendChild(tr);
-            }
-
-            $(document).on('click', '.worksheet-entry', function () {
-                const worksheet_id = this.dataset.id;
-                editWorksheet(worksheet_id);
-            });
-
-            function formatDayLabel(date) {
-                // 'MM-DD' formátumban
-                const month = String(date.getMonth() + 1).padStart(2, '0');
-                const day   = String(date.getDate()).padStart(2, '0');
-                return `${month}-${day}`;
-            }
-
-            function changeWeek(offset) {
-                currentMonday.setDate(currentMonday.getDate() + offset * 7);
-                renderCalendar();
-            }
-
-            $('#prevWeek').click(function() {
-                changeWeek(-1);
-            });
-            $('#nextWeek').click(function() {
-                changeWeek(1);
-            });
-
-            $(document).on('click', '.new_contract_from_calendar', function () {
-                const contract_date = $(this).data('date');
-                if (!contract_date) return;
-
-                const url = `${window.appConfig.APP_URL}admin/szerzodesek?make_contract=true&installation_date=${contract_date}`;
-                window.open(url, '_blank');
-            });
-
-            $(document).on('click', '.new_worksheet_from_calendar', function () {
-                const worksheet_date = $(this).data('date');
-                showCreateForm(worksheet_date);
-            });
-
-            $('#showCalendar').click(function() {
-                $('#hideCalendar').removeClass('d-none');
-                $('#calendarContainer').removeClass('d-none');
-                $('#showCalendar').addClass('d-none');
-                $('#worksheetTableArea').addClass('d-none');
-                renderCalendar();
-            });
-
-            $('#hideCalendar').click(function() {
-                $('#hideCalendar').addClass('d-none');
-                $('#calendarContainer').addClass('d-none');
-                $('#worksheetTableArea').removeClass('d-none');
-                $('#showCalendar').removeClass('d-none');
-            });
-
-
 
             // Új munkalap létrehozása modal megjelenítése
             $('#addButton').on('click', async function () {

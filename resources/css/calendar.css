@@ -46,7 +46,15 @@ h2 {
     right: 2px;
 }
 
-#calendar td:hover {
+/*#calendar td:hover {
     background-color: #f8fafc;
+    cursor: pointer;
+}*/
+.worksheet-entry {
+    padding: 5px;
+    transition: all 0.3s ease;
+}
+.worksheet-entry:hover {
+    background-color: #f0f9ff;
     cursor: pointer;
 }
