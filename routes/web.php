@@ -189,7 +189,10 @@ Route::middleware([Incognito::class])->group(function () {
             Route::get('/idopontfoglalasok/data', [AppointmentController::class, 'data'])->name('appointments.data');
             Route::post('/idopontfoglalasok', [AppointmentController::class, 'store'])->name('appointments.store');
             Route::put('/idopontfoglalasok/{id}', [AppointmentController::class, 'update'])->name('appointments.update');
+            Route::get('/idopontfoglalasok/{id}', [AppointmentController::class, 'show'])->name('appointments.show');
+            Route::delete('/idopontfoglalasok/delete-photo', [AppointmentController::class, 'deleteAppointmentPhoto'])->name('appointments.delete_appointment_photo');
             Route::delete('/idopontfoglalasok/{id}', [AppointmentController::class, 'destroy'])->name('appointments.destroy');
+
 
             /* Beállítások - Webshop */
 
@@ -341,6 +344,17 @@ Route::middleware([Incognito::class])->group(function () {
 
                 return response()->file($path);
             })->name('worksheets.image');
+
+            // Időpontfoglalás csatolmányok
+            Route::get('/appointment-photos/{filename}', function ($filename) {
+                $path = storage_path("app/private/appointment_images/{$filename}");
+
+                if (!file_exists($path)) {
+                    abort(404);
+                }
+
+                return response()->file($path);
+            })->name('appointments.image');
         });
     });
 

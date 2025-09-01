@@ -5,13 +5,14 @@ namespace App\Models;
 use App\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
 
-class Appointment extends Model
+class AppointmentPhoto extends Model
 {
     use LogsActivity;
+
     protected $guarded = [];
 
-    public function photos()
+    public function appointment()
     {
-        return $this->hasMany(AppointmentPhoto::class);
+        return $this->belongsTo(Appointment::class);
     }
 }

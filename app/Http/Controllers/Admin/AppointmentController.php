@@ -4,6 +4,10 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Appointment;
+use App\Models\AppointmentPhoto;
+use App\Models\ProductPhoto;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Http\Request;
 
@@ -75,10 +79,6 @@ class AppointmentController extends Controller
             ->make(true);
     }
 
-
-
-
-
     public function store(Request $request)
     {
         try {
@@ -94,6 +94,59 @@ class AppointmentController extends Controller
                 'message'          => $request->input('message'),
                 'status'           => $request->input('status', 'Függőben'),
             ]);
+
+            if (!empty($request->file('new_photos'))) {
+
+                $photos = [];
+
+                foreach ($request->file('new_photos') as $file) {
+
+                    $extension = strtolower($file->getClientOriginalExtension());
+
+                    $filename = Str::random(40) . '.' . $extension;
+                    $storagePath = 'appointment_images/' . $filename;
+
+                    if (!Storage::disk('local')->exists($storagePath)) {
+                        $file->storeAs('appointment_images', $filename, 'local');
+
+                        // Teljes fájlút
+                        $fullPath = Storage::disk('local')->path($storagePath);
+
+                        // Csak képek optimalizálása (ne pdf/doc)
+                        if (!in_array($extension, ['pdf', 'doc', 'docx'])) {
+                            try {
+                                $imagick = new \Imagick($fullPath);
+
+                                // Tömörítési beállítások
+                                if (in_array($extension, ['jpg', 'jpeg'])) {
+                                    $imagick->setImageCompression(\Imagick::COMPRESSION_JPEG);
+                                    $imagick->setImageCompressionQuality(75);
+                                } elseif ($extension === 'png') {
+                                    $imagick->setImageCompression(\Imagick::COMPRESSION_ZIP);
+                                    $imagick->setImageCompressionQuality(75);
+                                }
+
+                                // Metaadatok törlése
+                                $imagick->stripImage();
+
+                                // Felülírás optimalizált változattal
+                                $imagick->writeImage($fullPath);
+                                $imagick->destroy();
+                            } catch (\Exception $e) {
+                                \Log::error("Kép optimalizálás sikertelen: {$fullPath} - {$e->getMessage()}");
+                            }
+                        }
+
+                        $photos[] = [
+                            'path' => $filename
+                        ];
+                    }
+                }
+                if (!empty($photos)) {
+                    $appointment->photos()->createMany($photos);
+                }
+
+            }
 
             return response()->json([
                 'message' => 'Sikeres mentés!',
@@ -127,6 +180,59 @@ class AppointmentController extends Controller
                 'status'           => $request->input('status', 'Függőben'),
             ]);
 
+            if (!empty($request->file('new_photos'))) {
+
+                $photos = [];
+
+                foreach ($request->file('new_photos') as $file) {
+
+                    $extension = strtolower($file->getClientOriginalExtension());
+
+                    $filename = Str::random(40) . '.' . $extension;
+                    $storagePath = 'appointment_images/' . $filename;
+
+                    if (!Storage::disk('local')->exists($storagePath)) {
+                        $file->storeAs('appointment_images', $filename, 'local');
+
+                        // Teljes fájlút
+                        $fullPath = Storage::disk('local')->path($storagePath);
+
+                        // Csak képek optimalizálása (ne pdf/doc)
+                        if (!in_array($extension, ['pdf', 'doc', 'docx'])) {
+                            try {
+                                $imagick = new \Imagick($fullPath);
+
+                                // Tömörítési beállítások
+                                if (in_array($extension, ['jpg', 'jpeg'])) {
+                                    $imagick->setImageCompression(\Imagick::COMPRESSION_JPEG);
+                                    $imagick->setImageCompressionQuality(75);
+                                } elseif ($extension === 'png') {
+                                    $imagick->setImageCompression(\Imagick::COMPRESSION_ZIP);
+                                    $imagick->setImageCompressionQuality(75);
+                                }
+
+                                // Metaadatok törlése
+                                $imagick->stripImage();
+
+                                // Felülírás optimalizált változattal
+                                $imagick->writeImage($fullPath);
+                                $imagick->destroy();
+                            } catch (\Exception $e) {
+                                \Log::error("Kép optimalizálás sikertelen: {$fullPath} - {$e->getMessage()}");
+                            }
+                        }
+
+                        $photos[] = [
+                            'path' => $filename
+                        ];
+                    }
+                }
+                if (!empty($photos)) {
+                    $appointment->photos()->createMany($photos);
+                }
+
+            }
+
             return response()->json([
                 'message' => 'Sikeres mentés!',
                 'appointment' => $appointment,
@@ -144,6 +250,13 @@ class AppointmentController extends Controller
     public function destroy($id) {
         try {
             $appointment = Appointment::findOrFail($id);
+
+            // Először töröljük a képeket
+            foreach ($appointment->photos as $photo) {
+                Storage::disk('local')->delete('appointment_images/' . $photo->path);
+                $photo->delete();
+            }
+
             $appointment->delete();
 
             return response()->json([
@@ -157,6 +270,32 @@ class AppointmentController extends Controller
 
         } catch (\Exception $e) {
             \Log::error('Időpont törlési hiba: ' . $e->getMessage());
+
+            return response()->json([
+                'message' => 'Hiba történt a törlés során.',
+                'errors' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function show($id) {
+         $appointment = Appointment::with('photos')->findOrFail($id);
+         return response()->json($appointment);
+    }
+
+    public function deleteAppointmentPhoto(Request $request) {
+        try {
+            $photo = AppointmentPhoto::findOrFail($request->id);
+
+            Storage::disk('local')->delete('appointment_images/' . $photo->path);
+            $photo->delete();
+
+            return response()->json([
+                'message' => 'Sikeres törlés!',
+            ], 200);
+
+        } catch (\Exception $e) {
+            \Log::error('Időpont kép törlési hiba: ' . $e->getMessage());
 
             return response()->json([
                 'message' => 'Hiba történt a törlés során.',
