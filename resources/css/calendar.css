@@ -58,3 +58,32 @@ h2 {
     background-color: #f0f9ff;
     cursor: pointer;
 }
+#calendar th,
+#calendar td {
+    border: none; /* eltüntetjük az alap border-t */
+}
+
+#calendar th.today,
+#calendar td.today {
+    background-color: #e8f5e9;
+    border: 2px solid #90be6d;
+}
+
+.calendar-header-label {
+    margin-bottom: 0.25rem;
+}
+.calendar-header-label small {
+    font-weight: bold;
+    font-size: 0.9em;
+    display: block;
+}
+.calendar-header-label div:last-child {
+    font-size: 0.85em;
+    color: #555;
+}
+
+@media only screen and (max-width: 600px) {
+    #weekLabel {
+        font-size: 10px;
+    }
+}

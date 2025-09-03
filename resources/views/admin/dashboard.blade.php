@@ -11,50 +11,47 @@
 
 
         <div class="rounded-xl bg-white shadow-lg p-4" id="calendarContainer">
-
             <div class="calendar-nav">
-                <button class="btn btn-light" id="prevWeek">⬅ Előző hét</button>
+                <button class="btn btn-light" id="prevWeek">⬅</button>
                 <h5 id="weekLabel">Heti naptár</h5>
-                <button class="btn btn-light" id="nextWeek">Következő hét ➡</button>
+                <button class="btn btn-light" id="nextWeek">➡</button>
             </div>
-            <table id="calendar">
-                <thead>
-                <tr>
-                    <th>Hétfő</th>
-                    <th>Kedd</th>
-                    <th>Szerda</th>
-                    <th>Csütörtök</th>
-                    <th>Péntek</th>
-                    <th>Szombat</th>
-                    <th>Vasárnap</th>
-                </tr>
-                <tr>
-                    @foreach(range(1, 7) as $i)
-                        <th class="text-center">
-                            <button class="btn btn-circle new_contract_from_calendar" title="Új szerződés">
-                                <i class="fas fa-file-signature" style="color: #8ecae6;"></i>
-                            </button>
-                            <button class="btn btn-circle new_worksheet_from_calendar" title="Új munkalap">
-                                <i class="fas fa-clipboard-list" style="color: #90be6d;"></i>
-                            </button>
-                            <button class="btn btn-circle new_appointment_from_calendar" title="Új időpont">
-                                <i class="fas fa-calendar-check" style="color: #fcbf49;"></i>
-                            </button>
-                        </th>
 
-                    @endforeach
-                </tr>
-                </thead>
-                <tbody>
-                <!-- JavaScript tölti ki -->
-                </tbody>
-            </table>
-            <div id="calendarLoader" style="display: none; text-align: center; margin: 1rem 0;">
-                <div class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden">Betöltés...</span>
+            <div id="calendarArea">
+                <div style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
+                    <table id="calendar" class="table table-bordered" style="min-width: 1100px;">
+                        <thead>
+                        <tr>
+                            @foreach(range(1, 7) as $i)
+                                <th class="text-center">
+                                    <div class="calendar-header-label"></div>
+                                    <button class="btn btn-circle new_contract_from_calendar" title="Új szerződés">
+                                        <i class="fas fa-file-signature" style="color: #8ecae6;"></i>
+                                    </button>
+                                    <button class="btn btn-circle new_worksheet_from_calendar" title="Új munkalap">
+                                        <i class="fas fa-clipboard-list" style="color: #90be6d;"></i>
+                                    </button>
+                                    <button class="btn btn-circle new_appointment_from_calendar" title="Új időpont">
+                                        <i class="fas fa-calendar-check" style="color: #fcbf49;"></i>
+                                    </button>
+                                </th>
+                            @endforeach
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <!-- JavaScript tölti ki -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div id="calendarLoader" style="display: none; text-align: center; margin: 1rem 0;">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Betöltés...</span>
+                    </div>
                 </div>
             </div>
         </div>
+
 
 
 
@@ -118,7 +115,7 @@
                 const endStr = formatDate(days[6]);
 
                 if (weekLabel) {
-                    weekLabel.textContent = `Heti naptár: ${startStr} - ${endStr}`;
+                    weekLabel.textContent = `${startStr} - ${endStr}`;
                 }
 
                 const worksheets = await fetchWorksheets(startStr, endStr);
@@ -126,33 +123,39 @@
                 // 🔹 Loader elrejtése
                 document.getElementById('calendarLoader').style.display = 'none';
 
+                const daysOfWeek = ["Vasárnap", "Hétfő", "Kedd", "Szerda", "Csütörtök", "Péntek", "Szombat"];
+
                 // 🔸 Meglévő <th>-ek dátum hozzárendelése (Blade-ből jöttek)
-                const headerThs = document.querySelectorAll('#calendar thead tr:nth-child(2) th');
+                const headerThs = document.querySelectorAll('#calendar thead tr th');
                 headerThs.forEach((th, i) => {
                     const dateStr = formatDate(days[i]);
                     th.dataset.date = dateStr;
 
-                    // 🔹 Előző dátumcímke eltávolítása, ha van
-                    const oldLabel = th.querySelector('.calendar-date-label');
-                    if (oldLabel) {
-                        oldLabel.remove();
+                    // régi címke törlése
+                    const label = th.querySelector('.calendar-header-label');
+                    if (label) {
+                        label.innerHTML = `
+                            <div><small><strong>${daysOfWeek[days[i].getDay()]}</strong></small></div>
+                            <div>${formatDayLabel(days[i])}</div>
+                        `;
                     }
-
-                    // 🔹 Új címke hozzáadása
-                    const dateLabel = document.createElement('div');
-                    dateLabel.textContent = formatDayLabel(days[i]);
-                    dateLabel.classList.add('calendar-date-label');
-                    th.prepend(dateLabel);
 
                     // Gombokra is rátesszük a dátumot
                     const contractBtn = th.querySelector('.new_contract_from_calendar');
                     const worksheetBtn = th.querySelector('.new_worksheet_from_calendar');
                     const appointmentBtn = th.querySelector('.new_appointment_from_calendar');
 
-
                     if (contractBtn) contractBtn.dataset.date = dateStr;
                     if (worksheetBtn) worksheetBtn.dataset.date = dateStr;
                     if (appointmentBtn) appointmentBtn.dataset.date = dateStr;
+
+                    // 🔹 Mai nap kiemelése (header TH)
+                    const todayStr = formatDate(new Date());
+                    if (dateStr === todayStr) {
+                        th.classList.add("today");
+                    } else {
+                        th.classList.remove("today");
+                    }
                 });
 
                 // 🔸 Tartalom cellák
@@ -161,6 +164,11 @@
                     const td = document.createElement('td');
                     td.dataset.date = formatDate(day);
 
+                    // 🔹 Mai nap kiemelése (tartalom TD)
+                    const todayStr = formatDate(new Date());
+                    if (td.dataset.date === todayStr) {
+                        td.classList.add("today");
+                    }
 
                     const dayWorksheets = worksheets.filter(w => w.installation_date === td.dataset.date);
 
@@ -168,9 +176,7 @@
                         const div = document.createElement('div');
                         div.style.textAlign = 'left';
                         div.style.paddingLeft = '0.5rem';
-
                         div.dataset.id = w.id;
-
 
                         let modelName, typeIcon = '';
                         switch (w.model) {
@@ -179,7 +185,6 @@
                                 div.style.borderLeftStyle = 'solid';
                                 div.style.borderWidth = '5px';
                                 div.style.borderColor = '#90be6d';
-                                div.style.hover = 'background-color: #90be6d !important; color: white; cursor: pointer;';
                                 break;
                             case 'appointment':
                                 modelName = '<i class="fas fa-calendar-check" style="color: #fcbf49" title="Időpontfoglalás"></i> Időpontfoglalás';
@@ -209,31 +214,22 @@
                         }
 
                         div.innerHTML += `
-                            <p style="margin-bottom: 0px"><strong>${w.name}</strong></p>
-                            <small>(${w.city})</small>
-                            <p style="margin-top: 5px">${typeIcon} ${w.type}</p>
-                            <p style="font-style: italic">${w.work_status}</p>
-                        `;
+                <p style="margin-bottom: 0px"><strong>${w.name}</strong></p>
+                <small>(${w.city})</small>
+                <p style="margin-top: 5px">${typeIcon} ${w.type}</p>
+                <p style="font-style: italic">${w.work_status}</p>
+            `;
 
                         if (w.work_name) {
-                            div.innerHTML += `
-                                <small>${w.work_name}</small><br>
-                            `;
+                            div.innerHTML += `<small>${w.work_name}</small><br>`;
                         }
 
                         if (w.worker_name) {
                             div.innerHTML += `
-                                <i class="fa-solid fa-users-gear"></i>
-                                ${w.worker_name}
-                                <br>
-                            `;
+                    <i class="fa-solid fa-users-gear"></i>
+                    ${w.worker_name}<br>
+                `;
                         }
-
-                        /*div.innerHTML += `
-                            ${statusIcon}<strong>${w.work_name}</strong><br>
-                            ${w.name}<br>
-                            ${w.city}
-                        `;*/
 
                         div.classList.add('worksheet-entry');
 
@@ -247,12 +243,12 @@
                         }
                     });
 
-
                     tr.appendChild(td);
                 });
 
                 calendarBody.appendChild(tr);
             }
+
 
             $(document).on('click', '.worksheet-entry', function () {
                 const worksheet_id = this.dataset.id;
