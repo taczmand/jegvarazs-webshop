@@ -436,7 +436,7 @@
                                     id="product_${item.id}"
                                 >
                             </td>
-                            <td><label for="product_${item.id}">${item.title}</label</td>
+                            <td><label for="product_${item.id}">${item.title}</label></td>
                             <td>
                                 <input
                                     type="number"

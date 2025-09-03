@@ -257,6 +257,7 @@
                             <!-- Termékek tab-->
 
                             <div class="tab-pane fade" id="products">
+                                <input type="text" class="form-control mb-3" id="productSearch" placeholder="Keresés a termékek között...">
                                 <div style="max-height: 300px; overflow-y: auto">
                                     <table class="table table-bordered" id="productManagerTable" style="display: {{ $display }}">
                                         <thead>
@@ -597,6 +598,25 @@
                 adminModal.show();
             }
 
+            $(document).on('input', '#productSearch', function () {
+                const searchValue = $(this).val().toLowerCase();
+
+                $('#productManagerTable tbody tr').each(function () {
+                    const row = $(this);
+
+                    // csak a termék sorokra keresünk, a kategória sort meghagyjuk
+                    if (!row.hasClass('table-secondary')) {
+                        const productName = row.find('label').text().toLowerCase();
+
+                        if (productName.includes(searchValue)) {
+                            row.show();
+                        } else {
+                            row.hide();
+                        }
+                    }
+                });
+            });
+
             // Munkalap mentése
 
             $('#saveWorksheet').on('click', function (e) {
@@ -741,10 +761,11 @@
                                                 type="checkbox"
                                                 name="products[${item.id}][selected]"
                                                 value="1"
+                                                id="product_${item.id}"
                                                 ${isChecked ? 'checked' : ''}
                                             >
                                         </td>
-                                        <td>${item.title}</td>
+                                        <td><label for="product_${item.id}">${item.title}</label></td>
                                         <td>
                                             <input
                                                 type="number"
