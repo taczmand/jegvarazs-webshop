@@ -90,6 +90,7 @@ class PermissionSeeder extends Seeder
             ['id' => 78, 'name' => 'view-settings', 'label' => 'Rendszer beállítások megtekintése', 'group' => 'Rendszer'],
             ['id' => 79, 'name' => 'view-media-settings', 'label' => 'Média beállítások megtekintése', 'group' => 'Tartalomkezelés'],
             ['id' => 80, 'name' => 'edit-media-settings', 'label' => 'Média beállítások szerkesztése', 'group' => 'Tartalomkezelés'],
+            ['id' => 81, 'name' => 'edit-contract', 'label' => 'Szerződés szerkesztése', 'group' => 'Ügyviteli folyamatok'],
 
         ];
 

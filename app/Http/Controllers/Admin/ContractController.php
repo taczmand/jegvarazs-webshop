@@ -86,6 +86,12 @@ class ContractController extends Controller
                     <i class="fas fa-eye"></i>
                 </button>
             ';
+                if ($user && $user->can('edit-contract')) {
+                    $buttons .= '
+                    <button class="btn btn-sm btn-warning edit" data-id="' . $contract->id . '" title="Szerkesztés">
+                        <i class="fas fa-edit"></i>
+                    </button>';
+                }
 
                 if ($user && $user->can('delete-contract')) {
                     $buttons .= '
@@ -122,7 +128,6 @@ class ContractController extends Controller
     }
     public function store(Request $request)
     {
-
         // Validáció
         $request->validate([
             'contract_version' => 'required|string',
@@ -181,103 +186,177 @@ class ContractController extends Controller
                 }
             }
 
-            $contract = Contract::create([
-                'version' => $request->input('contract_version'),
-                'name' => $request->input('contact_name'),
-                'country' => $request->input('contact_country'),
-                'zip_code' => $request->input('contact_zip_code'),
-                'city' => $request->input('contact_city'),
-                'address_line' => $request->input('contact_address_line'),
-                'installation_date' => $request->input('installation_date'),
-                'phone' => $request->input('contact_phone'),
-                'email' => $request->input('contact_email'),
-                'mothers_name' => $request->input('mothers_name'),
-                'place_of_birth' => $request->input('place_of_birth'),
-                'date_of_birth' => $request->input('date_of_birth'),
-                'id_number' => $request->input('id_number'),
-                'data' => $request->input('contract_data', []),
-                'signature_path' => "{$signatureName}",
-                'created_by' => auth('admin')->id(),
-            ]);
+            // Ha van contract_id → frissítünk
+            if ($request->filled('contract_id')) {
+                $contract = Contract::findOrFail($request->input('contract_id'));
 
-            $products = [];
-
-            foreach ($request->input('products') as $productId => $data) {
-                if (!isset($data['selected'])) {
-                    continue;
-                }
-
-                $item = ContractProduct::create([
-                    'contract_id' => $contract->id,
-                    'product_id' => $productId,
-                    'product_qty' => $data['product_qty'],
-                    'gross_price' => $data['gross_price'],
+                $contract->update([
+                    'version' => $request->input('contract_version'),
+                    'name' => $request->input('contact_name'),
+                    'country' => $request->input('contact_country'),
+                    'zip_code' => $request->input('contact_zip_code'),
+                    'city' => $request->input('contact_city'),
+                    'address_line' => $request->input('contact_address_line'),
+                    'installation_date' => $request->input('installation_date'),
+                    'phone' => $request->input('contact_phone'),
+                    'email' => $request->input('contact_email'),
+                    'mothers_name' => $request->input('mothers_name'),
+                    'place_of_birth' => $request->input('place_of_birth'),
+                    'date_of_birth' => $request->input('date_of_birth'),
+                    'id_number' => $request->input('id_number'),
+                    'data' => $request->input('contract_data', []),
+                    'signature_path' => $signatureName ?? $contract->signature_path,
                 ]);
 
-                $products[] = [
-                    'title' => Product::findOrFail($productId)->title ?? "N/A",
-                    'gross_price' => $item->gross_price,
-                    'product_qty' => $item->product_qty
+                // Régi termékek törlése és újak mentése
+                $contract->products()->detach();
+
+
+                $products = [];
+                foreach ($request->input('products') as $productId => $data) {
+                    if (!isset($data['selected'])) {
+                        continue;
+                    }
+
+                    $item = ContractProduct::create([
+                        'contract_id' => $contract->id,
+                        'product_id' => $productId,
+                        'product_qty' => $data['product_qty'],
+                        'gross_price' => $data['gross_price'],
+                    ]);
+
+                    $products[] = [
+                        'title' => Product::findOrFail($productId)->title ?? "N/A",
+                        'gross_price' => $item->gross_price,
+                        'product_qty' => $item->product_qty
+                    ];
+                }
+
+                $totalGross = collect($products)->sum(fn($item) => $item['gross_price'] * $item['product_qty']);
+
+                $pdf_data = [
+                    'contract' => $contract->toArray(),
+                    'products' => $products,
+                    'total_gross' => $totalGross,
+                    'total_gross_text' => AmountToText::convert($totalGross),
+                    'data' => $contract->data,
+                    'signature_path' => $signatureName ? storage_path("app/private/signatures/{$signatureName}") : null,
                 ];
-            }
 
-            $totalGross = collect($products)->sum(function ($item) {
-                return $item['gross_price'] * $item['product_qty'];
-            });
+                // PDF újragenerálás
+                $pdf = Pdf::loadView('pdf.contract_' . $request->get('contract_version'), $pdf_data);
+                $file_name = 'contract_' . $contract->id . '.pdf';
+                Storage::put("contracts/{$file_name}", $pdf->output());
+                $contract->update(['pdf_path' => "contracts/{$file_name}"]);
 
-            $pdf_data = [
-                'contract' => $contract->toArray(),
-                'products' => $products,
-                'total_gross' => $totalGross,
-                'total_gross_text' => AmountToText::convert($totalGross),
-                'data' => $contract->data,
-                'signature_path' => $signatureName ? storage_path("app/private/signatures/{$signatureName}") : null,
-                // 'company' => config('app.company_info') // opcionális
-            ];
+                DB::commit();
 
-            // PDF generálása
-            $pdf = Pdf::loadView('pdf.contract_' . $request->get('contract_version'), $pdf_data);
-
-            $file_name = 'contract_' . $contract->id . '.pdf';
-            Storage::put("contracts/{$file_name}", $pdf->output());
-
-            $contract->update(['pdf_path' => "contracts/{$file_name}"]);
-
-
-            // Munkalap létrehozása
-            $worksheet = Worksheet::create([
-                'work_name' => "Szerződéses munkalap - {$contract->name}",
-                'work_type' => "Szerelés",
-                'name' => $contract->name,
-                'email' => $contract->email,
-                'phone' => $contract->phone,
-                'country' => $contract->country,
-                'zip_code' => $contract->zip_code,
-                'city' => $contract->city,
-                'address_line' => $contract->address_line,
-                'installation_date' => $contract->installation_date,
-                'work_status' => "Folyamatban",
-                'contract_id' => $contract->id,
-                'created_by' => auth('admin')->id(),
-            ]);
-
-            // Munkalap termékek hozzárendelése, ha van
-            foreach ($request->input('products') as $productId => $data) {
-                if (!isset($data['selected'])) {
-                    continue;
+                if ($contract->email) {
+                    Mail::to($contract->email)->send(new NewContract($contract));
                 }
 
-                $item = WorksheetProduct::create([
-                    'worksheet_id' => $worksheet->id,
-                    'product_id' => $productId,
-                    'quantity' => $data['product_qty']
-                ]);
-            }
+                return response()->json([
+                    'message' => 'Szerződés frissítve!',
+                    'data' => [
+                        'contract' => $contract,
+                        'pdf_path' => Storage::url($contract->pdf_path),
+                    ]
+                ], 200);
+            } else {
 
+
+                // Ha nincs contract_id → új szerződés és munkalap
+                $contract = Contract::create([
+                    'version' => $request->input('contract_version'),
+                    'name' => $request->input('contact_name'),
+                    'country' => $request->input('contact_country'),
+                    'zip_code' => $request->input('contact_zip_code'),
+                    'city' => $request->input('contact_city'),
+                    'address_line' => $request->input('contact_address_line'),
+                    'installation_date' => $request->input('installation_date'),
+                    'phone' => $request->input('contact_phone'),
+                    'email' => $request->input('contact_email'),
+                    'mothers_name' => $request->input('mothers_name'),
+                    'place_of_birth' => $request->input('place_of_birth'),
+                    'date_of_birth' => $request->input('date_of_birth'),
+                    'id_number' => $request->input('id_number'),
+                    'data' => $request->input('contract_data', []),
+                    'signature_path' => "{$signatureName}",
+                    'created_by' => auth('admin')->id(),
+                ]);
+
+                $products = [];
+
+                foreach ($request->input('products') as $productId => $data) {
+                    if (!isset($data['selected'])) {
+                        continue;
+                    }
+
+                    $item = ContractProduct::create([
+                        'contract_id' => $contract->id,
+                        'product_id' => $productId,
+                        'product_qty' => $data['product_qty'],
+                        'gross_price' => $data['gross_price'],
+                    ]);
+
+                    $products[] = [
+                        'title' => Product::findOrFail($productId)->title ?? "N/A",
+                        'gross_price' => $item->gross_price,
+                        'product_qty' => $item->product_qty
+                    ];
+                }
+
+                $totalGross = collect($products)->sum(fn($item) => $item['gross_price'] * $item['product_qty']);
+
+                $pdf_data = [
+                    'contract' => $contract->toArray(),
+                    'products' => $products,
+                    'total_gross' => $totalGross,
+                    'total_gross_text' => AmountToText::convert($totalGross),
+                    'data' => $contract->data,
+                    'signature_path' => $signatureName ? storage_path("app/private/signatures/{$signatureName}") : null,
+                ];
+
+                // PDF generálása
+                $pdf = Pdf::loadView('pdf.contract_' . $request->get('contract_version'), $pdf_data);
+
+                $file_name = 'contract_' . $contract->id . '.pdf';
+                Storage::put("contracts/{$file_name}", $pdf->output());
+
+                $contract->update(['pdf_path' => "contracts/{$file_name}"]);
+
+                // Munkalap létrehozása
+                $worksheet = Worksheet::create([
+                    'work_name' => "Szerződéses munkalap - {$contract->name}",
+                    'work_type' => "Szerelés",
+                    'name' => $contract->name,
+                    'email' => $contract->email,
+                    'phone' => $contract->phone,
+                    'country' => $contract->country,
+                    'zip_code' => $contract->zip_code,
+                    'city' => $contract->city,
+                    'address_line' => $contract->address_line,
+                    'installation_date' => $contract->installation_date,
+                    'work_status' => "Folyamatban",
+                    'contract_id' => $contract->id,
+                    'created_by' => auth('admin')->id(),
+                ]);
+
+                foreach ($request->input('products') as $productId => $data) {
+                    if (!isset($data['selected'])) {
+                        continue;
+                    }
+
+                    WorksheetProduct::create([
+                        'worksheet_id' => $worksheet->id,
+                        'product_id' => $productId,
+                        'quantity' => $data['product_qty']
+                    ]);
+                }
+            }
 
             DB::commit();
 
-            // E-mail küldése a szerződésről
             if ($contract->email) {
                 Mail::to($contract->email)->send(new NewContract($contract));
             }
@@ -300,6 +379,7 @@ class ContractController extends Controller
             ], 500);
         }
     }
+
 
 
     public function fetchWithCategories() {

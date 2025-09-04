@@ -68,10 +68,10 @@
     <div class="modal fade" id="adminModal" tabindex="-1" aria-labelledby="adminModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-xl">
             <form id="adminModalForm" action="" method="POST" enctype="multipart/form-data">
-
+                <input type="hidden" name="contract_id" id="contract_id">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="adminModalLabel">Vevő/partner szerkesztése</h5>
+                        <h5 class="modal-title" id="adminModalLabel">Szerződés szerkesztése</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Bezárás"></button>
                     </div>
                     <div class="modal-body">
@@ -214,7 +214,7 @@
                                     </div>
                                 </div>
 
-                                <img id="show_signature" src="" class="d-none">
+                                <img id="show_signature" src="" class="d-none" style="max-width: 300px">
 
                                 <a href="#" id="clear_signature" class="btn btn-secondary">Aláírás</a>
                                 <a href="" id="contract_pdf_link" target="_blank" class="btn btn-primary d-none">Generált PDF megtekintése</a>
@@ -331,13 +331,14 @@
                 document.getElementById('fullscreen_signature').style.display = 'flex';
                 resizeCanvas();
             });
-            
+
             document.getElementById('clear-signature-pad').addEventListener('click', function() {
                 signaturePad.clear();
             });
 
 
-            $("#close-fullscreen-signature").on("click", function () {
+            $("#close-fullscreen-signature").on("click", function (e) {
+                e.preventDefault();
                 $("#fullscreen_signature").hide(); // bezárás
             });
 
@@ -359,7 +360,6 @@
 
                 // Kapcsolati adatok
 
-                $('#contract_id').val(contract.id);
                 $('#contact_name').val(contract.name);
                 $('#contact_country').val(contract.country);
                 $('#contact_zip_code').val(contract.zip_code);
@@ -455,6 +455,14 @@
                 adminModal.show();
             });
 
+            // Szerződés szerkesztése
+
+            $('#adminTable').on('click', '.edit', async function () {
+                const row_data = $('#adminTable').DataTable().row($(this).parents('tr')).data();
+                const contract_data = await loadContractProducts(row_data.id);
+                showModalToUpdate(contract_data);
+            });
+
             async function loadContractProducts(id) {
                 try {
                     const response = await fetch(`{{ url('/admin/szerzodesek/termekek') }}/${id}`, {
@@ -509,6 +517,50 @@
                         $('#installation_date').val(installationDate);
                     }
                     loadProducts();
+                    $('.contract-contact').find('input, select, textarea').prop('disabled', false);
+
+                    $('#generateContract').removeClass('d-none');
+                    $('#clear_signature').removeClass('d-none');
+                    $('#contract_pdf_link').addClass('d-none').removeAttr('href');
+                } catch (error) {
+                    showToast(error, 'danger');
+                }
+                adminModal.show();
+            }
+
+            async function showModalToUpdate(existingContractData = null) {
+                try {
+
+                    resetForm('Szerződés szerkesztése');
+
+                    const contract = existingContractData.contract || {};
+                    const contract_products = contract.products || [];
+
+                    // Kapcsolati adatok
+
+                    $('#contract_id').val(contract.id);
+                    $('#contact_name').val(contract.name);
+                    $('#contact_country').val(contract.country);
+                    $('#contact_zip_code').val(contract.zip_code);
+                    $('#contact_city').val(contract.city);
+                    $('#contact_address_line').val(contract.address_line);
+                    $('#contact_phone').val(contract.phone);
+                    $('#contact_email').val(contract.email);
+                    $('#mothers_name').val(contract.mothers_name);
+                    $('#place_of_birth').val(contract.place_of_birth);
+                    $('#date_of_birth').val(contract.date_of_birth);
+                    $('#id_number').val(contract.id_number);
+                    $('#installation_date').val(contract.installation_date);
+
+
+                    $('#show_signature').addClass('d-none');
+                    $('#signature_area').removeClass('d-none');
+                    $('#contract_version').prop('disabled', false);
+
+                    const loaded_version = await loadVersions("v1");
+                    renderContractForm(loaded_version.fields, existingContractData);
+
+                    loadProducts(contract_products);
                     $('.contract-contact').find('input, select, textarea').prop('disabled', false);
 
                     $('#generateContract').removeClass('d-none');
@@ -600,7 +652,7 @@
 
             // Szerződés mezők renderelése
 
-            function renderContractForm(fields) {
+            function renderContractForm(fields, existingData = null) {
                 const container = $('#contractDataFieldsArea');
                 container.empty();
 
@@ -611,70 +663,74 @@
                     let wrapperClass = 'col-md-3'; // Négy oszlopos elrendezés
 
                     const inputName = `contract_data[${field.key}]`;
+                    const value = existingData?.contract?.data?.[field.key] ?? '';
 
                     switch (field.type) {
                         case 'text':
-                            input = `<input type="text" name="${inputName}" class="form-control">`;
+                            input = `<input type="text" name="${inputName}" value="${value}" class="form-control">`;
                             break;
 
                         case 'number':
-                            input = `<input type="number" name="${inputName}" class="form-control">`;
+                            input = `<input type="number" name="${inputName}" value="${value}" class="form-control">`;
                             break;
 
                         case 'date':
-                            input = `<input type="date" name="${inputName}" class="form-control">`;
+                            input = `<input type="date" name="${inputName}" value="${value}" class="form-control">`;
                             break;
 
                         case 'select':
                             const selectOptions = (field.options || []).map(opt => {
-                                if (typeof opt === 'object') {
-                                    return `<option value="${opt.value}">${opt.label}</option>`;
-                                }
-                                return `<option value="${opt}">${opt}</option>`;
+                                let optValue = typeof opt === 'object' ? opt.value : opt;
+                                let optLabel = typeof opt === 'object' ? opt.label : opt;
+                                let selected = (value && value == optValue) ? 'selected' : '';
+                                return `<option value="${optValue}" ${selected}>${optLabel}</option>`;
                             }).join('');
                             input = `<select name="${inputName}" class="form-control">${selectOptions}</select>`;
                             break;
 
                         case 'boolean':
+                            const checked = (value && (value === 1 || value === '1' || value === true)) ? 'checked' : '';
                             input = `
                                 <div class="form-check mt-4">
-                                    <input type="checkbox" name="${inputName}" value="1" class="form-check-input" id="${field.key}">
+                                    <input type="checkbox" name="${inputName}" value="1" class="form-check-input" id="${field.key}" ${checked}>
                                     <label class="form-check-label" for="${field.key}">${field.label}</label>
                                 </div>
                             `;
                             break;
 
                         case 'textarea':
-                            input = `<textarea name="${inputName}" class="form-control" rows="4"></textarea>`;
+                            input = `<textarea name="${inputName}" class="form-control" rows="4">${value}</textarea>`;
                             wrapperClass = 'col-12';
                             break;
 
                         case 'model':
                             const modelOptions = (field.options || []).map(opt => {
-                                return `<option value="${opt.value}">${opt.label}</option>`;
+                                let selected = (value && value == opt.value) ? 'selected' : '';
+                                return `<option value="${opt.value}" ${selected}>${opt.label}</option>`;
                             }).join('');
                             input = `<select name="${inputName}" class="form-control">${modelOptions}</select>`;
                             break;
 
                         default:
-                            input = `<input type="text" name="${inputName}" class="form-control">`;
+                            input = `<input type="text" name="${inputName}" value="${value}" class="form-control">`;
                     }
 
                     let fieldHtml;
 
                     if (field.type !== 'boolean') {
                         fieldHtml = `
-                            <div class="${wrapperClass}">
-                                <label class="form-label" for="${field.key}">${field.label}</label>
-                                ${input}
-                            </div>
-                        `;
+                <div class="${wrapperClass}">
+                    <label class="form-label" for="${field.key}">${field.label}</label>
+                    ${input}
+                </div>
+            `;
                     } else {
                         fieldHtml = `<div class="${wrapperClass}">${input}</div>`;
                     }
 
                     row.append(fieldHtml);
                 });
+
                 container.append(row);
                 loadDefaultData();
             }
@@ -702,45 +758,57 @@
 
             // Termékek betöltése
 
-            function loadProducts() {
+            function loadProducts(selectedProducts = []) {
                 const productManagerTable = $('#productManagerTable tbody');
                 productManagerTable.empty();
+
+                // összegyűjtjük az összes selected product id-t
+                const selectedIds = selectedProducts.map(p => p.pivot?.product_id ?? p.id);
 
                 fetch(`${window.appConfig.APP_URL}admin/szerzodesek/szerzodes-termekek`)
                     .then(response => response.json())
                     .then(data => {
                         data.forEach(category => {
                             const categoryRow = `
-                        <tr class="table-secondary">
-                            <td colspan="4"><strong>${category.title}</strong></td>
-                        </tr>`;
+                    <tr class="table-secondary">
+                        <td colspan="4"><strong>${category.title}</strong></td>
+                    </tr>`;
                             productManagerTable.append(categoryRow);
 
                             category.products.forEach(item => {
+                                const isChecked = selectedIds.includes(item.id) ? 'checked' : '';
+
                                 const row = `
-                            <tr>
-                                <td>
-                                    <input
-                                        type="checkbox"
-                                        name="products[${item.id}][selected]"
-                                        value="1"
-                                        id="product_${item.id}"
-                                    >
-                                </td>
-                                <td><label for="product_${item.id}">${item.title}</label></td>
-                                <td style="width: 200px">
-                                    <input
-                                        type="number"
-                                        class="form-control"
-                                        name="products[${item.id}][gross_price]"
-                                        value="${item.gross_price}"
-                                        step="1"
-                                    >
-                                </td>
-                                <td style="width: 100px">
-                                    <input type="number" min="1" name="products[${item.id}][product_qty]" step="1" value="1" class="form-control">
-                                </td>
-                            </tr>`;
+                        <tr>
+                            <td>
+                                <input
+                                    type="checkbox"
+                                    name="products[${item.id}][selected]"
+                                    value="1"
+                                    id="product_${item.id}"
+                                    ${isChecked}
+                                >
+                            </td>
+                            <td><label for="product_${item.id}">${item.title}</label></td>
+                            <td style="width: 200px">
+                                <input
+                                    type="number"
+                                    class="form-control"
+                                    name="products[${item.id}][gross_price]"
+                                    value="${item.gross_price}"
+                                    step="1"
+                                >
+                            </td>
+                            <td style="width: 100px">
+                                <input
+                                    type="number"
+                                    min="1"
+                                    name="products[${item.id}][product_qty]"
+                                    step="1"
+                                    value="1"
+                                    class="form-control">
+                            </td>
+                        </tr>`;
                                 productManagerTable.append(row);
                             });
                         });
@@ -749,6 +817,7 @@
                         console.error('Hiba a termékek betöltésekor:', error);
                     });
             }
+
 
             let debounceTimeout;
 
@@ -809,6 +878,7 @@
             function resetForm(title = null) {
                 $('#adminModalLabel').text(title);
                 $('#adminModalForm')[0].reset();
+                $('#contract_id').val('');
             }
 
 

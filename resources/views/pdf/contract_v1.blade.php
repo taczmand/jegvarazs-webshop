@@ -21,7 +21,6 @@
             max-width: 100%;
             margin: 0;
             color: #000;
-            background-image: url("{{ $backgroundImage }}");
             background-position: center center;
             background-repeat: no-repeat;
             background-size: contain;
@@ -401,7 +400,7 @@
 <div class="signature-image">
     <div>
     @if(!empty($signature_path) && file_exists($signature_path))
-        <img src="{{ $signature_path }}" style="width: 200px; height: auto;">
+        <img src="{{ $signature_path }}" style="max-width: 200px;">
     @endif
     </div>
     <div>
