@@ -593,9 +593,12 @@
                     data: formData,
                     contentType: false,
                     processData: false,
+                    beforeSend: () => {
+                        showLoader();
+                    },
                     success(response) {
                         showToast(response.message || 'Sikeres!', 'success');
-                        table.ajax.reload();
+                        table.ajax.reload(null, false);
                         adminModal.hide();
                         const worksheet_id = response.data.worksheet.id;
                         window.location.href = `{{ url('/admin/munkalapok') }}?id=${worksheet_id}`;
@@ -610,7 +613,8 @@
                         showToast(msg, 'danger');
                     },
                     complete: () => {
-                        signaturePad.clear()
+                        signaturePad.clear();
+                        hideLoader();
                     }
                 });
 
@@ -880,6 +884,37 @@
                 $('#adminModalForm')[0].reset();
                 $('#contract_id').val('');
             }
+
+            // Szerződés törlése
+            $('#adminTable').on('click', '.delete', async function () {
+                const row_data = $('#adminTable').DataTable().row($(this).parents('tr')).data();
+                const contract_id = row_data.id;
+
+                if (!confirm('Biztosan törölni szeretnéd a szerződést?')) return;
+
+                try {
+                    $.ajax({
+                        url: `{{ url('/admin/szerzodesek') }}/${contract_id}`,
+                        method: 'DELETE',
+                        headers: {
+                            'X-CSRF-TOKEN': csrfToken
+                        },
+                        success: function(response) {
+                            showToast('Szerződése sikeresen törölve!', 'success');
+                            table.ajax.reload(null, false);
+                        },
+                        error: function(xhr) {
+                            let msg = 'Hiba történt a szerződés törlésekor';
+                            if (xhr.responseJSON && xhr.responseJSON.message) {
+                                msg = xhr.responseJSON.message;
+                            }
+                            showToast(msg, 'danger');
+                        }
+                    });
+                } catch (error) {
+                    showToast(error.message || 'Hiba történt a szerződés törlésekor', 'danger');
+                }
+            });
 
 
 

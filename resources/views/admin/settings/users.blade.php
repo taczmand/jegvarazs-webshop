@@ -212,7 +212,7 @@
                     processData: false,
                     success(response) {
                         showToast(response.message || 'Sikeres!', 'success');
-                        table.ajax.reload();
+                        table.ajax.reload(null, false);
                         userModal.hide();
                     },
                     error(xhr) {
@@ -246,7 +246,7 @@
                         },
                         success: function(response) {
                             showToast('Felhasználó sikeresen törölve!', 'success');
-                            table.ajax.reload();
+                            table.ajax.reload(null, false);
                         },
                         error: function(xhr) {
                             let msg = 'Hiba történt a felhasználó törlésekor';

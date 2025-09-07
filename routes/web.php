@@ -172,6 +172,7 @@ Route::middleware([Incognito::class])->group(function () {
             })->name('contracts.create_v1');
             Route::get('/szerzodesek/szerzodes-termekek', [ContractController::class, 'fetchWithCategories'])->name('contracts.list-with-categories');
             Route::get('/szerzodesek/termekek/{id}', [ContractController::class, 'showProductsToContract'])->name('contracts.show_products_to_contracts');
+            Route::delete('/szerzodesek/{id}', [ContractController::class, 'destroy'])->name('contracts.destroy');
 
             // Munkalapok
             Route::get('/munkalapok', [WorksheetController::class, 'index'])->name('worksheets.index');

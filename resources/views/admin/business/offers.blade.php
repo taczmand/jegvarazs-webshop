@@ -361,7 +361,7 @@
                     processData: false,
                     success(response) {
                         showToast(response.message || 'Sikeres!', 'success');
-                        table.ajax.reload();
+                        table.ajax.reload(null, false);
                         adminModal.hide();
                     },
                     error(xhr) {
@@ -396,7 +396,7 @@
                         },
                         success: function(response) {
                             showToast('Ajánlat sikeresen törölve!', 'success');
-                            table.ajax.reload();
+                            table.ajax.reload(null, false);
                         },
                         error: function(xhr) {
                             let msg = 'Hiba történt az ajánlat törlésekor';
@@ -407,7 +407,7 @@
                         }
                     });
                 } catch (error) {
-                    showToast(error.message || 'Hiba történt a kategória törlésekor', 'danger');
+                    showToast(error.message || 'Hiba történt az ajánlat törlésekor', 'danger');
                 }
             });
 

@@ -245,7 +245,7 @@
                     processData: false,
                     success(response) {
                         showToast(response.message || 'Sikeres!', 'success');
-                        table.ajax.reload();
+                        table.ajax.reload(null, false);
                         adminModal.hide();
                     },
                     error(xhr) {
@@ -280,7 +280,7 @@
                         },
                         success: function(response) {
                             showToast('Blog bejegyzés sikeresen törölve!', 'success');
-                            table.ajax.reload();
+                            table.ajax.reload(null, false);
                         },
                         error: function(xhr) {
                             let msg = 'Hiba történt a blog bejegyzés törlésekor';

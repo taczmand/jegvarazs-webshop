@@ -440,7 +440,37 @@ class ContractController extends Controller
     }
 
 
+    public function destroy($id)
+    {
+        $contract = Contract::findOrFail($id);
 
+        // Ellenőrizzük, hogy van-e kapcsolódó munkalap
+        if ($contract->worksheets()->exists()) {
+            return response()->json([
+                'message' => 'A szerződés nem törölhető, mert kapcsolódó munkalapok vannak.'
+            ], 400);
+        }
+
+        // Kapcsolódó termékek törlése
+        $contract->products()->detach();
+
+        // Aláírás fájl törlése, ha létezik
+        if ($contract->signature_path && Storage::disk('local')->exists("signatures/{$contract->signature_path}")) {
+            Storage::disk('local')->delete("signatures/{$contract->signature_path}");
+        }
+
+        // PDF fájl törlése, ha létezik
+        if ($contract->pdf_path && Storage::disk('local')->exists($contract->pdf_path)) {
+            Storage::disk('local')->delete($contract->pdf_path);
+        }
+
+        // Szerződés törlése
+        $contract->delete();
+
+        return response()->json([
+            'message' => 'Szerződés sikeresen törölve.'
+        ], 200);
+    }
 
 
 }

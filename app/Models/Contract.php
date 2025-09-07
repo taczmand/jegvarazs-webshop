@@ -26,4 +26,9 @@ class Contract extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
+    public function worksheets()
+    {
+        return $this->hasMany(Worksheet::class);
+    }
+
 }

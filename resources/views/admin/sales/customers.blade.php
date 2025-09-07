@@ -602,7 +602,7 @@
 
                     showToast('Vevő sikeresen mentve!', 'success');
                     loadProductsWithPartnerPrices(customer_id, is_partner);
-                    table.ajax.reload();
+                    table.ajax.reload(null, false);
                 } catch (error) {
                     showToast(error.message || 'Hiba történt a vevő mentésekor', 'danger');
                 }
@@ -916,7 +916,7 @@
                         },
                         success: function(response) {
                             showToast('Vevő vagy partner sikeresen törölve!', 'success');
-                            table.ajax.reload();
+                            table.ajax.reload(null, false);
                         },
                         error: function(xhr) {
                             let msg = 'Hiba történt a vevő vagy partner törlésekor';

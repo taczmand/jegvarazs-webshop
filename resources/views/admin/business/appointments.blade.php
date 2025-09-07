@@ -257,7 +257,7 @@
                     processData: false,
                     success(response) {
                         showToast(response.message || 'Sikeres!', 'success');
-                        table.ajax.reload();
+                        table.ajax.reload(null, false);
                         appointmentModal.hide();
                     },
                     error(xhr) {
@@ -326,7 +326,7 @@
                         },
                         success: function(response) {
                             showToast('Termék sikeresen törölve!', 'success');
-                            table.ajax.reload();
+                            table.ajax.reload(null, false);
                         },
                         error: function(xhr) {
                             let msg = 'Hiba történt a termék törlésekor';

@@ -640,7 +640,7 @@
                     processData: false,
                     success(response) {
                         showToast(response.message || 'Sikeres!', 'success');
-                        table.ajax.reload();
+                        table.ajax.reload(null, false);
                         adminModal.hide();
                         renderCalendar();
                     },
@@ -676,7 +676,7 @@
                         },
                         success: function(response) {
                             showToast('Munkalap sikeresen törölve!', 'success');
-                            table.ajax.reload();
+                            table.ajax.reload(null, false);
                         },
                         error: function(xhr) {
                             let msg = 'Hiba történt a munkalap törlésekor';
