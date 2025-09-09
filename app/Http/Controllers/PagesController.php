@@ -122,7 +122,8 @@ class PagesController extends Controller
 
         $products = Product::where('title', 'like', '%' . $query . '%')->where('status', true)
             ->orWhere('description', 'like', '%' . $query . '%')
-            ->paginate(10);
+            ->paginate(10)
+            ->appends(['query' => $query]);
 
 
         Searched::create([

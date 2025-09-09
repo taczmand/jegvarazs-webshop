@@ -303,6 +303,9 @@
 
 
                     renderPhotos(assigned_photos);
+                    sendViewRequest("appointment", row_data.id);
+
+                    table.ajax.reload(null, false);
 
                     appointmentModal.show();
                 }).fail(function(xhr, status, error) {

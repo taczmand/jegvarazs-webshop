@@ -89,6 +89,11 @@ import * as bootstrap from "bootstrap";
         $(this).css('background-image', 'url(' + bg + ')');
     });
 
+    $('.set-hero-bg').each(function () {
+        var bg = $(this).data('setbg');
+        $(this).css('background-image', 'url(' + bg + ')');
+    });
+
     //Humberger Menu
     $(".humberger__open").on('click', function () {
         $(".humberger__menu__wrapper").addClass("show__humberger__menu__wrapper");

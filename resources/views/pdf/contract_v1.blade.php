@@ -401,7 +401,7 @@
 <div class="signature-image">
     <div>
     @if(!empty($signature_path) && file_exists($signature_path))
-        <img src="{{ $signature_path }}" style="max-height: 140px;">
+        <img src="{{ $signature_path }}" style="max-height: 2cm;">
     @endif
     </div>
     <div>
@@ -526,7 +526,7 @@
 <div class="signature-image">
     <div>
         @if(!empty($signature_path) && file_exists($signature_path))
-            <img src="{{ $signature_path }}" style="max-height: 140px;">
+            <img src="{{ $signature_path }}" style="max-height: 2cm;">
         @endif
     </div>
     <div>

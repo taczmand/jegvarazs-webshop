@@ -50,8 +50,11 @@ class BasicMediaController extends Controller
             if ($request->hasFile('file_upload')) {
 
                 $originalName = pathinfo($request->file_upload->getClientOriginalName(), PATHINFO_FILENAME);
+                $originalName = str_replace(' ', '_', $originalName); // szóköz helyett "_"
+
                 $extension = $request->file_upload->getClientOriginalExtension();
                 $random = substr(Str::random(6), 0, 6); // 6 karakteres random string
+
                 $filename = $originalName . '_' . $random . '.' . $extension;
 
                 $path = $request->file_upload->storeAs('media', $filename, 'public');
