@@ -104,7 +104,9 @@ class PagesController extends Controller
                 'message' => $request->message
             ]);
 
-            Mail::to($request->email)->send(new NewAppointment($appointment));
+            Mail::to($request->email)
+                ->bcc('jegvarazsiroda@gmail.com')
+                ->send(new NewAppointment($appointment));
 
         } catch (\Exception $e) {
             return response()->json(['result' => 'error', 'error_message' => $e->getMessage()], 200);

