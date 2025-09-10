@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Mail\NewAppointment;
 use App\Models\Appointment;
 use App\Models\AppointmentPhoto;
 use App\Models\ProductPhoto;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Yajra\DataTables\Facades\DataTables;
@@ -94,6 +96,10 @@ class AppointmentController extends Controller
                 'message'          => $request->input('message'),
                 'status'           => $request->input('status', 'Függőben'),
             ]);
+
+            if ($request->input('email')) {
+                Mail::to($request->input('email'))->send(new NewAppointment($appointment));
+            }
 
             if (!empty($request->file('new_photos'))) {
 

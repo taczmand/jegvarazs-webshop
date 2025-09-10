@@ -41,6 +41,8 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/incognito', [PagesController::class, 'incognito']);
 
+Route::get('/idopontfoglalas', [PagesController::class, 'appointment'])->name('appointment');
+
 Route::middleware([Incognito::class])->group(function () {
 
     // Admin
@@ -383,7 +385,7 @@ Route::middleware([Incognito::class])->group(function () {
     Route::get('/', [PagesController::class, 'index'])->name('index');
     Route::get('/rolunk', [PagesController::class, 'about'])->name('about');
     Route::get('/kapcsolat', [PagesController::class, 'contact'])->name('contact');
-    Route::get('/idopontfoglalas', [PagesController::class, 'appointment'])->name('appointment');
+
     Route::post('/idopontfoglalas', [PagesController::class, 'addAppointment'])->name('appointment.post');
     Route::get('/letoltesek', [PagesController::class, 'downloads'])->name('downloads');
     Route::get('/blog', [PagesController::class, 'blog'])->name('blog');
