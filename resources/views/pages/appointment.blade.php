@@ -1,19 +1,9 @@
 @extends('layouts.shop')
 
-@section('hero')
-    @include('partials.hero', ['extra_class' => 'hero-normal'])
-@endsection
+
 
 
 @section('content')
-    @include('partials.breadcrumbs', ['breadcrumbs' => [
-        'page_title' => 'Időpontfoglalás',
-        'nav' => [
-            ['title' => 'Főoldal', 'url' => route('index')],
-            ['title' => 'Időpontfoglalás', 'url' => route('appointment')]
-        ],
-    ]
-    ])
 
     @if($errors->any())
         <div class="shop-validation-error">

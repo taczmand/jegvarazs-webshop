@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\CartRequest;
+use App\Models\BasicData;
 use App\Models\Cart;
 use Illuminate\Http\Request;
 
@@ -184,5 +185,21 @@ class CartController extends Controller
                 'message' => 'Váratlan hiba történt.'
             ], 500);
         }
+    }
+
+    public function resetCarts(Request $request)
+    {
+        try {
+            $days = BasicData::where('key', 'cart_expiration_days')->value('value') ?? 1; // Alapértelmezett 1 nap, ha nincs beállítva
+
+            $expirationDate = now()->subDays($days);
+            $deletedCount = \DB::table('carts')
+                ->where('updated_at', '<', $expirationDate)
+                ->delete();
+        } catch (\Exception $e) {
+            return response()->json(['result' => 'error', 'error_message' => $e->getMessage()], 500);
+        }
+
+        return response()->json(['result' => 'success', 'message' => 'Kosár törölve.'], 200);
     }
 }

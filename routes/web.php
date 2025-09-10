@@ -43,6 +43,8 @@ Route::get('/incognito', [PagesController::class, 'incognito']);
 
 Route::get('/idopontfoglalas', [PagesController::class, 'appointment'])->name('appointment');
 
+Route::get('/reset-carts', [CartController::class, 'resetCarts']);
+
 Route::middleware([Incognito::class])->group(function () {
 
     // Admin

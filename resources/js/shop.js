@@ -659,6 +659,17 @@ import * as bootstrap from "bootstrap";
         });
     });
 
+    $("#showFilters").on('click', function () {
+        $(".sidebar").slideToggle(400);
+        const btn = document.getElementById('showFilters');
+        if (btn.textContent === 'Szűrés beállítása') {
+            btn.textContent = 'Szűrők elrejtése';
+        } else {
+            btn.textContent = 'Szűrés beállítása';
+        }
+        btn.classList.toggle('btn-secondary');
+    });
+
 
 })(jQuery);
 

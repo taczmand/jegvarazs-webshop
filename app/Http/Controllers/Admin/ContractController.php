@@ -204,9 +204,10 @@ class ContractController extends Controller
                     'place_of_birth' => $request->input('place_of_birth'),
                     'date_of_birth' => $request->input('date_of_birth'),
                     'id_number' => $request->input('id_number'),
-                    'data' => $request->input('contract_data', []),
-                    'signature_path' => $signatureName ?? $contract->signature_path,
+                    'data' => $request->input('contract_data', [])
                 ]);
+
+                $signatureName = $contract->signature_path;
 
                 // Régi termékek törlése és újak mentése
                 $contract->products()->detach();

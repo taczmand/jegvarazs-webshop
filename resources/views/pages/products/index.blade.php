@@ -16,7 +16,7 @@
         <section class="product spad">
             <div class="container">
                 <div class="row">
-                    <div class="col-lg-3 col-md-5 order-2 order-md-1">
+                    <div class="col-lg-3 col-md-5">
                         <div class="sidebar">
                             <!--<div class="sidebar__item">
                                 <h4>Ár</h4>
@@ -167,14 +167,17 @@
                     </div>
 
                     <!-- Main Product Section Begin -->
-                    <div class="col-lg-9 col-md-7 order-1 order-md-2">
+                    <div class="col-lg-9 col-md-7">
 
                         <div class="filter__item">
                             <div class="row mb-4">
                                 <div class="col-12">
                                     <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                                        <div class="filter__sort">
+                                            <button class="site-btn" id="showFilters">Szűrés beállítása</button>
+                                        </div>
                                         <div class="filter__found">
-                                            <h6 class="mb-0"><span>{{ $product_count }}</span> termék</h6>
+                                            <h6 class="mb-0"><span>{{ $product_count }}</span> találat</h6>
                                         </div>
 
                                         <div class="filter__found">
@@ -187,7 +190,6 @@
                                             </select>
                                         </div>
                                         <div class="filter__sort d-flex align-items-center gap-2">
-                                            <span class="fw-bold mr-3">Rendezés:</span>
                                             <select class="form-control" style="min-width: 220px;" id="sortBy" name="sortBy">
                                                 <option value="productAsc" {{ request('sortBy') === 'productAsc' ? 'selected' : '' }}>
                                                     Terméknév szerint növekvő

@@ -217,6 +217,7 @@
                                 <img id="show_signature" src="" class="d-none" style="max-width: 300px">
 
                                 <a href="#" id="clear_signature" class="btn btn-secondary">Aláírás</a>
+                                <a href="#" id="regenarate" class="btn btn-secondary">Újragenerálás</a>
                                 <a href="" id="contract_pdf_link" target="_blank" class="btn btn-primary d-none">Generált PDF megtekintése</a>
                             </div>
 
@@ -442,6 +443,7 @@
                 $('#show_signature').attr("src", "szerzodes/alairas/" + contract.signature_path);
                 $('#show_signature').removeClass('d-none');
                 $('#clear_signature').addClass('d-none');
+                $('#regenarate').addClass('d-none');
                 $('#signature_area').addClass('d-none');
 
                 // Generált PDF link
@@ -521,6 +523,7 @@
 
                     $('#generateContract').removeClass('d-none');
                     $('#clear_signature').removeClass('d-none');
+                    $('#regenarate').addClass('d-none');
                     $('#contract_pdf_link').addClass('d-none').removeAttr('href');
                 } catch (error) {
                     showToast(error, 'danger');
@@ -564,7 +567,10 @@
                     $('.contract-contact').find('input, select, textarea').prop('disabled', false);
 
                     $('#generateContract').removeClass('d-none');
-                    $('#clear_signature').removeClass('d-none');
+
+                    $('#regenarate').removeClass('d-none');
+                    $('#clear_signature').addClass('d-none');
+
                     $('#contract_pdf_link').addClass('d-none').removeAttr('href');
                 } catch (error) {
                     showToast(error, 'danger');
@@ -614,6 +620,45 @@
                     },
                     complete: () => {
                         signaturePad.clear();
+                        hideLoader();
+                    }
+                });
+
+            });
+
+            // Szerződés újragenerálása
+
+            $('#regenarate').on('click', function (e) {
+                e.preventDefault();
+
+                const form = document.getElementById('adminModalForm');
+                const formData = new FormData(form);
+                formData.append('_token', csrfToken);
+
+                $.ajax({
+                    url: '{{ route('admin.contracts.store') }}',
+                    method: 'POST',
+                    data: formData,
+                    contentType: false,
+                    processData: false,
+                    beforeSend: () => {
+                        showLoader();
+                    },
+                    success(response) {
+                        showToast(response.message || 'Sikeres!', 'success');
+                        table.ajax.reload(null, false);
+                        adminModal.hide();
+                    },
+                    error(xhr) {
+                        let msg = 'Hiba!';
+                        if (xhr.responseJSON?.errors) {
+                            msg = Object.values(xhr.responseJSON.errors).flat().join(' ');
+                        } else if (xhr.responseJSON?.message) {
+                            msg = xhr.responseJSON.message;
+                        }
+                        showToast(msg, 'danger');
+                    },
+                    complete: () => {
                         hideLoader();
                     }
                 });
