@@ -74,7 +74,7 @@ export function initCrud(options) {
 
             if (input.type === 'checkbox') {
                 const value = row[key];
-                input.checked = value === 'active' || value === 1 || value === '1' || value === true || value === 'true' || value === 'Aktív';
+                input.checked = value === 'active' || value === 1 || value === '1' || value === true || value === 'true' || value === 'Aktív' || value === 'Igen';
             } else {
                 input.value = row[key];
             }

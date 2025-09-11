@@ -98,6 +98,7 @@ class ProductController extends Controller
         $attributes = Attribute::select('attributes.id', 'attributes.name', 'product_attributes.value')
             ->join('product_attributes', 'attributes.id', '=', 'product_attributes.attribute_id')
             ->whereIn('product_attributes.product_id', $productIds)
+            ->where('attributes.show_filter', true)
             ->distinct()
             ->get()
             ->groupBy('name');
@@ -250,6 +251,7 @@ class ProductController extends Controller
         $attributes = Attribute::select('attributes.id', 'attributes.name', 'product_attributes.value')
             ->join('product_attributes', 'attributes.id', '=', 'product_attributes.attribute_id')
             ->whereIn('product_attributes.product_id', $productIds)
+            ->where('attributes.show_filter', true)
             ->distinct()
             ->get()
             ->groupBy('name');

@@ -35,6 +35,7 @@
                     <tr>
                         <th>ID</th>
                         <th data-priority="1">Név</th>
+                        <th data-priority="2">Szűrésnél látszik?</th>
                         <th>Létrehozva</th>
                         <th>Módosítva</th>
                         <th data-priority="2">Műveletek</th>
@@ -65,6 +66,10 @@
                             <label for="name" class="form-label">Név</label>
                             <input type="text" class="form-control" id="name" name="name" required>
                         </div>
+                        <div class="mb-3">
+                            <label for="show_filter" class="form-label">Szűrésnél látszik?</label>
+                            <input type="checkbox" class="" id="show_filter" name="show_filter">
+                        </div>
                     </div>
                     <div class="modal-footer">
                         <button type="submit" class="btn btn-primary save-btn">Mentés</button>
@@ -92,6 +97,7 @@
                 columns: [
                     { data: 'id' },
                     { data: 'name' },
+                    { data: 'show_filter' },
                     { data: 'created' },
                     { data: 'updated' },
                     { data: 'action', orderable: false, searchable: false }

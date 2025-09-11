@@ -17,9 +17,12 @@ class AttributeController extends Controller
 
     public function data()
     {
-        $attributes = Attribute::select(['id', 'name', 'created_at as created', 'updated_at as updated']);
+        $attributes = Attribute::select(['id', 'name', 'show_filter', 'created_at as created', 'updated_at as updated']);
 
         return DataTables::of($attributes)
+            ->editColumn('show_filter', function ($attribute) {
+                return $attribute->show_filter ? 'Igen' : 'Nem';
+            })
             ->addColumn('action', function ($attribute) {
                 $user = auth('admin')->user();
                 $buttons = '';
@@ -74,6 +77,13 @@ class AttributeController extends Controller
             $attribute->update([
                 'name' => $request['name']
             ]);
+
+            if ($request->has('show_filter')) {
+                $attribute->show_filter = 1;
+            } else {
+                $attribute->show_filter = 0;
+            }
+            $attribute->save();
 
             return response()->json([
                 'message' => 'Sikeres mentés!',
