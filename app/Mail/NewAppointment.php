@@ -2,6 +2,7 @@
 
 namespace App\Mail;
 
+use App\Models\BasicData;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
@@ -37,10 +38,13 @@ class NewAppointment extends Mailable
      */
     public function content(): Content
     {
+        $basic_data = BasicData::pluck('value', 'key')->toArray();
+
         return new Content(
             view: 'emails.add-appointment',
             with: [
                 'appointment' => $this->appointment,
+                'basic_data' => $basic_data,
             ],
         );
     }

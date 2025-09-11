@@ -65,7 +65,14 @@
         @endif
     </div>
 
-    <p>Hamarosan felvesszük önnel a kapcsolatot.</p>
+    <h4 style="margin-top: 25px; color: #0077b6;">Elérhetőségeink</h4>
+    <p>
+        <strong>Cím:</strong> {{ $basic_data['company_address'] ?? '' }}<br>
+        <strong>Telefon:</strong> {{ $basic_data['company_appointment_phone'] ?? '' }}<br>
+        <strong>E-mail:</strong> {{ $basic_data['company_appointment_email'] ?? '' }}
+    </p>
+
+    <p>Üdvözlettel,<br />{{ $basic_data['company_name'] ?? '' }}</p>
 
     <small style="font-style: italic;">Kérjük, erre az e-mail címre ne válaszoljon.</small>
 
