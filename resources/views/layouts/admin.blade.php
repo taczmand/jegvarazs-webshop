@@ -197,6 +197,7 @@
 <!-- Vendor Scripts -->
 <script src="{{ asset('vendor/js/jquery-3.3.1.min.js') }}"></script>
 <script src="{{ asset('vendor/js/datatables.min.js') }}"></script>
+<script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
 <script src="https://cdn.datatables.net/responsive/3.0.5/js/dataTables.responsive.js"></script>
 <script src="https://cdn.datatables.net/responsive/3.0.5/js/responsive.dataTables.js"></script>
 

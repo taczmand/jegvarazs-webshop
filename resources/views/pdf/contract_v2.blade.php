@@ -143,13 +143,11 @@
             font-size: 0.9em;
         }
         .cotract-options {
-            margin-top: 20px;
-            font-size: 12px;
+            margin-top: 10px;
+            font-size: 8pt;
         }
         .cotract-options div {
             display: inline-block;
-            margin-right: 15px;
-            white-space: nowrap;
         }
         .contact-section {
             text-align: center;
@@ -377,47 +375,15 @@
 
 <div class="section cotract-options">
     @php
-        $has_ground_bracket_checked = isset($contract['data']['has_ground_bracket']) && $contract['data']['has_ground_bracket'] ? 'checked' : '';
-        $has_roof_mounting_checked = isset($contract['data']['roof_mounting']) && $contract['data']['roof_mounting'] ? 'checked' : '';
-        $has_decor_piping_checked = isset($contract['data']['has_decor_and_piping']) && $contract['data']['has_decor_and_piping'] ? 'checked' : '';
-        $has_concrete_wall_checked = isset($contract['data']['has_concrete_wall']) && $contract['data']['has_concrete_wall'] ? 'checked' : '';
-
-        $bracket = $contract['data']['bracket'] ?? null; // Konzol
-        $insulation_cm = $contract['data']['insulation_thickness_cm'] ?? null; // Szigetelés cm-ben
-
-        // Ezek akkor legyenek "checked", ha van értékük
-        $has_bracket_checked = $bracket ? 'checked' : '';
-        $has_insulation_cm_checked = $insulation_cm ? 'checked' : '';
+        if (isset($contract['data']['comment'])) {
+            $comment = $contract['data']['comment'];
+        } else {
+            $comment = null;
+        }
     @endphp
 
     <div>
-        <input type="checkbox" {{ $has_ground_bracket_checked }}>
-        <span>Talpkonzol</span>
-    </div>
-
-    <div>
-        <input type="checkbox" {{ $has_bracket_checked }}>
-        <span>{{ $bracket ?? '... konzol' }}</span>
-    </div>
-
-    <div>
-        <input type="checkbox" {{ $has_roof_mounting_checked }}>
-        <span>Tetőszerelés</span>
-    </div>
-
-    <div>
-        <input type="checkbox" {{ $has_decor_piping_checked }}>
-        <span>Dekor és csövezés</span>
-    </div>
-
-    <div>
-        <input type="checkbox" {{ $has_insulation_cm_checked }}>
-        <span>{{ $insulation_cm ? $insulation_cm . ' cm szigetelés' : '... cm szigetelés' }}</span>
-    </div>
-
-    <div>
-        <input type="checkbox" {{ $has_concrete_wall_checked }}>
-        <span>Betonfal</span>
+        <b>Megjegyzés:</b> {{ $comment ?? "……………………………………" }}
     </div>
 
 </div>

@@ -422,7 +422,7 @@ class ContractController extends Controller
         $totalGross = collect($products)->sum(function ($item) {
             return $item['gross_price'] * $item['product_qty'];
         });
-        //dd($contract->toArray());
+
         $pdf_data = [
             'contract' => $contract->toArray(),
             'products' => $products,
@@ -436,7 +436,7 @@ class ContractController extends Controller
         \Log::info($pdf_data);
 
         // PDF generálása
-        $pdf = Pdf::loadView('pdf.contract_v1', $pdf_data);
+        $pdf = Pdf::loadView('pdf.contract_'.$contract->version, $pdf_data);
         return $pdf->stream('contract.pdf');
     }
 

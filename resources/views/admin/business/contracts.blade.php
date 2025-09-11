@@ -462,6 +462,7 @@
             $('#adminTable').on('click', '.edit', async function () {
                 const row_data = $('#adminTable').DataTable().row($(this).parents('tr')).data();
                 const contract_data = await loadContractProducts(row_data.id);
+                sendViewRequest("contract", row_data.id);
                 showModalToUpdate(contract_data);
             });
 
@@ -512,8 +513,9 @@
                     $('#show_signature').addClass('d-none');
                     $('#signature_area').removeClass('d-none');
                     $('#contract_version').prop('disabled', false);
+                    $('#contract_version').val('v2');
 
-                    const loaded_version = await loadVersions("v1");
+                    const loaded_version = await loadVersions("v2");
                     renderContractForm(loaded_version.fields);
                     if (installationDate) {
                         $('#installation_date').val(installationDate);
@@ -559,8 +561,9 @@
                     $('#show_signature').addClass('d-none');
                     $('#signature_area').removeClass('d-none');
                     $('#contract_version').prop('disabled', false);
+                    $('#contract_version').val(contract.version);
 
-                    const loaded_version = await loadVersions("v1");
+                    const loaded_version = await loadVersions(contract.version);
                     renderContractForm(loaded_version.fields, existingContractData);
 
                     loadProducts(contract_products);
