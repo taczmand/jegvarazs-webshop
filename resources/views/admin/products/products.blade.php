@@ -327,6 +327,10 @@
                     data: formData,
                     contentType: false,
                     processData: false,
+                    beforeSend: function() {
+                        $('#uploadPhotosBtn').html('Feltöltés...').prop('disabled', true);
+                        showLoader();
+                    },
                     success: async function (response) {
                         showToast(response.message || 'Képek sikeresen feltöltve!', 'success');
                         await editProductModal(productId);
@@ -341,6 +345,10 @@
                             msg = xhr.responseJSON.message;
                         }
                         showToast(msg, 'danger');
+                    },
+                    complete: function() {
+                        $('#uploadPhotosBtn').html('Feltöltés').prop('disabled', false);
+                        hideLoader();
                     }
                 });
             });
