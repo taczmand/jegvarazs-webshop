@@ -168,8 +168,12 @@
                             <div class="tab-pane fade" id="images">
                                 <div class="mb-3">
                                     <label class="form-label">Új képek feltöltése</label>
-                                    <input type="file" class="form-control" name="new_photos[]" multiple accept="image/*">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <input type="file" class="form-control" name="new_photos[]" multiple accept="image/*">
+                                        <button type="button" class="btn btn-sm btn-info" id="uploadPhotosBtn">Feltöltés</button>
+                                    </div>
                                 </div>
+
 
                                 <div id="productPhotos" class="mt-3"></div>
                             </div>
@@ -236,6 +240,7 @@
                     resetForm('Új termék létrehozása');
 
                     const allMetaData = await getAllMetaData();
+                    $('#uploadPhotosBtn').hide(); // Elrejtjük a feltöltés gombot új termék esetén
 
                     const treeCategories = buildCategoryTree(allMetaData.original.categories);
                     renderCategories(treeCategories);
@@ -299,6 +304,47 @@
 
             });
 
+            // Új képek feltöltése
+            $('#uploadPhotosBtn').on('click', function () {
+                const productId = $('#product_id').val();
+                if (!productId) {
+                    showToast('Előbb mentsd el a terméket, mielőtt képeket töltesz fel!', 'warning');
+                    return;
+                }
+
+                const form = document.getElementById('productForm');
+                const formData = new FormData(form);
+                formData.append('_token', csrfToken);
+
+                if (!formData.getAll('new_photos[]').length) {
+                    showToast('Válassz ki legalább egy képet a feltöltéshez!', 'warning');
+                    return;
+                }
+
+                $.ajax({
+                    url: `${window.appConfig.APP_URL}admin/termekek/${productId}/upload-photos`,
+                    method: 'POST',
+                    data: formData,
+                    contentType: false,
+                    processData: false,
+                    success: async function (response) {
+                        showToast(response.message || 'Képek sikeresen feltöltve!', 'success');
+                        await editProductModal(productId);
+                        // Töröljük a fájl inputot
+                        form.querySelector('input[name="new_photos[]"]').value = '';
+                    },
+                    error(xhr) {
+                        let msg = 'Hiba a képek feltöltésekor!';
+                        if (xhr.responseJSON?.errors) {
+                            msg = Object.values(xhr.responseJSON.errors).flat().join(' ');
+                        } else if (xhr.responseJSON?.message) {
+                            msg = xhr.responseJSON.message;
+                        }
+                        showToast(msg, 'danger');
+                    }
+                });
+            });
+
             // Termék szerkesztése
 
             $('#productsTable').on('click', '.edit', async function () {
@@ -307,7 +353,13 @@
 
                 const row_data = $('#productsTable').DataTable().row($(this).parents('tr')).data();
                 const productId = row_data.id;
+                await editProductModal(productId);
+            });
+
+            async function editProductModal(productId) {
                 const allMetaData = await getAllMetaData();
+
+                $('#uploadPhotosBtn').show();
 
                 $.get(`{{ url('/admin/termekek') }}/${productId}`, function(data) {
                     const product = data.original.product;
@@ -341,7 +393,7 @@
                 }).fail(function(xhr, status, error) {
                     showToast('Nem sikerült betölteni a termék adatait! ' + error, 'danger');
                 });
-            });
+            }
 
             // Termék törlése
             $('#productsTable').on('click', '.delete', async function () {

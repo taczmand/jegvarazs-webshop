@@ -286,4 +286,24 @@ class ProductController extends Controller
 
         return response()->json($categories);
     }
+
+    public function uploadProductPhotos(Request $request) {
+        try {
+            $uploaded_photos = $this->product_service->uploadProductPhotos($request->all());
+
+            return response()->json([
+                'message' => 'Sikeres feltöltés!',
+                'photos' => $uploaded_photos,
+            ], 200);
+
+        } catch (\Exception $e) {
+
+            \Log::error('Termék kép feltöltési hiba: ' . $e->getMessage());
+
+            return response()->json([
+                'message' => 'Hiba történt a feltöltés során.',
+                'errors' => $e->getMessage(),
+            ], 500);
+        }
+    }
 }

@@ -265,4 +265,67 @@ class ProductService
             return $product;
         });
     }
+
+    public function uploadProductPhotos($data)
+    {
+        $product = Product::findOrFail($data['id']);
+
+        if (!empty($data['new_photos'])) {
+            $photos = [];
+
+            foreach ($data['new_photos'] as $photo) {
+
+                $extension = strtolower($photo->getClientOriginalExtension());
+
+                $path = $photo->store('products', 'public');
+
+                $fullPath = Storage::disk('public')->path($path);
+
+                // Csak képeknél optimalizálunk
+                if (in_array($extension, ['jpg', 'jpeg', 'png'])) {
+                    try {
+                        $imagick = new \Imagick($fullPath);
+
+                        if (in_array($extension, ['jpg', 'jpeg'])) {
+                            $imagick->setImageCompression(\Imagick::COMPRESSION_JPEG);
+                            $imagick->setImageCompressionQuality(75);
+                        } elseif ($extension === 'png') {
+                            $imagick->setImageCompression(\Imagick::COMPRESSION_ZIP);
+                            $imagick->setImageCompressionQuality(75);
+                        }
+
+                        $imagick->stripImage();
+
+                        // Vízjel betöltése
+                        $watermark = new \Imagick(env('STATIC_MEDIA_PATH') . '/uj_logo_szeles_transzparens.png');
+
+                        // Csak az alpha csatorna átlátszóságát csökkentjük
+                        $watermark->evaluateImage(\Imagick::EVALUATE_MULTIPLY, 0.1, \Imagick::CHANNEL_ALPHA);
+
+                        // Méretezés a fő képhez
+                        $watermark->thumbnailImage($imagick->getImageWidth() / 1.5, 0);
+
+                        // Középre helyezés
+                        $x = ($imagick->getImageWidth() - $watermark->getImageWidth()) / 2;
+                        $y = ($imagick->getImageHeight() - $watermark->getImageHeight()) / 2;
+
+                        // Biztos alpha csatorna a fő képen
+                        $imagick->setImageAlphaChannel(\Imagick::ALPHACHANNEL_SET);
+
+                        // Kompozitálás
+                        $imagick->compositeImage($watermark, \Imagick::COMPOSITE_OVER, $x, $y);
+
+                        $imagick->writeImage($fullPath);
+                        $imagick->destroy();
+                    } catch (\Exception $e) {
+                        \Log::error("Kép optimalizálás sikertelen: {$fullPath} - {$e->getMessage()}");
+                    }
+                }
+
+                $photos[] = ['path' => $path];
+            }
+
+            $product->photos()->createMany($photos);
+        }
+    }
 }

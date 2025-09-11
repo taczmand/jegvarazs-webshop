@@ -114,6 +114,7 @@ Route::middleware([Incognito::class])->group(function () {
             Route::patch('/termekek/set-primary-photo', [AdminProductController::class, 'setPrimaryProductPhoto'])->name('products.set_primary_product_photo');
             Route::delete('/termekek/delete-photo', [AdminProductController::class, 'deleteProductPhoto'])->name('products.delete_product_photo');
             Route::delete('/termekek/{id}', [AdminProductController::class, 'destroy'])->name('products.destroy');
+            Route::post('/termekek/{id}/upload-photos', [AdminProductController::class, 'uploadProductPhotos'])->name('products.upload_product_photo');
 
             // Kategóriák
             Route::get('/kategoriak', [CategoryController::class, 'index'])->name('categories.index');
