@@ -25,6 +25,8 @@ class ProductController extends Controller
         $query = Product::with('category')
             ->where('status', 'active');
 
+        $allProductIds = $query->pluck('id');
+
         // 🔍 Tag szűrés, ha van
         if ($tags) {
             $tagArray = explode(',', $tags);
@@ -78,26 +80,23 @@ class ProductController extends Controller
                 $query->orderBy('title', 'asc'); // alapértelmezett
         }
 
+
+
         // Pagináció
         $products = $query->paginate($itemsPerPage)->withQueryString();
 
-        $tags = Tag::whereHas('products', function ($q) use ($products) {
-            $q->whereIn('products.id', $products->pluck('id'));
-        })
-            ->pluck('id', 'name')
-            ->toArray();
+        $tags = Tag::whereHas('products', function ($q) use ($allProductIds) {
+            $q->whereIn('products.id', $allProductIds);
+        })->pluck('id', 'name');
 
+        $brands = Brand::whereHas('products', function ($q) use ($allProductIds) {
+            $q->whereIn('products.id', $allProductIds);
+        })->pluck('id', 'title');
 
-        $brands = Brand::where('status', 'active')
-            ->whereIn('id', $products->pluck('brand_id')->filter()) // kiszűri a NULL-okat
-            ->pluck('id', 'title')
-            ->toArray();
-
-        $productIds = $products->pluck('id');
 
         $attributes = Attribute::select('attributes.id', 'attributes.name', 'product_attributes.value')
             ->join('product_attributes', 'attributes.id', '=', 'product_attributes.attribute_id')
-            ->whereIn('product_attributes.product_id', $productIds)
+            ->whereIn('product_attributes.product_id', $allProductIds)
             ->where('attributes.show_filter', true)
             ->distinct()
             ->get()
@@ -125,6 +124,13 @@ class ProductController extends Controller
             'url' => route('index'),
         ]);
 
+        // Ha van szűrés, akkor a product_count a szűrt termékek száma
+        if ($tags || $brands || $attributes) {
+            $product_count = $products->total();
+        } else {
+            $product_count = $allProductsQuery->count();
+        }
+
         return view('pages.products.index', [
             'products' => $products,
             'breadcrumbs' => [
@@ -137,7 +143,7 @@ class ProductController extends Controller
             'minPrice' => $minPrice,
             'maxPrice' => $maxPrice,
             'latest_products' => $latest_products,
-            'product_count' => $allProductsQuery->count(),
+            'product_count' => $product_count,
         ]);
     }
 
@@ -183,6 +189,8 @@ class ProductController extends Controller
         $query = Product::with('category')
             ->whereIn('cat_id', $categoryIds)
             ->where('status', 'active');
+
+        $allProductIds = $query->pluck('id');
 
         // 🔍 Tag szűrés
         if ($tags) {
@@ -233,24 +241,22 @@ class ProductController extends Controller
                 break;
         }
 
+
+
         $products = $query->paginate($itemsPerPage)->withQueryString();
 
-        $tags = Tag::whereHas('products', function ($q) use ($products) {
-            $q->whereIn('products.id', $products->pluck('id'));
-        })
-            ->pluck('id', 'name')
-            ->toArray();
+        $tags = Tag::whereHas('products', function ($q) use ($allProductIds) {
+            $q->whereIn('products.id', $allProductIds);
+        })->pluck('id', 'name');
 
-        $brands = Brand::where('status', 'active')
-            ->whereIn('id', $products->pluck('brand_id')->filter()) // kiszűri a NULL-okat
-            ->pluck('id', 'title')
-            ->toArray();
+        $brands = Brand::whereHas('products', function ($q) use ($allProductIds) {
+            $q->whereIn('products.id', $allProductIds);
+        })->pluck('id', 'title');
 
-        $productIds = $products->pluck('id');
 
         $attributes = Attribute::select('attributes.id', 'attributes.name', 'product_attributes.value')
             ->join('product_attributes', 'attributes.id', '=', 'product_attributes.attribute_id')
-            ->whereIn('product_attributes.product_id', $productIds)
+            ->whereIn('product_attributes.product_id', $allProductIds)
             ->where('attributes.show_filter', true)
             ->distinct()
             ->get()
@@ -285,6 +291,13 @@ class ProductController extends Controller
             'url' => route('index'),
         ]);
 
+        // Ha van szűrés, akkor a product_count a szűrt termékek száma
+        if ($tags || $brands || $attributes) {
+            $product_count = $products->total();
+        } else {
+            $product_count = $allProductsQuery->count();
+        }
+
         return view('pages.products.index', [
             'products' => $products,
             'category' => $parent,
@@ -298,7 +311,7 @@ class ProductController extends Controller
                 'page_title' => $parent->title,
                 'nav' => $nav
             ],
-            'product_count' => $allProductsQuery->count(),
+            'product_count' => $product_count,
         ]);
     }
 

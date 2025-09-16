@@ -527,7 +527,7 @@ import * as bootstrap from "bootstrap";
                 if (brands.includes(brand)) {
                     $('#brand_label_'+brand).css({'background-color': '#007bff', 'color': 'white'}); // vagy bármilyen szín, ami jelzi, hogy kiválasztott
                 } else {
-                    $('#brand_label_'+brand).css({'background-color': '#f5f5f5', 'color': 'white'}); // alapértelmezett szín
+                    $('#brand_label_'+brand).css({'background-color': '#f5f5f5'}); // alapértelmezett szín
                 }
             });
         }
