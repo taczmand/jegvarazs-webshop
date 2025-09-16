@@ -390,7 +390,7 @@ import * as bootstrap from "bootstrap";
         const existingTags = searchParams.get('tag');
         let newTags = [];
         if (existingTags) {
-            newTags = existingTags.split(',').filter(tag => tag !== filter);
+            newTags = existingTags.split('|').filter(tag => tag !== filter);
         }
         if (!newTags.includes(selected_tag)) {
             newTags.push(selected_tag);
@@ -398,7 +398,7 @@ import * as bootstrap from "bootstrap";
             // ha már benne van, akkor eltávolítjuk
             newTags = newTags.filter(tag => tag !== selected_tag);
         }
-        searchParams.set('tag', newTags.join(','));
+        searchParams.set('tag', newTags.join('|'));
         currentUrl.search = searchParams.toString();
         window.location.href = currentUrl.toString();
 
@@ -416,7 +416,7 @@ import * as bootstrap from "bootstrap";
         const existingBrands = searchParams.get('brand');
         let newBrands = [];
         if (existingBrands) {
-            newBrands = existingBrands.split(',').filter(brand => brand !== filter);
+            newBrands = existingBrands.split('|').filter(brand => brand !== filter);
         }
         if (!newBrands.includes(selected_brand)) {
             newBrands.push(selected_brand);
@@ -424,7 +424,7 @@ import * as bootstrap from "bootstrap";
             // ha már benne van, akkor eltávolítjuk
             newBrands = newBrands.filter(brand => brand !== selected_brand);
         }
-        searchParams.set('brand', newBrands.join(','));
+        searchParams.set('brand', newBrands.join('|'));
         currentUrl.search = searchParams.toString();
         window.location.href = currentUrl.toString();
 
@@ -442,7 +442,7 @@ import * as bootstrap from "bootstrap";
         const searchParams = new URLSearchParams(currentUrl.search);
         const existingAttributes = searchParams.get('attribute');
 
-        let newAttributes = existingAttributes ? existingAttributes.split(',') : [];
+        let newAttributes = existingAttributes ? existingAttributes.split('|') : [];
 
         if (newAttributes.includes(selectedAttr)) {
             newAttributes = newAttributes.filter(a => a !== selectedAttr);
@@ -450,7 +450,7 @@ import * as bootstrap from "bootstrap";
             newAttributes.push(selectedAttr);
         }
 
-        searchParams.set('attribute', newAttributes.join(','));
+        searchParams.set('attribute', newAttributes.join('|'));
         currentUrl.search = searchParams.toString();
         window.location.href = currentUrl.toString();
     });
@@ -501,7 +501,7 @@ import * as bootstrap from "bootstrap";
         const existingTags = searchParams.get('tag');
 
         if (existingTags) {
-            const tags = existingTags.split(',');
+            const tags = existingTags.split('|');
 
             $('.tag-filter').each(function() {
                 const tag = $(this).val();
@@ -520,7 +520,7 @@ import * as bootstrap from "bootstrap";
         const existingBrands = searchParams.get('brand');
 
         if (existingBrands) {
-            const brands = existingBrands.split(',');
+            const brands = existingBrands.split('|');
 
             $('.brand-filter').each(function() {
                 const brand = $(this).val();
@@ -539,7 +539,7 @@ import * as bootstrap from "bootstrap";
         const existingAttributes = searchParams.get('attribute');
 
         if (existingAttributes) {
-            const attributes = existingAttributes.split(',');
+            const attributes = existingAttributes.split('|');
 
             $('.attribute-label').each(function() {
                 const attrKey = $(this).data('attrkey');

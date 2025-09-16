@@ -29,7 +29,7 @@ class ProductController extends Controller
 
         // 🔍 Tag szűrés, ha van
         if ($tags) {
-            $tagArray = explode(',', $tags);
+            $tagArray = explode('|', $tags);
             $query->whereHas('tags', function ($q) use ($tagArray) {
                 $q->whereIn('tag_id', $tagArray);
             });
@@ -37,7 +37,7 @@ class ProductController extends Controller
 
         // 🔍 Brand szűrés, ha van
         if ($brands) {
-            $brandArray = explode(',', $brands);
+            $brandArray = explode('|', $brands);
             $query->whereHas('brands', function ($q) use ($brandArray) {
                 $q->whereIn('brand_id', $brandArray);
             });
@@ -46,7 +46,7 @@ class ProductController extends Controller
         // 🔍 Attribútum szűrés, ha van
         if ($attributes) {
             // Pl. ?attribute=3:red,5:xl
-            $attributeArray = explode(',', $attributes);
+            $attributeArray = explode('|', $attributes);
 
             $query->whereHas('attributes', function ($q) use ($attributeArray) {
                 foreach ($attributeArray as $attr) {
@@ -194,7 +194,7 @@ class ProductController extends Controller
 
         // 🔍 Tag szűrés
         if ($tags) {
-            $tagArray = explode(',', $tags);
+            $tagArray = explode('|', $tags);
             $query->whereHas('tags', function ($q) use ($tagArray) {
                 $q->whereIn('tag_id', $tagArray);
             });
@@ -202,7 +202,7 @@ class ProductController extends Controller
 
         // 🔍 Brand szűrés
         if ($brands) {
-            $brandArray = explode(',', $brands);
+            $brandArray = explode('|', $brands);
             $query->whereHas('brands', function ($q) use ($brandArray) {
                 $q->whereIn('brand_id', $brandArray);
             });
@@ -210,7 +210,7 @@ class ProductController extends Controller
 
         // 🔍 Attribútum szűrés, ha van
         if ($attributes) {
-            $attributeArray = explode(',', $attributes);
+            $attributeArray = explode('|', $attributes);
 
             $query->whereHas('attributes', function ($q) use ($attributeArray) {
                 foreach ($attributeArray as $attr) {

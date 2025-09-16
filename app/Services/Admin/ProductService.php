@@ -84,7 +84,7 @@ class ProductService
             $attributes = [];
 
             foreach ($data['attributes'] ?? [] as $attributeId => $value) {
-                if ($value !== null) {
+                if ($value !== null && !str_contains($value, '|')) {
                     $attributes[$attributeId] = ['value' => $value];
                 }
             }
@@ -189,7 +189,7 @@ class ProductService
             $attributes = [];
 
             foreach ($data['attributes'] ?? [] as $attributeId => $value) {
-                if ($value !== null) {
+                if ($value !== null && !str_contains($value, '|')) {
                     $attributes[$attributeId] = ['value' => $value];
                 }
             }

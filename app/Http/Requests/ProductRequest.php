@@ -27,7 +27,19 @@ class ProductRequest extends FormRequest
             'tax_id' => ['required', 'numeric', 'exists:tax_categories,id'],
             'status' => ['required', 'string', 'in:active,inactive'],
             'category_id' => ['required', 'numeric', 'exists:categories,id'],
+            'attributes' => ['nullable', 'array'],
+            'attributes.*' => [
+                'nullable',
+                'string',
+                'max:100',
+                function ($attribute, $value, $fail) {
+                    if (str_contains($value, '|')) {
+                        $fail("Az {$attribute} mező nem tartalmazhatja a '|' karaktert.");
+                    }
+                },
+            ],
         ];
+
 
     }
 }
