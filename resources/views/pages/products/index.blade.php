@@ -75,7 +75,32 @@
                                 </div>
                             </div>-->
 
-                            @if(count($tags) > 0)
+                            @if(count($product_sub_categories) > 0)
+                                @foreach($product_sub_categories as $subcategory)
+                                    <div class="sidebar__item">
+
+                                        @php
+
+                                            $data = $subcategory->getFullSlugWithImage(); // slug + első kép
+                                            $fullSlug = $data['slug'];
+                                            $productWithImage = $data['product_with_image'];
+                                        @endphp
+
+                                        <div class="subcategory-item">
+                                            <a href="{{ route('products.resolve', ['slugs' => $fullSlug]) }}" class="subcategory-link">
+                                                <div class="subcategory-image">
+                                                    <img src="{{ asset('storage/' . $productWithImage?->path ?? 'static_media/no-image.jpg') }}" alt="{{ $subcategory->title }}">
+                                                </div>
+                                                <span class="subcategory-title">{{ $subcategory->title }}</span>
+                                            </a>
+                                        </div>
+
+                                    </div>
+                                @endforeach
+                            @endif
+
+
+                        @if(count($tags) > 0)
                                 <div class="sidebar__item">
                                     <h4>Címkék</h4>
 

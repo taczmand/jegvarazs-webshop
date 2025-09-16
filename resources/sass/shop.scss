@@ -3729,6 +3729,37 @@ a {
     cursor: pointer;
     font-size: 14px;
 }
+
+.subcategory-item {
+    margin-bottom: 0.5rem;
+}
+
+.subcategory-link {
+    display: flex;
+    align-items: center; /* kép és cím függőlegesen középre */
+    text-decoration: none;
+    color: #333;
+    gap: 0.5rem; /* távolság a kép és a cím között */
+}
+
+.subcategory-image img {
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+    border-radius: 4px;
+    display: block;
+}
+
+.subcategory-title {
+    font-weight: bold;
+    padding: 0.2rem 0.5rem;
+}
+.subcategory-title:hover {
+    background-color: $light-grey-color;
+}
+
+
+
 /* PC - Hover mutatja jobbra háromoszlopos gridben */
 @media (min-width: 992px) {
     .subcategory-toggle {

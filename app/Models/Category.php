@@ -46,4 +46,35 @@ class Category extends Model
 
         return implode('/', array_reverse($slugs));
     }
+
+    public function getFullSlugWithImage(): array
+    {
+        $slugs = [];
+        $category = $this;
+
+        while ($category) {
+            $slugs[] = $category->slug;
+            $category = $category->parent;
+        }
+
+        $fullSlug = implode('/', array_reverse($slugs));
+
+        // Az első termék, ami képpel rendelkezik
+        $productWithImage = $this->products()
+            ->whereHas('photos')
+            ->with('photos')
+            ->first();
+
+        if ($productWithImage) {
+            // Ha van ilyen termék, akkor visszaadjuk az első képét
+            $photo = $productWithImage->photos->first();
+        } else {
+            $photo = null;
+        }
+
+        return [
+            'slug' => $fullSlug,
+            'product_with_image' => $photo,
+        ];
+    }
 }
