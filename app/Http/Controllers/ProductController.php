@@ -144,7 +144,7 @@ class ProductController extends Controller
             'maxPrice' => $maxPrice,
             'latest_products' => $latest_products,
             'product_count' => $product_count,
-            'product_sub_categories' => Category::whereNull('parent_id')->with('children')->get(),
+            'product_sub_categories' => [],
         ]);
     }
 
