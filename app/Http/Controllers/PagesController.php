@@ -122,10 +122,20 @@ class PagesController extends Controller
             return redirect()->back()->with('error', 'Kérjük, adjon meg keresési kifejezést.');
         }
 
-        $products = Product::where('title', 'like', '%' . $query . '%')->where('status', true)
-            ->orWhere('description', 'like', '%' . $query . '%')
+        $products = Product::where(function ($q) use ($query) {
+            $q->where('title', 'like', '%' . $query . '%')
+                ->orWhere('description', 'like', '%' . $query . '%');
+        })
+            ->orWhereHas('tags', function ($q) use ($query) {
+                $q->where('name', 'like', '%' . $query . '%');
+            })
+            ->orWhereHas('attributes', function ($q) use ($query) {
+                $q->where('value', 'like', '%' . $query . '%');
+            })
+            ->where('status', true)
             ->paginate(10)
             ->appends(['query' => $query]);
+
 
 
         Searched::create([
