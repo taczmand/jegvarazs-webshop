@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\ContactMessage;
 use App\Mail\NewAppointment;
 use App\Models\Appointment;
 use App\Models\BlogPost;
@@ -195,8 +196,17 @@ class PagesController extends Controller
         }
 
         try {
-            // email küldése a megadott címre
-            \Log::info($request->all());
+            if ($request->input('contact_email')) {
+                $contactData = [
+                    'contact_name' => $request->input('contact_name'),
+                    'contact_email' => $request->input('contact_email'),
+                    'contact_message' => $request->input('contact_message'),
+                ];
+
+                Mail::to('jegvarazsiroda@gmail.com')
+                    ->send(new ContactMessage($contactData));
+            }
+
             return response()->json(['result' => 'success', 'message' => 'Sikeresen elküldve!'], 200);
         } catch (\Exception $e) {
             return response()->json(['result' => 'error', 'error_message' => $e->getMessage()], 200);
