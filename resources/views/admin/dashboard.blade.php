@@ -177,6 +177,7 @@
                         div.style.textAlign = 'left';
                         div.style.paddingLeft = '0.5rem';
                         div.dataset.id = w.id;
+                        div.dataset.model = w.model;
 
                         let modelName, typeIcon = '';
                         switch (w.model) {
@@ -251,10 +252,19 @@
 
 
             $(document).on('click', '.worksheet-entry', function () {
-                const worksheet_id = this.dataset.id;
-                // TODO: időpontfoglalás
-                const url = `${window.appConfig.APP_URL}admin/munkalapok?id=${worksheet_id}`;
-                window.open(url, '_blank');
+                const data_id = this.dataset.id;
+                const model = this.dataset.model;
+
+                if ("worksheet" === model) {
+                    const url = `${window.appConfig.APP_URL}admin/munkalapok?id=${data_id}`;
+                    window.open(url, '_blank');
+                } else if("appointment" === model) {
+                    const url = `${window.appConfig.APP_URL}admin/idopontfoglalasok?id=${data_id}`;
+                    window.open(url, '_blank');
+                } else {
+                    alert('Ismeretlen elem, nem lehet megnyitni.');
+                }
+
             });
 
             function formatDayLabel(date) {

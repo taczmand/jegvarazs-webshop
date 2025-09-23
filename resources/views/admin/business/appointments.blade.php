@@ -177,6 +177,8 @@
 @section('scripts')
     <script type="module">
 
+        const urlParams = new URLSearchParams(window.location.search);
+        const searchId = urlParams.get('id');
         const appointmentModalDOM = document.getElementById('appointmentModal');
         const appointmentModal = new bootstrap.Modal(appointmentModalDOM);
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
@@ -215,6 +217,16 @@
                 var v =$(this).val();
                 table.columns(i).search(v).draw();
             });
+
+            if (searchId) {
+                $('.filter-input[data-name="id"]').val(searchId);
+                const input = $('.filter-input[data-name="id"]');
+                const i = input.attr('data-column');
+                const v = input.val();
+                table.columns(i).search(v).draw();
+
+                editAppointment(searchId);
+            }
 
             // Új időpontfoglalás létrehozása modal megjelenítése
             $('#addButton').on('click', async function () {
@@ -276,14 +288,8 @@
 
             });
 
-            // Időpont szerkesztése
-
-            $('#appointmentsTable').on('click', '.edit', async function () {
-
+            function editAppointment(appointmentId) {
                 resetForm('Időpontfoglalás szerkesztése');
-
-                const row_data = $('#appointmentsTable').DataTable().row($(this).parents('tr')).data();
-                const appointmentId = row_data.id;
 
                 $.get(`{{ url('/admin/idopontfoglalasok') }}/${appointmentId}`, function(data) {
                     const assigned_photos = data.photos;
@@ -303,7 +309,7 @@
 
 
                     renderPhotos(assigned_photos);
-                    sendViewRequest("appointment", row_data.id);
+                    sendViewRequest("appointment", appointmentId);
 
                     table.ajax.reload(null, false);
 
@@ -311,6 +317,14 @@
                 }).fail(function(xhr, status, error) {
                     showToast('Nem sikerült betölteni az időpont adatait! ' + error, 'danger');
                 });
+            }
+
+            // Időpont szerkesztése
+
+            $('#appointmentsTable').on('click', '.edit', async function () {
+                const row_data = $('#appointmentsTable').DataTable().row($(this).parents('tr')).data();
+                const appointmentId = row_data.id;
+                editAppointment(appointmentId);
             });
 
             // Termék törlése
