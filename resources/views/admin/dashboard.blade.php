@@ -260,33 +260,53 @@
                     placeholder: "ui-state-highlight",
                     helper: "clone",
                     cursor: "move",
-                    receive: function(event, ui) {
-                        // 🔹 új cellába érkezett elem
-                        let movedItem = ui.item;                  // a mozgatott div
-                        let worksheetId = movedItem.data("id");   // pl. 123
-                        let model = movedItem.data("model");      // pl. "worksheet"
-                        let newDate = $(this).data("date");       // a td dátuma
 
-                        // 🔸 AJAX hívás
-                        $.ajax({
-                            url: "/admin/munkalapok/update-date",
-                            method: "POST",
-                            data: {
-                                id: worksheetId,
-                                model: model,
-                                date: newDate,
-                                _token: $('meta[name="csrf-token"]').attr('content')
-                            },
-                            success: function(resp) {
-                                renderCalendar();
-                            },
-                            error: function(xhr) {
-                                alert("Hiba történt a módosítás közben!");
-                                console.error(xhr.responseText);
-                            }
-                        });
+                    // ha másik napra kerül
+                    receive: function(event, ui) {
+                        saveDateAndOrder($(this));
+                    },
+
+                    // ha ugyanazon a napon belül sorrend változik
+                    update: function(event, ui) {
+                        if (this === ui.item.parent()[0]) {
+                            saveDateAndOrder($(this));
+                        }
                     }
+
                 }).disableSelection();
+
+                function saveDateAndOrder($td) {
+                    let date = $td.data("date");
+                    let items = $td.find(".worksheet-entry");
+                    let data = [];
+
+                    items.each(function(index) {
+                        data.push({
+                            id: $(this).data("id"),
+                            model: $(this).data("model"),
+                            date: date,
+                            sort_order: index + 1
+                        });
+                    });
+
+                    $.ajax({
+                        url: "/admin/munkalapok/update-orderdate",
+                        method: "POST",
+                        data: {
+                            items: data,
+                            _token: $('meta[name="csrf-token"]').attr('content')
+                        },
+                        success: function(resp) {
+                            console.log("Sorrend mentve:", resp);
+                            renderCalendar(); // újrarendereljük a naptárt a frissített adatokkal
+                        },
+                        error: function(xhr) {
+                            alert("Hiba történt a módosítás közben!");
+                            console.error(xhr.responseText);
+                        }
+                    });
+                }
+
 
             }
 

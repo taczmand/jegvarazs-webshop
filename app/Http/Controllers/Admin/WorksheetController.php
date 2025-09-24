@@ -51,13 +51,15 @@ class WorksheetController extends Controller
         // WORKSHEETS
         if ($user->can('view-worksheets')) {
             $query = Worksheet::with(['workers:id,name'])
-                ->whereBetween('installation_date', [$startDate, $endDate]);
+                ->whereBetween('installation_date', [$startDate, $endDate])
+                ->orderBy('sort_order', 'ASC');
         } elseif ($user->can('view-own-worksheets')) {
             $query = Worksheet::with(['workers:id,name'])
                 ->whereHas('workers', function ($q) use ($user) {
                     $q->where('users.id', $user->id);
                 })
-                ->whereBetween('installation_date', [$startDate, $endDate]);
+                ->whereBetween('installation_date', [$startDate, $endDate])
+                ->orderBy('sort_order', 'ASC');
         } else {
             return response()->json(['error' => 'Nincs jogosultság'], 403);
         }
@@ -79,13 +81,16 @@ class WorksheetController extends Controller
                     'worker_name' => $worksheet->workers->pluck('name')->implode(', '),
                     'model' => 'worksheet',
                     'type' => $worksheet->work_type,
+                    'sort_order' => $worksheet->sort_order,
                 ];
             });
         }
 
         // APPOINTMENTS
         if ($user->can('view-appointments')) {
-            $appointments = Appointment::whereBetween('appointment_date', [$startDate, $endDate])->get();
+            $appointments = Appointment::whereBetween('appointment_date', [$startDate, $endDate])
+                ->orderBy('sort_order', 'ASC')
+                ->get();
 
             $appointment_results = $appointments->map(function ($appointment) {
                 return [
@@ -98,10 +103,13 @@ class WorksheetController extends Controller
                     'worker_name' => null,
                     'model' => 'appointment',
                     'type' => $appointment->appointment_type,
+                    'sort_order' => $appointment->sort_order,
                 ];
             });
 
-            $result = $result->merge($appointment_results);
+            $result = $result->merge($appointment_results)
+                ->sortBy('sort_order')
+                ->values();
         }
 
         return response()->json($result);
@@ -633,11 +641,14 @@ class WorksheetController extends Controller
 
     }
 
-    public function setDate(Request $request) {
+    public function updateItemDateAndOrder(Request $request)
+    {
         $request->validate([
-            'model' => 'required|in:worksheet,appointment',
-            'id' => 'required|integer',
-            'date' => 'required|date',
+            'items' => 'required|array',
+            'items.*.id' => 'required|integer',
+            'items.*.model' => 'required|in:worksheet,appointment',
+            'items.*.date' => 'required|date',
+            'items.*.sort_order' => 'required|integer',
         ]);
 
         try {
@@ -646,31 +657,33 @@ class WorksheetController extends Controller
                 'appointment' => \App\Models\Appointment::class,
             ];
 
-            $modelKey = $request->input('model');
-            $modelClass = $map[$modelKey] ?? null;
+            foreach ($request->input('items') as $item) {
+                $modelClass = $map[$item['model']] ?? null;
+                if (!$modelClass) {
+                    continue; // vagy dobj hibát
+                }
 
-            if (!$modelClass) {
-                return response()->json([
-                    'message' => 'Érvénytelen modell típus.',
-                ], 400);
+                $row = $modelClass::findOrFail($item['id']);
+
+                // dátum frissítése
+                if ($item['model'] === 'worksheet') {
+                    $row->installation_date = $item['date'];
+                } else { // appointment
+                    $row->appointment_date = $item['date'];
+                }
+
+                // sorrend frissítése
+                $row->sort_order = $item['sort_order'];
+
+                $row->save();
             }
-
-            $row = $modelClass::findOrFail($request->input('id'));
-
-            if ($modelKey === 'appointment') {
-                $row->appointment_date = $request->input('date');
-            } elseif ($modelKey === 'worksheet') {
-                $row->installation_date = $request->input('date');
-            }
-
-            $row->save();
 
             return response()->json([
                 'message' => 'Sikeres mentés!',
             ], 200);
 
         } catch (\Exception $e) {
-            \Log::error('Dátum mentési hiba: ' . $e->getMessage());
+            \Log::error('Dátum/sorrend mentési hiba: ' . $e->getMessage());
 
             return response()->json([
                 'message' => 'Hiba történt a mentés során.',
@@ -678,5 +691,6 @@ class WorksheetController extends Controller
             ], 500);
         }
     }
+
 
 }
