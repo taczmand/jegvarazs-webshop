@@ -54,11 +54,17 @@ class WorksheetController extends Controller
                 ->whereBetween('installation_date', [$startDate, $endDate])
                 ->orderBy('sort_order', 'ASC');
         } elseif ($user->can('view-own-worksheets')) {
+            // aktuális hét kezdete
+            $currentWeekStart = now()->startOfWeek()->toDateString();
+            // következő hét vége
+            $nextWeekEnd = now()->addWeek()->endOfWeek()->toDateString();
+
+            // szűrés az aktuális hét + következő hétre
             $query = Worksheet::with(['workers:id,name'])
                 ->whereHas('workers', function ($q) use ($user) {
                     $q->where('users.id', $user->id);
                 })
-                ->whereBetween('installation_date', [$startDate, $endDate])
+                ->whereBetween('installation_date', [$currentWeekStart, $nextWeekEnd])
                 ->orderBy('sort_order', 'ASC');
         } else {
             return response()->json(['error' => 'Nincs jogosultság'], 403);
@@ -114,6 +120,7 @@ class WorksheetController extends Controller
 
         return response()->json($result);
     }
+
 
     public function data()
     {
