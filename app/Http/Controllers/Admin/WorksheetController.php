@@ -658,6 +658,13 @@ class WorksheetController extends Controller
             'items.*.sort_order' => 'required|integer',
         ]);
 
+        // legyen még itt jogosultság ellenőrzés
+        $user = auth('admin')->user();
+        if (!$user || (!$user->can('edit-worksheet') && !$user->can('edit-appointment'))) {
+            return response()->json(['message' => 'Nincs jogosultságod módosítani'], 403);
+        }
+
+
         try {
             $map = [
                 'worksheet' => \App\Models\Worksheet::class,

@@ -255,24 +255,16 @@
                 calendarBody.appendChild(tr);
 
                 $("#calendar td").sortable({
-                    items: ".worksheet-entry",        // csak ezeket engedjük mozgatni
-                    connectWith: "#calendar td",      // összekötjük a napokat
+                    items: ".worksheet-entry",
+                    connectWith: "#calendar td",
                     placeholder: "ui-state-highlight",
                     helper: "clone",
                     cursor: "move",
-
-                    // ha másik napra kerül
-                    receive: function(event, ui) {
-                        saveDateAndOrder($(this));
-                    },
-
-                    // ha ugyanazon a napon belül sorrend változik
-                    update: function(event, ui) {
-                        if (this === ui.item.parent()[0]) {
-                            saveDateAndOrder($(this));
-                        }
+                    stop: function(event, ui) {
+                        // a td, ahova az elem került
+                        const $td = ui.item.parent();
+                        saveDateAndOrder($td);
                     }
-
                 }).disableSelection();
 
                 function saveDateAndOrder($td) {
@@ -297,12 +289,12 @@
                             _token: $('meta[name="csrf-token"]').attr('content')
                         },
                         success: function(resp) {
-                            console.log("Sorrend mentve:", resp);
+                            showToast("Sorrend mentve", 'success');
                             renderCalendar(); // újrarendereljük a naptárt a frissített adatokkal
                         },
                         error: function(xhr) {
-                            alert("Hiba történt a módosítás közben!");
-                            console.error(xhr.responseText);
+                            showToast(xhr.responseJSON.message, 'danger');
+                            renderCalendar(); // visszaállítjuk az eredeti állapotot
                         }
                     });
                 }
