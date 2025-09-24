@@ -215,11 +215,17 @@
                         }
 
                         div.innerHTML += `
-                <p style="margin-bottom: 0px"><strong>${w.name}</strong></p>
-                <small>(${w.city})</small>
-                <p style="margin-top: 5px">${typeIcon} ${w.type}</p>
-                <p style="font-style: italic">${w.work_status}</p>
-            `;
+                            <p style="margin-bottom: 0px"><strong>${w.name}</strong></p>
+                            <small>(${w.city})</small>
+                            <p style="margin-top: 5px">${typeIcon} ${w.type}</p>
+                            <p style="font-style: italic">${w.work_status}</p>
+                        `;
+
+                        if (w.work_status === 'Kész') {
+                            div.style.backgroundColor = '#d4edda';
+                        } else {
+                            div.style.backgroundColor = 'none';
+                        }
 
                         if (w.work_name) {
                             div.innerHTML += `<small>${w.work_name}</small><br>`;
@@ -227,9 +233,9 @@
 
                         if (w.worker_name) {
                             div.innerHTML += `
-                    <i class="fa-solid fa-users-gear"></i>
-                    ${w.worker_name}<br>
-                `;
+                                <i class="fa-solid fa-users-gear"></i>
+                                ${w.worker_name}<br>
+                            `;
                         }
 
                         div.classList.add('worksheet-entry');
