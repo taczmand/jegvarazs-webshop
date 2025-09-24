@@ -64,23 +64,27 @@ class WorksheetController extends Controller
 
         $worksheets = $query->get();
 
-        $result = $worksheets->map(function ($worksheet) {
-            return [
-                'id' => $worksheet->id,
-                'name' => $worksheet->name,
-                'city' => $worksheet->city,
-                'work_name' => $worksheet->work_name,
-                'work_status' => $worksheet->work_status,
-                'installation_date' => $worksheet->installation_date,
-                'worker_name' => $worksheet->workers->pluck('name')->implode(', '), // több dolgozó összevonása
-                'model' => 'worksheet',
-                'type' => $worksheet->work_type,
-            ];
-        });
+        // mindig legyen kollekció
+        $result = collect();
+
+        if ($worksheets->isNotEmpty()) {
+            $result = $worksheets->map(function ($worksheet) {
+                return [
+                    'id' => $worksheet->id,
+                    'name' => $worksheet->name,
+                    'city' => $worksheet->city,
+                    'work_name' => $worksheet->work_name,
+                    'work_status' => $worksheet->work_status,
+                    'installation_date' => $worksheet->installation_date,
+                    'worker_name' => $worksheet->workers->pluck('name')->implode(', '),
+                    'model' => 'worksheet',
+                    'type' => $worksheet->work_type,
+                ];
+            });
+        }
 
         // APPOINTMENTS
         if ($user->can('view-appointments')) {
-
             $appointments = Appointment::whereBetween('appointment_date', [$startDate, $endDate])->get();
 
             $appointment_results = $appointments->map(function ($appointment) {
@@ -97,17 +101,11 @@ class WorksheetController extends Controller
                 ];
             });
 
-            // összefűzés
             $result = $result->merge($appointment_results);
         }
 
         return response()->json($result);
     }
-
-
-
-
-
 
     public function data()
     {
