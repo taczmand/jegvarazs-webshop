@@ -183,6 +183,7 @@ Route::middleware([Incognito::class])->group(function () {
             Route::get('/munkalapok', [WorksheetController::class, 'index'])->name('worksheets.index');
             Route::get('/munkalapok/data', [WorksheetController::class, 'data'])->name('worksheets.data');
             Route::get('/munkalapok/byweek', [WorksheetController::class, 'getDataToCalendarByWeek'])->name('worksheets.byweek'); // nem csak worksheets
+            Route::post('/munkalapok/update-date', [WorksheetController::class, 'setDate'])->name('worksheets.set-date'); // nem csak worksheets
             Route::put('/munkalapok/{id}', [WorksheetController::class, 'update'])->name('worksheets.update');
             Route::post('/munkalapok', [WorksheetController::class, 'store'])->name('worksheet.store');
             Route::get('/munkalapok/munkalap-termekek', [WorksheetController::class, 'fetchWithCategories'])->name('worksheets.list-with-categories');

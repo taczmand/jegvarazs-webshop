@@ -5,11 +5,6 @@
 @section('content')
     <div class="container p-0">
 
-        <div class="d-flex justify-content-between align-items-center mb-3 pb-2">
-            <h2 class="color-dark-blue mb-0">Naptár</h2>
-        </div>
-
-
         <div class="rounded-xl bg-white shadow-lg p-4" id="calendarContainer">
             <div class="calendar-nav">
                 <button class="btn btn-light" id="prevWeek">⬅</button>
@@ -64,6 +59,10 @@
     <script type="module">
 
         $(document).ready(function() {
+
+            if (window.innerWidth <= 992) {
+                $(".sidebar").toggleClass("toggled");
+            }
 
             const calendarBody = document.querySelector('#calendar tbody');
             const weekLabel = document.getElementById('weekLabel');
@@ -254,6 +253,41 @@
                 });
 
                 calendarBody.appendChild(tr);
+
+                $("#calendar td").sortable({
+                    items: ".worksheet-entry",        // csak ezeket engedjük mozgatni
+                    connectWith: "#calendar td",      // összekötjük a napokat
+                    placeholder: "ui-state-highlight",
+                    helper: "clone",
+                    cursor: "move",
+                    receive: function(event, ui) {
+                        // 🔹 új cellába érkezett elem
+                        let movedItem = ui.item;                  // a mozgatott div
+                        let worksheetId = movedItem.data("id");   // pl. 123
+                        let model = movedItem.data("model");      // pl. "worksheet"
+                        let newDate = $(this).data("date");       // a td dátuma
+
+                        // 🔸 AJAX hívás
+                        $.ajax({
+                            url: "/admin/munkalapok/update-date",
+                            method: "POST",
+                            data: {
+                                id: worksheetId,
+                                model: model,
+                                date: newDate,
+                                _token: $('meta[name="csrf-token"]').attr('content')
+                            },
+                            success: function(resp) {
+                                renderCalendar();
+                            },
+                            error: function(xhr) {
+                                alert("Hiba történt a módosítás közben!");
+                                console.error(xhr.responseText);
+                            }
+                        });
+                    }
+                }).disableSelection();
+
             }
 
 

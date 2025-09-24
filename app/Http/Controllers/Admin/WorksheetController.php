@@ -632,4 +632,51 @@ class WorksheetController extends Controller
         }
 
     }
+
+    public function setDate(Request $request) {
+        $request->validate([
+            'model' => 'required|in:worksheet,appointment',
+            'id' => 'required|integer',
+            'date' => 'required|date',
+        ]);
+
+        try {
+            $map = [
+                'worksheet' => \App\Models\Worksheet::class,
+                'appointment' => \App\Models\Appointment::class,
+            ];
+
+            $modelKey = $request->input('model');
+            $modelClass = $map[$modelKey] ?? null;
+
+            if (!$modelClass) {
+                return response()->json([
+                    'message' => 'Érvénytelen modell típus.',
+                ], 400);
+            }
+
+            $row = $modelClass::findOrFail($request->input('id'));
+
+            if ($modelKey === 'appointment') {
+                $row->appointment_date = $request->input('date');
+            } elseif ($modelKey === 'worksheet') {
+                $row->installation_date = $request->input('date');
+            }
+
+            $row->save();
+
+            return response()->json([
+                'message' => 'Sikeres mentés!',
+            ], 200);
+
+        } catch (\Exception $e) {
+            \Log::error('Dátum mentési hiba: ' . $e->getMessage());
+
+            return response()->json([
+                'message' => 'Hiba történt a mentés során.',
+                'errors' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
 }
