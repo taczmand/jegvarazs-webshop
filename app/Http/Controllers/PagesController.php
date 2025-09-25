@@ -123,27 +123,31 @@ class PagesController extends Controller
             return redirect()->back()->with('error', 'Kérjük, adjon meg keresési kifejezést.');
         }
 
-        $products = Product::where(function ($q) use ($query) {
+        $queryProducts = Product::where('status', 'active') // mindenre érvényes
+        ->where(function ($q) use ($query) {
             $q->where('title', 'like', '%' . $query . '%')
-                ->orWhere('description', 'like', '%' . $query . '%');
-        })
-            ->orWhereHas('tags', function ($q) use ($query) {
-                $q->where('name', 'like', '%' . $query . '%');
-            })
-            ->orWhereHas('attributes', function ($q) use ($query) {
-                $q->where('value', 'like', '%' . $query . '%');
-            })
-            ->where('status', true)
-            ->paginate(10)
-            ->appends(['query' => $query]);
+                ->orWhere('description', 'like', '%' . $query . '%')
+                ->orWhereHas('tags', function ($q) use ($query) {
+                    $q->where('name', 'like', '%' . $query . '%');
+                })
+                ->orWhereHas('attributes', function ($q) use ($query) {
+                    $q->where('value', 'like', '%' . $query . '%');
+                });
+        });
 
 
+        // Eredeti találatok száma
+        $totalHits = $queryProducts->count();
+
+        // Paginate
+        $products = $queryProducts->paginate(12)->appends(['query' => $query]);
 
         Searched::create([
             'search_term' => $query,
-            'number_of_hits' => $products->count(),
+            'number_of_hits' => $totalHits,
             'ip_address' => $request->ip()
         ]);
+
 
         return view('pages.search_results', compact('products', 'query'));
     }
