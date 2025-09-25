@@ -44,31 +44,40 @@ class ProductController extends Controller
         }
 
         // 🔍 Attribútum szűrés, ha van
-        if ($attributes) {
-            // pl.: "3:Fehér|1:3,5 kW|2:A+++/A++" (lehet URL-encoded is)
-            $attributeArray = array_filter(explode('|', urldecode($attributes)), function ($v) {
+        if ($attributes = $request->query('attribute')) {
+
+            // 1) Próbáljuk meg a nyers QUERY_STRING-ből kigyűjteni az "attribute" paraméter nyers értékét
+            $rawQuery = $request->server('QUERY_STRING') ?? ($_SERVER['QUERY_STRING'] ?? '');
+            $rawAttrValue = null;
+
+            if (preg_match('/(?:^|&)' . preg_quote('attribute') . '=([^&]*)/i', $rawQuery, $m)) {
+                // rawurldecode: csak %XX-eket dekódol, nem alakítja át a '+'-t szóközzé
+                $rawAttrValue = rawurldecode($m[1]);
+            }
+
+            // 2) Ha sikerült nyerset kinyerni, azt használjuk; ha nem, fallback az előfeldolgozott értékre (urldecode)
+            $decoded = $rawAttrValue !== null ? $rawAttrValue : urldecode($attributes);
+
+            // 3) Szétválasztás a '|' separatorral, majd minden elemnél az első ':'-nál vágunk
+            $attributeArray = array_filter(explode('|', $decoded), function ($v) {
                 return trim($v) !== '';
             });
 
             foreach ($attributeArray as $attr) {
-                // csak az első ":"-nál vágunk, mert az érték tartalmazhat kettőspontot is
                 [$attrId, $value] = array_pad(explode(':', $attr, 2), 2, null);
-
-                if (!$attrId || !$value) {
-                    continue; // hibás formátum, kihagyjuk
-                }
+                if (!$attrId || $value === null) continue;
 
                 $attrId = trim($attrId);
                 $value  = trim($value);
 
-                // minden attribútumra külön whereHas -> így biztosítjuk,
-                // hogy minden feltételre legyen találat
+                // minden attribútumra külön whereHas (AND a különböző attribútumok között)
                 $query->whereHas('attributes', function ($q) use ($attrId, $value) {
                     $q->where('attribute_id', $attrId)
                         ->where('value', $value);
                 });
             }
         }
+
 
 
         // 🔃 Rendezés
@@ -219,31 +228,40 @@ class ProductController extends Controller
         }
 
         // 🔍 Attribútum szűrés, ha van
-        if ($attributes) {
-            // pl.: "3:Fehér|1:3,5 kW|2:A+++/A++" (lehet URL-encoded is)
-            $attributeArray = array_filter(explode('|', urldecode($attributes)), function ($v) {
+        if ($attributes = $request->query('attribute')) {
+
+            // 1) Próbáljuk meg a nyers QUERY_STRING-ből kigyűjteni az "attribute" paraméter nyers értékét
+            $rawQuery = $request->server('QUERY_STRING') ?? ($_SERVER['QUERY_STRING'] ?? '');
+            $rawAttrValue = null;
+
+            if (preg_match('/(?:^|&)' . preg_quote('attribute') . '=([^&]*)/i', $rawQuery, $m)) {
+                // rawurldecode: csak %XX-eket dekódol, nem alakítja át a '+'-t szóközzé
+                $rawAttrValue = rawurldecode($m[1]);
+            }
+
+            // 2) Ha sikerült nyerset kinyerni, azt használjuk; ha nem, fallback az előfeldolgozott értékre (urldecode)
+            $decoded = $rawAttrValue !== null ? $rawAttrValue : urldecode($attributes);
+
+            // 3) Szétválasztás a '|' separatorral, majd minden elemnél az első ':'-nál vágunk
+            $attributeArray = array_filter(explode('|', $decoded), function ($v) {
                 return trim($v) !== '';
             });
 
             foreach ($attributeArray as $attr) {
-                // csak az első ":"-nál vágunk, mert az érték tartalmazhat kettőspontot is
                 [$attrId, $value] = array_pad(explode(':', $attr, 2), 2, null);
-
-                if (!$attrId || !$value) {
-                    continue; // hibás formátum, kihagyjuk
-                }
+                if (!$attrId || $value === null) continue;
 
                 $attrId = trim($attrId);
                 $value  = trim($value);
 
-                // minden attribútumra külön whereHas -> így biztosítjuk,
-                // hogy minden feltételre legyen találat
+                // minden attribútumra külön whereHas (AND a különböző attribútumok között)
                 $query->whereHas('attributes', function ($q) use ($attrId, $value) {
                     $q->where('attribute_id', $attrId)
                         ->where('value', $value);
                 });
             }
         }
+
 
 
 
