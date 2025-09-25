@@ -52,29 +52,35 @@ class Category extends Model
         $slugs = [];
         $category = $this;
 
+        // 🔹 Kategória slug-ok összegyűjtése
         while ($category) {
             $slugs[] = $category->slug;
             $category = $category->parent;
         }
-
         $fullSlug = implode('/', array_reverse($slugs));
 
-        // Az első termék, ami képpel rendelkezik
-        $productWithImage = $this->products()
-            ->whereHas('photos')
+        // 🔹 Kategóriák láncolata (aktuális + szülők)
+        $categoryIds = [];
+        $category = $this;
+        while ($category) {
+            $categoryIds[] = $category->id;
+            $category = $category->parent;
+        }
+
+        // 🔹 Első aktív termék képpel a kategóriákban
+        $productWithImage = \App\Models\Product::whereIn('cat_id', $categoryIds)
+            ->where('status', 'active')        // csak aktív termékek
+            ->whereHas('photos')               // csak képpel rendelkező termékek
             ->with('photos')
+            ->orderBy('created_at', 'asc')     // rendezés, hogy mindig ugyanaz az első legyen
             ->first();
 
-        if ($productWithImage) {
-            // Ha van ilyen termék, akkor visszaadjuk az első képét
-            $photo = $productWithImage->photos->first();
-        } else {
-            $photo = null;
-        }
+        $photo = $productWithImage?->photos->first() ?? null;
 
         return [
             'slug' => $fullSlug,
             'product_with_image' => $photo,
         ];
     }
+
 }
