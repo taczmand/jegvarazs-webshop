@@ -59,28 +59,36 @@ class Category extends Model
         }
         $fullSlug = implode('/', array_reverse($slugs));
 
-        // 🔹 Kategóriák láncolata (aktuális + szülők)
-        $categoryIds = [];
-        $category = $this;
-        while ($category) {
-            $categoryIds[] = $category->id;
-            $category = $category->parent;
-        }
-
-        // 🔹 Első aktív termék képpel a kategóriákban
-        $productWithImage = \App\Models\Product::whereIn('cat_id', $categoryIds)
-            ->where('status', 'active')        // csak aktív termékek
-            ->whereHas('photos')               // csak képpel rendelkező termékek
-            ->with('photos')
-            ->orderBy('created_at', 'asc')     // rendezés, hogy mindig ugyanaz az első legyen
-            ->first();
-
-        $photo = $productWithImage?->photos->first() ?? null;
+        // 🔹 Képet keresünk rekurzívan a kategóriában és a szülőkben
+        $photo = $this->findFirstProductImage();
 
         return [
             'slug' => $fullSlug,
             'product_with_image' => $photo,
         ];
     }
+
+    protected function findFirstProductImage()
+    {
+        // 🔹 Aktív termék képpel a jelenlegi kategóriában
+        $productWithImage = $this->products()
+            ->where('status', 'active')
+            ->whereHas('photos')
+            ->with('photos')
+            ->orderBy('created_at', 'asc')
+            ->first();
+
+        if ($productWithImage) {
+            return $productWithImage->photos->first();
+        }
+
+        // 🔹 Ha nincs, nézzük a szülőt
+        if ($this->parent) {
+            return $this->parent->findFirstProductImage();
+        }
+
+        return null; // sehol nincs kép
+    }
+
 
 }
