@@ -32,7 +32,9 @@
 
 <main class="container mx-auto">
     @yield('content')
-    @include('partials.contact-form')
+    @if (!request()->routeIs('checkout'))
+        @include('partials.contact-form')
+    @endif
 </main>
 
 <div id="myCoolToastContainer" style="position: fixed; bottom: 20px; right: 20px; z-index: 9999;"></div>
