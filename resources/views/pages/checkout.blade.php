@@ -41,7 +41,7 @@
 
         // Amíg 1 szabály és futárszolgálat van, addig fix a szállítási költség
         $shipping_cost = 0;
-        if ($total_item_amount < 1000000) {
+        if ($total_item_amount < 100000) {
             $shipping_cost = 1990;
         }
 
