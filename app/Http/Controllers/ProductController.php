@@ -45,23 +45,38 @@ class ProductController extends Controller
 
         // 🔍 Attribútum szűrés, ha van
         if ($attributes) {
-            // Pl. ?attribute=3:red,5:xl
-            $attributeArray = explode('|', $attributes);
-
-            $query->whereHas('attributes', function ($q) use ($attributeArray) {
-                foreach ($attributeArray as $attr) {
-                    // "id:value" formátum
-                    [$attrId, $value] = explode(':', $attr);
-                    $q->where(function ($sub) use ($attrId, $value) {
-                        $sub->where('attribute_id', $attrId)
-                            ->where('value', $value);
-                    });
-                }
+            // pl.: "3:Fehér|1:1000W" (lehet URL-encoded is)
+            $attributeArray = array_filter(explode('|', urldecode($attributes)), function($v) {
+                return trim($v) !== '';
             });
+
+            foreach ($attributeArray as $attr) {
+                // csak az első ":"-nál vágunk, mert az érték tartalmazhat kettőspontot is
+                $parts = explode(':', $attr, 2);
+                if (count($parts) < 2) {
+                    continue; // hibás formátum, kihagyjuk
+                }
+
+                $attrId = trim($parts[0]);
+                $value  = trim($parts[1]);
+
+                // minden attribútumra külön whereHas -> így biztosítjuk, hogy
+                // minden feltételre létezik külön kapcsolódó rekord
+                $query->whereHas('attributes', function ($q) use ($attrId, $value) {
+
+                    // ha a value több opciót tartalmaz (pl. "red,blue"), akkor támogatjuk a whereIn-t
+                    if (strpos($value, ',') !== false) {
+                        $vals = array_map('trim', explode(',', $value));
+                        $q->where('attribute_id', $attrId)
+                            ->whereIn('value', $vals);
+                    } else {
+                        $q->where('attribute_id', $attrId)
+                            ->where('value', $value);
+                    }
+                });
+            }
         }
-
-
-
+        
         // 🔃 Rendezés
         switch ($sortBy) {
             case 'productDesc':
@@ -211,19 +226,38 @@ class ProductController extends Controller
 
         // 🔍 Attribútum szűrés, ha van
         if ($attributes) {
-            $attributeArray = explode('|', $attributes);
-
-            $query->whereHas('attributes', function ($q) use ($attributeArray) {
-                foreach ($attributeArray as $attr) {
-                    // "id:value" formátum
-                    [$attrId, $value] = explode(':', $attr);
-                    $q->where(function ($sub) use ($attrId, $value) {
-                        $sub->where('attribute_id', $attrId)
-                            ->where('value', $value);
-                    });
-                }
+            // pl.: "3:Fehér|1:1000W" (lehet URL-encoded is)
+            $attributeArray = array_filter(explode('|', urldecode($attributes)), function($v) {
+                return trim($v) !== '';
             });
+
+            foreach ($attributeArray as $attr) {
+                // csak az első ":"-nál vágunk, mert az érték tartalmazhat kettőspontot is
+                $parts = explode(':', $attr, 2);
+                if (count($parts) < 2) {
+                    continue; // hibás formátum, kihagyjuk
+                }
+
+                $attrId = trim($parts[0]);
+                $value  = trim($parts[1]);
+
+                // minden attribútumra külön whereHas -> így biztosítjuk, hogy
+                // minden feltételre létezik külön kapcsolódó rekord
+                $query->whereHas('attributes', function ($q) use ($attrId, $value) {
+
+                    // ha a value több opciót tartalmaz (pl. "red,blue"), akkor támogatjuk a whereIn-t
+                    if (strpos($value, ',') !== false) {
+                        $vals = array_map('trim', explode(',', $value));
+                        $q->where('attribute_id', $attrId)
+                            ->whereIn('value', $vals);
+                    } else {
+                        $q->where('attribute_id', $attrId)
+                            ->where('value', $value);
+                    }
+                });
+            }
         }
+
 
         // 🔃 Rendezés
         switch ($sortBy) {
