@@ -51,6 +51,7 @@
     <!-- Checkout Section Begin -->
     <section class="checkout spad">
         <div class="container">
+            <a href="{{ route('cart') }}" class="site-btn mb-5"><i class="fa fa-arrow-left"></i><span class="pl-2">Vissza a kosárhoz</span></a>
             <div class="checkout__form">
                 <h4>Kapcsolattartó adatok</h4>
                 <form action="{{ route('order.store') }}" method="POST">

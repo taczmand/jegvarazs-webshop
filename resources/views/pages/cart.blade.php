@@ -102,7 +102,7 @@
                                 <!--<li>Kupon <span>- </span></li>-->
                                 <li>Összesen bruttó<span>{{ number_format($total_item_amount, 0, ',', ' ') }} Ft</span></li>
                             </ul>
-                            <a href="{{ route('checkout') }}" class="primary-btn">Pénztár</a>
+                            <a href="{{ route('checkout') }}" class="site-btn" style="width: 100%; text-align: center">Pénztár</a>
                         </div>
                     </div>
                 </div>
