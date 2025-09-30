@@ -29,13 +29,13 @@
                         <input type="text" placeholder="Ügyfélnév" class="filter-input form-control" data-column="1">
                     </div>
                     <div class="filter-group flex-grow-1 flex-md-shrink-0">
-                        <input type="text" placeholder="Irányítószám" class="filter-input form-control" data-column="3">
+                        <input type="text" placeholder="Irányítószám" class="filter-input form-control" data-column="4">
                     </div>
                     <div class="filter-group flex-grow-1 flex-md-shrink-0">
-                        <input type="text" placeholder="Város" class="filter-input form-control" data-column="4">
+                        <input type="text" placeholder="Város" class="filter-input form-control" data-column="5">
                     </div>
                     <div class="filter-group flex-grow-1 flex-md-shrink-0">
-                        <input type="text" placeholder="Cím" class="filter-input form-control" data-column="5">
+                        <input type="text" placeholder="Cím" class="filter-input form-control" data-column="6">
                     </div>
                     <div class="filter-group flex-grow-1 flex-md-shrink-0">
                         <select class="form-select filter-input" data-column="11">
