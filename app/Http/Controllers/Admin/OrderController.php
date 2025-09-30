@@ -61,6 +61,9 @@ class OrderController extends Controller
                     'completed' => 'Teljesítve',
                     'cancelled' => 'Törölve',
                     'processing'=> 'Feldolgozás alatt',
+                    'refunded'  => 'Visszatérítve',
+                    'failed'    => 'Sikertelen',
+                    'payment_failed' => 'Fizetés sikertelen',
                 ];
                 return $translations[$order->status] ?? ucfirst($order->status);
             })
