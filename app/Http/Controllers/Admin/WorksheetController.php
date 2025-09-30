@@ -276,6 +276,14 @@ class WorksheetController extends Controller
             'contact_email' => 'nullable|email|max:255',
             'work_status' => 'required',
             'work_type' => 'required'
+        ], [
+            'work_name.required' => 'A munkalap megnevezése kötelező.',
+            'installation_date.required' => 'A telepítés dátuma kötelező.',
+            'contact_name.required' => 'A kapcsolattartó neve kötelező.',
+            'contact_country.required' => 'A kapcsolattartó országa kötelező.',
+            'contact_zip_code.required' => 'A kapcsolattartó irányítószáma kötelező.',
+            'contact_city.required' => 'A kapcsolattartó városa kötelező.',
+            'contact_address_line.required' => 'A kapcsolattartó címe kötelező.',
         ]);
 
         DB::beginTransaction();
@@ -656,6 +664,17 @@ class WorksheetController extends Controller
             'items.*.model' => 'required|in:worksheet,appointment',
             'items.*.date' => 'required|date',
             'items.*.sort_order' => 'required|integer',
+        ], [
+            'items.required' => 'Nincsenek módosítandó elemek megadva.',
+            'items.array' => 'Az elemek formátuma nem megfelelő.',
+            'items.*.id.required' => 'Az elem azonosítója hiányzik.',
+            'items.*.id.integer' => 'Az elem azonosítójának egész számnak kell lennie.',
+            'items.*.model.required' => 'Az elem típusa hiányzik.',
+            'items.*.model.in' => 'Az elem típusa csak "worksheet" vagy "appointment" lehet.',
+            'items.*.date.required' => 'A dátum mező hiányzik.',
+            'items.*.date.date' => 'A dátum mezőnek érvényes dátumnak kell lennie.',
+            'items.*.sort_order.required' => 'A sorrend mező hiányzik.',
+            'items.*.sort_order.integer' => 'A sorrend mezőnek egész számnak kell lennie.',
         ]);
 
         // legyen még itt jogosultság ellenőrzés

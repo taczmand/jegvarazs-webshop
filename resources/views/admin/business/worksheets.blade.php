@@ -642,7 +642,6 @@
                         showToast(response.message || 'Sikeres!', 'success');
                         table.ajax.reload(null, false);
                         adminModal.hide();
-                        renderCalendar();
                     },
                     error(xhr) {
                         let msg = 'Hiba!';
@@ -972,7 +971,7 @@
 
                     // Egyéb dolgok resetelése:
                     $(form).find('input[type="checkbox"], input[type="radio"]').prop('checked', false);
-                    $(form).find('select').val('').trigger('change'); // select2 kompatibilitás
+                    $(form).find('select').val('Folyamatban').trigger('change'); // select2 kompatibilitás
                     $(form).find('textarea').val('');
                     $(form).find('input[type="file"]').val(''); // fájlmezők törlése
 
