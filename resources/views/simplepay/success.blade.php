@@ -14,13 +14,18 @@
     ]
     ])
 
-    <div class="w-100 p-4 bg-light rounded shadow-sm light-box">
+    <div class="w-100 p-4 bg-light rounded shadow-sm">
         <h3>Köszönjük a rendelést!</h3>
         <p class="mb-4">
             A fizetési folyamatot sikeresen elindította. Kérjük, legyen türelemmel, a végleges visszaigazolás néhány pillanaton belül meg fog érkezni. Amint ez megtörténik, e-mailben is értesítést küldünk Önnek.
         </p>
 
-
+        @php
+            // Kosár kiürítése a sikeres rendelés után
+            $customer = auth('customer')->user();
+            $cart = $customer->cart;
+            $cart->items()->delete();
+        @endphp
 
         @if(isset($order))
             <p><strong>Rendelés azonosító:</strong> {{ $order->id }}</p>

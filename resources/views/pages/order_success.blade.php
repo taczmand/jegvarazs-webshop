@@ -22,7 +22,7 @@
         $cart->items()->delete();
     @endphp
 
-    <div class="w-100 p-4 bg-light rounded shadow-sm light-box">
+    <div class="w-100 p-4 bg-light rounded shadow-sm">
         <h3>Köszönjük a rendelést!</h3>
 
         <p>Rendelés azonosítója: <strong>#{{ $order->id }}</strong></p>

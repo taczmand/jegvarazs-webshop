@@ -2315,6 +2315,18 @@ a {
     margin-bottom: 15px;
     padding-top: 15px;
 }
+.checkout__order_shipping {
+    font-size: 18px;
+    color: #1c1c1c;
+    font-weight: 700;
+    padding-bottom: 15px;
+    margin-bottom: 15px;
+    border-bottom: 1px solid #e1e1e1;
+}
+.checkout__order_shipping span {
+    float: right;
+    color: #6f6f6f;
+}
 
 .checkout__order .checkout__order__subtotal span {
     float: right;

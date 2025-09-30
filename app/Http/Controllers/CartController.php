@@ -18,7 +18,12 @@ class CartController extends Controller
         }
 
         // A kosarat az elemeivel együtt töltjük be
-        $cart = $customer->cart()->with('items.product')->first();
+        $cart = Cart::where('customer_id', $customer->id)
+            ->with(['items' => function ($query) {
+                $query->where('product_id', '<>', 1);
+            }, 'items.product'])
+            ->first();
+
 
         return view('pages.cart',compact('cart'));
     }
@@ -70,7 +75,12 @@ class CartController extends Controller
     {
         $customer = $request->user('customer');
 
-        $cart = Cart::where('customer_id', $customer->id)->with('items.product')->first();
+        $cart = Cart::where('customer_id', $customer->id)
+        ->with(['items' => function ($query) {
+            $query->where('product_id', '<>', 1);
+        }, 'items.product'])
+        ->first();
+
 
         if (!$cart) {
             return response()->json(['result' => 'error', 'error_message' => 'Cart not found'], 404);

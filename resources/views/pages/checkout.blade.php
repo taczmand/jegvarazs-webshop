@@ -19,6 +19,10 @@
         $customer = auth('customer')->user();
     @endphp
 
+    @if(session('debug'))
+        <pre>{{ print_r(session('debug'), true) }}</pre>
+    @endif
+
     @if ($errors->any())
         <div class="alert alert-danger">
             <ul>
@@ -41,8 +45,13 @@
 
         // Amíg 1 szabály és futárszolgálat van, addig fix a szállítási költség
         $shipping_cost = 0;
-        if ($total_item_amount < 100000) {
-            $shipping_cost = 1990;
+
+        $shipping_methods = config('shipping_methods');
+        $gls = collect($shipping_methods)->firstWhere('code', 'gls');
+        $cost_limit = $gls['cost_limit'] ?? 0;
+
+        if ($total_item_amount < $cost_limit) {
+            $shipping_cost = $gls_fee;
         }
 
     @endphp
@@ -371,7 +380,7 @@
                                         @endforeach
                                     </ul>
                                     <div class="checkout__order__subtotal">Részösszeg <span>{{ number_format($total_item_amount, 0, ',', ' ') }} Ft</span></div>
-                                    <div class="checkout__order__subtotal">Szállítás <span id="shipping_cost_display">{{ number_format(0, 0, ',', ' ') }} Ft</span></div>
+                                    <div class="checkout__order_shipping">Szállítás <span id="shipping_cost_display">{{ number_format(0, 0, ',', ' ') }} Ft</span></div>
                                     <div class="checkout__order__total">Összesen <span id="total_item_amount_display">{{ number_format($total_item_amount, 0, ',', ' ') }} Ft</span></div>
 
 
