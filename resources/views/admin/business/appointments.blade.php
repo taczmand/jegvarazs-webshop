@@ -327,26 +327,26 @@
                 editAppointment(appointmentId);
             });
 
-            // Termék törlése
-            $('#productsTable').on('click', '.delete', async function () {
-                const row_data = $('#productsTable').DataTable().row($(this).parents('tr')).data();
-                const productId = row_data.id;
+            // Időpont törlése
+            $('#appointmentsTable').on('click', '.delete', async function () {
+                const row_data = $('#appointmentsTable').DataTable().row($(this).parents('tr')).data();
+                const appointmentId = row_data.id;
 
-                if (!confirm('Biztosan törölni szeretnéd ezt a terméket?')) return;
+                if (!confirm('Biztosan törölni szeretnéd az időpontot?')) return;
 
                 try {
                     $.ajax({
-                        url: `{{ url('/admin/termekek') }}/${productId}`,
+                        url: `{{ url('/admin/idopontfoglalasok') }}/${appointmentId}`,
                         method: 'DELETE',
                         headers: {
                             'X-CSRF-TOKEN': csrfToken
                         },
                         success: function(response) {
-                            showToast('Termék sikeresen törölve!', 'success');
+                            showToast('Időpont sikeresen törölve!', 'success');
                             table.ajax.reload(null, false);
                         },
                         error: function(xhr) {
-                            let msg = 'Hiba történt a termék törlésekor';
+                            let msg = 'Hiba történt az időpont törlésekor';
                             if (xhr.responseJSON && xhr.responseJSON.message) {
                                 msg = xhr.responseJSON.message;
                             }
@@ -354,7 +354,7 @@
                         }
                     });
                 } catch (error) {
-                    showToast(error.message || 'Hiba történt a termék törlésekor', 'danger');
+                    showToast(error.message || 'Hiba történt az időpont törlésekor', 'danger');
                 }
             });
 
