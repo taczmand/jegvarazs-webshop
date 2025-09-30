@@ -14,7 +14,7 @@ return [
         'slug' => 'cod',
         'active' => true,
         'fee' => 990,
-        'description' => 'A futárnál fizetsz készpénzben vagy kártyával.',
+        'description' => 'Fizethetsz a futárnál készpénzzel, kártyával, vagy személyes átvétel esetén a helyszínen.',
         'public' => true,
     ],
     [
