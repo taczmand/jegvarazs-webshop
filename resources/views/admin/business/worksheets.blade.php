@@ -523,6 +523,7 @@
                         $('#installation_date').val(installation_date);
                     }
                     loadProducts();
+                    loadWorkers();
 
                     $('.worksheet-basic-table').find('input, select, textarea').prop('disabled', false);
 
