@@ -5,7 +5,6 @@
 @endsection
 
 @section('content')
-    @include('partials.categories')
     @include('partials.blogs')
     @include('partials.about')
     @include('partials.brands')

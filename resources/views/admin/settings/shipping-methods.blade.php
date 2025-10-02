@@ -17,7 +17,6 @@
                     <th>ID</th>
                     <th>Név</th>
                     <th>Kód</th>
-                    <th>Extra költség</th>
                     <th>Állapot</th>
                     <th>Láthatóság</th>
                 </tr>
@@ -27,7 +26,6 @@
                     <tr>
                         <td>{{ $method['name'] }}</td>
                         <td>{{ $method['code'] }}</td>
-                        <td>{{ $method['fee'] }}</td>
                         <td>{{ $method['description'] }}</td>
                         <td>{{ $method['active'] ? 'active' : 'inactive' }}</td>
                         <td>{{ $method['public'] ? 'bárki számára' : 'csak partner számára' }}</td>
