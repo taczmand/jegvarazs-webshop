@@ -77,7 +77,7 @@
                     @include('partials.heroitem')
                 @endif
 
-                <div class="row mt-3">
+                <div class="row mt-3" style="width:95%; padding-left: 5%">
                     <div class="categories__slider owl-carousel">
                         @foreach($all_categories as $category)
                             @php
