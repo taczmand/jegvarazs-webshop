@@ -107,13 +107,15 @@
                 </nav>
             </div>
             <div class="col-lg-3">
-                <div class="header__cart align-items-center justify-content-end">
-                    <ul>
-                        <!--<li><a href="#"><i class="fa fa-heart"></i> <span>0</span></a></li>-->
-                        <li><a href="{{ route('cart') }}"><i class="fa fa-shopping-bag"></i> <span class="cart_count">0</span></a></li>
-                    </ul>
-                    <div class="header__cart__price">összesen: <span class="cart_total_item_amount">0</span></div>
-                </div>
+                @if(!request()->routeIs('appointment'))
+                    <div class="header__cart align-items-center justify-content-end">
+                        <ul>
+                            <!--<li><a href="#"><i class="fa fa-heart"></i> <span>0</span></a></li>-->
+                            <li><a href="{{ route('cart') }}"><i class="fa fa-shopping-bag"></i> <span class="cart_count">0</span></a></li>
+                        </ul>
+                        <div class="header__cart__price">összesen: <span class="cart_total_item_amount">0</span></div>
+                    </div>
+                @endif
             </div>
         </div>
         <div class="humberger__open">

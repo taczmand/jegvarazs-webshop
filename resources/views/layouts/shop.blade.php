@@ -32,7 +32,7 @@
 
 <main class="container mx-auto">
     @yield('content')
-    @if (!request()->routeIs('checkout'))
+    @if (!request()->routeIs('checkout') && !request()->routeIs('appointment'))
         @include('partials.contact-form')
     @endif
 </main>

@@ -19,7 +19,7 @@
 
 
 
-    <form method="POST" action="{{ route('appointment.post') }}" class="w-100 p-4 bg-light rounded shadow-sm light-box">
+    <form method="POST" action="{{ route('appointment.post') }}" class="w-100 p-4 bg-light rounded shadow-sm light-box mb-5">
         @csrf
 
         <h4 class="mb-4 text-center">Kérem, töltse ki az adatokat</h4>
