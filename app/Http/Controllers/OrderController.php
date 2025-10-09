@@ -82,6 +82,8 @@ class OrderController extends Controller
                 'billing_postal_code' => 'required|string|max:20',
                 'billing_city' => 'required|string|max:255',
                 'billing_address' => 'required|string|max:255',
+                'billing_tax_number' => 'nullable|string|max:50',
+                'billing_country' => 'required|string|size:2',
             ], [
                 'billing_name.required' => 'A számlázási név megadása kötelező!',
                 'billing_postal_code.required' => 'A számlázási irányítószám megadása kötelező!',
