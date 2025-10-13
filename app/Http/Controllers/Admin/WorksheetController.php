@@ -338,7 +338,7 @@ class WorksheetController extends Controller
                     $missingFields = [];
 
                     foreach ($requiredExtraFields as $field => $label) {
-                        if (empty($extraData[$field])) {
+                        if (empty($extraData[$field]) && $extraData[$field] !== '0') {
                             $missingFields[] = $label;
                         }
                     }
