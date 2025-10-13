@@ -394,8 +394,8 @@
                                     </select>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="maintenance_payment_amount" class="form-label">Átvett készpénz összege:</label>
-                                    <input type="number" name="maintenance_payment_amount" id="maintenance_payment_amount" class="form-control">
+                                    <label for="payment_amount" class="form-label">Átvett készpénz összege:</label>
+                                    <input type="number" name="payment_amount" id="payment_amount" class="form-control">
                                 </div>
 
                                 <label for="worker_report">Szerelő megjegyzése:</label>
