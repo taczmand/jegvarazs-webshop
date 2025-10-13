@@ -155,6 +155,7 @@
                         <div class="tab-content mt-3">
                             @php
                                 $display = auth('admin')->user()->can('view-own-worksheets') ? 'none' : '';
+                                $readonly = auth('admin')->user()->can('view-own-worksheets') ? 'readonly' : '';
                             @endphp
 
 
@@ -162,16 +163,16 @@
                                 <!-- Alapadatok tab -->
 
                             <div class="tab-pane fade show active" id="basic">
-                                <table class="table table-bordered worksheet-basic-table" style="display: {{ $display }}">
+                                <table class="table table-bordered worksheet-basic-table">
                                     <tbody>
                                     <tr>
                                         <td class="w-25">Munka megnevezése</td>
-                                        <td><input type="text" class="form-control" id="work_name" name="work_name" required></td>
+                                        <td><input type="text" class="form-control" id="work_name" name="work_name" {{ $readonly }} required></td>
                                     </tr>
                                     <tr>
                                         <td class="w-25">Munka típusa</td>
                                         <td>
-                                            <select name="work_type" id="work_type" class="form-control">
+                                            <select name="work_type" id="work_type" class="form-control" {{ $readonly }}>
                                                 <option value="Karbantartás">Karbantartás</option>
                                                 <option value="Szerelés">Szerelés</option>
                                                 <option value="Felmérés">Felmérés</option>
@@ -180,16 +181,16 @@
                                     </tr>
                                     <tr>
                                         <td class="w-25">Munka dátuma</td>
-                                        <td><input type="date" class="form-control" id="installation_date" name="installation_date" required></td>
+                                        <td><input type="date" class="form-control" id="installation_date" name="installation_date" {{ $readonly }} required></td>
                                     </tr>
                                     <tr>
                                         <td class="w-25">Ügyfélnév</td>
-                                        <td><input type="text" class="form-control" id="contact_name" name="contact_name" required></td>
+                                        <td><input type="text" class="form-control" id="contact_name" name="contact_name" {{ $readonly }} required></td>
                                     </tr>
                                     <tr>
                                         <td>Ország</td>
                                         <td>
-                                            <select name="contact_country" class="form-control w-100" id="contact_country">
+                                            <select name="contact_country" class="form-control w-100" id="contact_country" {{ $readonly }}>
                                                 @foreach(config('countries') as $code => $name)
                                                     <option value="{{ $code }}">{{ $name }}</option>
                                                 @endforeach
@@ -198,28 +199,28 @@
                                     </tr>
                                     <tr>
                                         <td>Irányítószám</td>
-                                        <td><input type="text" class="form-control" id="contact_zip_code" name="contact_zip_code"></td>
+                                        <td><input type="text" class="form-control" id="contact_zip_code" name="contact_zip_code" {{ $readonly }}></td>
                                     </tr>
                                     <tr>
                                         <td>Város</td>
-                                        <td><input type="text" class="form-control" id="contact_city" name="contact_city"></td>
+                                        <td><input type="text" class="form-control" id="contact_city" name="contact_city" {{ $readonly }}></td>
                                     </tr>
                                     <tr>
                                         <td>Cím</td>
-                                        <td><input type="text" class="form-control" id="contact_address_line" name="contact_address_line"></td>
+                                        <td><input type="text" class="form-control" id="contact_address_line" name="contact_address_line" {{ $readonly }}></td>
                                     </tr>
                                     <tr>
                                         <td>Telefonszám</td>
-                                        <td><input type="text" class="form-control" id="contact_phone" name="contact_phone"></td>
+                                        <td><input type="text" class="form-control" id="contact_phone" name="contact_phone" {{ $readonly }}></td>
                                     </tr>
                                     <tr>
                                         <td>E-mail cím</td>
-                                        <td><input type="email" class="form-control" id="contact_email" name="contact_email"></td>
+                                        <td><input type="email" class="form-control" id="contact_email" name="contact_email" {{ $readonly }}></td>
                                     </tr>
                                     <tr>
                                         <td>Szerződés hozzárendelése</td>
                                         <td>
-                                            <select name="contract_id" class="form-control w-100" id="contract_id" name="contract_id">
+                                            <select name="contract_id" class="form-control w-100" id="contract_id" name="contract_id" {{ $readonly }}>
                                                 <option value=""></option>
                                                 @foreach($contracts as $contract)
                                                     <option value="{{ $contract->id }}">
@@ -231,7 +232,7 @@
                                     </tr>
                                     <tr>
                                         <td>Munka leírása</td>
-                                        <td><textarea class="form-control" id="contact_description" name="contact_description" rows="3"></textarea></td>
+                                        <td><textarea class="form-control" id="contact_description" name="contact_description" rows="3" {{ $readonly }}></textarea></td>
                                     </tbody>
                                 </table>
                             </div>
