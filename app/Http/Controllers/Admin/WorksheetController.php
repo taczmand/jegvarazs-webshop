@@ -315,7 +315,7 @@ class WorksheetController extends Controller
             if ($request->input('work_status') === 'Kész') {
 
                 $paymentMethod = $request->input('payment_method');
-                $paymentAmount = $request->input('maintenance_payment_amount');
+                $paymentAmount = $request->input('payment_amount');
                 $workType = $request->input('work_type');
 
                 if ("Szerelés" === $workType) {
