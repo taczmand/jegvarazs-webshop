@@ -388,8 +388,8 @@
                                     <div class="checkout__order_shipping">Szállítás <span id="shipping_cost_display">{{ number_format(0, 0, ',', ' ') }} Ft</span></div>
                                     <div class="checkout__order__total">Összesen <span id="total_item_amount_display">{{ number_format($total_item_amount, 0, ',', ' ') }} Ft</span></div>
 
-                                    <input type="checkbox" id="order_condition" class="form-check-input">
-                                    <label class="order-condition-label" name="order_condition" for="order_condition">Tudomásul veszem és elfogadom a rendeléssel járó fizetési kötelezettséget, valamint az <a target="_blank" href="{{ route('simplepay.adattovabbitasi_nyilatkozat') }}"><strong>adatkezelési nyilatkozatot</strong></a></label>
+                                    <input type="checkbox" id="order_condition" name="order_condition" class="form-check-input">
+                                    <label class="order-condition-label"  for="order_condition">Tudomásul veszem és elfogadom a rendeléssel járó fizetési kötelezettséget, valamint az <a target="_blank" href="{{ route('simplepay.adattovabbitasi_nyilatkozat') }}"><strong>adatkezelési nyilatkozatot</strong></a></label>
 
                                     <button type="submit" class="site-btn">Megrendelés</button>
                                 @else
