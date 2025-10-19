@@ -446,6 +446,9 @@ Route::middleware([Incognito::class])->group(function () {
     // SimplePay visszatérési oldal (ez már a felhasználó böngészőjében történik)
     Route::get('/payment/simplepay/return', [SimplePayController::class, 'return'])->name('simplepay.return');
 
+    // SimplePay adattovábbítási nyilatkozat
+    Route::get('/payment/simplepay/adattovabbitasi-nyilatkozat', [SimplePayController::class, 'adattovabbitasi_nyilatkozat'])->name('simplepay.adattovabbitasi_nyilatkozat');
+
     Route::get('/termekek', [ProductController::class, 'index'])->name('products.index');
     Route::get('/termekek/{slugs}', [ProductController::class, 'resolve'])
         ->where('slugs', '^(?!admin).*$') // ne kezdődjön admin-nal

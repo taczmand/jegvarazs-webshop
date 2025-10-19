@@ -19,6 +19,12 @@ class OrderController extends Controller
         $customer = auth('customer')->user();
         $cart = $customer->cart;
 
+        if (!$request->input('order_condition')) {
+            return redirect()->back()
+                ->withErrors(['El kell fogadni az adatkezelési nyilatkozatot.'])
+                ->withInput();
+        }
+
         // Kosár ellenőrzése
         if (!$cart || $cart->items->isEmpty()) {
             return redirect()->back()

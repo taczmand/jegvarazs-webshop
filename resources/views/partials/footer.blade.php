@@ -82,7 +82,11 @@
                             {!! $basicdata['company_footer_text'] !!}
                         @endif
                     </div>
+                    <div style="float: right; width: 250px">
+                        <img src="{{ asset('static_media/'.env('SIMPLEPAY_LOGO')) }}">
+                    </div>
                 </div>
+
             </div>
         </div>
     </div>

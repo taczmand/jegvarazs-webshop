@@ -57,6 +57,9 @@ class SimplePayController extends Controller
                 case 'FAILED':
                     $order->status = 'failed';
                     break;
+                case 'TIMEOUT':
+                    $order->status = 'timeout';
+                    break;
                 case 'CANCELED':
                     $order->status = 'canceled';
                     break;
@@ -116,8 +119,18 @@ class SimplePayController extends Controller
             return $item->gross_price * $item->quantity;
         });
 
-        if ("SUCCESS" !== $status) {
+        if ($status === 'SUCCESS') {
+            // Sikeres fizetés
+            $order_items = $order->items;
+            Mail::to($order->contact_email)->send(new NewOrder(
+                $order,
+                $order_items
+            ));
 
+            return view('simplepay.success', compact('order', 'order_total'));
+
+        } elseif ($status === 'FAIL') {
+            // Sikertelen fizetés
             $order->status = 'payment_failed';
             $order->save();
 
@@ -126,17 +139,35 @@ class SimplePayController extends Controller
                 $order,
                 $order_items
             ));
+
             return view('simplepay.failed', compact('order', 'transaction_id', 'status'));
 
-        } else {
-            //$cart->items()->delete();
+        } elseif ($status === 'CANCEL') {
+            // Felhasználó megszakította
+            $order->status = 'cancelled';
+            $order->save();
 
-            $order_items = $order->items;
-            Mail::to($order->contact_email)->send(new NewOrder(
-                $order,
-                $order_items
-            ));
-            return view('simplepay.success', compact('order', 'order_total'));
+            return view('simplepay.cancelled', compact('order', 'transaction_id', 'status'));
+
+        } elseif ($status === 'TIMEOUT') {
+            // Fizetés időtúllépés
+            $order->status = 'timeout';
+            $order->save();
+
+            return view('simplepay.timeout', compact('order', 'transaction_id', 'status'));
+
+        } else {
+            // Egyéb, ismeretlen státusz
+            $order->status = 'payment_failed';
+            $order->save();
+
+            return view('simplepay.failed', compact('order', 'transaction_id', 'status'));
         }
+
+    }
+
+    public function adattovabbitasi_nyilatkozat()
+    {
+        return view('simplepay.adattovabbitasi_nyilatkozat');
     }
 }

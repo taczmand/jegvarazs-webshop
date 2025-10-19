@@ -64,6 +64,7 @@ class OrderController extends Controller
                     'refunded'  => 'Visszatérítve',
                     'failed'    => 'Sikertelen',
                     'payment_failed' => 'Fizetés sikertelen',
+                    'timeout' => 'Időtúllépés',
                 ];
                 return $translations[$order->status] ?? ucfirst($order->status);
             })

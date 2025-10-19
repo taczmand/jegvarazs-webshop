@@ -33,6 +33,7 @@ class Order extends Model
             'canceled' => 'Törölve',
             'paid' => 'Fizetve',
             'payment_failed' => 'Sikertelen fizetés, próbálja újra',
+            'timeout' => 'Időtúllépés',
             default => ucfirst($this->status),
         };
     }

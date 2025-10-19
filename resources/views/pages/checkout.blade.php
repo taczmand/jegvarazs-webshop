@@ -331,6 +331,7 @@
                             <div class="collapse" id="paymentData">
                                 @foreach (config('payment_methods') as $method)
                                     @php
+                                        $logo = $method['settings']['logo'] ?? null;
                                         $isPublic = $method['public'] ?? false;
                                         $isPartner = $customer && $customer->is_partner;
                                     @endphp
@@ -339,6 +340,9 @@
                                         <div class="checkout__input__checkbox mb-2">
                                             <label for="{{ $method['slug'] }}">
                                                 {{ $method['name'] }}
+                                                @if (!empty($logo))
+                                                    <img style="max-width: 100px;" src="{{ asset('static_media/' . $logo) }}" alt="{{ $method['name'] }}">
+                                                @endif
                                                 @if (!empty($method['description']))
                                                     <small class="d-block text-muted">{{ $method['description'] }}</small>
                                                 @endif
@@ -349,6 +353,7 @@
                                                        @if ($loop->first) checked @endif>
                                                 <span class="checkmark"></span>
                                             </label>
+
                                         </div>
                                     @endif
                                 @endforeach
@@ -383,6 +388,8 @@
                                     <div class="checkout__order_shipping">Szállítás <span id="shipping_cost_display">{{ number_format(0, 0, ',', ' ') }} Ft</span></div>
                                     <div class="checkout__order__total">Összesen <span id="total_item_amount_display">{{ number_format($total_item_amount, 0, ',', ' ') }} Ft</span></div>
 
+                                    <input type="checkbox" id="order_condition" class="form-check-input">
+                                    <label class="order-condition-label" name="order_condition" for="order_condition">Tudomásul veszem és elfogadom a rendeléssel járó fizetési kötelezettséget, valamint az <a target="_blank" href="{{ route('simplepay.adattovabbitasi_nyilatkozat') }}"><strong>adattovábbítási nyilatkozatot</strong></a></label>
 
                                     <button type="submit" class="site-btn">Megrendelés</button>
                                 @else

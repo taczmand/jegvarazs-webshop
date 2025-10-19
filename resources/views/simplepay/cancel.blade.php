@@ -15,10 +15,10 @@
     ])
 
     <div class="w-100 p-4 bg-light rounded shadow-sm light-box">
-        <h3>A fizetés nem sikerült</h3>
+        <h3>A fizetés nem sikerült, megszakított tranzakció</h3>
 
         <p class="mb-4">
-            Sajnos a fizetés nem tudott befejeződni. Kérlek, próbáld újra vagy válassz másik fizetési módot.
+            Sajnos a fizetés nem tudott befejeződni, mert a tranzakció megszakadt. Kérlek, próbáld újra vagy válassz másik fizetési módot.
         </p>
 
         @if(isset($order->id))

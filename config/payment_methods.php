@@ -27,6 +27,7 @@ return [
         'settings' => [
             'merchant_id' => env('SIMPLEPAY_MERCHANT_ID'),
             'secret' => env('SIMPLEPAY_SECRET'),
+            'logo' => env('SIMPLEPAY_LOGO'),
         ]
     ],
     [

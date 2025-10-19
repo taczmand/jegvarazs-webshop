@@ -6,7 +6,7 @@
 
 @section('content')
     @include('partials.breadcrumbs', ['breadcrumbs' => [
-        'page_title' => 'Rendelés sikertelen',
+        'page_title' => 'Rendelés sikertelen időtúllépés miatt',
         'nav' => [
             ['title' => 'Főoldal', 'url' => route('index')],
             ['title' => 'Rendelés sikertelen', 'url' => route('index')]
@@ -15,10 +15,10 @@
     ])
 
     <div class="w-100 p-4 bg-light rounded shadow-sm light-box">
-        <h3>A fizetés nem sikerült</h3>
+        <h3>A fizetés nem sikerült időtúllépés miatt</h3>
 
         <p class="mb-4">
-            Sajnos a fizetés nem tudott befejeződni. Kérlek, próbáld újra vagy válassz másik fizetési módot.
+            Sajnos a fizetés nem tudott befejeződni, mert túl sok idő telt el. Kérlek, próbáld újra vagy válassz másik fizetési módot.
         </p>
 
         @if(isset($order->id))
