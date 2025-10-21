@@ -231,8 +231,8 @@
                                         </td>
                                     </tr>
                                     <tr>
-                                        <td>Munka leírása</td>
-                                        <td><textarea class="form-control" id="contact_description" name="contact_description" rows="3" {{ $readonly }}></textarea></td>
+                                        <td>Megjegyzés</td>
+                                        <td><textarea class="form-control" id="contact_description" name="contact_description" rows="3"></textarea></td>
                                     </tbody>
                                 </table>
                             </div>
@@ -260,7 +260,18 @@
                             <div class="tab-pane fade" id="products">
                                 <input type="text" class="form-control mb-3" id="productSearch" placeholder="Keresés a termékek között...">
                                 <div style="max-height: 300px; overflow-y: auto">
-                                    <table class="table table-bordered" id="productManagerTable" style="display: {{ $display }}">
+                                    <table id="productTableForWorker" class="table table-bordered" style="display: none">
+                                        <thead>
+                                        <tr>
+                                            <th>Termék</th>
+                                            <th>Darabszám</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        <!-- Termékek betöltése itt -->
+                                        </tbody>
+                                    </table>
+                                    <table class="table table-bordered" id="productManagerTable" style="display: {{ $display }}" isWorker="{{ $readonly }}">
                                         <thead>
                                         <tr>
                                             <th>Kiválasztás</th>
@@ -569,6 +580,7 @@
                 $('#contact_city').val(worksheet.city);
                 $('#contact_address_line').val(worksheet.address_line);
                 $('#contact_description').val(worksheet.description);
+                $('#worker_report').val(worksheet.worker_report);
                 $('#contact_phone').val(worksheet.phone);
                 $('#contact_email').val(worksheet.email);
                 $('#contract_id').val(worksheet.contract_id);
@@ -731,7 +743,9 @@
 
             function loadProducts(products = []) {
                 const productManagerTable = $('#productManagerTable tbody');
+                const isWorker = $('#productManagerTable').attr('isWorker');
                 productManagerTable.empty();
+                let selected_rows = '';
 
                 fetch(`${window.appConfig.APP_URL}admin/munkalapok/munkalap-termekek`)
                     .then(response => response.json())
@@ -753,6 +767,13 @@
                             category.products.forEach(item => {
                                 const isChecked = selectedProducts.hasOwnProperty(item.id);
                                 const quantity = isChecked ? selectedProducts[item.id] : 1;
+
+                                if (isChecked) {
+                                    selected_rows += `<tr>
+                                        <td>${item.title}</td>
+                                        <td>${selectedProducts[item.id]}</td>
+                                    </tr>`;
+                                }
 
                                 const row = `
                                     <tr>
@@ -781,6 +802,13 @@
                                 productManagerTable.append(row);
                             });
                         });
+
+                        if (isWorker == 'readonly') {
+                            $('#productTableForWorker tbody').append(selected_rows);
+                            $('#productTableForWorker').show();
+                        } else {
+                            $('#productTableForWorker').hide();
+                        }
                     })
                     .catch(error => {
                         console.error('Hiba a termékek betöltésekor:', error);
