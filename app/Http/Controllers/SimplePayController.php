@@ -55,7 +55,7 @@ class SimplePayController extends Controller
                     $order->status = 'paid';
                     break;
                 case 'FAILED' || 'NOTAUTHORIZED':
-                    $order->status = 'failed';
+                    $order->status = 'payment_failed';
                     break;
                 case 'TIMEOUT':
                     $order->status = 'timeout';
