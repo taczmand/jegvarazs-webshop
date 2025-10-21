@@ -81,7 +81,15 @@ class SimplePayController extends Controller
                 $order_items
             ));
 
-            return response('OK');
+            return response('OK')
+                ->header('Signature', base64_encode(
+                    hash_hmac(
+                        'sha384',
+                        'OK',
+                        env('SIMPLEPAY_SECRET_KEY'),
+                        true
+                    )
+                ));
         } catch (\Exception $e) {
             \Log::error('SimplePay callback error', [
                 'message' => $e->getMessage(),
