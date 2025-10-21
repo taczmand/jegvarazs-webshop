@@ -83,7 +83,7 @@
                         @endif
                     </div>
                     <div style="float: right; width: 250px">
-                        <img src="{{ asset('static_media/'.env('SIMPLEPAY_LOGO')) }}">
+                        <a href="{{ env('SIMPLEPAY_LOGO_URL') }}" target="_blank"><img src="{{ asset('static_media/'.env('SIMPLEPAY_LOGO')) }}"></a>
                     </div>
                 </div>
 

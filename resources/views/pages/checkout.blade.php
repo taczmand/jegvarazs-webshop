@@ -332,6 +332,7 @@
                                 @foreach (config('payment_methods') as $method)
                                     @php
                                         $logo = $method['settings']['logo'] ?? null;
+                                        $logo_url = $method['settings']['logo_url'] ?? null;
                                         $isPublic = $method['public'] ?? false;
                                         $isPartner = $customer && $customer->is_partner;
                                     @endphp
@@ -341,7 +342,7 @@
                                             <label for="{{ $method['slug'] }}">
                                                 {{ $method['name'] }}
                                                 @if (!empty($logo))
-                                                    <img style="max-width: 100px;" src="{{ asset('static_media/' . $logo) }}" alt="{{ $method['name'] }}">
+                                                    <a href="{{ $logo_url }}" target="_blank"><img style="max-width: 100px;" src="{{ asset('static_media/' . $logo) }}" alt="{{ $method['name'] }}"></a>
                                                 @endif
                                                 @if (!empty($method['description']))
                                                     <small class="d-block text-muted">{{ $method['description'] }}</small>

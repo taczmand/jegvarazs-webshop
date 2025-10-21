@@ -54,14 +54,14 @@ class SimplePayController extends Controller
                 case 'FINISHED':
                     $order->status = 'paid';
                     break;
-                case 'FAILED':
+                case 'FAILED' || 'NOTAUTHORIZED':
                     $order->status = 'failed';
                     break;
                 case 'TIMEOUT':
                     $order->status = 'timeout';
                     break;
                 case 'CANCELED':
-                    $order->status = 'canceled';
+                    $order->status = 'cancelled';
                     break;
                 case 'PENDING':
                     $order->status = 'pending';
@@ -70,6 +70,7 @@ class SimplePayController extends Controller
                     $order->status = 'unknown';
                     break;
             }
+            \Log::info('order-status', [$status, $order->status]);
 
             $order->save();
 
