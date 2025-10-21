@@ -17,11 +17,9 @@ class SimplePayController extends Controller
             $rawContent = $request->getContent();
             $signature = $request->header('Signature');
 
-            //\Log::info('SimplePay callback raw', ['body' => $rawContent, 'signature' => $signature]);
-
             $expectedSignature = base64_encode(
                 hash_hmac(
-                    'sha384', // a SimplePay V2 default hash algoritmusa
+                    'sha384',
                     $rawContent,
                     env('SIMPLEPAY_SECRET_KEY'),
                     true
@@ -54,7 +52,8 @@ class SimplePayController extends Controller
                 case 'FINISHED':
                     $order->status = 'paid';
                     break;
-                case 'FAILED' || 'NOTAUTHORIZED':
+                case 'FAILED':
+                case 'NOTAUTHORIZED':
                     $order->status = 'payment_failed';
                     break;
                 case 'TIMEOUT':
@@ -70,26 +69,34 @@ class SimplePayController extends Controller
                     $order->status = 'unknown';
                     break;
             }
-            \Log::info('order-status', [$status, $order->status]);
 
             $order->save();
 
-            // Sikeres fizetés után küldünk egy e-mailt a vásárlónak
             $order_items = $order->items;
-            Mail::to($order->contact_email)->send(new UpdateOrder(
-                $order,
-                $order_items
-            ));
+            Mail::to($order->contact_email)->send(new UpdateOrder($order, $order_items));
 
-            return response('OK')
-                ->header('Signature', base64_encode(
-                    hash_hmac(
-                        'sha384',
-                        'OK',
-                        env('SIMPLEPAY_SECRET_KEY'),
-                        true
-                    )
-                ));
+            // --- 🔹 IPN válasz összeállítása a dokumentáció szerint ---
+            $payload['receiveDate'] = now()->format('Y-m-d\TH:i:sP'); // pl. 2025-10-21T13:22:45+0200
+            $responseBody = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+
+            $responseSignature = base64_encode(
+                hash_hmac(
+                    'sha384',
+                    $responseBody,
+                    env('SIMPLEPAY_SECRET_KEY'),
+                    true
+                )
+            );
+
+            \Log::info('SimplePay IPN response', [
+                'response' => $responseBody,
+                'signature' => $responseSignature
+            ]);
+
+            return response($responseBody, 200)
+                ->header('Content-Type', 'application/json')
+                ->header('Signature', $responseSignature);
+
         } catch (\Exception $e) {
             \Log::error('SimplePay callback error', [
                 'message' => $e->getMessage(),
@@ -99,6 +106,7 @@ class SimplePayController extends Controller
             return response()->json(['status' => 'error', 'message' => 'Internal server error'], 500);
         }
     }
+
     public function return (Request $request)
     {
         \Log::info('SimplePay return', $request->all());
