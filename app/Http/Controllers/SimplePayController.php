@@ -164,7 +164,7 @@ class SimplePayController extends Controller
             $order->status = 'cancelled';
             $order->save();
 
-            return view('simplepay.cancelled', compact('order', 'transaction_id', 'status'));
+            return view('simplepay.cancel', compact('order', 'transaction_id', 'status'));
 
         } elseif ($status === 'TIMEOUT') {
             // Fizetés időtúllépés
