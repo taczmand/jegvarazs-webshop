@@ -53,23 +53,17 @@ class SimplePayController extends Controller
                 case 'FINISHED':
                     $order->status = 'paid';
                     break;
-                case 'FAILED':
-                case 'NOTAUTHORIZED':
-                    $order->status = 'payment_failed';
-                    break;
-                case 'TIMEOUT':
-                    $order->status = 'timeout';
-                    break;
-                case 'CANCELLED':
-                    $order->status = 'cancelled';
-                    break;
+
                 case 'PENDING':
                     $order->status = 'pending';
                     break;
+
                 default:
-                    $order->status = 'unknown';
+                    $order->status = 'payment_failed';
                     break;
             }
+
+
 
             $order->save();
 
@@ -168,14 +162,14 @@ class SimplePayController extends Controller
 
         } elseif ($status === 'CANCEL') {
             // Felhasználó megszakította
-            $order->status = 'cancelled';
+            $order->status = 'payment_failed';
             $order->save();
 
             return view('simplepay.cancel', compact('order', 'transaction_id', 'status'));
 
         } elseif ($status === 'TIMEOUT') {
             // Fizetés időtúllépés
-            $order->status = 'timeout';
+            $order->status = 'payment_failed';
             $order->save();
 
             return view('simplepay.timeout', compact('order', 'transaction_id', 'status'));
