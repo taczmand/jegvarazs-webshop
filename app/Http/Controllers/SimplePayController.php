@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Mail\NewOrder;
 use App\Mail\UpdateOrder;
 use App\Models\Order;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
@@ -59,7 +60,7 @@ class SimplePayController extends Controller
                 case 'TIMEOUT':
                     $order->status = 'timeout';
                     break;
-                case 'CANCELED':
+                case 'CANCELLED':
                     $order->status = 'cancelled';
                     break;
                 case 'PENDING':
@@ -73,7 +74,11 @@ class SimplePayController extends Controller
             $order->save();
 
             $order_items = $order->items;
-            Mail::to($order->contact_email)->send(new UpdateOrder($order, $order_items));
+            try {
+                Mail::to($order->contact_email)->send(new UpdateOrder($order, $order_items));
+            } catch(Exception $e) {
+                Log::error('E-mail küldési hiba: ' . $e->getMessage());
+            }
 
             // --- 🔹 IPN válasz összeállítása a dokumentáció szerint ---
             $payload['receiveDate'] = now()->format('Y-m-d\TH:i:sP'); // pl. 2025-10-21T13:22:45+0200
@@ -139,10 +144,11 @@ class SimplePayController extends Controller
         if ($status === 'SUCCESS') {
             // Sikeres fizetés
             $order_items = $order->items;
-            Mail::to($order->contact_email)->send(new NewOrder(
-                $order,
-                $order_items
-            ));
+            try {
+                Mail::to($order->contact_email)->send(new NewOrder($order, $order_items));
+            } catch(Exception $e) {
+                Log::error('E-mail küldési hiba: ' . $e->getMessage());
+            }
 
             return view('simplepay.success', compact('order', 'order_total'));
 
@@ -152,10 +158,11 @@ class SimplePayController extends Controller
             $order->save();
 
             $order_items = $order->items;
-            Mail::to($order->contact_email)->send(new UpdateOrder(
-                $order,
-                $order_items
-            ));
+            try {
+                Mail::to($order->contact_email)->send(new UpdateOrder($order, $order_items));
+            } catch(Exception $e) {
+                Log::error('E-mail küldési hiba: ' . $e->getMessage());
+            }
 
             return view('simplepay.failed', compact('order', 'transaction_id', 'status'));
 
