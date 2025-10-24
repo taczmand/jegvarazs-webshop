@@ -71,7 +71,7 @@ class SimplePayController extends Controller
             try {
                 Mail::to($order->contact_email)->send(new UpdateOrder($order, $order_items));
             } catch(Exception $e) {
-                Log::error('E-mail küldési hiba: ' . $e->getMessage());
+                \Log::error('E-mail küldési hiba: ' . $e->getMessage());
             }
 
             // --- 🔹 IPN válasz összeállítása a dokumentáció szerint ---
@@ -141,7 +141,7 @@ class SimplePayController extends Controller
             try {
                 Mail::to($order->contact_email)->send(new NewOrder($order, $order_items));
             } catch(Exception $e) {
-                Log::error('E-mail küldési hiba: ' . $e->getMessage());
+                \Log::error('E-mail küldési hiba: ' . $e->getMessage());
             }
 
             return view('simplepay.success', compact('order', 'order_total'));
@@ -155,7 +155,7 @@ class SimplePayController extends Controller
             try {
                 Mail::to($order->contact_email)->send(new UpdateOrder($order, $order_items));
             } catch(Exception $e) {
-                Log::error('E-mail küldési hiba: ' . $e->getMessage());
+                \Log::error('E-mail küldési hiba: ' . $e->getMessage());
             }
 
             return view('simplepay.failed', compact('order', 'transaction_id', 'status'));
