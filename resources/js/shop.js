@@ -670,6 +670,22 @@ import * as bootstrap from "bootstrap";
         btn.classList.toggle('btn-secondary');
     });
 
+    document.addEventListener("DOMContentLoaded", function() {
+        const lazyImages = document.querySelectorAll(".set-bg");
+        const observer = new IntersectionObserver(entries => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const el = entry.target;
+                    const bg = el.getAttribute("data-setbg");
+                    el.style.backgroundImage = `url(${bg})`;
+                    observer.unobserve(el);
+                }
+            });
+        });
+        lazyImages.forEach(img => observer.observe(img));
+    });
+
+
 
 })(jQuery);
 
