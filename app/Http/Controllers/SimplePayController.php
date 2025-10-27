@@ -144,7 +144,7 @@ class SimplePayController extends Controller
                 \Log::error('E-mail küldési hiba: ' . $e->getMessage());
             }
 
-            return view('simplepay.success', compact('order', 'order_total'));
+            return view('simplepay.success', compact('order', 'order_total', 'transaction_id'));
 
         } elseif ($status === 'FAIL') {
             // Sikertelen fizetés

@@ -17,16 +17,21 @@
     <div class="w-100 p-4 bg-light rounded shadow-sm light-box">
         <h3>A fizetés nem sikerült</h3>
 
+        <p class="mb-1">
+            Sikertelen tranzakció.
+        </p>
         <p class="mb-4">
-            Sajnos a fizetés nem tudott befejeződni. Kérlek, próbáld újra vagy válassz másik fizetési módot.
+            SimplePay tranzakció azonosító: {{ $transaction_id }}
+        </p>
+        <p class="mb-1">
+            Kérjük, ellenőrizze a tranzakció során megadott adatok helyességét.
+        </p>
+        <p class="mb-4">
+            Amennyiben minden adatot helyesen adott meg, a visszautasítás okának kivizsgálása kapcsán kérjük, szíveskedjen kapcsolatba lépni kártyakibocsátó bankjával.
         </p>
 
         @if(isset($order->id))
             <p><strong>Rendelés azonosító:</strong> {{ $order->id }}</p>
-        @endif
-
-        @if(isset($transaction_id))
-            <p><strong>Tranzakció azonosító:</strong> {{ $transaction_id }}</p>
         @endif
 
         @if(!empty($result))

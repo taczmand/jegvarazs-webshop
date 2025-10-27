@@ -17,6 +17,12 @@
     <div class="w-100 p-4 bg-light rounded shadow-sm">
         <h3>Köszönjük a rendelést!</h3>
         <p class="mb-4">
+            Sikeres tranzakció.
+        </p>
+        <p class="mb-4">
+            SimplePay tranzakcióazonosító: {{ $transaction_id }}
+        </p>
+        <p class="mb-4">
             A fizetési folyamatot sikeresen elindította. Kérjük, legyen türelemmel, a végleges visszaigazolás néhány pillanaton belül meg fog érkezni. Amint ez megtörténik, e-mailben is értesítést küldünk Önnek.
         </p>
 
