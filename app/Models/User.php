@@ -49,4 +49,10 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    public function worksheets()
+    {
+        return $this->belongsToMany(Worksheet::class, 'worksheet_workers', 'worker_id', 'worksheet_id');
+    }
+
 }

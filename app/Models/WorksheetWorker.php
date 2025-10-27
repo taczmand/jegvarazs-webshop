@@ -17,6 +17,6 @@ class WorksheetWorker extends Model
     }
     public function worker()
     {
-        return $this->belongsTo(User::class, 'worker_id');
+        return $this->belongsToMany(User::class, 'worker_id');
     }
 }

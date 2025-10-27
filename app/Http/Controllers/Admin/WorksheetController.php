@@ -473,14 +473,13 @@ class WorksheetController extends Controller
             }
 
             // Munkalap munkások hozzárendelése
-            foreach ($request->input('workers', []) as $workerId => $data) {
-                if (!isset($data['selected'])) continue;
+            $selectedWorkerIds = collect($request->input('workers', []))
+                ->filter(fn($data) => isset($data['selected']))
+                ->keys()
+                ->toArray();
 
-                WorksheetWorker::create([
-                    'worksheet_id' => $worksheet->id,
-                    'worker_id'   => $workerId
-                ]);
-            }
+            $worksheet->workers()->sync($selectedWorkerIds);
+
 
             // Termékek mentése
             foreach ($request->input('products', []) as $productId => $data) {
