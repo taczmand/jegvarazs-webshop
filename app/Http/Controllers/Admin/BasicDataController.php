@@ -64,8 +64,7 @@ class BasicDataController extends Controller
             'customers',
             'orders',
             'appointments',
-            'contracts',
-            'worksheets',
+            'contracts'
         ];
 
         $queries = [];
