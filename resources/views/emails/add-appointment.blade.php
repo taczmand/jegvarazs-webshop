@@ -60,21 +60,25 @@
         <p><strong>Irányítószám:</strong> {{ $appointment->zip_code }}</p>
         <p><strong>Város:</strong> {{ $appointment->city }}</p>
         <p><strong>Cím:</strong> {{ $appointment->address_line }}</p>
+        @if(!empty($appointment->appointment_date))
+            <p><strong>Dátum:</strong> {{ $appointment->appointment_date }}</p>
+        @endif
         @if(!empty($appointment->message))
             <p><strong>Megjegyzés:</strong> {{ $appointment->message }}</p>
         @endif
+
+
+        <h4 style="margin-top: 25px; color: #0077b6;">Elérhetőségeink</h4>
+        <p>
+            <strong>Cím:</strong> {{ $basic_data['company_address'] ?? '' }}<br>
+            <strong>Telefon:</strong> {{ $basic_data['company_appointment_phone'] ?? '' }}<br>
+            <strong>E-mail:</strong> {{ $basic_data['company_appointment_email'] ?? '' }}
+        </p>
+
+        <p>Üdvözlettel,<br />{{ $basic_data['company_name'] ?? '' }}</p>
+
+        <small style="font-style: italic;">Kérjük, erre az e-mail címre ne válaszoljon.</small>
     </div>
-
-    <h4 style="margin-top: 25px; color: #0077b6;">Elérhetőségeink</h4>
-    <p>
-        <strong>Cím:</strong> {{ $basic_data['company_address'] ?? '' }}<br>
-        <strong>Telefon:</strong> {{ $basic_data['company_appointment_phone'] ?? '' }}<br>
-        <strong>E-mail:</strong> {{ $basic_data['company_appointment_email'] ?? '' }}
-    </p>
-
-    <p>Üdvözlettel,<br />{{ $basic_data['company_name'] ?? '' }}</p>
-
-    <small style="font-style: italic;">Kérjük, erre az e-mail címre ne válaszoljon.</small>
 
     <div class="footer">
         © {{ now()->year }} Jegvarazsbolt.hu – Minden jog fenntartva.
