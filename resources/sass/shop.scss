@@ -143,8 +143,8 @@ ol {
 
 .set-bg {
     background-repeat: no-repeat;
-    background-size: cover;
-    background-position: top center;
+    background-size: contain;
+    background-position: center center;
 }
 .set-hero-bg {
     background-repeat: no-repeat;
@@ -823,12 +823,12 @@ a {
 }
 
 .categories__item h5 a {
-    font-size: 18px;
+    font-size: 14px;
     color: #1c1c1c;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 2px;
-    padding: 12px 0 10px;
+    letter-spacing: normal;
+    padding: 6px 0 3px;
     background: #ffffff;
     display: block;
 }
