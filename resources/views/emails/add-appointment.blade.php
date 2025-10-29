@@ -66,8 +66,8 @@
         @if(!empty($appointment->message))
             <p><strong>Megjegyzés:</strong> {{ $appointment->message }}</p>
         @endif
-
-
+        
+        <hr>
         <h4 style="margin-top: 25px; color: #0077b6;">Elérhetőségeink</h4>
         <p>
             <strong>Cím:</strong> {{ $basic_data['company_address'] ?? '' }}<br>
