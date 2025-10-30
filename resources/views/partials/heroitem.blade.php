@@ -13,7 +13,27 @@
     <div class="categories__slider owl-carousel">
         @foreach($all_categories as $category)
             @php
-                $firstProduct = $category->products->first();
+                $photo = 'static_media/no-image.jpg';
+
+                $firstProductWithPhoto = $category->products()
+                    ->whereHas('photos') // csak olyan termék, aminek van fotója
+                    ->orderBy('id', 'asc')
+                    ->first();
+
+                if ($firstProductWithPhoto) {
+
+                    $mainPhoto = $firstProductWithPhoto->photos()
+                        ->orderBy('id', 'asc')
+                        ->first();
+
+                    if ($mainPhoto && !empty($mainPhoto->path)) {
+                        $photo = 'storage/' . ltrim($mainPhoto->path, '/');
+                    }
+                }
+
+
+
+                /*$firstProduct = $category->products->first();
                 $photo = 'static_media/no-image.jpg';
 
                 if ($firstProduct) {
@@ -21,7 +41,7 @@
                     if ($mainPhoto) {
                         $photo = 'storage/' . $mainPhoto->path;
                     }
-                }
+                }*/
             @endphp
 
             <div class="col-lg-3 pr-3">

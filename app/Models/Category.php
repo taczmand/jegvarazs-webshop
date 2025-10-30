@@ -57,10 +57,11 @@ class Category extends Model
             $slugs[] = $category->slug;
             $category = $category->parent;
         }
+
         $fullSlug = implode('/', array_reverse($slugs));
 
-        // 🔹 Képet keresünk rekurzívan a kategóriában és a szülőkben
-        $photo = $this->findFirstProductImage();
+        // 🔹 Képet keresünk rekurzívan a kategóriában, gyermekekben és szülőkben
+        $photo = $this->findFirstProductImageRecursive();
 
         return [
             'slug' => $fullSlug,
@@ -68,9 +69,9 @@ class Category extends Model
         ];
     }
 
-    protected function findFirstProductImage()
+    protected function findFirstProductImageRecursive()
     {
-        // 🔹 Aktív termék képpel a jelenlegi kategóriában
+        // 🔹 1. Először nézzük az aktuális kategóriát
         $productWithImage = $this->products()
             ->where('status', 'active')
             ->whereHas('photos')
@@ -82,13 +83,23 @@ class Category extends Model
             return $productWithImage->photos->first();
         }
 
-        // 🔹 Ha nincs, nézzük a szülőt
-        if ($this->parent) {
-            return $this->parent->findFirstProductImage();
+        // 🔹 2. Ha nincs, nézzük az alkategóriákat (rekurzívan)
+        foreach ($this->children as $childCategory) {
+            $childPhoto = $childCategory->findFirstProductImageRecursive();
+            if ($childPhoto) {
+                return $childPhoto;
+            }
         }
 
-        return null; // sehol nincs kép
+        // 🔹 3. Ha az alkategóriákban sincs, nézzük a szülőt
+        if ($this->parent) {
+            return $this->parent->findFirstProductImageRecursive();
+        }
+
+        // 🔹 4. Sehol nincs kép
+        return null;
     }
+
 
 
 }
