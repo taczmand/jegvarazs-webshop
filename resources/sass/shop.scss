@@ -3965,6 +3965,10 @@ a {
     .table-header {
         display: none; /* fejléc eltűnik mobilon */
     }
+    .cta-btn {
+        left: 50%;
+        transform: translateX(-50%);
+    }
 }
 
 
