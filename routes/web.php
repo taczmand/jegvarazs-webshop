@@ -45,7 +45,7 @@ Route::get('/idopontfoglalas', [PagesController::class, 'appointment'])->name('a
 
 Route::get('/reset-carts', [CartController::class, 'resetCarts']);
 
-Route::middleware([Incognito::class])->group(function () {
+//Route::middleware([Incognito::class])->group(function () {
 
     // Admin
     Route::prefix('admin')->name('admin.')->group(function () {
@@ -445,7 +445,7 @@ Route::middleware([Incognito::class])->group(function () {
     Route::get('/termekek/{slugs}', [ProductController::class, 'resolve'])
         ->where('slugs', '^(?!admin).*$') // ne kezdődjön admin-nal
         ->name('products.resolve');
-});
+//});
 
 // SimplePay hívja, amikor a fizetés megtörtént (rendelés mentése)
 Route::post('/payment/simplepay/callback', [SimplePayController::class, 'callback'])
