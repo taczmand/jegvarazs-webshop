@@ -11,37 +11,48 @@
 </div>
 <div class="row mt-3" style="width:95%; padding-left: 5%">
     <div class="categories__slider owl-carousel">
+        @php
+            // 🔹 Segédfüggvény: megkeresi rekurzívan az első képes terméket
+            function findFirstProductWithPhotoRecursive($category)
+            {
+                // 1️⃣ Először a kategória saját termékeit nézzük
+                $product = $category->products()
+                    ->where('status', 'active')
+                    ->whereHas('photos')
+                    ->with(['photos' => function($q) {
+                        $q->orderBy('id', 'asc');
+                    }])
+                    ->orderBy('created_at', 'asc')
+                    ->first();
+
+                if ($product && $product->photos->isNotEmpty()) {
+                    return $product->photos->first();
+                }
+
+                // 2️⃣ Ha nincs ilyen termék, nézzük a gyerek kategóriákat rekurzívan
+                foreach ($category->children as $child) {
+                    $photo = findFirstProductWithPhotoRecursive($child);
+                    if ($photo) {
+                        return $photo;
+                    }
+                }
+
+                // 3️⃣ Nincs sehol fotó
+                return null;
+            }
+        @endphp
+
+
         @foreach($all_categories as $category)
             @php
                 $photo = 'static_media/no-image.jpg';
 
-                $firstProductWithPhoto = $category->products()
-                    ->whereHas('photos') // csak olyan termék, aminek van fotója
-                    ->orderBy('id', 'asc')
-                    ->first();
+                // 🔹 Kép keresése az adott kategóriában és gyerekeiben
+                $photoObj = findFirstProductWithPhotoRecursive($category);
 
-                if ($firstProductWithPhoto) {
-
-                    $mainPhoto = $firstProductWithPhoto->photos()
-                        ->orderBy('id', 'asc')
-                        ->first();
-
-                    if ($mainPhoto && !empty($mainPhoto->path)) {
-                        $photo = 'storage/' . ltrim($mainPhoto->path, '/');
-                    }
+                if ($photoObj && !empty($photoObj->path)) {
+                    $photo = 'storage/' . ltrim($photoObj->path, '/');
                 }
-
-
-
-                /*$firstProduct = $category->products->first();
-                $photo = 'static_media/no-image.jpg';
-
-                if ($firstProduct) {
-                    $mainPhoto = $firstProduct->photos->first();
-                    if ($mainPhoto) {
-                        $photo = 'storage/' . $mainPhoto->path;
-                    }
-                }*/
             @endphp
 
             <div class="col-lg-3 pr-3">
@@ -54,5 +65,6 @@
                 </div>
             </div>
         @endforeach
+
     </div>
 </div>
