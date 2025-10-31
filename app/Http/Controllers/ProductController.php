@@ -93,7 +93,7 @@ class ProductController extends Controller
 
 
         // Pagináció
-        $products = $query->paginate($itemsPerPage)->onEachSide(5)->withQueryString();
+        $products = $query->paginate($itemsPerPage)->withQueryString();
 
         $tags = Tag::whereHas('products', function ($q) use ($allProductIds) {
             $q->whereIn('products.id', $allProductIds);
@@ -266,7 +266,7 @@ class ProductController extends Controller
 
 
 
-        $products = $query->paginate($itemsPerPage)->onEachSide(5)->withQueryString();
+        $products = $query->paginate($itemsPerPage)->withQueryString();
 
         $tags = Tag::whereHas('products', function ($q) use ($allProductIds) {
             $q->whereIn('products.id', $allProductIds);

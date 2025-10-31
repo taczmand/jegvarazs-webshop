@@ -301,7 +301,7 @@
 
                         </div>
                         <!--<div class="product__pagination">-->
-                            {{ $products->links() }}
+                            {{ $products->onEachSide(5)->links() }}
                         <!--</div>-->
                     </div>
                 </div>
