@@ -210,7 +210,7 @@
                                         <td><input type="text" class="form-control" id="contact_address_line" name="contact_address_line" {{ $readonly }}></td>
                                     </tr>
                                     <tr>
-                                        <td>Telefonszám</td>
+                                        <td>Telefonszám <span class="ml-3 btn btn-primary" id="call_phone_number"><i class="fa fa-phone"></i> Hívás</span></td>
                                         <td><input type="text" class="form-control" id="contact_phone" name="contact_phone" {{ $readonly }}></td>
                                     </tr>
                                     <tr>
@@ -611,6 +611,18 @@
 
                 adminModal.show();
             }
+
+            $('#call_phone_number').on('click', function (e) {
+                e.preventDefault(); // ne csináljon mást, pl. ha gomb/link
+                let phone_number = $('#contact_phone').val().replace(/\s+/g, ''); // szóközök eltávolítása
+
+                if (phone_number) {
+                    window.location.href = 'tel:' + phone_number;
+                } else {
+                    alert('Nincs megadva telefonszám.');
+                }
+            });
+
 
             $(document).on('input', '#productSearch', function () {
                 const searchValue = $(this).val().toLowerCase();
