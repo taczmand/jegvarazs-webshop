@@ -50,7 +50,7 @@
                     <tr>
                         <th>ID</th>
                         <th data-priority="1">Terméknév</th>
-                        <th>Készlet</th>
+                        <th data-priority="6">Készlet</th>
                         <th data-priority="3">Bruttó ár</th>
                         <th data-priority="4">Partner bruttó ár</th>
                         <th>ÁFA</th>
