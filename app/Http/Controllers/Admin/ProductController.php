@@ -306,4 +306,26 @@ class ProductController extends Controller
             ], 500);
         }
     }
+
+    public function setProductInline(Request $request) {
+        try {
+            $product = Product::findOrFail($request->id);
+            $product->update([
+                $request->field => $request->value,
+            ]);
+
+            return response()->json([
+                'message' => 'Sikeres módosítás!',
+            ], 200);
+
+        } catch (\Exception $e) {
+
+            \Log::error('Termék módosítási hiba: ' . $e->getMessage());
+
+            return response()->json([
+                'message' => 'Hiba történt a módosítás során.',
+                'errors' => $e->getMessage(),
+            ], 500);
+        }
+    }
 }

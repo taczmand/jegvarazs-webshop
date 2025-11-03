@@ -51,10 +51,10 @@
                         <th>ID</th>
                         <th data-priority="1">Terméknév</th>
                         <th>Készlet</th>
-                        <th>Bruttó ár</th>
-                        <th>Partner bruttó ár</th>
+                        <th data-priority="3">Bruttó ár</th>
+                        <th data-priority="4">Partner bruttó ár</th>
                         <th>ÁFA</th>
-                        <th data-priority="3">Kategória</th>
+                        <th data-priority="5">Kategória</th>
                         <th>Státusz</th>
                         <th>Létrehozva</th>
                         <th data-priority="2">Műveletek</th>
@@ -215,9 +215,9 @@
                 columns: [
                     { data: 'id' },
                     { data: 'title', className: 'no-ellipsis' },
-                    { data: 'stock' },
-                    { data: 'gross_price' },
-                    { data: 'partner_gross_price' },
+                    { data: 'stock', className: 'editable', name: 'stock' },
+                    { data: 'gross_price', className: 'editable', name: 'gross_price' },
+                    { data: 'partner_gross_price', className: 'editable', name: 'partner_gross_price' },
                     { data: 'tax_value' },
                     { data: 'category' },
                     { data: 'status' },
@@ -634,6 +634,68 @@
                     });
                 });
             }
+
+            $('#productsTable').on('dblclick', 'td.editable', function () {
+                const cell = $(this);
+                const colIndex = cell.index();
+                const originalText = cell.text().trim();
+
+                // oszlopnév a columns definícióból
+                const column = table.settings().init().columns[colIndex].data;
+
+                // ha már input van benne, ne csináljon semmit
+                if (cell.find('input').length) return;
+
+                // csak a számot hagyjuk meg (Ft, szóköz, pont, vessző nélkül)
+                const cleanedValue = originalText
+                    .replace(/[^0-9,.\-]/g, '') // minden nem szám, nem pont, nem vessző eltávolítása
+                    .replace(',', '.'); // ha vesszőt használ tizedes elválasztónak
+
+                const input = $('<input type="text" class="form-control form-control-sm">')
+                    .val(cleanedValue);
+                cell.empty().append(input);
+                input.focus();
+
+                // ENTER ment, ESC visszavon
+                input.on('keydown blur', function (e) {
+                    if (e.key === 'Escape') {
+                        cell.text(originalText);
+                        return;
+                    }
+
+                    if (e.type === 'blur' || e.key === 'Enter') {
+                        const newValue = input.val().trim();
+                        if (newValue === cleanedValue) {
+                            cell.text(originalText);
+                            return;
+                        }
+
+                        const rowData = table.row(cell.closest('tr')).data();
+
+                        $.ajax({
+                            url: `${window.appConfig.APP_URL}admin/termekek/update-inline`,
+                            type: 'POST',
+                            data: {
+                                id: rowData.id,
+                                field: column,
+                                value: newValue,
+                                _token: '{{ csrf_token() }}'
+                            },
+                            success: function () {
+                                table.ajax.reload(null, false);
+                                showToast('Termék adatai sikeresen módosultak', 'success');
+                            },
+                            error: function (xhr) {
+                                console.error(xhr.message);
+                                showToast('Hiba történt a mentés során!', 'danger');
+                                cell.text(originalText);
+                            }
+                        });
+                    }
+                });
+            });
+
+
 
 
             function resetForm(title = null) {

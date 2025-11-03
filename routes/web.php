@@ -112,6 +112,7 @@ Route::get('/reset-carts', [CartController::class, 'resetCarts']);
             Route::put('/termekek/{id}', [AdminProductController::class, 'update'])->name('products.update');
             Route::patch('/termekek/update-photo-alt', [AdminProductController::class, 'updateProductPhotoAlt'])->name('products.update_product_photo_alt');
             Route::patch('/termekek/set-primary-photo', [AdminProductController::class, 'setPrimaryProductPhoto'])->name('products.set_primary_product_photo');
+            Route::post('/termekek/update-inline', [AdminProductController::class, 'setProductInline'])->name('products.set_product_inline');
             Route::delete('/termekek/delete-photo', [AdminProductController::class, 'deleteProductPhoto'])->name('products.delete_product_photo');
             Route::delete('/termekek/{id}', [AdminProductController::class, 'destroy'])->name('products.destroy');
             Route::post('/termekek/{id}/upload-photos', [AdminProductController::class, 'uploadProductPhotos'])->name('products.upload_product_photo');
