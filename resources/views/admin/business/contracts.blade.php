@@ -217,7 +217,8 @@
                                 <img id="show_signature" src="" class="d-none" style="max-width: 300px">
 
                                 <a href="#" id="clear_signature" class="btn btn-secondary">Aláírás</a>
-                                <a href="#" id="regenarate" class="btn btn-secondary">Újragenerálás</a>
+                                <a href="#" id="generateContractWithOutSignature" class="btn btn-primary">Aláírás nélküli szerződés generálás</a>
+                                <a href="#" id="regenarate" class="btn btn-secondary">Újragenerálás új aláírás nélkül</a>
                                 <a href="" id="contract_pdf_link" target="_blank" class="btn btn-primary d-none">Generált PDF megtekintése</a>
                             </div>
 
@@ -351,6 +352,7 @@
                 $('.contract-contact').find('input, select, textarea').prop('disabled', true);
 
                 $('#generateContract').addClass('d-none');
+                $('#generateContractWithOutSignature').addClass('d-none');
 
 
                 const row_data = $('#adminTable').DataTable().row($(this).parents('tr')).data();
@@ -440,8 +442,10 @@
                 });
 
                 // Alárás
-                $('#show_signature').attr("src", "szerzodes/alairas/" + contract.signature_path);
-                $('#show_signature').removeClass('d-none');
+                if(contract.signature_path !== null) {
+                    $('#show_signature').attr("src", "szerzodes/alairas/" + contract.signature_path);
+                    $('#show_signature').removeClass('d-none');
+                }
                 $('#clear_signature').addClass('d-none');
                 $('#regenarate').addClass('d-none');
                 $('#signature_area').addClass('d-none');
@@ -525,6 +529,7 @@
 
                     $('#generateContract').removeClass('d-none');
                     $('#clear_signature').removeClass('d-none');
+                    $('#generateContractWithOutSignature').removeClass('d-none');
                     $('#regenarate').addClass('d-none');
                     $('#contract_pdf_link').addClass('d-none').removeAttr('href');
                 } catch (error) {
@@ -557,8 +562,8 @@
                     $('#id_number').val(contract.id_number);
                     $('#installation_date').val(contract.installation_date);
 
-
                     $('#show_signature').addClass('d-none');
+                    $('#clear_signature').removeClass('d-none');
                     $('#signature_area').removeClass('d-none');
                     $('#contract_version').prop('disabled', false);
                     $('#contract_version').val(contract.version);
@@ -572,7 +577,7 @@
                     $('#generateContract').removeClass('d-none');
 
                     $('#regenarate').removeClass('d-none');
-                    $('#clear_signature').addClass('d-none');
+                    $('#generateContractWithOutSignature').addClass('d-none');
 
                     $('#contract_pdf_link').addClass('d-none').removeAttr('href');
                 } catch (error) {
@@ -609,8 +614,15 @@
                         showToast(response.message || 'Sikeres!', 'success');
                         table.ajax.reload(null, false);
                         adminModal.hide();
-                        const worksheet_id = response.data.worksheet.id;
-                        window.location.href = `{{ url('/admin/munkalapok') }}?id=${worksheet_id}`;
+                        const worksheet = response?.data?.worksheet;
+
+                        if (worksheet && worksheet.id) {
+                            const worksheet_id = worksheet.id;
+                            window.location.href = `{{ url('/admin/munkalapok') }}?id=${worksheet_id}`;
+                        } else {
+                            console.warn('Nincs elérhető munkalap az átvett adatokban:', response);
+                        }
+
                     },
                     error(xhr) {
                         let msg = 'Hiba!';
@@ -624,9 +636,49 @@
                     complete: () => {
                         signaturePad.clear();
                         hideLoader();
+                        $("#fullscreen_signature").hide();
                     }
                 });
 
+            });
+
+            // Szerződés generálása aláírás nélkül
+            $('#generateContractWithOutSignature').on('click', function (e) {
+                e.preventDefault();
+
+                const form = document.getElementById('adminModalForm');
+                const formData = new FormData(form);
+                formData.append('_token', csrfToken);
+
+                $.ajax({
+                    url: '{{ route('admin.contracts.store') }}',
+                    method: 'POST',
+                    data: formData,
+                    contentType: false,
+                    processData: false,
+                    beforeSend: () => {
+                        showLoader();
+                    },
+                    success(response) {
+                        showToast(response.message || 'Sikeres!', 'success');
+                        table.ajax.reload(null, false);
+                        adminModal.hide();
+                        const worksheet_id = response.data.worksheet.id;
+                        window.location.href = `{{ url('/admin/munkalapok') }}?id=${worksheet_id}`;
+                    },
+                    error(xhr) {
+                        let msg = 'Hiba!';
+                        if (xhr.responseJSON?.errors) {
+                            msg = Object.values(xhr.responseJSON.errors).flat().join(' ');
+                        } else if (xhr.responseJSON?.message) {
+                            msg = xhr.responseJSON.message;
+                        }
+                        showToast(msg, 'danger');
+                    },
+                    complete: () => {
+                        hideLoader();
+                    }
+                });
             });
 
             // Szerződés újragenerálása

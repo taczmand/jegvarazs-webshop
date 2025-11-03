@@ -207,7 +207,13 @@ class ContractController extends Controller
                     'data' => $request->input('contract_data', [])
                 ]);
 
-                $signatureName = $contract->signature_path;
+                if ($request->filled('signature')) {
+                    $contract->update([
+                        'signature_path' => $signatureName
+                    ]);
+                } else {
+                    $signatureName = $contract->signature_path;
+                }
 
                 // Régi termékek törlése és újak mentése
                 $contract->products()->detach();
@@ -253,7 +259,7 @@ class ContractController extends Controller
                 DB::commit();
 
                 if ($contract->email) {
-                    Mail::to($contract->email)->bcc('jegvarazsiroda@gmail.com')->send(new NewContract($contract));
+                    Mail::to($contract->email)->send(new NewContract($contract));
                 }
 
                 return response()->json([
