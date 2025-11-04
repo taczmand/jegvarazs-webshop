@@ -35,6 +35,7 @@
                         <th>ID</th>
                         <th data-priority="1">Név</th>
                         <th>E-mail cím</th>
+                        <th>Állapot</th>
                         <th>Létrehozva</th>
                         <th data-priority="2">Műveletek</th>
                     </tr>
@@ -75,6 +76,13 @@
                                         <div class="mb-3">
                                             <label class="form-label">E-mail cím*</label>
                                             <input type="email" class="form-control" name="email" id="email" required>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Állapot*</label>
+                                            <select class="form-select" id="status" name="status">
+                                                <option value="active">Aktív</option>
+                                                <option value="inactive">Inaktív</option>
+                                            </select>
                                         </div>
                                         <div class="mb-3">
                                             <label class="form-label">Jelszó*</label>
@@ -130,6 +138,7 @@
                     { data: 'id' },
                     { data: 'name' },
                     { data: 'email' },
+                    { data: 'status' },
                     { data: 'created_at' },
                     { data: 'action', orderable: false, searchable: false }
                 ]
@@ -171,6 +180,7 @@
 
                 $('#name').val(userData.name);
                 $('#email').val(userData.email);
+                $('#status').val(userData.status);
                 $('#password').val(''); // Jelszó mező ürítése
                 $('#password_confirmation').val(''); // Jelszó megerősítés mező ürítése
 

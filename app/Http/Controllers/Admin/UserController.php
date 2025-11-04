@@ -32,7 +32,7 @@ class UserController extends Controller
     {
         $users = User::with('roles')
             ->where('id', '!=', auth('admin')->id()) // kizárjuk a belépett usert
-            ->select(['id', 'name', 'email', 'created_at']);
+            ->select(['id', 'name', 'email', 'status', 'created_at']);
 
         return DataTables::of($users)
             ->editColumn('created_at', function ($user) {
@@ -91,13 +91,15 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'password' => 'required|string|min:8|confirmed',
+            'status' => 'required|string|in:active,inactive',
         ]);
 
         try {
             $user = User::create([
                 'name' => $request->input('name'),
                 'email' => $request->input('email'),
-                'password' => bcrypt($request->input('password'))
+                'password' => bcrypt($request->input('password')),
+                'status' => $request->input('status'),
             ]);
 
             // Permission kezelése
@@ -128,12 +130,14 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $id,
             'password' => 'nullable|string|min:8|confirmed',
+            'status' => 'required|string|in:active,inactive',
         ]);
 
         try {
             $user = User::findOrFail($id);
             $user->name = $request->input('name');
             $user->email = $request->input('email');
+            $user->status = $request->input('status');
 
             if ($request->filled('password')) {
                 $user->password = bcrypt($request->input('password'));
