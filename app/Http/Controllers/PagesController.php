@@ -27,7 +27,11 @@ class PagesController extends Controller
                     $q2->where('is_main', true);
                 }]);
             }
-        ])->active()->get();
+        ])
+            ->active()
+            ->orderBy('title', 'asc')
+            ->get();
+
 
         $last_blogs = BlogPost::latest()
             ->where('status', 'published')
