@@ -237,6 +237,13 @@
 
                         </div>
                         <div class="row">
+                            @if($category->description)
+                                <div class="col-12">
+                                    <div class="product__details__text">
+                                        <p>{!! $category->description !!}</p>
+                                    </div>
+                                </div>
+                            @endif
                             @forelse($products as $product)
                                 @php
                                     $status = $stockHelper::resolve($product->stock);
