@@ -16,12 +16,15 @@
                         <div class="blog__item h-100">
                             <div class="blog__item__pic">
                                 <img src="{{ $blog->featured_image ? asset('storage/' . $blog->featured_image) : asset('static_media/no-image.jpg') }}" alt="{{ $blog->title }}">
+                                <div class="blog__item__overlay"></div>
+                                <div class="blog__item__title-overlay">
+                                    {{ $blog->title }}
+                                </div>
                             </div>
                             <div class="blog__item__text">
                                 <ul class="mb-2">
                                     <li><i class="fa fa-calendar-o"></i> {{ $blog->created_at->format('Y-m-d') }}</li>
                                 </ul>
-                                <h5><a href="{{ route('blog.post', $blog->slug) }}">{{ $blog->title }}</a></h5>
                                 <p>{!! Str::limit(strip_tags($blog->content), 200) !!}</p>
                             </div>
                         </div>
