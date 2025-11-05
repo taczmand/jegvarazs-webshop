@@ -28,13 +28,18 @@
                                 <div class="col-lg-6 col-md-6 col-sm-6 mb-4">
                                     <div class="blog__item">
                                         <div class="blog__item__pic">
-                                            <img src="{{ asset('storage/' . ($blog->featured_image ?? 'static_media/no-image.jpg')) }}" alt="{{ $blog->title }}">
+                                            <a href="{{ route('blog.post', $blog->slug) }}">
+                                                <img src="{{ asset('storage/' . ($blog->featured_image ?? 'static_media/no-image.jpg')) }}" alt="{{ $blog->title }}">
+                                                <div class="blog__item__overlay"></div>
+                                                <div class="blog__item__title-overlay">
+                                                    {{ $blog->title }}
+                                                </div>
+                                            </a>
                                         </div>
                                         <div class="blog__item__text">
                                             <ul>
                                                 <li><i class="fa fa-calendar-o"></i> {{ $blog->created_at->format('Y. M d') }}</li>
                                             </ul>
-                                            <h5><a href="{{ route('blog.post', $blog->slug) }}">{{ $blog->title }}</a></h5>
                                             @php
                                                 $content = strip_tags($blog->content);
                                                 if (strlen($content) > 500) {
