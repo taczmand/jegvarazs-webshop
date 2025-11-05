@@ -88,6 +88,7 @@ class WorksheetController extends Controller
                     'model' => 'worksheet',
                     'type' => $worksheet->work_type,
                     'sort_order' => $worksheet->sort_order,
+                    'description' => $worksheet->description,
                 ];
             });
         }

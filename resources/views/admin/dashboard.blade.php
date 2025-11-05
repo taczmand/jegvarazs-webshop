@@ -229,6 +229,9 @@
                         if (w.work_name) {
                             div.innerHTML += `<small>${w.work_name}</small><br>`;
                         }
+                        if (w.description) {
+                            div.innerHTML += `<small>${w.description}</small><br>`;
+                        }
 
                         if (w.worker_name) {
                             div.innerHTML += `
