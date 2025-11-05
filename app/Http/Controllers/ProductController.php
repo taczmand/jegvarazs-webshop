@@ -19,7 +19,7 @@ class ProductController extends Controller
         $brands = $request->query('brand');
         $attributes = $request->query('attribute');
         $sortBy = $request->query('sortBy');
-        $itemsPerPage = $request->query('itemsPerPage', 12);
+        $itemsPerPage = $request->query('itemsPerPage', 24);
 
         // Alap query
         $query = Product::with('category')
@@ -194,7 +194,7 @@ class ProductController extends Controller
         $brands = $request->query('brand');
         $attributes = $request->query('attribute');
         $sortBy = $request->query('sortBy');
-        $itemsPerPage = $request->query('itemsPerPage', 12);
+        $itemsPerPage = $request->query('itemsPerPage', 24);
 
         // 🔎 Alap lekérdezés
         $query = Product::with('category')

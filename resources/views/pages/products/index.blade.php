@@ -207,8 +207,8 @@
 
                                         <div class="filter__found">
                                             <select class="form-control" style="min-width: 220px;" id="itemsPerPage" name="itemsPerPage">
-                                                <option value="12" {{ request('itemsPerPage', 12) == 12 ? 'selected' : '' }}>12 találat / oldal</option>
-                                                <option value="24" {{ request('itemsPerPage') == 24 ? 'selected' : '' }}>24 találat / oldal</option>
+                                                <option value="12" {{ request('itemsPerPage') == 12 ? 'selected' : '' }}>12 találat / oldal</option>
+                                                <option value="24" {{ request('itemsPerPage', 24) == 24 ? 'selected' : '' }}>24 találat / oldal</option>
                                                 <option value="36" {{ request('itemsPerPage') == 36 ? 'selected' : '' }}>36 találat / oldal</option>
                                                 <option value="48" {{ request('itemsPerPage') == 48 ? 'selected' : '' }}>48 találat / oldal</option>
                                                 <option value="60" {{ request('itemsPerPage') == 60 ? 'selected' : '' }}>60 találat / oldal</option>
