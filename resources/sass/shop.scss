@@ -2399,7 +2399,7 @@ a {
     left: 50%;
     transform: translate(-50%, -50%);
     color: #ffffff;
-    font-size: 1.5rem;
+    font-size: 3rem;
     text-align: center;
     font-weight: 600;
     text-shadow: 0 2px 6px rgba(0,0,0,0.4);
@@ -4003,6 +4003,9 @@ a {
     .cta-btn {
         left: 50%;
         transform: translateX(-50%);
+    }
+    .blog__item__title-overlay {
+        font-size: 1.8rem;
     }
 }
 
