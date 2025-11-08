@@ -1,6 +1,8 @@
 @extends('layouts.admin')
 
 @section('content')
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/glightbox/dist/css/glightbox.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/glightbox/dist/js/glightbox.min.js"></script>
     <div class="container p-0">
 
         <div class="d-flex justify-content-between align-items-center mb-3 pb-2">
@@ -884,10 +886,11 @@
                     if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(extension)) {
                         // kép megjelenítése thumbnailként
                         previewHtml = `
-                            <a href="${fileUrl}" target="_blank">
+                            <a href="${fileUrl}" class="glightbox" data-gallery="worksheet" data-title="${description}">
                                 <img src="${fileUrl}" alt="${description}" class="img-thumbnail" style="width: 100px;">
                             </a>
                         `;
+
                     } else if (['pdf'].includes(extension)) {
                         // PDF ikon vagy szöveg
                         previewHtml = `
@@ -982,6 +985,20 @@
                         </div>
                     `);
                 }
+
+                // Lightbox init friss képekre
+                if (window.worksheetLightbox) {
+                    window.worksheetLightbox.destroy();
+                }
+
+                window.worksheetLightbox = GLightbox({
+                    selector: '.glightbox',
+                    touchNavigation: true,
+                    loop: true,
+                    zoomable: true,
+                    closeOnOutsideClick: true
+                });
+
             }
 
 
