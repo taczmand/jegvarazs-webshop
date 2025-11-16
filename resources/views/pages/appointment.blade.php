@@ -14,19 +14,12 @@
         </div>
     @endif
 
-    <script src="https://www.google.com/recaptcha/api.js?render=6Le1aA4sAAAAAPRyuiMD79NOT2oYekHfOdhNC6Fr"></script>
+    <script src="https://www.google.com/recaptcha/api.js"></script>
 
     <script>
-        document.getElementById('contact-form').addEventListener('submit', function (e) {
-            e.preventDefault();
-
-            grecaptcha.ready(function () {
-                grecaptcha.execute('SITE_KEYED', {action: 'submit'}).then(function (token) {
-                    document.getElementById('recaptcha_token').value = token;
-                    e.target.submit();
-                });
-            });
-        });
+        function onSubmit(token) {
+            document.getElementById("contact-form").submit();
+        }
     </script>
 
 
@@ -82,7 +75,9 @@
             <textarea name="message" id="message" class="form-control" rows="3" placeholder="Ide írja a megjegyzését..."></textarea>
         </div>
 
-        <button type="submit" class="site-btn w-100">Foglalás elküldése</button>
+        <button data-sitekey="6Le1aA4sAAAAAPRyuiMD79NOT2oYekHfOdhNC6Fr"
+                data-callback='onSubmit'
+                data-action='submit' type="submit" class="g-recaptcha site-btn w-100">Foglalás elküldése</button>
     </form>
 
 

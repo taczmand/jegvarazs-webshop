@@ -16,6 +16,7 @@ use App\Models\Product;
 use App\Models\Searched;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cookie;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 
 class PagesController extends Controller
@@ -88,26 +89,33 @@ class PagesController extends Controller
         return view('pages.products.show', compact('product'));
     }
 
-    public function addAppointment(Request $request) {
+    public function addAppointment(Request $request)
+    {
+        $token = $request->input('g-recaptcha-response');
 
-        $token = $_POST['recaptcha_token'] ?? null;
-        $secret = '6Le1aA4sAAAAAPQCX01qczEUwunjqGc_tTx_SNKa';
+        $response = Http::asForm()->post(
+            'https://www.google.com/recaptcha/api/siteverify',
+            [
+                'secret'   => '6Le1aA4sAAAAAPQCX01qczEUwunjqGc_tTx_SNKa',
+                'response' => $token,
+                'remoteip' => $request->ip(),
+            ]
+        );
 
-        $resp = file_get_contents('https://www.google.com/recaptcha/api/siteverify?secret=' . $secret . '&response=' . $token);
-        $data = json_decode($resp, true);
+        $data = $response->json();
 
-        if (!($data['success'] ?? false)) {
-            return response()->json(['result' => 'error', 'error_message' => "Nem sikerült az űrlap elküldése, kérem próbálja újra. (reCAPTCHA hiba)"], 200);
+        if (!($data['success'] ?? false) || ($data['score'] ?? 0) < 0.5) {
+            return response()->json([
+                'result' => 'error',
+                'error_message' => "Nem sikerült az űrlap elküldése, kérem próbálja újra. (reCAPTCHA hiba vagy BOT)"
+            ]);
         }
 
-        if (($data['score'] ?? 0) < 0.5) {
-            return response()->json(['result' => 'error', 'error_message' => "Nem sikerült az űrlap elküldése, kérem próbálja újra. (BOT)"], 200);
-        }
-
+        // Validáció
         $request->validate([
-            'name' => 'required|string|max:255',
+            'name'  => 'required|string|max:255',
             'email' => 'required|email|max:255',
-            'phone' => 'required|string|max:20'
+            'phone' => 'required|string|max:20',
         ]);
 
         try {
