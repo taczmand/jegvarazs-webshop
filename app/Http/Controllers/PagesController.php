@@ -90,6 +90,20 @@ class PagesController extends Controller
 
     public function addAppointment(Request $request) {
 
+        $token = $_POST['recaptcha_token'] ?? null;
+        $secret = '6Le1aA4sAAAAAPQCX01qczEUwunjqGc_tTx_SNKa';
+
+        $resp = file_get_contents('https://www.google.com/recaptcha/api/siteverify?secret=' . $secret . '&response=' . $token);
+        $data = json_decode($resp, true);
+
+        if (!($data['success'] ?? false)) {
+            return response()->json(['result' => 'error', 'error_message' => "Nem sikerült az űrlap elküldése, kérem próbálja újra. (reCAPTCHA hiba)"], 200);
+        }
+
+        if (($data['score'] ?? 0) < 0.5) {
+            return response()->json(['result' => 'error', 'error_message' => "Nem sikerült az űrlap elküldése, kérem próbálja újra. (BOT)"], 200);
+        }
+
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255',

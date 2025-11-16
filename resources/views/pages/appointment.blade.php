@@ -1,8 +1,5 @@
 @extends('layouts.shop')
 
-
-
-
 @section('content')
 
     @if($errors->any())
@@ -17,10 +14,26 @@
         </div>
     @endif
 
+    <script src="https://www.google.com/recaptcha/api.js?render=6Le1aA4sAAAAAPRyuiMD79NOT2oYekHfOdhNC6Fr"></script>
+
+    <script>
+        document.getElementById('contact-form').addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            grecaptcha.ready(function () {
+                grecaptcha.execute('SITE_KEYED', {action: 'submit'}).then(function (token) {
+                    document.getElementById('recaptcha_token').value = token;
+                    e.target.submit();
+                });
+            });
+        });
+    </script>
 
 
-    <form method="POST" action="{{ route('appointment.post') }}" class="w-100 p-4 bg-light rounded shadow-sm light-box mb-5">
+    <form method="POST" id="contact-form" action="{{ route('appointment.post') }}" class="w-100 p-4 bg-light rounded shadow-sm light-box mb-5">
         @csrf
+
+        <input type="hidden" name="recaptcha_token" id="recaptcha_token">
 
         <h4 class="mb-4 text-center">Kérem, töltse ki az adatokat</h4>
 
