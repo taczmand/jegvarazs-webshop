@@ -157,7 +157,7 @@
                                 <tr>
                                     <th>Új jelszó</th>
                                     <td>
-                                        <input type="password" class="form-control" id="customer_password" name="customer_password">
+                                        <input type="password" class="form-control" id="customer_password" name="customer_password" autocomplete="new-password">
                                     </td>
                                 </tr>
                                 <tr>
