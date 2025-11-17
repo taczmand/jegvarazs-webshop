@@ -82,6 +82,9 @@ class OrderController extends Controller
                     ? $order->last_name . ' ' . $order->first_name
                     : ($order->customer ? $order->customer->last_name . ' ' . $order->customer->first_name : 'N/A');
             })
+            ->addColumn('is_partner', function ($order) {
+                return $order->customer->is_partner ? 'Igen' : 'Nem';
+            })
             ->editColumn('created_at', function ($order) {
                 return $order->created_at ? $order->created_at->format('Y-m-d H:i:s') : '';
             })

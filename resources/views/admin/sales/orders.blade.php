@@ -44,6 +44,7 @@
                         <th data-priority="1">ID</th>
                         <th>Dátum</th>
                         <th data-priority="2">Vásárló</th>
+                        <th>Partner?</th>
                         <th>Teljes összeg</th>
                         <th>Állapot</th>
                         <th>Termékek száma</th>
@@ -121,7 +122,7 @@
                                             </tr>
                                             <tr>
                                                 <td>Vásárló</td>
-                                                <td><a href=""><span id="customer_name_display"></span></a></td>
+                                                <td><span id="customer_name_display"></span></td>
                                             </tr>
                                             <tr>
                                                 <td>Teljes összeg</td>
@@ -321,6 +322,7 @@
                     {data: 'id'},
                     {data: 'created_at'},
                     {data: 'customer_name'},
+                    {data: 'is_partner'},
                     {data: 'total_amount'},
                     {data: 'status'},
                     {data: 'items_count'},
@@ -349,7 +351,13 @@
                 $('#order_id').val(row_data.id);
                 $('#order_id_display').text(row_data.id);
                 $('#order_date_display').text(row_data.created_at);
-                $('#customer_name_display').text(row_data.customer_name);
+                let displayName = row_data.customer_name;
+                console.log(row_data);
+                if (row_data.is_partner) {
+                    displayName += ' (Partner)';
+                }
+
+                $('#customer_name_display').text(displayName);
                 $('#total_amount_display').text(row_data.total_amount);
 
                 renderBasicData(order_data);
