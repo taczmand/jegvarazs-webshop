@@ -3,6 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <title>@yield('title', 'Webshop')</title>
+
+    <meta property="og:title" content="{{ $basicmedia['facebook_og_title'] ?? 'Jégvarázs bolt' }}">
+    <meta property="og:description" content="{{ $basicmedia['facebook_og_description'] ?? 'Klímaberendezések és szerelési segédanyagok kis- és nagykereskedelmi értékesítése' }}">
+    <meta property="og:image" content="{{ isset($basicmedia['facebook_og_image']) && $basicmedia['facebook_og_image']
+    ? asset('storage/' . $basicmedia['facebook_og_image'])
+    : asset('images/default-og.jpg') }}">
+
+    <meta property="og:url" content="https://example.com/az-oldal">
+    <meta property="og:type" content="website">
+
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@200;300;400;600;900&display=swap" rel="stylesheet">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
