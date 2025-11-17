@@ -10,7 +10,7 @@
     ? asset('storage/' . $basicmedia['facebook_og_image'])
     : asset('images/default-og.jpg') }}">
 
-    <meta property="og:url" content="https://example.com/az-oldal">
+    <meta property="og:url" content="https://jegvarazsbolt.hu/">
     <meta property="og:type" content="website">
 
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@200;300;400;600;900&display=swap" rel="stylesheet">
