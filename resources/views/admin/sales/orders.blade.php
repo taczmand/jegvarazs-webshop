@@ -353,7 +353,7 @@
                 $('#order_date_display').text(row_data.created_at);
                 let displayName = row_data.customer_name;
                 console.log(row_data);
-                if (row_data.is_partner) {
+                if (row_data.is_partner && row_data.is_partner === '1') {
                     displayName += ' (Partner)';
                 }
 
