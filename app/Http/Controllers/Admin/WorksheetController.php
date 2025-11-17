@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Mail\WorksheetToCustomer;
 use App\Models\Appointment;
 use App\Models\Category;
 use App\Models\Worksheet;
@@ -13,6 +14,7 @@ use App\Models\WorksheetProduct;
 use App\Models\WorksheetWorker;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Spatie\LaravelImageOptimizer\Facades\ImageOptimizer;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\Storage;
@@ -466,6 +468,13 @@ class WorksheetController extends Controller
                     $worksheet = Worksheet::create($data + [
                             'created_by' => auth('admin')->id()
                         ]);
+                    if (isset($data['email']) && filter_var($data['email'], FILTER_VALIDATE_EMAIL) && "Karbantartás" === $request->input('work_type')) {
+                        try {
+                            Mail::to($data['email'])->send(new WorksheetToCustomer($worksheet));
+                        } catch (Exception $e) {
+                            \Log::error('E-mail küldési hiba: ' . $e->getMessage());
+                        }
+                    }
                 } else {
                     return response()->json([
                         'message' => 'Csak "Folyamatban" állapottal hozható létre munkalap',
