@@ -2,8 +2,8 @@
 namespace App\Services\Order\PaymentHandlers;
 
 use App\Mail\NewOrder;
+use App\Mail\NewOrderToOffice;
 use App\Models\Order;
-use App\Models\OrderItem;
 use Illuminate\Support\Facades\Mail;
 
 class BankTransferHandler implements PaymentHandlerInterface
@@ -11,6 +11,11 @@ class BankTransferHandler implements PaymentHandlerInterface
     public function handleRedirect(Order $order, $order_items)
     {
         Mail::to($order->contact_email)->send(new NewOrder(
+            $order,
+            $order_items
+        ));
+
+        Mail::to("jegvarazsiroda@gmail.com")->send(new NewOrderToOffice(
             $order,
             $order_items
         ));

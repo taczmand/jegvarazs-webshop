@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Mail\NewOrder;
+use App\Mail\NewOrderToOffice;
 use App\Mail\UpdateOrder;
 use App\Models\Order;
 use Exception;
@@ -140,6 +141,10 @@ class SimplePayController extends Controller
             $order_items = $order->items;
             try {
                 Mail::to($order->contact_email)->send(new NewOrder($order, $order_items));
+                Mail::to("jegvarazsiroda@gmail.com")->send(new NewOrderToOffice(
+                    $order,
+                    $order_items
+                ));
             } catch(Exception $e) {
                 \Log::error('E-mail küldési hiba: ' . $e->getMessage());
             }
