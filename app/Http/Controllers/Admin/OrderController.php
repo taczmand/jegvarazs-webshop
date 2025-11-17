@@ -70,7 +70,7 @@ class OrderController extends Controller
             })
             ->addColumn('total_amount', function ($order) {
                 return $order->items->sum(function ($item) {
-                    $grossPrice = optional($item->product)->gross_price ?? 0;
+                    $grossPrice = $item->gross_price ?? 0;
                     return $item->quantity * $grossPrice;
                 });
             })
