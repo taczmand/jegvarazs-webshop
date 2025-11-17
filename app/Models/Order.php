@@ -11,6 +11,18 @@ class Order extends Model
 
     protected $guarded = [];
 
+    protected $appends = ['payment_method_label'];
+
+    public function getPaymentMethodLabelAttribute()
+    {
+        // Betöltjük a fizetési módokat a configból
+        $methods = collect(config('payment_methods')); // pl. config/payments.php
+
+        $method = $methods->firstWhere('slug', $this->payment_method);
+
+        return $method['name'] ?? $this->payment_method;
+    }
+
     public function items()
     {
         return $this->hasMany(OrderItem::class);

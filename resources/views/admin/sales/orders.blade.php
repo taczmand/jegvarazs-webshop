@@ -408,7 +408,7 @@
                 $('#contact_first_name').val(order_data.contact_first_name || '');
                 $('#contact_email').val(order_data.contact_email || '');
                 $('#contact_phone').val(order_data.contact_phone || '');
-                $('#payment_method').text(order_data.payment_method);
+                $('#payment_method').text(order_data.payment_method_label);
                 $('#order_comment').val(order_data.comment || '');
                 $('#order_status').val(order_data.status || 'pending');
             }
