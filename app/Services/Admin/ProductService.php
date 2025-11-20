@@ -80,7 +80,7 @@ class ProductService
                 'status' => $data['status'] ?? 'inactive',
             ]);
 
-            // Attribútumok mentése (kulcs szerint)
+            // Attribútumok mentése
             $attributes = [];
 
             foreach ($data['attributes'] ?? [] as $attributeId => $value) {
@@ -96,7 +96,7 @@ class ProductService
                 $product->tags()->sync($data['tags']);
             }
 
-            // Új képek mentése, első kép lesz az is_main = 1
+            // Új képek mentése
             if (!empty($data['new_photos'])) {
                 $photos = [];
 
@@ -105,51 +105,54 @@ class ProductService
                     $extension = strtolower($photo->getClientOriginalExtension());
 
                     $path = $photo->store('products', 'public');
-
                     $fullPath = Storage::disk('public')->path($path);
 
-                    // Csak képeknél optimalizálunk
+                    // Csak JPG/PNG → WEBP
                     if (in_array($extension, ['jpg', 'jpeg', 'png'])) {
                         try {
                             $imagick = new \Imagick($fullPath);
 
-                            if (in_array($extension, ['jpg', 'jpeg'])) {
-                                $imagick->setImageCompression(\Imagick::COMPRESSION_JPEG);
-                                $imagick->setImageCompressionQuality(75);
-                            } elseif ($extension === 'png') {
-                                $imagick->setImageCompression(\Imagick::COMPRESSION_ZIP);
-                                $imagick->setImageCompressionQuality(75);
-                            }
-
+                            // WEBP beállítások
+                            $imagick->setImageFormat('webp');
+                            $imagick->setImageCompressionQuality(75);
                             $imagick->stripImage();
 
                             // Vízjel betöltése
                             $watermark = new \Imagick(env('STATIC_MEDIA_PATH') . '/uj_logo_szeles_transzparens.png');
 
-                            // Csak az alpha csatorna átlátszóságát csökkentjük
+                            // Halványítás
                             $watermark->evaluateImage(\Imagick::EVALUATE_MULTIPLY, 0.1, \Imagick::CHANNEL_ALPHA);
 
-                            // Méretezés a fő képhez
+                            // Méretezés
                             $watermark->thumbnailImage($imagick->getImageWidth() / 1.5, 0);
 
-                            // Középre helyezés
+                            // Pozicionálás
                             $x = ($imagick->getImageWidth() - $watermark->getImageWidth()) / 2;
                             $y = ($imagick->getImageHeight() - $watermark->getImageHeight()) / 2;
 
-                            // Biztos alpha csatorna a fő képen
+                            // Alpha csatorna
                             $imagick->setImageAlphaChannel(\Imagick::ALPHACHANNEL_SET);
 
-                            // Kompozitálás
+                            // Rákompozitálás
                             $imagick->compositeImage($watermark, \Imagick::COMPOSITE_OVER, $x, $y);
 
-                            // Mentés
-                            $imagick->writeImage($fullPath);
+                            // Mentés új webp fájlba
+                            $webpPath = preg_replace('/\.(jpg|jpeg|png)$/i', '.webp', $fullPath);
+                            $imagick->writeImage($webpPath);
                             $imagick->destroy();
+
+                            // Eredeti törlése
+                            unlink($fullPath);
+
+                            // Új relatív path
+                            $path = preg_replace('/\.(jpg|jpeg|png)$/i', '.webp', $path);
+
                         } catch (\Exception $e) {
-                            \Log::error("Kép optimalizálás sikertelen: {$fullPath} - {$e->getMessage()}");
+                            \Log::error("WEBP konverzió sikertelen: {$fullPath} - {$e->getMessage()}");
                         }
                     }
 
+                    // Fotók mentése a DB-be
                     $photos[] = [
                         'path' => $path,
                         'is_main' => $index === 0 ? 1 : 0
@@ -158,9 +161,11 @@ class ProductService
 
                 $product->photos()->createMany($photos);
             }
+
             return $product;
         });
     }
+
 
     public function update(array $data)
     {
@@ -215,44 +220,50 @@ class ProductService
 
                     $fullPath = Storage::disk('public')->path($path);
 
-                    // Csak képeknél optimalizálunk
+                    // Csak képeknél optimalizálunk + webp konverzió
                     if (in_array($extension, ['jpg', 'jpeg', 'png'])) {
                         try {
                             $imagick = new \Imagick($fullPath);
 
-                            if (in_array($extension, ['jpg', 'jpeg'])) {
-                                $imagick->setImageCompression(\Imagick::COMPRESSION_JPEG);
-                                $imagick->setImageCompressionQuality(75);
-                            } elseif ($extension === 'png') {
-                                $imagick->setImageCompression(\Imagick::COMPRESSION_ZIP);
-                                $imagick->setImageCompressionQuality(75);
-                            }
-
+                            // WEBP beállítások
+                            $imagick->setImageFormat('webp');
+                            $imagick->setImageCompressionQuality(75);
                             $imagick->stripImage();
 
                             // Vízjel betöltése
                             $watermark = new \Imagick(env('STATIC_MEDIA_PATH') . '/uj_logo_szeles_transzparens.png');
 
-                            // Csak az alpha csatorna átlátszóságát csökkentjük
+                            // Finom átlátszóság
                             $watermark->evaluateImage(\Imagick::EVALUATE_MULTIPLY, 0.1, \Imagick::CHANNEL_ALPHA);
 
                             // Méretezés a fő képhez
                             $watermark->thumbnailImage($imagick->getImageWidth() / 1.5, 0);
 
-                            // Középre helyezés
+                            // Középre pozicionálás
                             $x = ($imagick->getImageWidth() - $watermark->getImageWidth()) / 2;
                             $y = ($imagick->getImageHeight() - $watermark->getImageHeight()) / 2;
 
-                            // Biztos alpha csatorna a fő képen
+                            // Biztos alpha csatorna
                             $imagick->setImageAlphaChannel(\Imagick::ALPHACHANNEL_SET);
 
-                            // Kompozitálás
+                            // Vízjel rákompozitálása
                             $imagick->compositeImage($watermark, \Imagick::COMPOSITE_OVER, $x, $y);
 
-                            $imagick->writeImage($fullPath);
+                            // Új fájlnév: .webp
+                            $webpPath = preg_replace('/\.(jpg|jpeg|png)$/i', '.webp', $fullPath);
+
+                            // Mentés webp-be
+                            $imagick->writeImage($webpPath);
                             $imagick->destroy();
+
+                            // Eredeti fájl törlése
+                            unlink($fullPath);
+
+                            // A path frissítése, hogy adatbázisba a webp menjen
+                            $path = preg_replace('/\.(jpg|jpeg|png)$/i', '.webp', $path);
+
                         } catch (\Exception $e) {
-                            \Log::error("Kép optimalizálás sikertelen: {$fullPath} - {$e->getMessage()}");
+                            \Log::error("WEBP konverzió sikertelen: {$fullPath} - {$e->getMessage()}");
                         }
                     }
 
@@ -275,57 +286,62 @@ class ProductService
 
             foreach ($data['new_photos'] as $photo) {
 
-                $extension = strtolower($photo->getClientOriginalExtension());
+                // Eredeti fájl mentése (még nem WebP)
+                $originalPath = $photo->store('products', 'public');
+                $fullOriginalPath = Storage::disk('public')->path($originalPath);
 
-                $path = $photo->store('products', 'public');
+                // Új WebP fájlnév
+                $filenameWithoutExt = pathinfo($originalPath, PATHINFO_FILENAME);
+                $webpFilename = $filenameWithoutExt . '.webp';
+                $webpPath = 'products/' . $webpFilename;
+                $fullWebpPath = Storage::disk('public')->path($webpPath);
 
-                $fullPath = Storage::disk('public')->path($path);
+                try {
+                    $imagick = new \Imagick($fullOriginalPath);
 
-                // Csak képeknél optimalizálunk
-                if (in_array($extension, ['jpg', 'jpeg', 'png'])) {
-                    try {
-                        $imagick = new \Imagick($fullPath);
+                    // Mindig WebP-re konvertálunk
+                    $imagick->setImageFormat('webp');
 
-                        if (in_array($extension, ['jpg', 'jpeg'])) {
-                            $imagick->setImageCompression(\Imagick::COMPRESSION_JPEG);
-                            $imagick->setImageCompressionQuality(75);
-                        } elseif ($extension === 'png') {
-                            $imagick->setImageCompression(\Imagick::COMPRESSION_ZIP);
-                            $imagick->setImageCompressionQuality(75);
-                        }
+                    // WebP tömörítés minősége
+                    $imagick->setImageCompressionQuality(75);
 
-                        $imagick->stripImage();
+                    // Metaadatok törlése
+                    $imagick->stripImage();
 
-                        // Vízjel betöltése
-                        $watermark = new \Imagick(env('STATIC_MEDIA_PATH') . '/uj_logo_szeles_transzparens.png');
+                    /**
+                     * VÍZJEL
+                     */
+                    $watermark = new \Imagick(env('STATIC_MEDIA_PATH') . '/uj_logo_szeles_transzparens.png');
+                    $watermark->evaluateImage(\Imagick::EVALUATE_MULTIPLY, 0.1, \Imagick::CHANNEL_ALPHA);
 
-                        // Csak az alpha csatorna átlátszóságát csökkentjük
-                        $watermark->evaluateImage(\Imagick::EVALUATE_MULTIPLY, 0.1, \Imagick::CHANNEL_ALPHA);
+                    $watermark->thumbnailImage($imagick->getImageWidth() / 1.5, 0);
 
-                        // Méretezés a fő képhez
-                        $watermark->thumbnailImage($imagick->getImageWidth() / 1.5, 0);
+                    $x = ($imagick->getImageWidth() - $watermark->getImageWidth()) / 2;
+                    $y = ($imagick->getImageHeight() - $watermark->getImageHeight()) / 2;
 
-                        // Középre helyezés
-                        $x = ($imagick->getImageWidth() - $watermark->getImageWidth()) / 2;
-                        $y = ($imagick->getImageHeight() - $watermark->getImageHeight()) / 2;
+                    $imagick->setImageAlphaChannel(\Imagick::ALPHACHANNEL_SET);
+                    $imagick->compositeImage($watermark, \Imagick::COMPOSITE_OVER, $x, $y);
 
-                        // Biztos alpha csatorna a fő képen
-                        $imagick->setImageAlphaChannel(\Imagick::ALPHACHANNEL_SET);
+                    // WebP mentés
+                    $imagick->writeImage($fullWebpPath);
 
-                        // Kompozitálás
-                        $imagick->compositeImage($watermark, \Imagick::COMPOSITE_OVER, $x, $y);
+                    $imagick->clear();
+                    $imagick->destroy();
 
-                        $imagick->writeImage($fullPath);
-                        $imagick->destroy();
-                    } catch (\Exception $e) {
-                        \Log::error("Kép optimalizálás sikertelen: {$fullPath} - {$e->getMessage()}");
-                    }
+                    // Eredeti JPG/PNG törlése
+                    Storage::disk('public')->delete($originalPath);
+
+                } catch (\Exception $e) {
+                    \Log::error("WEBP konverzió vagy vízjelezés sikertelen: {$fullOriginalPath} - {$e->getMessage()}");
+                    continue;
                 }
 
-                $photos[] = ['path' => $path];
+                // Csak a WebP fájlt tároljuk adatbázisban
+                $photos[] = ['path' => $webpPath];
             }
 
             $product->photos()->createMany($photos);
         }
     }
+
 }
