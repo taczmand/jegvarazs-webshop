@@ -102,20 +102,26 @@ class BlogsController extends Controller
                 try {
                     $imagick = new \Imagick($fullPath);
 
-                    // Tömörítési beállítások
+                    // Formátum beállítása
                     if (in_array($extension, ['jpg', 'jpeg'])) {
+                        $imagick->setImageFormat('jpeg');
                         $imagick->setImageCompression(\Imagick::COMPRESSION_JPEG);
                         $imagick->setImageCompressionQuality(75);
-                    } elseif ($extension === 'png') {
+                        $imagick->setInterlaceScheme(\Imagick::INTERLACE_JPEG);
+                    }
+
+                    if ($extension === 'png') {
+                        $imagick->setImageFormat('png');
                         $imagick->setImageCompression(\Imagick::COMPRESSION_ZIP);
-                        $imagick->setImageCompressionQuality(75);
+                        $imagick->setImageCompressionQuality(75); // PNG-nél nem sokat ér
                     }
 
                     // Metaadatok törlése
                     $imagick->stripImage();
 
-                    // Felülírás optimalizált változattal
+                    // Mentés
                     $imagick->writeImage($fullPath);
+                    $imagick->clear();
                     $imagick->destroy();
                 } catch (\Exception $e) {
                     \Log::error("Kép optimalizálás sikertelen: {$fullPath} - {$e->getMessage()}");
