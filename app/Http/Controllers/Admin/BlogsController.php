@@ -97,8 +97,10 @@ class BlogsController extends Controller
 
                 $path = $image->storeAs('blogs', $filename, 'public');
 
+                $fullPath = Storage::disk('public')->path($path);
+
                 try {
-                    $imagick = new \Imagick($path);
+                    $imagick = new \Imagick($fullPath);
 
                     // Tömörítési beállítások
                     if (in_array($extension, ['jpg', 'jpeg'])) {
@@ -113,10 +115,10 @@ class BlogsController extends Controller
                     $imagick->stripImage();
 
                     // Felülírás optimalizált változattal
-                    $imagick->writeImage($path);
+                    $imagick->writeImage($fullPath);
                     $imagick->destroy();
                 } catch (\Exception $e) {
-                    \Log::error("Kép optimalizálás sikertelen: {$path} - {$e->getMessage()}");
+                    \Log::error("Kép optimalizálás sikertelen: {$fullPath} - {$e->getMessage()}");
                 }
             } else {
                 $path = null;
