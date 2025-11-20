@@ -96,6 +96,28 @@ class BlogsController extends Controller
                 $filename = $originalName . '_' . $random . '.' . $extension;
 
                 $path = $image->storeAs('blogs', $filename, 'public');
+
+                try {
+                    $imagick = new \Imagick($path);
+
+                    // Tömörítési beállítások
+                    if (in_array($extension, ['jpg', 'jpeg'])) {
+                        $imagick->setImageCompression(\Imagick::COMPRESSION_JPEG);
+                        $imagick->setImageCompressionQuality(75);
+                    } elseif ($extension === 'png') {
+                        $imagick->setImageCompression(\Imagick::COMPRESSION_ZIP);
+                        $imagick->setImageCompressionQuality(75);
+                    }
+
+                    // Metaadatok törlése
+                    $imagick->stripImage();
+
+                    // Felülírás optimalizált változattal
+                    $imagick->writeImage($path);
+                    $imagick->destroy();
+                } catch (\Exception $e) {
+                    \Log::error("Kép optimalizálás sikertelen: {$path} - {$e->getMessage()}");
+                }
             } else {
                 $path = null;
             }
