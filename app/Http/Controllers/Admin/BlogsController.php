@@ -90,45 +90,73 @@ class BlogsController extends Controller
             $image = $request->file('image_upload');
 
             if ($image && $image->isValid()) {
+
+                // ---- FÁJLNÉV TISZTÍTÁSA ----
                 $originalName = pathinfo($image->getClientOriginalName(), PATHINFO_FILENAME);
-                $extension = $image->getClientOriginalExtension();
+
+                // Ékezetek eltávolítása
+                $cleanName = Str::ascii($originalName);
+
+                // Kisbetűsítés
+                $cleanName = strtolower($cleanName);
+
+                // Szóközök -> kötőjel
+                $cleanName = str_replace(' ', '-', $cleanName);
+
+                // Minden nem megengedett karakter eltávolítása
+                $cleanName = preg_replace('/[^a-z0-9\-]/', '', $cleanName);
+
+                // Többszörös kötőjelek összevonása
+                $cleanName = preg_replace('/-+/', '-', $cleanName);
+
+                // Biztonság kedvéért, ha valamiért üres lenne
+                if (empty($cleanName)) {
+                    $cleanName = 'image';
+                }
+
+                $extension = strtolower($image->getClientOriginalExtension());
                 $random = Str::random(6);
-                $filename = $originalName . '_' . $random . '.' . $extension;
 
-                $path = $image->storeAs('blogs', $filename, 'public');
+                // A végeredmény MINDIG WebP
+                $finalFilename = $cleanName . '_' . $random . '.webp';
+                $finalPath = 'blogs/' . $finalFilename;
+                $finalFullPath = Storage::disk('public')->path($finalPath);
 
-                $fullPath = Storage::disk('public')->path($path);
+                // ---- IDEIGLENES MENTÉS EREDETI FORMÁTBAN ----
+                $tempFilename = $cleanName . '_' . $random . '_orig.' . $extension;
+                $tempPath = $image->storeAs('blogs', $tempFilename, 'public');
+                $tempFullPath = Storage::disk('public')->path($tempPath);
 
                 try {
-                    $imagick = new \Imagick($fullPath);
+                    $imagick = new \Imagick($tempFullPath);
 
-                    // Formátum beállítása
-                    if (in_array($extension, ['jpg', 'jpeg'])) {
-                        $imagick->setImageFormat('jpeg');
-                        $imagick->setImageCompression(\Imagick::COMPRESSION_JPEG);
-                        $imagick->setImageCompressionQuality(75);
-                        $imagick->setInterlaceScheme(\Imagick::INTERLACE_JPEG);
-                    }
-
-                    if ($extension === 'png') {
-                        $imagick->setImageFormat('png');
-                        $imagick->setImageCompression(\Imagick::COMPRESSION_ZIP);
-                        $imagick->setImageCompressionQuality(75); // PNG-nél nem sokat ér
-                    }
+                    // ---- WEBP KONVERZIÓ ----
+                    $imagick->setImageFormat('webp');
+                    $imagick->setImageCompressionQuality(75); // jó kompromisszum 1MB alatt
 
                     // Metaadatok törlése
                     $imagick->stripImage();
 
-                    // Mentés
-                    $imagick->writeImage($fullPath);
+                    // WebP mentése
+                    $imagick->writeImage($finalFullPath);
+
                     $imagick->clear();
                     $imagick->destroy();
+
+                    // ---- IDEIGLENES FÁJL TÖRLÉSE ----
+                    Storage::disk('public')->delete($tempPath);
+
+                    $path = $finalPath; // a végeredmény WebP
+
                 } catch (\Exception $e) {
-                    \Log::error("Kép optimalizálás sikertelen: {$fullPath} - {$e->getMessage()}");
+                    \Log::error("Kép optimalizálás sikertelen: {$finalFullPath} - {$e->getMessage()}");
+                    $path = null;
                 }
+
             } else {
                 $path = null;
             }
+
 
             $blogpost = BlogPost::create([
                 'title' => $request->input('blog_title'),
@@ -201,47 +229,72 @@ class BlogsController extends Controller
             $image = $request->file('image_upload');
 
             if ($image && $image->isValid()) {
+
+                // Eredeti név + tisztítás
                 $originalName = pathinfo($image->getClientOriginalName(), PATHINFO_FILENAME);
-                $extension = $image->getClientOriginalExtension();
+
+                // Ékezetek eltávolítása
+                $cleanName = Str::ascii($originalName);
+
+                // Kisbetűsre állítás
+                $cleanName = strtolower($cleanName);
+
+                // Szóközök -> kötőjel
+                $cleanName = str_replace(' ', '-', $cleanName);
+
+                // Minden nem megengedett karakter eltávolítása
+                $cleanName = preg_replace('/[^a-z0-9\-]/', '', $cleanName);
+
+                // Többszörös kötőjelek -> 1 kötőjel
+                $cleanName = preg_replace('/-+/', '-', $cleanName);
+
+                // Ha üres lenne:
+                if (empty($cleanName)) {
+                    $cleanName = 'image';
+                }
+
                 $random = Str::random(6);
-                $filename = $originalName . '_' . $random . '.' . $extension;
 
-                $path = $image->storeAs('blogs', $filename, 'public');
+                // Végső webp fájl neve
+                $filename = $cleanName . '_' . $random . '.webp';
 
-                $fullPath = Storage::disk('public')->path($path);
+                // Ideiglenes mentés eredeti formátumban
+                $tempPath = $image->storeAs('blogs', $cleanName . '_' . $random . '_orig.' . $image->getClientOriginalExtension(), 'public');
+                $tempFullPath = Storage::disk('public')->path($tempPath);
+
+                // WebP végső mentési útvonal
+                $finalPath = 'blogs/' . $filename;
+                $finalFullPath = Storage::disk('public')->path($finalPath);
 
                 try {
-                    $imagick = new \Imagick($fullPath);
+                    $imagick = new \Imagick($tempFullPath);
 
-                    // Formátum beállítása
-                    if (in_array($extension, ['jpg', 'jpeg'])) {
-                        $imagick->setImageFormat('jpeg');
-                        $imagick->setImageCompression(\Imagick::COMPRESSION_JPEG);
-                        $imagick->setImageCompressionQuality(75);
-                        $imagick->setInterlaceScheme(\Imagick::INTERLACE_JPEG);
-                    }
-
-                    if ($extension === 'png') {
-                        $imagick->setImageFormat('png');
-                        $imagick->setImageCompression(\Imagick::COMPRESSION_ZIP);
-                        $imagick->setImageCompressionQuality(75); // PNG-nél nem sokat ér
-                    }
+                    // WebP-re konvertálás
+                    $imagick->setImageFormat('webp');
+                    $imagick->setImageCompressionQuality(75);
 
                     // Metaadatok törlése
                     $imagick->stripImage();
 
-                    // Mentés
-                    $imagick->writeImage($fullPath);
+                    // Mentés webp formátumban
+                    $imagick->writeImage($finalFullPath);
+
                     $imagick->clear();
                     $imagick->destroy();
+
+                    // Ideiglenes fájl törlése
+                    Storage::disk('public')->delete($tempPath);
+
                 } catch (\Exception $e) {
-                    \Log::error("Kép optimalizálás sikertelen: {$fullPath} - {$e->getMessage()}");
+                    \Log::error("WebP konverzió sikertelen: {$finalFullPath} - {$e->getMessage()}");
                 }
 
+                // WebP útvonal mentése az adatbázisba
                 $blogpost->update([
-                    'featured_image' => $path,
+                    'featured_image' => $finalPath,
                 ]);
             }
+
 
             return response()->json([
                 'message' => 'Sikeres mentés!',
