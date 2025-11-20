@@ -208,6 +208,36 @@ class BlogsController extends Controller
 
                 $path = $image->storeAs('blogs', $filename, 'public');
 
+                $fullPath = Storage::disk('public')->path($path);
+
+                try {
+                    $imagick = new \Imagick($fullPath);
+
+                    // Formátum beállítása
+                    if (in_array($extension, ['jpg', 'jpeg'])) {
+                        $imagick->setImageFormat('jpeg');
+                        $imagick->setImageCompression(\Imagick::COMPRESSION_JPEG);
+                        $imagick->setImageCompressionQuality(75);
+                        $imagick->setInterlaceScheme(\Imagick::INTERLACE_JPEG);
+                    }
+
+                    if ($extension === 'png') {
+                        $imagick->setImageFormat('png');
+                        $imagick->setImageCompression(\Imagick::COMPRESSION_ZIP);
+                        $imagick->setImageCompressionQuality(75); // PNG-nél nem sokat ér
+                    }
+
+                    // Metaadatok törlése
+                    $imagick->stripImage();
+
+                    // Mentés
+                    $imagick->writeImage($fullPath);
+                    $imagick->clear();
+                    $imagick->destroy();
+                } catch (\Exception $e) {
+                    \Log::error("Kép optimalizálás sikertelen: {$fullPath} - {$e->getMessage()}");
+                }
+
                 $blogpost->update([
                     'featured_image' => $path,
                 ]);
