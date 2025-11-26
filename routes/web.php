@@ -30,6 +30,7 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\WorksheetController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\FacebookWebhookController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PagesController;
 use App\Http\Controllers\ProductController;
@@ -44,6 +45,9 @@ Route::get('/incognito', [PagesController::class, 'incognito']);
 Route::get('/idopontfoglalas', [PagesController::class, 'appointment'])->name('appointment');
 
 Route::get('/reset-carts', [CartController::class, 'resetCarts']);
+
+Route::get('/facebook/webhook', [FacebookWebhookController::class, 'verify']);
+Route::post('/facebook/webhook', [FacebookWebhookController::class, 'handle']);
 
 //Route::middleware([Incognito::class])->group(function () {
 
