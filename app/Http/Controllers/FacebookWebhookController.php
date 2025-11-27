@@ -23,7 +23,6 @@ class FacebookWebhookController extends Controller
             \Log::info('FB Webhook verify', $request->all());
             return response($request->get('hub_challenge'), 200)->header('Content-Type', 'text/plain');
         }
-        \Log::info('tovább ment');
         return response('Invalid verify token', 403);
     }
 
@@ -32,7 +31,7 @@ class FacebookWebhookController extends Controller
      */
     public function handle(Request $request)
     {
-        Log::info('FB Lead Webhook received', $request->all());
+        \Log::info('FB Lead Webhook received', [$request->all()]);
 
         // Biztonsági ellenőrzés
         if (!isset($request->entry[0]['changes'])) {
@@ -50,8 +49,8 @@ class FacebookWebhookController extends Controller
 
             // Lead részletek lekérése Graph API-ból
             $leadData = $this->getLeadDetails($leadId);
+            \Log::info('leadData: ', [$leadData]);
 
-            // Mentsd el
             Lead::updateOrCreate(
                 ['lead_id' => $leadId],
                 [
@@ -72,21 +71,42 @@ class FacebookWebhookController extends Controller
     {
         $pageToken = env('FB_PAGE_TOKEN');
 
+        // Lead adatok lekérése
         $url = "https://graph.facebook.com/v19.0/$leadId";
-
         $response = Http::get($url, [
-            'fields' => 'created_time,field_data',
+            'fields' => 'created_time,field_data,ad_id,adset_id,campaign_id',
             'access_token' => $pageToken,
         ]);
 
         if ($response->failed()) {
-            Log::error('Failed to fetch lead', [
+            \Log::error('Failed to fetch lead', [
                 'lead_id' => $leadId,
                 'response' => $response->body()
             ]);
             return [];
         }
 
-        return $response->json();
+        $leadData = $response->json();
+
+        // Kampány nevét lekérjük, ha van campaign_id
+        if (!empty($leadData['campaign_id'])) {
+            $campaignResponse = Http::get("https://graph.facebook.com/v19.0/{$leadData['campaign_id']}", [
+                'fields' => 'name',
+                'access_token' => $pageToken,
+            ]);
+
+            if (!$campaignResponse->failed()) {
+                $leadData['campaign_name'] = $campaignResponse->json()['name'] ?? null;
+            } else {
+                $leadData['campaign_name'] = null;
+                \Log::warning('Failed to fetch campaign name', [
+                    'campaign_id' => $leadData['campaign_id'],
+                    'response' => $campaignResponse->body()
+                ]);
+            }
+        }
+
+        return $leadData;
     }
+
 }

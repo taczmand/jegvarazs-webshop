@@ -21,6 +21,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // CSRF kivétel az adott route-okhoz
         $middleware->validateCsrfTokens(except: [
             '/payment/simplepay/callback', // SimplePay callback
+            '/facebook/webhook',
         ]);
 
     })
