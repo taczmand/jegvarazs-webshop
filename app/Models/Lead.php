@@ -9,6 +9,15 @@ class Lead extends Model
     protected $fillable = [
         'lead_id',
         'form_id',
-        'data',
+        'form_name',
+        'full_name',
+        'email',
+        'phone',
+        'city',
+        'campaign_name',
+        'status',
+        'viewed_by',
+        'viewed_at',
+        'data'
     ];
 }

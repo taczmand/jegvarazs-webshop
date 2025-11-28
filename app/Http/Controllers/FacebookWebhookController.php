@@ -54,6 +54,8 @@ class FacebookWebhookController extends Controller
             // Mezők kinyerése field_data-ból
             $mapped = $this->mapLeadFields($leadData['field_data'] ?? []);
 
+            Log::info('mapped: ', [$mapped]);
+
             // Form name lekérése
             $formName = $this->getFormName($formId);
 
