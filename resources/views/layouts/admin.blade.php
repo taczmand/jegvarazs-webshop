@@ -54,7 +54,7 @@
                             models: {
                                 orders: { label: 'rendelés', badgeId: 'new_order_badge' },
                                 coupons: { label: 'kupon', badgeId: 'new_coupon_badge' },
-                                customers: { label: 'vevő', badgeId: 'new_customer_badge' }
+                                customers: { label: 'vevő', badgeId: 'new_customer_badge' },
                             }
                         },
                         products: {
@@ -73,7 +73,8 @@
                                 appointments: { label: 'időpontfoglalás', badgeId: 'new_appointment_badge' },
                                 offers: { label: 'ajánlat', badgeId: 'new_offer_badge' },
                                 contracts: { label: 'szerződés', badgeId: 'new_contract_badge' },
-                                worksheets: { label: 'munkalap', badgeId: 'new_worksheet_badge' }
+                                worksheets: { label: 'munkalap', badgeId: 'new_worksheet_badge' },
+                                leads: { label: 'eredklődő', badgeId: 'new_lead_badge' },
                             }
                         }
                     };

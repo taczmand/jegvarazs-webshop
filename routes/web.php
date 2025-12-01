@@ -15,6 +15,7 @@ use App\Http\Controllers\Admin\CustomerController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\DownloadsController;
 use App\Http\Controllers\Admin\EmployeeController;
+use App\Http\Controllers\Admin\LeadController;
 use App\Http\Controllers\Admin\OfferController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\OrderStatusesController;
@@ -63,6 +64,8 @@ Route::post('/facebook/webhook', [FacebookWebhookController::class, 'handle']);
 
             Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
             Route::get('/profil', [UserController::class, 'profil'])->name('profile');
+
+
 
 
             /* Bolt kezelés - Értékesítés */
@@ -204,6 +207,12 @@ Route::post('/facebook/webhook', [FacebookWebhookController::class, 'handle']);
             Route::get('/idopontfoglalasok/{id}', [AppointmentController::class, 'show'])->name('appointments.show');
             Route::delete('/idopontfoglalasok/delete-photo', [AppointmentController::class, 'deleteAppointmentPhoto'])->name('appointments.delete_appointment_photo');
             Route::delete('/idopontfoglalasok/{id}', [AppointmentController::class, 'destroy'])->name('appointments.destroy');
+
+            Route::get('/leads', [LeadController::class, 'index'])->name('leads.index');
+            Route::get('/leads/data', [LeadController::class, 'data'])->name('leads.data');
+            Route::get('/leads/{id}', [LeadController::class, 'show'])->name('leads.show');
+            Route::post('/leads/{id}', [LeadController::class, 'update'])->name('leads.update');
+            Route::delete('/leads/{id}', [LeadController::class, 'destroy'])->name('leads.destroy');
 
 
             /* Beállítások - Webshop */
