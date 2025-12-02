@@ -256,6 +256,39 @@ class ContractController extends Controller
                 Storage::put("contracts/{$file_name}", $pdf->output());
                 $contract->update(['pdf_path' => "contracts/{$file_name}"]);
 
+                // Munkalap módosítása
+                $worksheet = Worksheet::where('contract_id', $contract->id)->first();
+                if ($worksheet) {
+                    $worksheet->update([
+                        'work_name' => "Szerződéses munkalap - {$contract->name}",
+                        'work_type' => "Szerelés",
+                        'name' => $contract->name,
+                        'email' => $contract->email,
+                        'phone' => $contract->phone,
+                        'country' => $contract->country,
+                        'zip_code' => $contract->zip_code,
+                        'city' => $contract->city,
+                        'address_line' => $contract->address_line,
+                        'installation_date' => $contract->installation_date
+                    ]);
+
+                    // Munkalap termékek módosítása
+                    $worksheet->products()->detach();
+
+                    foreach ($request->input('products') as $productId => $data) {
+                        if (!isset($data['selected'])) {
+                            continue;
+                        }
+
+                        WorksheetProduct::create([
+                            'worksheet_id' => $worksheet->id,
+                            'product_id' => $productId,
+                            'quantity' => $data['product_qty']
+                        ]);
+                    }
+
+                }
+
                 DB::commit();
 
                 if ($contract->email) {

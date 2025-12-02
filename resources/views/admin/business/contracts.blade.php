@@ -863,11 +863,22 @@
             // Termékek betöltése
 
             function loadProducts(selectedProducts = []) {
+
                 const productManagerTable = $('#productManagerTable tbody');
                 productManagerTable.empty();
 
                 // összegyűjtjük az összes selected product id-t
                 const selectedIds = selectedProducts.map(p => p.pivot?.product_id ?? p.id);
+
+                // gyors hozzáférés: selected map product_id → pivot
+                const selectedMap = {};
+                selectedProducts.forEach(p => {
+                    const id = p.pivot?.product_id ?? p.id;
+                    selectedMap[id] = {
+                        gross_price: p.pivot?.gross_price ?? p.gross_price ?? '',
+                        product_qty: p.pivot?.product_qty ?? 1
+                    };
+                });
 
                 fetch(`${window.appConfig.APP_URL}admin/szerzodesek/szerzodes-termekek`)
                     .then(response => response.json())
@@ -881,6 +892,10 @@
 
                             category.products.forEach(item => {
                                 const isChecked = selectedIds.includes(item.id) ? 'checked' : '';
+
+                                // ha kiválasztott, vegyük a pivot értékeit
+                                const grossPrice = selectedMap[item.id]?.gross_price ?? item.gross_price;
+                                const productQty = selectedMap[item.id]?.product_qty ?? 1;
 
                                 const row = `
                         <tr>
@@ -899,7 +914,7 @@
                                     type="number"
                                     class="form-control"
                                     name="products[${item.id}][gross_price]"
-                                    value="${item.gross_price}"
+                                    value="${grossPrice}"
                                     step="1"
                                 >
                             </td>
@@ -909,7 +924,7 @@
                                     min="1"
                                     name="products[${item.id}][product_qty]"
                                     step="1"
-                                    value="1"
+                                    value="${productQty}"
                                     class="form-control">
                             </td>
                         </tr>`;
@@ -921,6 +936,7 @@
                         console.error('Hiba a termékek betöltésekor:', error);
                     });
             }
+
 
 
             let debounceTimeout;
