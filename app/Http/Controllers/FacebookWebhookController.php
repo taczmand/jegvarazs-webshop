@@ -142,7 +142,7 @@ class FacebookWebhookController extends Controller
     {
         $map = [
             'full_name' => ['full_name', 'teljes_név', 'teljes név', 'név', 'name', 'Teljes név', 'first_name', 'last_name', 'utónév', 'First name', 'Last name', 'Full name', 'Full Name', 'Name', 'First Name', 'Last Name'],
-            'email'     => ['email', 'e-mail', 'email_address'],
+            'email'     => ['email', 'e-mail', 'email_address', 'e-mail_cím'],
             'phone'     => ['phone_number', 'telefonszám', 'telefon', 'phone'],
             'city'      => ['city', 'város', 'lakóhely', 'location', 'település'],
         ];
