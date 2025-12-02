@@ -88,7 +88,8 @@ class LeadController extends Controller
             $lead = Lead::findOrFail($request['id']);
 
             $lead->update([
-                'status' => $request['lead_status']
+                'status' => $request['lead_status'],
+                'comment' => $request['lead_comment']
             ]);
 
             return response()->json([

@@ -18,6 +18,7 @@ class Lead extends Model
         'status',
         'viewed_by',
         'viewed_at',
+        'comment',
         'data'
     ];
 }

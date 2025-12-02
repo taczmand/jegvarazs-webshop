@@ -45,9 +45,10 @@
                     <div class="filter-group flex-grow-1 flex-md-shrink-0">
                         <select class="form-select filter-input" data-column="7">
                             <option value="">Állapot (összes)</option>
-                            <option value="new">new</option>
-                            <option value="contacted">contacted</option>
-                            <option value="converted">converted</option>
+                            <option value="Új">Új</option>
+                            <option value="Nem vette fel">Nem vette fel</option>
+                            <option value="Csak érdeklődött">Csak érdeklődött</option>
+                            <option value="Felmérés">Felmérés</option>
                         </select>
                     </div>
                 </div>
@@ -116,10 +117,15 @@
                         <div class="mb-3">
                             <label for="leader_campaign" class="form-label"><strong>Státusz</strong></label>
                             <select id="lead_status" name="lead_status" class="form-select">
-                                <option value="new">new</option>
-                                <option value="contacted">contacted</option>
-                                <option value="converted">converted</option>
+                                <option value="Új">Új</option>
+                                <option value="Nem vette fel">Nem vette fel</option>
+                                <option value="Csak érdeklődött">Csak érdeklődött</option>
+                                <option value="Felmérés">Felmérés</option>
                             </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="lead_comment" class="form-label"><strong>Megjegyzés</strong></label>
+                            <textarea id="lead_comment" name="lead_comment" class="form-control"></textarea>
                         </div>
                         <div class="mb-3">
                             <label for="" class="form-label"><strong>Egyéb adatok</strong></label>
@@ -194,6 +200,7 @@
                 $('#leader_campaign').val(lead_data.campaign_name || 'Nem kampány része');
 
                 $('#lead_status').val(lead_data.status);
+                $('#lead_comment').val(lead_data.comment || '');
 
                 let lead;
                 try {

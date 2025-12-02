@@ -21,6 +21,7 @@ return new class extends Migration
             $table->enum('status', ['new', 'contacted', 'converted'])->nullable()->after('city');
             $table->string('viewed_by')->nullable()->after('status');
             $table->dateTime('viewed_at')->nullable()->after('viewed_by');
+            $table->text('comment')->nullable()->after('viewed_at');
         });
     }
 
@@ -30,7 +31,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('leads', function (Blueprint $table) {
-            $table->dropColumn(['form_name', 'full_name', 'campaign_name', 'email', 'phone', 'city', 'status', 'viewed_by', 'viewed_at']);
+            $table->dropColumn(['form_name', 'full_name', 'campaign_name', 'email', 'phone', 'city', 'status', 'viewed_by', 'viewed_at', 'comment']);
         });
     }
 };

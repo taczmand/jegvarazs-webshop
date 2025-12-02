@@ -69,7 +69,7 @@ class FacebookWebhookController extends Controller
                     'phone'          => $mapped['phone'],
                     'city'           => $mapped['city'],
                     'campaign_name'  => $leadData['campaign_name'] ?? null,
-                    'status'         => 'new',
+                    'status'         => 'Új',
                     'viewed_by'      => null,
                     'viewed_at'      => null,
                     'data'           => json_encode($leadData)
