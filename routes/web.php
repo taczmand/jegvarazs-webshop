@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\AppointmentController;
 use App\Http\Controllers\Admin\AttributeController;
 use App\Http\Controllers\Admin\Auth\AdminLoginController;
+use App\Http\Controllers\Admin\AutomatedEmailController;
 use App\Http\Controllers\Admin\BasicDataController;
 use App\Http\Controllers\Admin\BasicMediaController;
 use App\Http\Controllers\Admin\BlogsController;
@@ -208,11 +209,20 @@ Route::post('/facebook/webhook', [FacebookWebhookController::class, 'handle']);
             Route::delete('/idopontfoglalasok/delete-photo', [AppointmentController::class, 'deleteAppointmentPhoto'])->name('appointments.delete_appointment_photo');
             Route::delete('/idopontfoglalasok/{id}', [AppointmentController::class, 'destroy'])->name('appointments.destroy');
 
+            // Érdeklődők
             Route::get('/leads', [LeadController::class, 'index'])->name('leads.index');
             Route::get('/leads/data', [LeadController::class, 'data'])->name('leads.data');
             Route::get('/leads/{id}', [LeadController::class, 'show'])->name('leads.show');
             Route::post('/leads/{id}', [LeadController::class, 'update'])->name('leads.update');
             Route::delete('/leads/{id}', [LeadController::class, 'destroy'])->name('leads.destroy');
+
+            // E-mail automatizációk beállítása
+            Route::get('/automatizacio', [AutomatedEmailController::class, 'index'])->name('automated-emails.index');
+            Route::get('/automatizacio/data', [AutomatedEmailController::class, 'data'])->name('automated-emails.data');
+            Route::post('/automatizacio', [AutomatedEmailController::class, 'store'])->name('automated-emails.store');
+            Route::put('/automatizacio/{id}', [AutomatedEmailController::class, 'update'])->name('automated-emails.update');
+            Route::delete('/automatizacio/{id}', [AutomatedEmailController::class, 'destroy'])->name('automated-emails.destroy');
+
 
 
             /* Beállítások - Webshop */

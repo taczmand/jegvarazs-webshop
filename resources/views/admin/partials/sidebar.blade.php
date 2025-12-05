@@ -97,6 +97,7 @@
                 <a class="collapse-item" href="{{ route('admin.appointments.index') }}">Időpontfoglalások<span id="new_appointment_badge" class="badge badge-secondary ml-2 d-none">0</span></a>
                 <a class="collapse-item" href="{{ route('admin.worksheets.index') }}">Munkalapok<span id="new_worksheet_badge" class="badge badge-secondary ml-2 d-none">0</span></a>
                 <a class="collapse-item" href="{{ route('admin.leads.index') }}">Érdeklődők<span id="new_lead_badge" class="badge badge-secondary ml-2 d-none">0</span></a>
+                <a class="collapse-item" href="{{ route('admin.automated-emails.index') }}">E-mail automatizáció</a>
             </div>
         </div>
     </li>
