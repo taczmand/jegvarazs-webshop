@@ -49,6 +49,8 @@
                             <option value="Nem vette fel">Nem vette fel</option>
                             <option value="Csak érdeklődött">Csak érdeklődött</option>
                             <option value="Felmérés">Felmérés</option>
+                            <option value="Átgondolja">Átgondolja</option>
+                            <option value="Nem érdekli">Nem érdekli</option>
                         </select>
                     </div>
                 </div>
@@ -121,6 +123,8 @@
                                 <option value="Nem vette fel">Nem vette fel</option>
                                 <option value="Csak érdeklődött">Csak érdeklődött</option>
                                 <option value="Felmérés">Felmérés</option>
+                                <option value="Átgondolja">Átgondolja</option>
+                                <option value="Nem érdekli">Nem érdekli</option>
                             </select>
                         </div>
                         <div class="mb-3">
