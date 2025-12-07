@@ -155,14 +155,38 @@ class AutomatedEmailController extends Controller
 
         foreach ($emails as $automation) {
 
+            $body = view($automation->email_template, [
+                'automation' => $automation,
+                'vars'       => $this->configTemplate['variables'] ?? [],
+            ])->render();
+
             try {
                 Mail::to($automation->email_address)->send(new AutomatedEmailMailable($automation));
                 $automation->last_sent_at = Carbon::now();
                 $automation->save();
 
+                EmailLog::create([
+                    'email_template' => $automation->email_template,
+                    'email_address' => $automation->email_address,
+                    'subject' => $automation->email_template,
+                    'body' => $body,
+                    'status' => 'sent',
+                    'sent_at' => Carbon::now(),
+                ]);
+
                 \Log::info('Automatizáció elküldve: ' . $automation->email_address.' Típus: ' . $automation->email_template);
 
             } catch (\Exception $e) {
+
+                EmailLog::create([
+                    'email_template' => $automation->email_template,
+                    'email_address' => $automation->email_address,
+                    'subject' => $automation->email_template,
+                    'body' => $body,
+                    'status' => 'failed',
+                    'sent_at' => Carbon::now(),
+                ]);
+
                 \Log::error('Automatizáció elküldési hiba: ' . $e->getMessage());
             }
         }
