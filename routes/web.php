@@ -224,8 +224,9 @@ Route::get('/automatizacio/kuldes', [AutomatedEmailController::class, 'sendToday
             Route::post('/automatizacio', [AutomatedEmailController::class, 'store'])->name('automated-emails.store');
             Route::put('/automatizacio/{id}', [AutomatedEmailController::class, 'update'])->name('automated-emails.update');
             Route::delete('/automatizacio/{id}', [AutomatedEmailController::class, 'destroy'])->name('automated-emails.destroy');
-
-
+            Route::get('/automatizacio/history/{email}/{template}', [AutomatedEmailController::class, 'history'])->name('automated-emails.history');
+            Route::get('automatizacio/history-body/{id}', [AutomatedEmailController::class, 'viewHistoryBody'])->name('automated-emails.history_body');
+            Route::post('/automatizacio/resend/{id}', [AutomatedEmailController::class, 'resend'])->name('automated-emails.resend');
 
             /* Beállítások - Webshop */
 

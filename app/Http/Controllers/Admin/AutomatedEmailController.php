@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Models\EmailLog;
 use App\Services\Admin\AutomatedEmailScheduler;
 use App\Http\Controllers\Controller;
 use App\Mail\AutomatedEmailMailable;
@@ -49,14 +50,19 @@ class AutomatedEmailController extends Controller
                 $user = auth('admin')->user();
                 $actions = '';
 
-                if ($user && $user->can('edit-lead')) {
+                if ($user && $user->can('edit-automated-email')) {
                     $actions .= '
-                <button class="btn btn-sm btn-primary edit" data-id="' . $item->id . '" title="Szerkesztés">
-                    <i class="fas fa-edit"></i>
-                </button>';
+                    <button class="btn btn-sm btn-primary edit" data-id="' . $item->id . '" title="Szerkesztés">
+                        <i class="fas fa-edit"></i>
+                    </button>';
+
+                    $actions .= '
+                    <button class="btn btn-sm btn-secondary history" data-id="' . $item->id . '" title="Történet">
+                        <i class="fas fa-history"></i>
+                    </button>';
                 }
 
-                if ($user && $user->can('delete-lead')) {
+                if ($user && $user->can('delete-automated-email')) {
                     $actions .= '
                 <button class="btn btn-sm btn-danger delete" data-id="' . $item->id . '" title="Törlés">
                     <i class="fas fa-trash"></i>
@@ -154,46 +160,94 @@ class AutomatedEmailController extends Controller
         }
 
         foreach ($emails as $automation) {
-
-            $body = view($automation->email_template, [
-                'automation' => $automation,
-                'vars'       => $this->configTemplate['variables'] ?? [],
-            ])->render();
-
-            try {
-                Mail::to($automation->email_address)->send(new AutomatedEmailMailable($automation));
-                $automation->last_sent_at = Carbon::now();
-                $automation->save();
-
-                EmailLog::create([
-                    'email_template' => $automation->email_template,
-                    'email_address' => $automation->email_address,
-                    'subject' => $automation->email_template,
-                    'body' => $body,
-                    'status' => 'sent',
-                    'sent_at' => Carbon::now(),
-                ]);
-
-                \Log::info('Automatizáció elküldve: ' . $automation->email_address.' Típus: ' . $automation->email_template);
-
-            } catch (\Exception $e) {
-
-                EmailLog::create([
-                    'email_template' => $automation->email_template,
-                    'email_address' => $automation->email_address,
-                    'subject' => $automation->email_template,
-                    'body' => $body,
-                    'status' => 'failed',
-                    'sent_at' => Carbon::now(),
-                ]);
-
-                \Log::error('Automatizáció elküldési hiba: ' . $e->getMessage());
-            }
+            $this->sendEmail($automation);
         }
 
         return response()->json([
             'message' => 'Automatikus emailek elküldve.',
             'count' => $emails->count(),
         ]);
+    }
+
+    public function sendEmail($automation)
+    {
+        $template = collect(config('automated_email_templates'))
+            ->firstWhere('title', $automation->email_template);
+
+        $body = view($template['view'], [
+            'automation' => $automation,
+            'vars'       => $this->configTemplate['variables'] ?? [],
+        ])->render();
+
+        try {
+            Mail::to($automation->email_address)->send(new AutomatedEmailMailable($automation));
+            $automation->last_sent_at = Carbon::now();
+            $automation->save();
+
+            EmailLog::create([
+                'email_template' => $automation->email_template,
+                'email_address' => $automation->email_address,
+                'subject' => $automation->email_template,
+                'body' => $body,
+                'status' => 'sent',
+                'sent_at' => Carbon::now(),
+            ]);
+
+            \Log::info('Automatizáció elküldve: ' . $automation->email_address.' Típus: ' . $automation->email_template);
+
+        } catch (\Exception $e) {
+
+            EmailLog::create([
+                'email_template' => $automation->email_template,
+                'email_address' => $automation->email_address,
+                'subject' => $automation->email_template,
+                'body' => $body,
+                'status' => 'failed',
+                'sent_at' => Carbon::now(),
+            ]);
+
+            \Log::error('Automatizáció elküldési hiba: ' . $e->getMessage());
+        }
+    }
+
+    public function history($email_address, $template)
+    {
+        $emailLogs = EmailLog::where('email_template', $template)
+            ->where('email_address', $email_address)
+            ->orderBy('sent_at', 'desc')
+            ->get()
+            ->map(function ($log) {
+                $log->created_at_formatted = $log->created_at
+                    ? $log->created_at->format('Y-m-d H:i:s')
+                    : null;
+
+                return $log;
+            });
+
+        return response()->json($emailLogs);
+
+    }
+    public function viewHistoryBody($id)
+    {
+        $emailLog = EmailLog::findOrFail($id);
+
+        // Visszaadjuk a HTML tartalmat és beállítjuk a content-type-ot
+        return response($emailLog->body ?? '', 200)
+            ->header('Content-Type', 'text/html; charset=utf-8');
+    }
+
+    public function resend($id)
+    {
+        $emailLog = EmailLog::findOrFail($id);
+        $automation = AutomatedEmail::where('email_address', $emailLog->email_address)
+            ->where('email_template', $emailLog->email_template)
+            ->first();
+
+        $this->sendEmail($automation);
+
+        return response()->json([
+            'message' => 'Automatizáció újraküldve.',
+            'emailLog' => $emailLog,
+        ], 200);
     }
 }

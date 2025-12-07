@@ -7,14 +7,14 @@
 
         <div class="d-flex justify-content-between align-items-center mb-3 pb-2">
             <h2 class="color-dark-blue mb-0">Ügyviteli folyamatok / E-mail automatizáció</h2>
-            @if(auth('admin')->user()->can('create-category'))
+            @if(auth('admin')->user()->can('create-automated-email'))
                 <button class="btn btn-success" id="addButton"><i class="fas fa-plus me-1"></i> Új automatizáció</button>
             @endif
         </div>
 
         <div class="rounded-xl bg-white shadow-lg p-4">
 
-            @if(auth('admin')->user()->can('view-leads'))
+            @if(auth('admin')->user()->can('view-automated-emails'))
 
                 <div class="filters d-flex flex-wrap gap-2 mb-3 align-items-center">
                     <div class="filter-group">
@@ -95,8 +95,43 @@
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="submit" class="btn btn-primary save-btn" id="saveLead">Mentés</button>
+                        <button type="submit" class="btn btn-primary save-btn" id="saveAutomated">Mentés</button>
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Mégse</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modális ablak előzmények és újraküldés -->
+    <div class="modal fade" id="historyModal" tabindex="-1" aria-labelledby="historyModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <form id="adminModalForm">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="historyModalLabel">Előzmények és újraküldés</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Bezárás"></button>
+                    </div>
+                    <div class="modal-body" style="max-height: 60vh; overflow-y: auto;">
+                        <input type="hidden" id="automated_id_for_history" name="automated_id_for_history">
+                        <div class="mb-3">
+                            <table id="historyTable" class="table table-bordered display responsive nowrap" style="width:100%">
+                                <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>E-mail cím</th>
+                                    <th>Sablon</th>
+                                    <th>Státusz</th>
+                                    <th>Dátum</th>
+                                    <th>Hiba</th>
+                                    <th>Tartalom</th>
+                                    <th>Újraküldés</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </form>
@@ -109,6 +144,10 @@
 
         const adminModalDOM = document.getElementById('adminModal');
         const adminModal = new bootstrap.Modal(adminModalDOM);
+
+        const historyModalDOM = document.getElementById('historyModal');
+        const historyModal = new bootstrap.Modal(historyModalDOM);
+
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
         $(document).ready(function() {
@@ -172,7 +211,7 @@
 
             // Automatizáció mentése
 
-            $('#saveLead').on('click', function (e) {
+            $('#saveAutomated').on('click', function (e) {
                 e.preventDefault();
                 const form = document.getElementById('adminModalForm');
                 const formData = new FormData(form);
@@ -248,6 +287,91 @@
                     showToast(error.message || 'Hiba történt a automatizáció törlésekor', 'danger');
                 }
             });
+
+            const statusMap = {
+                sent:     { text: 'Küldve',      badge: 'badge-success' },
+                failed:   { text: 'Sikertelen',  badge: 'badge-danger' }
+            };
+
+            $('#adminTable').on('click', '.history', async function () {
+                const row_data = $('#adminTable').DataTable().row($(this).parents('tr')).data();
+                const history = await loadHistory(row_data.email_address, row_data.email_template);
+
+                const historyTbody = $('#historyTable tbody');
+                historyTbody.empty();
+
+                history.forEach(item => {
+
+                    const statusInfo = statusMap[item.status] || {
+                        text: item.status,
+                        badge: 'badge-secondary'
+                    };
+
+                    const row = `<tr>
+                        <td>${item.id}</td>
+                        <td>${item.email_address}</td>
+                        <td>${item.email_template}</td>
+                        <td><span class="badge ${statusInfo.badge}">${statusInfo.text}</span></td>
+                        <td>${item.created_at_formatted }</td>
+                        <td>${item.error_message || ''}</td>
+                        <td><a href="automatizacio/history-body/${item.id}" target="_blank">Tartalom</a></td>
+                        <td><button type="button" class="btn btn-primary resend" data-item-id="${item.id}">Újraküldés</button></td>
+                    </tr>`;
+                    historyTbody.append(row);
+                });
+
+                historyModal.show();
+
+
+            });
+
+            async function loadHistory(email, template) {
+                try {
+                    const response = await fetch(`{{ url('/admin/automatizacio/history') }}/${email}/${template}`, {
+                        headers: {
+                            'X-CSRF-TOKEN': csrfToken
+                        }
+                    });
+                    if (!response.ok) {
+                        throw new Error('Hiba az előzmények lekérdezésekor');
+                    }
+                    return await response.json();
+                } catch (error) {
+                    console.error('Lekérdezési hiba:', error);
+                    return [];
+                }
+            }
+
+            $(document).on('click', '.resend', function (e) {
+                const itemId = $(this).data('item-id');
+
+                const originalSendButtonHtml = $(this).html();
+                $(this).html('Küldés...').prop('disabled', true);
+
+                $.ajax({
+                    url: `{{ url('/admin/automatizacio/resend') }}/${itemId}`,
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': csrfToken
+                    },
+                    success: function(response) {
+                        showToast('Automatizáció sikeresen újraküldve!', 'success');
+                        historyModal.hide();
+                    },
+                    error: function(xhr) {
+                        let msg = 'Hiba történt az automatizáció újraküldésékor';
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            msg = xhr.responseJSON.message;
+                        }
+                        showToast(msg, 'danger');
+                    },
+                    complete: () => {
+                        $(this).html(originalSendButtonHtml).prop('disabled', false);
+                    }
+                });
+            });
+
+
 
             function resetForm(title = null) {
                 $('#adminModalForm')[0].reset();

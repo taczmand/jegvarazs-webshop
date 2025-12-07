@@ -94,8 +94,10 @@ class PermissionSeeder extends Seeder
             ['id' => 82, 'name' => 'view-leads', 'label' => 'Érdeklődők megtekintése', 'group' => 'Ügyviteli folyamatok'],
             ['id' => 83, 'name' => 'edit-lead', 'label' => 'Érdeklődő szerkesztése', 'group' => 'Ügyviteli folyamatok'],
             ['id' => 84, 'name' => 'delete-lead', 'label' => 'Érdeklődő törlése', 'group' => 'Ügyviteli folyamatok'],
-
-
+            ['id' => 85, 'name' => 'delete-automated-email', 'label' => 'E-mail automatizáció törlése', 'group' => 'Ügyviteli folyamatok'],
+            ['id' => 86, 'name' => 'view-automated-emails', 'label' => 'E-mail automatizációk megtekintése', 'group' => 'Ügyviteli folyamatok'],
+            ['id' => 87, 'name' => 'edit-automated-email', 'label' => 'E-mail automatizáció szerkesztése', 'group' => 'Ügyviteli folyamatok'],
+            ['id' => 88, 'name' => 'create-automated-email', 'label' => 'E-mail automatizáció létrehozása', 'group' => 'Ügyviteli folyamatok'],
         ];
 
         foreach ($permissions as $perm) {
