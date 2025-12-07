@@ -17,7 +17,7 @@
 
     <!-- Status bar style (fekete/fehér háttér) -->
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    
+
     <title>@yield('title', 'Admin')</title>
     @vite('resources/sass/admin.scss')
     <script>

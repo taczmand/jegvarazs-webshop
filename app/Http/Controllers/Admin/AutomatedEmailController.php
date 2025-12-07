@@ -2,13 +2,24 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Services\Admin\AutomatedEmailScheduler;
 use App\Http\Controllers\Controller;
+use App\Mail\AutomatedEmailMailable;
 use App\Models\AutomatedEmail;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 use Yajra\DataTables\Facades\DataTables;
 
 class AutomatedEmailController extends Controller
 {
+    protected $scheduler;
+
+    public function __construct(AutomatedEmailScheduler $scheduler)
+    {
+        $this->scheduler = $scheduler;
+    }
+
     public function index()
     {
         return view('admin.business.automated');
@@ -66,6 +77,7 @@ class AutomatedEmailController extends Controller
                 'email_address' => $request['email_address'],
                 'frequency_interval' => $request['frequency_interval'],
                 'frequency_unit' => $request['frequency_unit'],
+                'last_sent_at' => Carbon::now(), // Amikor létrehozzuk még nem akarjuk küldeni
             ]);
 
             return response()->json([
@@ -127,5 +139,37 @@ class AutomatedEmailController extends Controller
             ], 500);
         }
 
+    }
+
+    /**
+     * A mai napon esedékes automatikus emailek küldése.
+     */
+    public function sendTodayEmails()
+    {
+        $emails = $this->scheduler->getEmailsForToday();
+
+        if ($emails->isEmpty()) {
+            \Log::info('Nincs ma küldendő email.');
+            return response()->json(['message' => 'Nincs ma küldendő email.']);
+        }
+
+        foreach ($emails as $automation) {
+
+            try {
+                Mail::to($automation->email_address)->send(new AutomatedEmailMailable($automation));
+                $automation->last_sent_at = Carbon::now();
+                $automation->save();
+
+                \Log::info('Automatizáció elküldve: ' . $automation->email_address.' Típus: ' . $automation->email_template);
+
+            } catch (\Exception $e) {
+                \Log::error('Automatizáció elküldési hiba: ' . $e->getMessage());
+            }
+        }
+
+        return response()->json([
+            'message' => 'Automatikus emailek elküldve.',
+            'count' => $emails->count(),
+        ]);
     }
 }

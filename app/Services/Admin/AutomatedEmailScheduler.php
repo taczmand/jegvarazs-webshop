@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Admin\Services;
+namespace App\Services\Admin;
 
 use App\Models\AutomatedEmail;
 use Carbon\Carbon;
