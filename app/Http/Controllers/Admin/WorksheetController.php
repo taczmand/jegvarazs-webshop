@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Mail\WorksheetToCustomer;
 use App\Models\Appointment;
+use App\Models\AutomatedEmail;
 use App\Models\Category;
 use App\Models\Worksheet;
 use App\Models\User;
@@ -484,6 +485,15 @@ class WorksheetController extends Controller
 
                 $worksheet->workers()->detach(); // előző dolgozók törlése
                 $worksheet->products()->detach(); // előző termékek törlése
+
+                AutomatedEmail::updateOrCreate([
+                    'email_template' => 'Karbantartás',
+                    'email_address' => $worksheet->email,
+                ], [
+                    'frequency_unit' => 'havonta',
+                    'frequency_interval' => 6,
+                    'last_sent_at' => now(),
+                ]);
             } else {
                 if ($request->input('work_status') === "Folyamatban") {
                     $worksheet = Worksheet::create($data + [
