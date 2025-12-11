@@ -43,86 +43,107 @@ class WorksheetController extends Controller
     {
         $startDate = $request->query('start_date');
         $endDate = $request->query('end_date');
+        $type = $request->query('type') ?? 'all';
 
         if (!$startDate || !$endDate) {
             return response()->json(['error' => 'Missing date range'], 400);
         }
 
         $user = auth('admin')->user();
-
-        // WORKSHEETS
-        if ($user->can('view-worksheets')) {
-            $query = Worksheet::with(['workers:id,name'])
-                ->whereBetween('installation_date', [$startDate, $endDate])
-                ->orderBy('sort_order', 'ASC');
-        } elseif ($user->can('view-own-worksheets')) {
-            // aktuális hét kezdete
-            $currentWeekStart = now()->startOfWeek()->toDateString();
-            // következő hét vége
-            $nextWeekEnd = now()->addWeek()->endOfWeek()->toDateString();
-
-            // szűrés az aktuális hét + következő hétre
-            $query = Worksheet::with(['workers:id,name'])
-                ->whereHas('workers', function ($q) use ($user) {
-                    $q->where('users.id', $user->id);
-                })
-                ->whereBetween('installation_date', [$currentWeekStart, $nextWeekEnd])
-                ->orderBy('sort_order', 'ASC');
-        } else {
-            return response()->json(['error' => 'Nincs jogosultság'], 403);
-        }
-
-        $worksheets = $query->get();
-
-        // mindig legyen kollekció
         $result = collect();
 
-        if ($worksheets->isNotEmpty()) {
-            $result = $worksheets->map(function ($worksheet) {
-                return [
-                    'id' => $worksheet->id,
-                    'name' => $worksheet->name,
-                    'city' => $worksheet->city,
-                    'work_name' => $worksheet->work_name,
-                    'work_status' => $worksheet->work_status,
-                    'installation_date' => $worksheet->installation_date,
-                    'worker_name' => $worksheet->workers->pluck('name')->implode(', '),
-                    'model' => 'worksheet',
-                    'type' => $worksheet->work_type,
-                    'sort_order' => $worksheet->sort_order,
-                    'description' => $worksheet->description,
-                ];
-            });
+        /*
+        |--------------------------------------------------------------------------
+         | WORKSHEETS (ha type = all vagy worksheets)
+         |--------------------------------------------------------------------------
+         */
+        if (in_array($type, ['all', 'worksheets'])) {
+
+            if ($user->can('view-worksheets')) {
+
+                $worksheetQuery = Worksheet::with(['workers:id,name'])
+                    ->whereBetween('installation_date', [$startDate, $endDate])
+                    ->orderBy('sort_order', 'ASC');
+
+            } elseif ($user->can('view-own-worksheets')) {
+
+                $currentWeekStart = now()->startOfWeek()->toDateString();
+                $nextWeekEnd = now()->addWeek()->endOfWeek()->toDateString();
+
+                $worksheetQuery = Worksheet::with(['workers:id,name'])
+                    ->whereHas('workers', function ($q) use ($user) {
+                        $q->where('users.id', $user->id);
+                    })
+                    ->whereBetween('installation_date', [$currentWeekStart, $nextWeekEnd])
+                    ->orderBy('sort_order', 'ASC');
+
+            } elseif ($type === 'worksheets') {
+                return response()->json(['error' => 'Nincs jogosultság munkalapokhoz'], 403);
+            }
+
+            if (isset($worksheetQuery)) {
+                $worksheets = $worksheetQuery->get();
+
+                $result = $result->merge(
+                    $worksheets->map(function ($worksheet) {
+                        return [
+                            'id' => $worksheet->id,
+                            'name' => $worksheet->name,
+                            'city' => $worksheet->city,
+                            'work_name' => $worksheet->work_name,
+                            'work_status' => $worksheet->work_status,
+                            'installation_date' => $worksheet->installation_date,
+                            'worker_name' => $worksheet->workers->pluck('name')->implode(', '),
+                            'model' => 'worksheet',
+                            'type' => $worksheet->work_type,
+                            'sort_order' => $worksheet->sort_order,
+                            'description' => $worksheet->description,
+                        ];
+                    })
+                );
+            }
         }
 
-        // APPOINTMENTS
-        if ($user->can('view-appointments')) {
-            $appointments = Appointment::whereBetween('appointment_date', [$startDate, $endDate])
-                ->orderBy('sort_order', 'ASC')
-                ->get();
+        /*
+        |--------------------------------------------------------------------------
+         | APPOINTMENTS (ha type = all vagy appointments)
+         |--------------------------------------------------------------------------
+         */
+        if (in_array($type, ['all', 'appointments'])) {
 
-            $appointment_results = $appointments->map(function ($appointment) {
-                return [
-                    'id' => $appointment->id,
-                    'name' => $appointment->name,
-                    'city' => $appointment->city,
-                    'work_name' => null,
-                    'work_status' => $appointment->status,
-                    'installation_date' => $appointment->appointment_date,
-                    'worker_name' => null,
-                    'model' => 'appointment',
-                    'type' => $appointment->appointment_type,
-                    'sort_order' => $appointment->sort_order,
-                ];
-            });
+            if (!$user->can('view-appointments') && $type === 'appointments') {
+                return response()->json(['error' => 'Nincs jogosultság időpontokhoz'], 403);
+            }
 
-            $result = $result->merge($appointment_results)
-                ->sortBy('sort_order')
-                ->values();
+            if ($user->can('view-appointments')) {
+                $appointments = Appointment::whereBetween('appointment_date', [$startDate, $endDate])
+                    ->orderBy('sort_order', 'ASC')
+                    ->get();
+
+                $result = $result->merge(
+                    $appointments->map(function ($appointment) {
+                        return [
+                            'id' => $appointment->id,
+                            'name' => $appointment->name,
+                            'city' => $appointment->city,
+                            'work_name' => null,
+                            'work_status' => $appointment->status,
+                            'installation_date' => $appointment->appointment_date,
+                            'worker_name' => null,
+                            'model' => 'appointment',
+                            'type' => $appointment->appointment_type,
+                            'sort_order' => $appointment->sort_order,
+                        ];
+                    })
+                );
+            }
         }
 
-        return response()->json($result);
+        return response()->json(
+            $result->sortBy('sort_order')->values()
+        );
     }
+
 
 
     public function data()

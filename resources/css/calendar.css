@@ -81,9 +81,19 @@ h2 {
     font-size: 0.85em;
     color: #555;
 }
+.calendar-select {
+    width: 150px !important;
+    font-size: 12px !important;
+    padding: 5px !important;
+}
 
 @media only screen and (max-width: 600px) {
     #weekLabel {
         font-size: 10px;
+    }
+    .calendar-select {
+        width: 100px !important;
+        font-size: 12px !important;
+        padding: 5px !important;
     }
 }

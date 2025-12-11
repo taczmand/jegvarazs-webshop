@@ -9,6 +9,11 @@
             <div class="calendar-nav">
                 <button class="btn btn-light" id="prevWeek">⬅</button>
                 <h5 id="weekLabel">Heti naptár</h5>
+                <select id="selectedType" class="form-select calendar-select">
+                    <option value="all">Összes típus</option>
+                    <option value="worksheets">Munkalapok</option>
+                    <option value="appointments">Időpontfoglalások</option>
+                </select>
                 <button class="btn btn-light" id="nextWeek">➡</button>
             </div>
 
@@ -84,10 +89,11 @@
                 return days;
             }
 
-            async function fetchWorksheets(startDate, endDate) {
+            async function fetchWorksheets(startDate, endDate, selectedType) {
                 const url = new URL('{{ route("admin.worksheets.byweek") }}', window.location.origin);
                 url.searchParams.append('start_date', startDate);
                 url.searchParams.append('end_date', endDate);
+                url.searchParams.append('type', selectedType);
 
                 try {
                     const response = await fetch(url);
@@ -117,7 +123,8 @@
                     weekLabel.textContent = `${startStr} - ${endStr}`;
                 }
 
-                const worksheets = await fetchWorksheets(startStr, endStr);
+                const selectedType = document.getElementById('selectedType').value;
+                const worksheets = await fetchWorksheets(startStr, endStr, selectedType);
 
                 // 🔹 Loader elrejtése
                 document.getElementById('calendarLoader').style.display = 'none';
@@ -320,6 +327,10 @@
                     alert('Ismeretlen elem, nem lehet megnyitni.');
                 }
 
+            });
+
+            $(document).on('change', '#selectedType', function () {
+                renderCalendar();
             });
 
             function formatDayLabel(date) {
