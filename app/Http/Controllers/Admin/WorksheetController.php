@@ -479,6 +479,18 @@ class WorksheetController extends Controller
                             ], 422);
                         }
                     }
+
+                    // Lezárva állapotra helyezés létrehoz vagy frissít egy automatikus e-mail küldési eseményt
+                    if ("Szerelés" === $request->input('work_type') || "Karbantartás" === $request->input('work_type')) {
+                        AutomatedEmail::updateOrCreate([
+                            'email_template' => 'Karbantartás',
+                            'email_address' => $worksheet->email,
+                        ], [
+                            'frequency_unit' => 'havonta',
+                            'frequency_interval' => 6,
+                            'last_sent_at' => now(),
+                        ]);
+                    }
                 }
 
                 $worksheet->update($data);
@@ -486,14 +498,6 @@ class WorksheetController extends Controller
                 $worksheet->workers()->detach(); // előző dolgozók törlése
                 $worksheet->products()->detach(); // előző termékek törlése
 
-                AutomatedEmail::updateOrCreate([
-                    'email_template' => 'Karbantartás',
-                    'email_address' => $worksheet->email,
-                ], [
-                    'frequency_unit' => 'havonta',
-                    'frequency_interval' => 6,
-                    'last_sent_at' => now(),
-                ]);
             } else {
                 if ($request->input('work_status') === "Folyamatban") {
                     $worksheet = Worksheet::create($data + [
