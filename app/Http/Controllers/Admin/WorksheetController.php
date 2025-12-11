@@ -13,6 +13,7 @@ use App\Models\Contract;
 use App\Models\WorksheetImage;
 use App\Models\WorksheetProduct;
 use App\Models\WorksheetWorker;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
@@ -488,7 +489,7 @@ class WorksheetController extends Controller
                         ], [
                             'frequency_unit' => 'havonta',
                             'frequency_interval' => 6,
-                            'last_sent_at' => now(),
+                            'last_sent_at' => Carbon::parse($worksheet->installation_date)->format('Y-m-d H:i:s'),
                         ]);
                     }
                 }
