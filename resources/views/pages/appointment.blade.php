@@ -32,41 +32,53 @@
 
         <div class="mb-3">
             <label for="name" class="form-label">Név*</label>
-            <input type="text" name="name" id="name" class="form-control" placeholder="Teljes név" required>
+            <input type="text" name="name" id="name" class="form-control" placeholder="Teljes név" value="{{ request()->query('full_name') }}" required>
         </div>
 
         <div class="mb-3">
             <label for="phone" class="form-label">Telefonszám*</label>
-            <input type="text" name="phone" id="phone" class="form-control" placeholder="+36..." required>
+            <input type="text" name="phone" id="phone" class="form-control" value="{{ request()->query('phone') }}" placeholder="+36..." required>
         </div>
 
         <div class="mb-3">
             <label for="email" class="form-label">E-mail cím*</label>
-            <input type="email" name="email" id="email" class="form-control" placeholder="pelda@email.hu" required>
+            <input type="email" name="email" id="email" class="form-control" value="{{ request()->query('email_address') }}" placeholder="pelda@email.hu" required>
         </div>
 
         <div class="row">
             <div class="col-md-4 mb-3">
                 <label for="zip_code" class="form-label">Irányítószám*</label>
-                <input type="text" name="zip_code" id="zip_code" class="form-control" placeholder="1234" required>
+                <input type="text" name="zip_code" id="zip_code" class="form-control" value="{{ request()->query('zip') }}" placeholder="1234" required>
             </div>
             <div class="col-md-4 mb-3">
                 <label for="city" class="form-label">Város*</label>
-                <input type="text" name="city" id="city" class="form-control" placeholder="Budapest" required>
+                <input type="text" name="city" id="city" class="form-control" value="{{ request()->query('city') }}" placeholder="Budapest" required>
             </div>
             <div class="col-md-4 mb-3">
                 <label for="address_line" class="form-label">Cím*</label>
-                <input type="text" name="address_line" id="address_line" class="form-control" placeholder="Utca, házszám" required>
+                <input type="text" name="address_line" id="address_line" class="form-control" value="{{ request()->query('address') }}" placeholder="Utca, házszám" required>
             </div>
         </div>
 
         <div class="mb-3">
             <label for="appointment_type" class="form-label" style="display:block">Kérem, válasszon az alábbi felsorolásból*</label>
             <select name="appointment_type" id="appointment_type" class="form-control" required>
-                <option value="" disabled selected>Válasszon típust</option>
-                <option value="Karbantartás">Karbantartás</option>
-                <option value="Felmérés">Ingyenes helyszíni felmérés</option>
-                <option value="Egyéb">Egyéb</option>
+                <option value="" disabled {{ request('type') ? '' : 'selected' }}>Válasszon típust</option>
+
+                <option value="Karbantartás"
+                    {{ request('type') === 'Karbantartás' ? 'selected' : '' }}>
+                    Karbantartás
+                </option>
+
+                <option value="Felmérés"
+                    {{ request('type') === 'Felmérés' ? 'selected' : '' }}>
+                    Ingyenes helyszíni felmérés
+                </option>
+
+                <option value="Egyéb"
+                    {{ request('type') === 'Egyéb' ? 'selected' : '' }}>
+                    Egyéb
+                </option>
             </select>
         </div>
 

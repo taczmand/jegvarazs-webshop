@@ -20,6 +20,11 @@ return new class extends Migration
 
             // lehet egyedi email cím
             $table->string('email_address');
+            $table->string('full_name');
+            $table->string('phone');
+            $table->string('zip');
+            $table->string('city');
+            $table->string('address');
 
             // gyakoriság
             $table->enum('frequency_unit', ['naponta', 'hetente', 'havonta', 'évente']);
