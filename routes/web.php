@@ -53,7 +53,7 @@ Route::post('/facebook/webhook', [FacebookWebhookController::class, 'handle']);
 
 Route::get('/automatizacio/kuldes', [AutomatedEmailController::class, 'sendTodayEmails'])->name('automated-emails.send-today-emails');
 
-Route::get('workauto', [AutomatedEmailController::class, 'workAuto'])->name('workauto');
+//Route::get('workauto', [AutomatedEmailController::class, 'workAuto'])->name('workauto'); // ideiglenes kellhet
 
 //Route::middleware([Incognito::class])->group(function () {
 
