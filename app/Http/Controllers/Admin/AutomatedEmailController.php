@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Models\EmailLog;
+use App\Models\Worksheet;
 use App\Services\Admin\AutomatedEmailScheduler;
 use App\Http\Controllers\Controller;
 use App\Mail\AutomatedEmailMailable;
@@ -249,5 +250,29 @@ class AutomatedEmailController extends Controller
             'message' => 'Automatizáció újraküldve.',
             'emailLog' => $emailLog,
         ], 200);
+    }
+
+    public function workAuto()
+    {
+        $worksheets = Worksheet::where('work_type', 'Szerelés')
+            ->where('work_status', 'Lezárva')
+            ->get();
+
+        foreach ($worksheets as $worksheet) {
+            if ($worksheet->email) {
+                AutomatedEmail::create([
+                    'email_template' => 'Karbantartás',
+                    'email_address' => $worksheet->email,
+                    'full_name' => $worksheet->name,
+                    'phone' => $worksheet->phone,
+                    'zip' => $worksheet->zip_code,
+                    'city' => $worksheet->city,
+                    'address' => $worksheet->address_line,
+                    'frequency_interval' => 6,
+                    'frequency_unit' => 'havonta',
+                    'last_sent_at' => $worksheet->installation_date,
+                ]);
+            }
+        }
     }
 }
