@@ -22,7 +22,7 @@ return new class extends Migration
             $table->string('address_line')->nullable();
             $table->date('appointment_date')->nullable();
             $table->integer('sort_order')->default(0);
-            $table->enum('appointment_type', ['Karbantartás', 'Felmérés', 'Egyéb'])->default('Karbantartás');
+            $table->enum('appointment_type', ['Karbantartás', 'Felmérés', 'Érdeklődés', 'Egyéb'])->default('Karbantartás');
             $table->text('message')->nullable();
             $table->enum('status', ['Függőben', 'Folyamatban', 'Törölve', 'Kész'])->default('Függőben');
             $table->string('viewed_by')->nullable();

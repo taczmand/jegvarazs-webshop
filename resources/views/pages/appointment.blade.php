@@ -75,6 +75,11 @@
                     Ingyenes helyszíni felmérés
                 </option>
 
+                <option value="Érdeklődés"
+                    {{ request('type') === 'Érdeklődés' ? 'selected' : '' }}>
+                    Érdeklődés
+                </option>
+
                 <option value="Egyéb"
                     {{ request('type') === 'Egyéb' ? 'selected' : '' }}>
                     Egyéb
