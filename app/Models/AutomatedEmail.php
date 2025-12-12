@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
 
 class AutomatedEmail extends Model
 {
+    use LogsActivity;
+
     protected $fillable = [
         'email_id',
         'email_address',

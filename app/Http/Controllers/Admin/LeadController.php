@@ -55,9 +55,9 @@ class LeadController extends Controller
 
                 if ($user && $user->can('edit-lead')) {
                     $actions .= '
-                <button class="btn btn-sm btn-primary edit" data-id="' . $item->id . '" title="Szerkesztés">
-                    <i class="fas fa-edit"></i>
-                </button>';
+                    <button class="btn btn-sm btn-primary edit" data-id="' . $item->id . '" title="Szerkesztés">
+                        <i class="fas fa-edit"></i>
+                    </button>';
                 }
 
                 if ($user && $user->can('delete-lead')) {
@@ -65,6 +65,15 @@ class LeadController extends Controller
                 <button class="btn btn-sm btn-danger delete" data-id="' . $item->id . '" title="Törlés">
                     <i class="fas fa-trash"></i>
                 </button>';
+                }
+
+                if ($user && $user->can('edit-lead')) {
+                    if ($item->viewed_at) {
+                        $actions .= '
+                        <button class="btn btn-sm btn-warning reset-viewed" data-id="' . $item->id . '" title="Látta visszavonása">
+                            <i class="fas fa-eye-slash"></i>
+                        </button>';
+                    }
                 }
 
                 return $actions;
@@ -126,5 +135,24 @@ class LeadController extends Controller
             ], 500);
         }
 
+    }
+
+    public function resetViewed(Request $request) {
+        try {
+            $lead = Lead::findOrFail($request->id);
+            $lead->update([
+                'viewed_at' => null,
+                'viewed_by' => null,
+            ]);
+            return response()->json([
+                'message' => 'Sikeres visszavonás!',
+            ], 200);
+        } catch (\Exception $e) {
+            \Log::error('Érdeklődő visszavonási hiba: ' . $e->getMessage());
+            return response()->json([
+                'message' => 'Hiba történt a visszavonás során.',
+                'errors' => $e->getMessage(),
+            ], 500);
+        }
     }
 }

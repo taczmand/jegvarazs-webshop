@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
 
 class Lead extends Model
 {
+    use LogsActivity;
+
     protected $fillable = [
         'lead_id',
         'form_id',

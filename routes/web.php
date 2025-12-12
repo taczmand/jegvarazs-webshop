@@ -219,6 +219,7 @@ Route::get('/automatizacio/kuldes', [AutomatedEmailController::class, 'sendToday
             Route::get('/leads/{id}', [LeadController::class, 'show'])->name('leads.show');
             Route::post('/leads/{id}', [LeadController::class, 'update'])->name('leads.update');
             Route::delete('/leads/{id}', [LeadController::class, 'destroy'])->name('leads.destroy');
+            Route::post('/leads/{id}/reset-viewed', [LeadController::class, 'resetViewed'])->name('leads.reset-viewed');
 
             // E-mail automatizációk beállítása
             Route::get('/automatizacio', [AutomatedEmailController::class, 'index'])->name('automated-emails.index');

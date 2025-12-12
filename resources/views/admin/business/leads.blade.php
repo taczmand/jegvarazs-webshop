@@ -60,13 +60,13 @@
                     <tr>
                         <th>ID</th>
                         <th data-priority="1">Név</th>
-                        <th data-priority="3">Email</th>
-                        <th data-priority="4">Telefon</th>
-                        <th data-priority="5">Város</th>
+                        <th data-priority="4">Email</th>
+                        <th data-priority="5">Telefon</th>
+                        <th data-priority="6">Város</th>
                         <th>Form</th>
                         <th>Kampány</th>
                         <th>Állapot</th>
-                        <th>Létrehozva</th>
+                        <th data-priority="3">Létrehozva</th>
                         <th>Látta</th>
                         <th data-priority="2">Műveletek</th>
                     </tr>
@@ -330,6 +330,37 @@
                 } else {
                     alert('Nincs megadva telefonszám.');
                 }
+            });
+
+            $('#adminTable').on('click', '.reset-viewed', async function () {
+                const row_data = $('#adminTable').DataTable().row($(this).parents('tr')).data();
+                const leadId = row_data.id;
+
+                if (!confirm('Biztosan visszavonodni szeretnéd az érdeklődő látását?')) return;
+
+                try {
+                    $.ajax({
+                        url: `{{ url('/admin/leads') }}/${leadId}/reset-viewed`,
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': csrfToken
+                        },
+                        success: function(response) {
+                            showToast('Érdeklődő megtekintése sikeresen visszavonva!', 'success');
+                            table.ajax.reload(null, false);
+                        },
+                        error: function(xhr) {
+                            let msg = 'Hiba történt az érdeklődő visszavonásakor';
+                            if (xhr.responseJSON && xhr.responseJSON.message) {
+                                msg = xhr.responseJSON.message;
+                            }
+                            showToast(msg, 'danger');
+                        }
+                    });
+                } catch (error) {
+                    showToast(error.message || 'Hiba történt az érdeklődő megtekintésének visszavonásakor', 'danger');
+                }
+
             });
 
             function resetForm(title = null) {
