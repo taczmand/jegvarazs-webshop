@@ -195,7 +195,7 @@
                 $('#lead_id').val(row_data.id);
 
                 const lead_data = await loadLead(row_data.id);
-                console.log(lead_data);
+
                 $('#leader_name').text(lead_data.full_name || 'Nem adott meg nevet');
                 $('#leader_email').text(lead_data.email);
                 $('#leader_phone').text(lead_data.phone || 'Nem adott meg telefon');
@@ -214,13 +214,15 @@
                     lead = { field_data: [] }; // fallback
                 }
 
-                let html = `<ul>`;
-                lead.field_data.forEach(field => {
-                    html += `<li><strong>${field.name}:</strong> ${field.values.join(', ')}</li>`;
-                });
-                html += `</ul>`;
+                if (lead.field_data) {
+                    let html = `<ul>`;
+                    lead.field_data.forEach(field => {
+                        html += `<li><strong>${field.name}:</strong> ${field.values.join(', ')}</li>`;
+                    });
+                    html += `</ul>`;
 
-                $('#leader_data').html(html);
+                    $('#leader_data').html(html);
+                }
 
                 sendViewRequest("lead", row_data.id);
 

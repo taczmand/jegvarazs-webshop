@@ -11,6 +11,7 @@ use App\Models\Category;
 use App\Models\CompanySite;
 use App\Models\Download;
 use App\Models\Employee;
+use App\Models\Lead;
 use App\Models\NewsletterSubscription;
 use App\Models\Product;
 use App\Models\Searched;
@@ -18,6 +19,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 
 class PagesController extends Controller
 {
@@ -130,6 +132,21 @@ class PagesController extends Controller
                 'appointment_type' => $request->appointment_type,
                 'message' => $request->message
             ]);
+
+            if ($request->appointment_type == 'Érdeklődés' || $request->appointment_type == 'Felmérés') {
+                Lead::create([
+                    'lead_id' => Str::uuid(),
+                    'form_id' => '1',
+                    'form_name' => 'Weboldalról érdeklődés',
+                    'full_name' => $request->name,
+                    'email' => $request->email,
+                    'phone' => $request->phone,
+                    'city' => $request->city,
+                    'status' => 'Új',
+                    'comment' => $request->message,
+                    'data' => json_encode(array("field_data" =>  null))
+                ]);
+            }
 
             Mail::to($request->email)
                 ->bcc('jegvarazsiroda@gmail.com')
