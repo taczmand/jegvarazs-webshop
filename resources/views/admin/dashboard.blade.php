@@ -11,7 +11,10 @@
                 <h5 id="weekLabel">Heti naptár</h5>
                 <select id="selectedType" class="form-select calendar-select">
                     <option value="all">Összes típus</option>
-                    <option value="worksheets">Munkalapok</option>
+                    <option value="worksheets">Összes munkalap</option>
+                    <option value="worksheets_szereles">Szerelés</option>
+                    <option value="worksheets_karbantartas">Karbantartás</option>
+                    <option value="worksheets_felmeres">Felmérés</option>
                     <option value="appointments">Időpontfoglalások</option>
                 </select>
                 <button class="btn btn-light" id="nextWeek">➡</button>

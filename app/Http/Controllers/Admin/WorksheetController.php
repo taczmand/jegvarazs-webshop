@@ -55,96 +55,90 @@ class WorksheetController extends Controller
         $result = collect();
 
         /*
-        |--------------------------------------------------------------------------
-         | WORKSHEETS (ha type = all vagy worksheets)
-         |--------------------------------------------------------------------------
-         */
-        if (in_array($type, ['all', 'worksheets'])) {
+        |----------------------------------------------------------------------
+        | WORKSHEETS
+        |----------------------------------------------------------------------
+        */
+        $worksheetTypes = ['worksheets', 'worksheets_szereles', 'worksheets_karbantartas', 'worksheets_felmeres'];
 
-            if ($user->can('view-worksheets')) {
+        if (in_array($type, $worksheetTypes) || $type === 'all') {
 
-                $worksheetQuery = Worksheet::with(['workers:id,name'])
-                    ->whereBetween('installation_date', [$startDate, $endDate])
-                    ->orderBy('sort_order', 'ASC');
-
-            } elseif ($user->can('view-own-worksheets')) {
-
-                $currentWeekStart = now()->startOfWeek()->toDateString();
-                $nextWeekEnd = now()->addWeek()->endOfWeek()->toDateString();
-
-                $worksheetQuery = Worksheet::with(['workers:id,name'])
-                    ->whereHas('workers', function ($q) use ($user) {
-                        $q->where('users.id', $user->id);
-                    })
-                    ->whereBetween('installation_date', [$currentWeekStart, $nextWeekEnd])
-                    ->orderBy('sort_order', 'ASC');
-
-            } elseif ($type === 'worksheets') {
+            if (!$user->can('view-worksheets') && in_array($type, $worksheetTypes)) {
                 return response()->json(['error' => 'Nincs jogosultság munkalapokhoz'], 403);
             }
 
-            if (isset($worksheetQuery)) {
-                $worksheets = $worksheetQuery->get();
+            $worksheetQuery = Worksheet::with(['workers:id,name'])
+                ->when(!$user->can('view-worksheets') && $user->can('view-own-worksheets'), function($q) use ($user) {
+                    $currentWeekStart = now()->startOfWeek()->toDateString();
+                    $nextWeekEnd = now()->addWeek()->endOfWeek()->toDateString();
+                    $q->whereHas('workers', fn($q2) => $q2->where('users.id', $user->id))
+                        ->whereBetween('installation_date', [$currentWeekStart, $nextWeekEnd]);
+                })
+                ->when($type !== 'all' && $type !== 'worksheets', function($q) use ($type) {
+                    // altípus szerinti szűrés: csak a megfelelő work_type-ok
+                    $mapping = [
+                        'worksheets_szereles' => 'szereles',
+                        'worksheets_karbantartas' => 'karbantartas',
+                        'worksheets_felmeres' => 'felmeres',
+                    ];
+                    if (isset($mapping[$type])) {
+                        $q->where('work_type', $mapping[$type]);
+                    }
+                })
+                ->when($type === 'worksheets' || $type === 'all', fn($q) => $q->orderBy('sort_order', 'ASC'))
+                ->get();
 
-                $result = $result->merge(
-                    $worksheets->map(function ($worksheet) {
-                        return [
-                            'id' => $worksheet->id,
-                            'name' => $worksheet->name,
-                            'city' => $worksheet->city,
-                            'work_name' => $worksheet->work_name,
-                            'work_status' => $worksheet->work_status,
-                            'installation_date' => $worksheet->installation_date,
-                            'worker_name' => $worksheet->workers->pluck('name')->implode(', '),
-                            'model' => 'worksheet',
-                            'type' => $worksheet->work_type,
-                            'sort_order' => $worksheet->sort_order,
-                            'description' => $worksheet->description,
-                        ];
-                    })
-                );
-            }
+            $result = $result->merge(
+                $worksheetQuery->map(fn($worksheet) => [
+                    'id' => $worksheet->id,
+                    'name' => $worksheet->name,
+                    'city' => $worksheet->city,
+                    'work_name' => $worksheet->work_name,
+                    'work_status' => $worksheet->work_status,
+                    'installation_date' => $worksheet->installation_date,
+                    'worker_name' => $worksheet->workers->pluck('name')->implode(', '),
+                    'model' => 'worksheet',
+                    'type' => $worksheet->work_type,
+                    'sort_order' => $worksheet->sort_order,
+                    'description' => $worksheet->description,
+                ])
+            );
         }
 
         /*
-        |--------------------------------------------------------------------------
-         | APPOINTMENTS (ha type = all vagy appointments)
-         |--------------------------------------------------------------------------
-         */
-        if (in_array($type, ['all', 'appointments'])) {
+        |----------------------------------------------------------------------
+        | APPOINTMENTS
+        |----------------------------------------------------------------------
+        */
+        if (in_array($type, ['appointments', 'all'])) {
 
             if (!$user->can('view-appointments') && $type === 'appointments') {
                 return response()->json(['error' => 'Nincs jogosultság időpontokhoz'], 403);
             }
 
-            if ($user->can('view-appointments')) {
-                $appointments = Appointment::whereBetween('appointment_date', [$startDate, $endDate])
-                    ->orderBy('sort_order', 'ASC')
-                    ->get();
+            $appointments = Appointment::whereBetween('appointment_date', [$startDate, $endDate])
+                ->orderBy('sort_order', 'ASC')
+                ->get();
 
-                $result = $result->merge(
-                    $appointments->map(function ($appointment) {
-                        return [
-                            'id' => $appointment->id,
-                            'name' => $appointment->name,
-                            'city' => $appointment->city,
-                            'work_name' => null,
-                            'work_status' => $appointment->status,
-                            'installation_date' => $appointment->appointment_date,
-                            'worker_name' => null,
-                            'model' => 'appointment',
-                            'type' => $appointment->appointment_type,
-                            'sort_order' => $appointment->sort_order,
-                        ];
-                    })
-                );
-            }
+            $result = $result->merge(
+                $appointments->map(fn($appointment) => [
+                    'id' => $appointment->id,
+                    'name' => $appointment->name,
+                    'city' => $appointment->city,
+                    'work_name' => null,
+                    'work_status' => $appointment->status,
+                    'installation_date' => $appointment->appointment_date,
+                    'worker_name' => null,
+                    'model' => 'appointment',
+                    'type' => $appointment->appointment_type,
+                    'sort_order' => $appointment->sort_order,
+                ])
+            );
         }
 
-        return response()->json(
-            $result->sortBy('sort_order')->values()
-        );
+        return response()->json($result->sortBy('sort_order')->values());
     }
+
 
 
 
