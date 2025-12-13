@@ -4,6 +4,18 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="shortcut icon" href="{{ asset('storage/' . $basicmedia['favicon']) }}" type="image/x-icon">
+    <!-- iOS ikon (Apple Touch Icon) -->
+    <link rel="apple-touch-icon" href="{{ asset('storage/' . $basicmedia['favicon']) }}">
+
+    <!-- App név a Home Screen-en -->
+    <meta name="apple-mobile-web-app-title" content="Jégvarázs Admin">
+
+    <!-- iOS „Add to Home Screen” app mód engedélyezése -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+
+    <!-- Status bar style (fekete/fehér háttér) -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>@yield('title', 'Admin')</title>
     @vite('resources/sass/admin.scss')
 </head>
