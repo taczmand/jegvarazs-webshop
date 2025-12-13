@@ -69,7 +69,7 @@
                 processing: true,
                 serverSide: true,
                 ajax: '{{ route('admin.stats.contacts.data') }}',
-                order: [[0, 'desc']],
+                order: [[0, 'asc']],
                 columns: [
                     { data: 'name' },
                     { data: 'email' },
