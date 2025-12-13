@@ -144,15 +144,38 @@
     </div>
 
     <li class="nav-item">
-        <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseAnalytics" aria-expanded="false">
+        <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseWebshopAnalytics" aria-expanded="false">
             <i class="fa-solid fa-chart-simple"></i>
-            <span>Aktivitás</span>
+            <span>Webshop</span>
         </a>
-        <div id="collapseAnalytics" class="collapse" data-bs-parent="#accordionSidebar">
+        <div id="collapseWebshopAnalytics" class="collapse" data-bs-parent="#accordionSidebar">
             <div class="bg-white py-2 collapse-inner rounded">
                 <a class="collapse-item" href="{{ route('admin.stats.watched_products') }}">Megtekintett termékek</a>
                 <a class="collapse-item" href="{{ route('admin.stats.purchased_products') }}">Vásárolt termékek</a>
                 <a class="collapse-item" href="{{ route('admin.stats.searched_products') }}">Keresések</a>
+            </div>
+        </div>
+    </li>
+
+    <li class="nav-item">
+        <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseCRMAnalytics" aria-expanded="false">
+            <i class="fa-solid fa-user-group"></i>
+            <span>Ügyviteli</span>
+        </a>
+        <div id="collapseCRMAnalytics" class="collapse" data-bs-parent="#accordionSidebar">
+            <div class="bg-white py-2 collapse-inner rounded">
+                <a class="collapse-item" href="{{ route('admin.stats.contacts') }}">Kapcsolatok</a>
+            </div>
+        </div>
+    </li>
+
+    <li class="nav-item">
+        <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseSystemAnalytics" aria-expanded="false">
+            <i class="fa-solid fa-server"></i>
+            <span>Rendszer</span>
+        </a>
+        <div id="collapseSystemAnalytics" class="collapse" data-bs-parent="#accordionSidebar">
+            <div class="bg-white py-2 collapse-inner rounded">
                 <a class="collapse-item" href="{{ route('admin.stats.admin_logs') }}">Admin tevékenységek</a>
             </div>
         </div>
