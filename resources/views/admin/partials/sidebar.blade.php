@@ -165,14 +165,15 @@
         <div id="collapseCRMAnalytics" class="collapse" data-bs-parent="#accordionSidebar">
             <div class="bg-white py-2 collapse-inner rounded">
                 <a class="collapse-item" href="{{ route('admin.stats.contacts') }}">Kapcsolatok</a>
+                <a class="collapse-item" href="{{ route('admin.stats.installations') }}">Szerelések</a>
             </div>
         </div>
     </li>
 
     <li class="nav-item">
         <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseSystemAnalytics" aria-expanded="false">
-            <i class="fa-solid fa-server"></i>
-            <span>Rendszer</span>
+            <i class="fa-solid fa-gear"></i>
+            <span>Általános</span>
         </a>
         <div id="collapseSystemAnalytics" class="collapse" data-bs-parent="#accordionSidebar">
             <div class="bg-white py-2 collapse-inner rounded">

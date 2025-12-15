@@ -162,6 +162,8 @@ Route::get('/automatizacio/kuldes', [AutomatedEmailController::class, 'sendToday
             Route::get('/statisztika/vasarolt-termekek/data', [StatController::class, 'purchasedProductsData'])->name('stats.purchased_products.data');
             Route::get('/statisztika/kapcsolatok', [StatController::class, 'contacts'])->name('stats.contacts');
             Route::get('/statisztika/kapcsolatok/data', [StatController::class, 'contactsData'])->name('stats.contacts.data');
+            Route::get('/statisztika/szerelesek', [StatController::class, 'installations'])->name('stats.installations');
+            Route::get('/statisztika/szerelesek/data', [StatController::class, 'installationsData'])->name('stats.installations.data');
 
 
             // Gyártók

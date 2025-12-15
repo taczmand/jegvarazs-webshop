@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Searched;
 use App\Models\WatchedProduct;
+use App\Models\Worksheet;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Yajra\DataTables\Facades\DataTables;
@@ -184,7 +185,65 @@ class StatController extends Controller
     }
 
 
+    public function installations()
+    {
+        return view('admin.statistics.installations');
+    }
+    public function installationsData()
+    {
+        $query = Worksheet::query()
+            ->from('worksheets as w')
+            ->leftJoin(
+                DB::raw('
+                    (
+                        SELECT
+                            email,
+                            MAX(installation_date) as last_maintenance_date
+                        FROM worksheets
+                        WHERE work_type = "Karbantartás"
+                        GROUP BY email
+                    ) as m
+                '),
+                'm.email',
+                '=',
+                'w.email'
+            )
+            ->where('w.work_type', 'Szerelés')
+            ->where('w.work_status', 'Lezárva')
+            ->select([
+                'w.id',
+                'w.name',
+                'w.email',
+                'w.phone',
+                'w.city',
+                'w.installation_date',
+                DB::raw('m.last_maintenance_date'),
+                // 👉 Összefűzött cím
+                DB::raw("
+                    CONCAT_WS(
+                        ' ',
+                        w.zip_code,
+                        w.city,
+                        w.address_line
+                    ) as address
+                "),
+                DB::raw('
+                    DATEDIFF(
+                        CURDATE(),
+                        COALESCE(m.last_maintenance_date, w.installation_date)
+                    ) as days_since_service
+                ')
+            ]);
 
+        return datatables()->of($query)
+            ->editColumn('last_maintenance_date', fn ($row) =>
+            $row->last_maintenance_date
+                ? date('Y-m-d', strtotime($row->last_maintenance_date))
+                : null
+            )
+
+            ->make(true);
+    }
 
 
 }
