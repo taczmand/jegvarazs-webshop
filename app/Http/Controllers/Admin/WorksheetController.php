@@ -116,24 +116,26 @@ class WorksheetController extends Controller
                 return response()->json(['error' => 'Nincs jogosultság időpontokhoz'], 403);
             }
 
-            $appointments = Appointment::whereBetween('appointment_date', [$startDate, $endDate])
-                ->orderBy('sort_order', 'ASC')
-                ->get();
+            if ($user->can('view-appointments')) {
+                $appointments = Appointment::whereBetween('appointment_date', [$startDate, $endDate])
+                    ->orderBy('sort_order', 'ASC')
+                    ->get();
 
-            $result = $result->merge(
-                $appointments->map(fn($appointment) => [
-                    'id' => $appointment->id,
-                    'name' => $appointment->name,
-                    'city' => $appointment->city,
-                    'work_name' => null,
-                    'work_status' => $appointment->status,
-                    'installation_date' => $appointment->appointment_date,
-                    'worker_name' => null,
-                    'model' => 'appointment',
-                    'type' => $appointment->appointment_type,
-                    'sort_order' => $appointment->sort_order,
-                ])
-            );
+                $result = $result->merge(
+                    $appointments->map(fn($appointment) => [
+                        'id' => $appointment->id,
+                        'name' => $appointment->name,
+                        'city' => $appointment->city,
+                        'work_name' => null,
+                        'work_status' => $appointment->status,
+                        'installation_date' => $appointment->appointment_date,
+                        'worker_name' => null,
+                        'model' => 'appointment',
+                        'type' => $appointment->appointment_type,
+                        'sort_order' => $appointment->sort_order,
+                    ])
+                );
+            }
         }
 
         return response()->json($result->sortBy('sort_order')->values());
