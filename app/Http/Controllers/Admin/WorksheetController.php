@@ -476,15 +476,17 @@ class WorksheetController extends Controller
                     }
 
                     // Lezárva állapotra helyezés létrehoz vagy frissít egy automatikus e-mail küldési eseményt
-                    if ("Szerelés" === $request->input('work_type') || "Karbantartás" === $request->input('work_type')) {
-                        AutomatedEmail::updateOrCreate([
-                            'email_template' => 'Karbantartás',
-                            'email_address' => $worksheet->email,
-                        ], [
-                            'frequency_unit' => 'havonta',
-                            'frequency_interval' => 6,
-                            'last_sent_at' => Carbon::parse($worksheet->installation_date)->format('Y-m-d H:i:s'),
-                        ]);
+                    if ($worksheet->email) {
+                        if ("Szerelés" === $request->input('work_type') || "Karbantartás" === $request->input('work_type')) {
+                            AutomatedEmail::updateOrCreate([
+                                'email_template' => 'Karbantartás',
+                                'email_address' => $worksheet->email,
+                            ], [
+                                'frequency_unit' => 'havonta',
+                                'frequency_interval' => 6,
+                                'last_sent_at' => Carbon::parse($worksheet->installation_date)->format('Y-m-d H:i:s'),
+                            ]);
+                        }
                     }
                 }
 
