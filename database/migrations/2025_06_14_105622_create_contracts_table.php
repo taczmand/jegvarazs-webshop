@@ -20,9 +20,9 @@ return new class extends Migration
 
             // Alap kontakt adatok
             $table->string('name');
-            $table->string('mothers_name');
-            $table->string('place_of_birth');
-            $table->date('date_of_birth');
+            $table->string('mothers_name')->nullable();
+            $table->string('place_of_birth')->nullable();
+            $table->date('date_of_birth')->nullable();
             $table->string('id_number')->nullable(); // Személyi igazolvány szám vagy más azonosító
             $table->string('email')->nullable();
             $table->string('phone')->nullable();
