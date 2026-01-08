@@ -27,7 +27,7 @@ class AutomatedEmailScheduler
             $next = $this->calculateNextSend($last, $automation->frequency_unit, $automation->frequency_interval);
 
             // Ha a következő dátum ma vagy korábban van
-            return $next->lessThanOrEqualTo($today);
+            return $next->startOfDay()->lessThanOrEqualTo($today);
         });
     }
 
