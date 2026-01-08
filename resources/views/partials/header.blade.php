@@ -94,20 +94,21 @@
                     <a href="{{ route('index') }}"><img src="{{ asset('storage/' . $basicmedia['default_logo']) }}" alt=""></a>
                 </div>
             </div>
-            <div class="col-lg-6 d-flex align-items-center">
+            <div class="col-lg-7 d-flex align-items-center">
                 <nav class="header__menu">
                     <ul>
                         <li class="{{ Route::currentRouteName() === 'downloads' ? 'active' : '' }}"><a href="{{ config('app.url') }}letoltesek">Letöltések</a></li>
                         <li class="{{ Route::currentRouteName() === 'blog' ? 'active' : '' }}"><a href="{{ config('app.url') }}blog">Blog</a></li>
                         @if(!auth('customer')->check() || !auth('customer')->user()->is_partner)
                             <li class="{{ Route::currentRouteName() === 'appointments' ? 'active' : '' }}"><a href="{{ config('app.url') }}idopontfoglalas">Időpontfoglalás</a></li>
+                            <li class="{{ Route::currentRouteName() === 'offer' ? 'active' : '' }}"><a href="{{ config('app.url') }}ajanlatkeres">Ajánlatkérés</a></li>
                         @endif
                         <li class="{{ Route::currentRouteName() === 'contact' ? 'active' : '' }}"><a href="{{ config('app.url') }}kapcsolat">Kapcsolat</a></li>
                     </ul>
                 </nav>
             </div>
-            <div class="col-lg-3">
-                @if(!request()->routeIs('appointment'))
+            <div class="col-lg-2">
+                @if(!request()->routeIs('appointment') && !request()->routeIs('offer'))
                     <div class="header__cart align-items-center justify-content-end">
                         <ul>
                             <!--<li><a href="#"><i class="fa fa-heart"></i> <span>0</span></a></li>-->

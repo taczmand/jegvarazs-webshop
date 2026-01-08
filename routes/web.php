@@ -45,6 +45,7 @@ use Illuminate\Support\Facades\Route;
 Route::get('/incognito', [PagesController::class, 'incognito']);
 
 Route::get('/idopontfoglalas', [PagesController::class, 'appointment'])->name('appointment');
+Route::get('/ajanlatkeres', [PagesController::class, 'offer'])->name('offer');
 
 Route::get('/reset-carts', [CartController::class, 'resetCarts']);
 
@@ -425,6 +426,8 @@ Route::get('/automatizacio/kuldes', [AutomatedEmailController::class, 'sendToday
     Route::get('/kapcsolat', [PagesController::class, 'contact'])->name('contact');
 
     Route::post('/idopontfoglalas', [PagesController::class, 'addAppointment'])->name('appointment.post');
+    Route::post('/ajanlatkeres', [PagesController::class, 'addOffer'])->name('offer.post');
+
     Route::get('/letoltesek', [PagesController::class, 'downloads'])->name('downloads');
     Route::get('/blog', [PagesController::class, 'blog'])->name('blog');
     Route::get('/blog/{slug}', [PagesController::class, 'blogPost'])->name('blog.post');

@@ -44,6 +44,7 @@
             <li class="{{ Route::currentRouteName() === 'blog' ? 'active' : '' }}"><a href="{{ config('app.url') }}blog">Blog</a></li>
             @if(!auth('customer')->check() || !auth('customer')->user()->is_partner)
                 <li class="{{ Route::currentRouteName() === 'appointments' ? 'active' : '' }}"><a href="{{ config('app.url') }}idopontfoglalas">Időpontfoglalás</a></li>
+                <li class="{{ Route::currentRouteName() === 'offer' ? 'active' : '' }}"><a href="{{ config('app.url') }}ajanlatkeres">Ajánlatkérés</a></li>
             @endif
             <li class="{{ Route::currentRouteName() === 'contact' ? 'active' : '' }}"><a href="{{ config('app.url') }}kapcsolat">Kapcsolat</a></li>
         </ul>

@@ -23,13 +23,13 @@
     </script>
 
 
-    <form method="POST" id="contact-form" action="{{ route('appointment.post') }}" class="w-100 p-4 bg-light rounded shadow-sm light-box mb-5">
+    <form method="POST" id="contact-form" action="{{ route('offer.post') }}" class="w-100 p-4 bg-light rounded shadow-sm light-box mb-5">
         @csrf
 
         <input type="hidden" name="recaptcha_token" id="recaptcha_token">
 
         <h4 class="mb-4 text-center">Kérem, töltse ki az adatokat</h4>
-        <p class="text-center">Időpontfoglalás</p>
+        <p class="text-center">Ajánlatkérés</p>
 
         <div class="mb-3">
             <label for="name" class="form-label">Név*</label>
@@ -62,35 +62,13 @@
         </div>
 
         <div class="mb-3">
-            <label for="appointment_type" class="form-label" style="display:block">Kérem, válasszon az alábbi felsorolásból*</label>
-            <select name="appointment_type" id="appointment_type" class="form-control" required>
-                <option value="" disabled {{ request('type') ? '' : 'selected' }}>Válasszon típust</option>
-
-                <option value="Karbantartás"
-                    {{ request('type') === 'Karbantartás' ? 'selected' : '' }}>
-                    Karbantartás
-                </option>
-
-                <option value="Felmérés"
-                    {{ request('type') === 'Felmérés' ? 'selected' : '' }}>
-                    Ingyenes helyszíni felmérés
-                </option>
-
-                <option value="Egyéb"
-                    {{ request('type') === 'Egyéb' ? 'selected' : '' }}>
-                    Egyéb
-                </option>
-            </select>
-        </div>
-
-        <div class="mb-3">
             <label for="message" class="form-label" style="display:block">Megjegyzés</label>
             <textarea name="message" id="message" class="form-control" rows="3" placeholder="Ide írja a megjegyzését..."></textarea>
         </div>
 
         <button data-sitekey="6Le1aA4sAAAAAPRyuiMD79NOT2oYekHfOdhNC6Fr"
                 data-callback='onSubmit'
-                data-action='submit' type="submit" class="g-recaptcha site-btn w-100">Foglalás elküldése</button>
+                data-action='submit' type="submit" class="g-recaptcha site-btn w-100">Ajánlatkérés elküldése</button>
     </form>
 
 

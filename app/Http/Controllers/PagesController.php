@@ -84,6 +84,11 @@ class PagesController extends Controller
         return view('pages.appointment');
     }
 
+    public function offer() {
+
+        return view('pages.offer');
+    }
+
     public function product() {
 
         $product = Product::where('slug', $slug)->firstOrFail();
@@ -157,6 +162,56 @@ class PagesController extends Controller
         }
 
         return redirect()->back()->with('success', 'Az időpontfoglalás sikeresen elküldve!');
+    }
+
+    public function addOffer(Request $request) {
+        $token = $request->input('g-recaptcha-response');
+
+        $response = Http::asForm()->post(
+            'https://www.google.com/recaptcha/api/siteverify',
+            [
+                'secret'   => '6Le1aA4sAAAAAPQCX01qczEUwunjqGc_tTx_SNKa',
+                'response' => $token,
+                'remoteip' => $request->ip(),
+            ]
+        );
+
+        $data = $response->json();
+
+        if (!($data['success'] ?? false) || ($data['score'] ?? 0) < 0.5) {
+            return response()->json([
+                'result' => 'error',
+                'error_message' => "Nem sikerült az űrlap elküldése, kérem próbálja újra. (reCAPTCHA hiba vagy BOT)"
+            ]);
+        }
+
+        // Validáció
+        $request->validate([
+            'name'  => 'required|string|max:255',
+            'email' => 'required|email|max:255',
+            'phone' => 'required|string|max:20',
+        ]);
+
+        try {
+
+            Lead::create([
+                'lead_id' => Str::uuid(),
+                'form_id' => '1',
+                'form_name' => 'Weboldalról ajánlatkérés',
+                'full_name' => $request->name,
+                'email' => $request->email,
+                'phone' => $request->phone,
+                'city' => $request->city,
+                'status' => 'Új',
+                'comment' => $request->message,
+                'data' => json_encode(array("field_data" =>  null))
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json(['result' => 'error', 'error_message' => $e->getMessage()], 200);
+        }
+
+        return redirect()->back()->with('success', 'Az ajánlatkérés sikeresen elküldve!');
     }
 
     public function search(Request $request) {
