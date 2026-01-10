@@ -66,6 +66,7 @@ Route::get('/automatizacio/kuldes', [AutomatedEmailController::class, 'sendToday
 
         Route::middleware(['admin.auth'])->group(function () {
             Route::get('contract/{id}/pdf', [ContractController::class, 'getPdf'])->name('contract.pdf');
+            Route::post('contract/preview', [ContractController::class, 'previewPdf'])->name('contract.preview');
             /* Dashboard */
 
             Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');

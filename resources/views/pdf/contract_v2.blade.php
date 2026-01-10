@@ -161,6 +161,11 @@
             font-size: 0.9em;
         }
 
+        .page-break {
+            page-break-before: always;
+        }
+
+
     </style>
 </head>
 <body>
@@ -219,7 +224,7 @@
 
     <div class="pont">
         @php
-            $total_gross = $contract['data']['price'] ?? null;
+            $total_gross = $contract['data']['price'] ?? 0;
             if (is_numeric($total_gross)) {
                 $teljes_vetelar_formazva = number_format($total_gross, 0, ',', ' ');
             } else {
@@ -247,7 +252,7 @@
 
             $due_date = '…………év …………….hónap …………..nap';
 
-            $deposit_amount = $contract['data']['deposit_amount'] ?? null;
+            $deposit_amount = $contract['data']['deposit_amount'] ?? 0;
 
             if ($contract['data']['deposit_due_date']) {
                 $carbon = \Carbon\Carbon::parse($contract['data']['deposit_due_date']);
@@ -410,7 +415,7 @@
     <div>Kivitelező</div>
 </div>
 
-<div class="section">
+<div class="section page-break">
     <h2>Nyilatkozat foglaló megfizetéséről</h2>
     <p>Mint kivitelező felelősségem teljes tudatában nyilatkozom, hogy az általam elvállalt munka ellenértéke :
         <b style="display: inline-block; border-bottom: 1px dotted #000;">{!! $teljes_vetelar_formazva !!}</b> Ft, melyből </p>

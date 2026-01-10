@@ -470,9 +470,6 @@ class ContractController extends Controller
             'total_gross_text' => AmountToText::convert($totalGross),
             'signature_path' => $signatureName ? storage_path("app/private/signatures/{$signatureName}") : null
         ];
-        //dd($pdf_data['products']);
-
-        \Log::info($pdf_data);
 
         // PDF generálása
         $pdf = Pdf::loadView('pdf.contract_'.$contract->version, $pdf_data);
@@ -512,5 +509,54 @@ class ContractController extends Controller
         ], 200);
     }
 
+    public function previewPdf(Request $request) {
+
+        $contract = array(
+            'version' => $request->input('contract_version'),
+            'name' => $request->input('contact_name'),
+            'country' => $request->input('contact_country'),
+            'zip_code' => $request->input('contact_zip_code'),
+            'city' => $request->input('contact_city'),
+            'address_line' => $request->input('contact_address_line'),
+            'installation_date' => $request->input('installation_date'),
+            'phone' => $request->input('contact_phone'),
+            'email' => $request->input('contact_email'),
+            'mothers_name' => $request->input('mothers_name') ?? null,
+            'place_of_birth' => $request->input('place_of_birth') ?? null,
+            'date_of_birth' => $request->input('date_of_birth') ?? null,
+            'id_number' => $request->input('id_number'),
+            'data' => $request->input('contract_data', []),
+            'created_by' => auth('admin')->id()
+        );
+
+        $products = [];
+
+        foreach ($request->input('products') as $productId => $data) {
+            if (!isset($data['selected'])) {
+                continue;
+            }
+
+            $products[] = [
+                'title' => Product::findOrFail($productId)->title ?? "N/A",
+                'gross_price' => $data['gross_price'],
+                'product_qty' => $data['product_qty']
+            ];
+        }
+
+        $totalGross = collect($products)->sum(fn($item) => $item['gross_price'] * $item['product_qty']);
+
+        $pdf_data = [
+            'contract' => $contract,
+            'products' => $products,
+            'total_gross' => $totalGross,
+            'total_gross_text' => AmountToText::convert($totalGross),
+            'data' => $contract['data'],
+        ];
+
+        // PDF generálása előnézetre
+        $pdf = Pdf::loadView('pdf.contract_'.$contract['version'], $pdf_data);
+        return $pdf->stream('contract.pdf');
+
+    }
 
 }

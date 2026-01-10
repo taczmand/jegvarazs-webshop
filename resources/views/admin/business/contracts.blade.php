@@ -68,6 +68,7 @@
     <div class="modal fade" id="adminModal" tabindex="-1" aria-labelledby="adminModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-xl">
             <form id="adminModalForm" action="" method="POST" enctype="multipart/form-data">
+                @csrf
                 <input type="hidden" name="contract_id" id="contract_id">
                 <div class="modal-content">
                     <div class="modal-header">
@@ -215,7 +216,7 @@
                                 </div>
 
                                 <img id="show_signature" src="" class="d-none" style="max-width: 300px">
-
+                                <a href="#" id="preview_contract" target="_blank" class="btn btn-info d-none">Előnézet</a>
                                 <a href="#" id="clear_signature" class="btn btn-secondary">Aláírás</a>
                                 <a href="#" id="generateContractWithOutSignature" class="btn btn-primary">Aláírás nélküli szerződés generálás</a>
                                 <a href="#" id="regenarate" class="btn btn-secondary">Újragenerálás új aláírás nélkül</a>
@@ -447,6 +448,7 @@
                     $('#show_signature').removeClass('d-none');
                 }
                 $('#clear_signature').addClass('d-none');
+                $('#preview_contract').addClass('d-none');
                 $('#regenarate').addClass('d-none');
                 $('#signature_area').addClass('d-none');
 
@@ -529,6 +531,7 @@
 
                     $('#generateContract').removeClass('d-none');
                     $('#clear_signature').removeClass('d-none');
+                    $('#preview_contract').removeClass('d-none');
                     $('#generateContractWithOutSignature').removeClass('d-none');
                     $('#regenarate').addClass('d-none');
                     $('#contract_pdf_link').addClass('d-none').removeAttr('href');
@@ -564,6 +567,7 @@
 
                     $('#show_signature').addClass('d-none');
                     $('#clear_signature').removeClass('d-none');
+                    $('#preview_contract').removeClass('d-none');
                     $('#signature_area').removeClass('d-none');
                     $('#contract_version').prop('disabled', false);
                     $('#contract_version').val(contract.version);
@@ -1030,6 +1034,18 @@
                 } catch (error) {
                     showToast(error.message || 'Hiba történt a szerződés törlésekor', 'danger');
                 }
+            });
+
+            document.getElementById('preview_contract').addEventListener('click', function (e) {
+                e.preventDefault();
+
+                document.getElementById('signature-input').value = signaturePad.toDataURL();
+
+                const form = document.getElementById('adminModalForm');
+                form.action = "{{ route('admin.contract.preview') }}";
+                form.method = "POST";
+                form.target = "_blank";
+                form.submit();
             });
 
 
