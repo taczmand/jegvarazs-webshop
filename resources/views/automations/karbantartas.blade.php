@@ -85,8 +85,8 @@
         ]) }}">
             Időpontfoglalás most
         </a>
-        <p>Vagy telefonon az alábbi telefonszámon :</p>
-        <a href="tel:+36 20 433 1949">&#128222; +36 20 433 1949</a>
+        <p>Vagy telefonon az alábbi telefonszámon:</p>
+        <a href="tel:+36204331949">&#128222; +36 20 433 1949</a>
 
     </div>
 
