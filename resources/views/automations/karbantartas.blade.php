@@ -86,8 +86,8 @@
             Időpontfoglalás most
         </a>
         <p>Vagy telefonon az alábbi telefonszámon:</p>
-        <a href="tel:+36 (20) 433-1949">+36 (20) 433-1949</a>
-
+        <p><strong>+36 20 433 1949</strong></p>
+        <a class="email-link" href="tel:36204331949">Hívás indítása</a>
     </div>
 
     <p>
