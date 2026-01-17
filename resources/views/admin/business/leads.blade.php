@@ -325,7 +325,7 @@
 
             $('#call_phone_number').on('click', function (e) {
                 e.preventDefault(); // ne csináljon mást, pl. ha gomb/link
-                let phone_number = $('#leader_phone').val().replace(/\s+/g, ''); // szóközök eltávolítása
+                let phone_number = $('#leader_phone').text().replace(/\s+/g, ''); // szóközök eltávolítása
 
                 if (phone_number) {
                     window.location.href = 'tel:' + phone_number;
