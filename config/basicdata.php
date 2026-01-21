@@ -37,4 +37,9 @@ return [
     'items_per_page' => '10',
     'maintenance_mode' => 'off',
     'maintenance_message' => 'A weboldal karbantartás alatt áll. Kérjük, látogasson vissza később.',
+    'facebook_verify_token' => 'your-secret-token',
+    'facebook_app_id' => 'xxxxxxxxxxxxxxx',
+    'facebook_app_secret' => 'xxxxxxxxxxxxxxx',
+    'facebook_page_token' => 'EAAB........',
+    'facebook_page_id' => 'xxxxxxxxxxxxxxx',
 ];

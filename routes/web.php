@@ -52,6 +52,21 @@ Route::get('/reset-carts', [CartController::class, 'resetCarts']);
 Route::get('/facebook/webhook', [FacebookWebhookController::class, 'verify']);
 Route::post('/facebook/webhook', [FacebookWebhookController::class, 'handle']);
 
+Route::get('/facebook/refresh-token', function () {
+    abort_unless(
+        request('key') === env('FB_REFRESH_KEY'),
+        403
+    );
+
+    Artisan::call('facebook:refresh-token');
+
+    return response()->json([
+        'status' => 'ok',
+        'output' => Artisan::output(),
+    ]);
+});
+
+
 Route::get('/automatizacio/kuldes', [AutomatedEmailController::class, 'sendTodayEmails'])->name('automated-emails.send-today-emails');
 
 //Route::get('workauto', [AutomatedEmailController::class, 'workAuto'])->name('workauto'); // ideiglenes kellhet

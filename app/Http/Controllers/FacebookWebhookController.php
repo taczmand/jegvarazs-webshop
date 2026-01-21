@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\BasicData;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
@@ -10,12 +11,19 @@ use Carbon\Carbon;
 
 class FacebookWebhookController extends Controller
 {
+    private $facebook_options;
+    public function __construct()
+    {
+        $this->facebook_options = BasicData::where('key', 'LIKE', 'facebook%')
+            ->pluck('value', 'key');
+
+    }
     /**
      * FB webhook verify (GET)
      */
     public function verify(Request $request)
     {
-        $verifyToken = env('FB_VERIFY_TOKEN');
+        $verifyToken = $this->facebook_options['facebook_verify_token'];
 
         if (
             $request->get('hub_mode') === 'subscribe' &&
@@ -85,12 +93,10 @@ class FacebookWebhookController extends Controller
      */
     private function getLeadDetails($leadId)
     {
-        $pageToken = env('FB_PAGE_TOKEN');
-
         $url = "https://graph.facebook.com/v19.0/$leadId";
         $response = Http::get($url, [
             'fields' => 'created_time,field_data,ad_id,adset_id,campaign_id',
-            'access_token' => $pageToken,
+            'access_token' => $this->facebook_options['facebook_page_token'],
         ]);
 
         if ($response->failed()) {
@@ -121,11 +127,9 @@ class FacebookWebhookController extends Controller
      */
     private function getFormName($formId)
     {
-        $pageToken = env('FB_PAGE_TOKEN');
-
         $response = Http::get("https://graph.facebook.com/v19.0/$formId", [
             'fields' => 'name',
-            'access_token' => $pageToken,
+            'access_token' => $this->facebook_page_token,
         ]);
 
         if ($response->successful()) {
