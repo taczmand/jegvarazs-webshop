@@ -129,7 +129,7 @@ class FacebookWebhookController extends Controller
     {
         $response = Http::get("https://graph.facebook.com/v19.0/$formId", [
             'fields' => 'name',
-            'access_token' => $this->facebook_page_token,
+            'access_token' => $this->facebook_options['facebook_page_token'],
         ]);
 
         if ($response->successful()) {
