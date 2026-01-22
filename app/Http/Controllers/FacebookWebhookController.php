@@ -113,7 +113,7 @@ class FacebookWebhookController extends Controller
         if (!empty($leadData['campaign_id'])) {
             $campaignResponse = Http::get("https://graph.facebook.com/v19.0/{$leadData['campaign_id']}", [
                 'fields' => 'name',
-                'access_token' => $pageToken,
+                'access_token' => $this->facebook_options['facebook_page_token'],
             ]);
 
             $leadData['campaign_name'] = $campaignResponse->json()['name'] ?? null;
