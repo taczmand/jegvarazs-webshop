@@ -100,6 +100,7 @@ class PermissionSeeder extends Seeder
             ['id' => 88, 'name' => 'create-automated-email', 'label' => 'E-mail automatizáció létrehozása', 'group' => 'Ügyviteli folyamatok'],
             ['id' => 89, 'name' => 'view-contacts', 'label' => 'Kapcsolatok megtekintése', 'group' => 'Jelentések'],
             ['id' => 90, 'name' => 'view-installations', 'label' => 'Szerelések megtekintése', 'group' => 'Jelentések'],
+            ['id' => 91, 'name' => 'view-sensor-reports', 'label' => 'Szenzor riportok megtekintése', 'group' => 'Jelentések'],
 
         ];
 

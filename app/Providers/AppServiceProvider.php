@@ -6,8 +6,11 @@ use App\Models\BasicData;
 use App\Models\BasicMedia;
 use App\Models\Category;
 use App\Models\Regulation;
+use App\Models\SensorEvent;
 use Illuminate\Pagination\Paginator;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
@@ -38,6 +41,20 @@ class AppServiceProvider extends ServiceProvider
         Paginator::useBootstrap();
 
         View::share('basicmedia', BasicMedia::all()->pluck('file_path', 'key')->toArray());
+
+        if (request()->is('admin/*')) {
+            $sensorDeviceIds = [];
+
+            $sensorDeviceIds = SensorEvent::query()
+                ->select('device_id')
+                ->whereNotNull('device_id')
+                ->distinct()
+                ->orderBy('device_id')
+                ->pluck('device_id')
+                ->all();
+
+            View::share('sensorDeviceIds', $sensorDeviceIds);
+        }
 
         if (!request()->is('admin/*')) {
             View::share('categories', Category::with([

@@ -170,6 +170,25 @@
         </div>
     </li>
 
+    @if(auth('admin')->user() && auth('admin')->user()->can('view-sensor-reports'))
+        <li class="nav-item">
+            <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseSensorAnalytics" aria-expanded="false">
+                <i class="fa-solid fa-microchip"></i>
+                <span>Szenzorok</span>
+            </a>
+            <div id="collapseSensorAnalytics" class="collapse" data-bs-parent="#accordionSidebar">
+                <div class="bg-white py-2 collapse-inner rounded">
+                    <a class="collapse-item" href="{{ route('admin.stats.sensors') }}">Összes eszköz</a>
+                    @if(isset($sensorDeviceIds) && count($sensorDeviceIds) > 0)
+                        @foreach($sensorDeviceIds as $deviceId)
+                            <a class="collapse-item" href="{{ route('admin.stats.sensors.device', ['deviceId' => $deviceId]) }}">{{ $deviceId }}</a>
+                        @endforeach
+                    @endif
+                </div>
+            </div>
+        </li>
+    @endif
+
     <li class="nav-item">
         <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseSystemAnalytics" aria-expanded="false">
             <i class="fa-solid fa-gear"></i>

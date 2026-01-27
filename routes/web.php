@@ -25,6 +25,7 @@ use App\Http\Controllers\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Admin\RegulationController;
 use App\Http\Controllers\Admin\ShippingMethodController;
 use App\Http\Controllers\Admin\StatController;
+use App\Http\Controllers\Admin\SensorReportController;
 use App\Http\Controllers\Admin\StockStatusesController;
 use App\Http\Controllers\Admin\TagController;
 use App\Http\Controllers\Admin\TaxCategoryController;
@@ -181,6 +182,9 @@ Route::get('/automatizacio/kuldes', [AutomatedEmailController::class, 'sendToday
             Route::get('/statisztika/kapcsolatok/data', [StatController::class, 'contactsData'])->name('stats.contacts.data');
             Route::get('/statisztika/szerelesek', [StatController::class, 'installations'])->name('stats.installations');
             Route::get('/statisztika/szerelesek/data', [StatController::class, 'installationsData'])->name('stats.installations.data');
+
+            Route::get('/statisztika/szenzorok', [SensorReportController::class, 'index'])->name('stats.sensors');
+            Route::get('/statisztika/szenzorok/{deviceId}', [SensorReportController::class, 'show'])->name('stats.sensors.device');
 
 
             // Gyártók
