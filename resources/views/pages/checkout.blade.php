@@ -290,7 +290,9 @@
                                                 <p>Ország<span>*</span></p>
                                                 <select name="shipping_country" class="form-control w-100">
                                                     @foreach(config('countries') as $code => $name)
-                                                        <option value="{{ $code }}" {{ old('shipping_country') === $code ? 'selected' : '' }}>{{ $name }}</option>
+                                                        @if($code === 'HU')
+                                                            <option value="{{ $code }}" {{ old('shipping_country') === $code ? 'selected' : '' }}>{{ $name }}</option>
+                                                        @endif
                                                     @endforeach
                                                 </select>
                                             </div>

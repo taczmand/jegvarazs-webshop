@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('email')->nullable()->after('campaign_name');
             $table->string('phone')->nullable()->after('email');
             $table->string('city')->nullable()->after('phone');
-            $table->enum('status', ['new', 'contacted', 'converted'])->nullable()->after('city');
+            $table->enum('status', ['Új','Nem vette fel','Csak érdeklődött','Felmérés','Átgondolja','Nem érdekli','Túl messze van'])->nullable()->after('city');
             $table->string('viewed_by')->nullable()->after('status');
             $table->dateTime('viewed_at')->nullable()->after('viewed_by');
             $table->text('comment')->nullable()->after('viewed_at');

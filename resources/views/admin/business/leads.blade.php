@@ -51,6 +51,7 @@
                             <option value="Felmérés">Felmérés</option>
                             <option value="Átgondolja">Átgondolja</option>
                             <option value="Nem érdekli">Nem érdekli</option>
+                            <option value="Túl messze van">Túl messze van</option>
                         </select>
                     </div>
                 </div>
@@ -125,6 +126,7 @@
                                 <option value="Felmérés">Felmérés</option>
                                 <option value="Átgondolja">Átgondolja</option>
                                 <option value="Nem érdekli">Nem érdekli</option>
+                                <option value="Túl messze van">Túl messze van</option>
                             </select>
                         </div>
                         <div class="mb-3">

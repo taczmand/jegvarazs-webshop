@@ -238,9 +238,11 @@
                                 <div class="table-cell" data-label="Ország">
                                     <select name="shipping_addresses[{{ $shippingAddressItem->id }}][shipping_country]" class="form-control">
                                         @foreach(config('countries') as $code => $name)
-                                            <option value="{{ $code }}" {{ $shippingAddressItem->country === $code ? 'selected' : '' }}>
-                                                {{ $name }}
-                                            </option>
+                                            @if($code === 'HU')
+                                                <option value="{{ $code }}" {{ $shippingAddressItem->country === $code ? 'selected' : '' }}>
+                                                    {{ $name }}
+                                                </option>
+                                            @endif
                                         @endforeach
                                     </select>
                                 </div>
