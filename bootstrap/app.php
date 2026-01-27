@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\AdminAuth;
+use App\Http\Middleware\ApiKeyAuth;
 use App\Http\Middleware\CustomerAuth;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -16,6 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->alias([
             'admin.auth' => AdminAuth::class,
+            'api.key' => ApiKeyAuth::class,
             'customer.auth' => CustomerAuth::class,
         ]);
         // CSRF kivétel az adott route-okhoz
