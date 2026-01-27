@@ -49,8 +49,22 @@
                                     @php
                                         $valid = checkdate($m, $day, $year);
                                         $c = $valid ? ($counts[$m][$day] ?? 0) : null;
+
+                                        $bucket = ($valid && $c !== null) ? (int) floor($c / 10) : 0;
+                                        $bucket = min($bucket, 9);
+
+                                        $bgClasses = [
+                                            0 => '',
+                                            1 => 'bg-primary bg-opacity-10',
+                                            2 => 'bg-primary bg-opacity-25',
+                                            3 => 'bg-primary bg-opacity-50',
+                                            4 => 'bg-primary bg-opacity-75',
+                                        ];
+
+                                        $bgClass = $bgClasses[$bucket] ?? 'bg-primary';
+                                        $textClass = $bucket >= 4 ? 'text-white' : '';
                                     @endphp
-                                    <td class="text-center" @if(!$valid) style="background-color: #f8f9fc" @endif>
+                                    <td class="text-center {{ $bgClass }} {{ $textClass }}" @if(!$valid) style="background-color: #f8f9fc" @endif>
                                         @if($valid)
                                             {{ $c }}
                                         @endif
