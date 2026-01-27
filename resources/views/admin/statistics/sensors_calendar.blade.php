@@ -64,9 +64,11 @@
                                         $bgClass = $bgClasses[$bucket] ?? 'bg-primary';
                                         $textClass = $bucket >= 4 ? 'text-white' : '';
                                     @endphp
-                                    <td class="text-center {{ $bgClass }} {{ $textClass }}" @if(!$valid) style="background-color: #f8f9fc" @endif>
+                                    <td class="text-center {{ $bgClass }} {{ $textClass }}" style="min-height: 28px; line-height: 28px; @if(!$valid) background-color: #f8f9fc; @endif">
                                         @if($valid)
-                                            {{ $c }}
+                                            @if($c > 0)
+                                                {{ $c }}
+                                            @endif
                                         @endif
                                     </td>
                                 @endfor
