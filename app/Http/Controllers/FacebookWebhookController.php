@@ -134,6 +134,11 @@ class FacebookWebhookController extends Controller
 
         if ($response->successful()) {
             return $response->json()['name'] ?? null;
+        } else {
+            Log::error('Failed to fetch form name', [
+                'form_id' => $formId,
+                'response' => $response->body()
+            ]);
         }
 
         return null;
