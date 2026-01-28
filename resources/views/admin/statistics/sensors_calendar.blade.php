@@ -21,6 +21,9 @@
                         @endfor
                     </select>
 
+                    <label for="threshold" class="mb-0">Küszöb</label>
+                    <input id="threshold" name="threshold" type="number" class="form-control" style="max-width: 120px" value="{{ $threshold ?? 25 }}" min="0" onchange="this.form.submit()">
+
                     <a class="btn btn-outline-secondary" href="{{ route('admin.stats.sensors') }}">Vissza</a>
                 </form>
 
@@ -30,6 +33,10 @@
                         7 => 'Júl', 8 => 'Aug', 9 => 'Sze', 10 => 'Okt', 11 => 'Nov', 12 => 'Dec'
                     ];
                 @endphp
+
+                <div class="mb-2">
+                    <strong>Foglalt napok ({{ $year }}):</strong> {{ $yearTotal ?? 0 }}
+                </div>
 
                 <div class="table-responsive">
                     <table class="table table-bordered table-sm">
@@ -50,6 +57,8 @@
                                         $valid = checkdate($m, $day, $year);
                                         $c = $valid ? ($counts[$m][$day] ?? 0) : null;
 
+                                        $isOverThreshold = $valid && $c !== null && $c >= ($threshold ?? 25);
+
                                         $bucket = ($valid && $c !== null) ? (int) floor($c / 10) : 0;
                                         $bucket = min($bucket, 9);
 
@@ -64,6 +73,11 @@
                                         $bgClass = $bgClasses[$bucket] ?? 'bg-primary';
                                         $textClass = $bucket >= 4 ? 'text-white' : '';
 
+                                        if ($isOverThreshold) {
+                                            $bgClass = 'bg-success';
+                                            $textClass = 'text-white';
+                                        }
+
                                         $ymd = $valid ? sprintf('%04d-%02d-%02d', $year, $m, $day) : null;
                                     @endphp
                                     <td class="text-center {{ $bgClass }} {{ $textClass }} sensor-calendar-cell" @if($valid) role="button" tabindex="0" data-device-id="{{ $deviceId }}" data-day="{{ $ymd }}" @endif style="min-height: 28px; line-height: 28px; @if(!$valid) background-color: #f8f9fc; @endif">
@@ -77,6 +91,14 @@
                             </tr>
                         @endfor
                         </tbody>
+                        <tfoot>
+                        <tr>
+                            <th class="text-center">Foglalt napok összesen</th>
+                            @for($m = 1; $m <= 12; $m++)
+                                <th class="text-center">{{ $monthTotals[$m] ?? 0 }}</th>
+                            @endfor
+                        </tr>
+                        </tfoot>
                     </table>
                 </div>
 

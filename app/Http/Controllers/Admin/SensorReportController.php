@@ -33,6 +33,11 @@ class SensorReportController extends Controller
 
         $year = (int) ($request->query('year') ?? now()->year);
 
+        $threshold = (int) ($request->query('threshold') ?? 25);
+        if ($threshold < 0) {
+            $threshold = 0;
+        }
+
         $dateExpr = 'COALESCE(occurred_at, created_at)';
 
         $minYear = SensorEvent::query()
@@ -73,12 +78,27 @@ class SensorReportController extends Controller
             $counts[(int) $row->m][(int) $row->d] = (int) $row->c;
         }
 
+        $monthTotals = array_fill(1, 12, 0);
+        $yearTotal = 0;
+        foreach ($rows as $row) {
+            $m = (int) $row->m;
+            $c = (int) $row->c;
+
+            if ($c >= $threshold) {
+                $monthTotals[$m] = ($monthTotals[$m] ?? 0) + 1;
+                $yearTotal += 1;
+            }
+        }
+
         return view('admin.statistics.sensors_calendar', [
             'deviceId' => $deviceId,
             'year' => $year,
             'minYear' => $minYear,
             'maxYear' => $maxYear,
             'counts' => $counts,
+            'threshold' => $threshold,
+            'monthTotals' => $monthTotals,
+            'yearTotal' => $yearTotal,
         ]);
     }
 
