@@ -101,6 +101,7 @@ class PermissionSeeder extends Seeder
             ['id' => 89, 'name' => 'view-contacts', 'label' => 'Kapcsolatok megtekintése', 'group' => 'Jelentések'],
             ['id' => 90, 'name' => 'view-installations', 'label' => 'Szerelések megtekintése', 'group' => 'Jelentések'],
             ['id' => 91, 'name' => 'view-sensor-reports', 'label' => 'Szenzor riportok megtekintése', 'group' => 'Jelentések'],
+            ['id' => 92, 'name' => 'view-laravel-logs', 'label' => 'Laravel logok', 'group' => 'Jelentések'],
 
         ];
 

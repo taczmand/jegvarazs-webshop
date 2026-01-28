@@ -197,6 +197,9 @@
         <div id="collapseSystemAnalytics" class="collapse" data-bs-parent="#accordionSidebar">
             <div class="bg-white py-2 collapse-inner rounded">
                 <a class="collapse-item" href="{{ route('admin.stats.admin_logs') }}">Admin tevékenységek</a>
+                @if(auth('admin')->user() && auth('admin')->user()->can('view-admin-logs'))
+                    <a class="collapse-item" href="{{ route('admin.stats.laravel_logs') }}">Laravel logok</a>
+                @endif
             </div>
         </div>
     </li>

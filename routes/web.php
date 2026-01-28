@@ -26,6 +26,7 @@ use App\Http\Controllers\Admin\RegulationController;
 use App\Http\Controllers\Admin\ShippingMethodController;
 use App\Http\Controllers\Admin\StatController;
 use App\Http\Controllers\Admin\SensorReportController;
+use App\Http\Controllers\Admin\LaravelLogController;
 use App\Http\Controllers\Admin\StockStatusesController;
 use App\Http\Controllers\Admin\TagController;
 use App\Http\Controllers\Admin\TaxCategoryController;
@@ -176,6 +177,7 @@ Route::get('/automatizacio/kuldes', [AutomatedEmailController::class, 'sendToday
             Route::get('/statisztika/megnezett-termekek/data', [StatController::class, 'watchedProductsData'])->name('stats.watched_products.data');
             Route::get('/statisztika/admin-tevekenysegek', [StatController::class, 'adminLogs'])->name('stats.admin_logs');
             Route::get('/statisztika/admin-tevekenysegek/data', [StatController::class, 'adminLogsData'])->name('stats.admin_logs.data');
+            Route::get('/statisztika/laravel-logok', [LaravelLogController::class, 'index'])->name('stats.laravel_logs');
             Route::get('/statisztika/vasarolt-termekek', [StatController::class, 'purchasedProducts'])->name('stats.purchased_products');
             Route::get('/statisztika/vasarolt-termekek/data', [StatController::class, 'purchasedProductsData'])->name('stats.purchased_products.data');
             Route::get('/statisztika/kapcsolatok', [StatController::class, 'contacts'])->name('stats.contacts');
