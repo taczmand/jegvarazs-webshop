@@ -40,3 +40,34 @@ window.sendViewRequest = function (model, id) {
         });
 
 }
+
+if (window.jQuery) {
+    const applyEllipsisTooltips = (tableEl) => {
+        if (!tableEl) return;
+
+        const cells = tableEl.querySelectorAll('tbody td');
+        cells.forEach((cell) => {
+            const text = (cell.textContent || '').trim();
+            if (!text) {
+                cell.removeAttribute('title');
+                return;
+            }
+
+            const isOverflowing = cell.scrollWidth > cell.clientWidth;
+            if (isOverflowing) {
+                cell.setAttribute('title', text);
+            } else {
+                cell.removeAttribute('title');
+            }
+        });
+    };
+
+    window.jQuery(document).on('draw.dt', function (e, settings) {
+        const tableEl = settings && settings.nTable ? settings.nTable : null;
+        applyEllipsisTooltips(tableEl);
+    });
+
+    window.jQuery(function () {
+        document.querySelectorAll('table.dataTable').forEach(t => applyEllipsisTooltips(t));
+    });
+}
