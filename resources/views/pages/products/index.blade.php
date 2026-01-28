@@ -237,7 +237,7 @@
 
                         </div>
                         <div class="row">
-                            @if($category->description)
+                            @if(isset($category) && $category && $category->description)
                                 <div class="col-12">
                                     <div class="product__details__text">
                                         <p>{!! $category->description !!}</p>

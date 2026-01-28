@@ -147,6 +147,7 @@ class ProductController extends Controller
                 'page_title' => 'Termékek',
                 'nav' => $nav
             ],
+            'category' => null,
             'tags' => $tags,
             'brands' => $brands,
             'attributes' => $attributes,
