@@ -185,6 +185,7 @@ Route::get('/automatizacio/kuldes', [AutomatedEmailController::class, 'sendToday
 
             Route::get('/statisztika/szenzorok', [SensorReportController::class, 'index'])->name('stats.sensors');
             Route::get('/statisztika/szenzorok/{deviceId}', [SensorReportController::class, 'show'])->name('stats.sensors.device');
+            Route::get('/statisztika/szenzorok/{deviceId}/day', [SensorReportController::class, 'day'])->name('stats.sensors.device.day');
 
 
             // Gyártók

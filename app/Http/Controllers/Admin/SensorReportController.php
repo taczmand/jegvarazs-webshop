@@ -81,4 +81,51 @@ class SensorReportController extends Controller
             'counts' => $counts,
         ]);
     }
+
+    public function day(string $deviceId, Request $request)
+    {
+        abort_unless(auth('admin')->user() && auth('admin')->user()->can('view-sensor-reports'), 403);
+
+        $day = (string) $request->query('day', '');
+        try {
+            $date = Carbon::createFromFormat('Y-m-d', $day);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'message' => 'Invalid day format. Expected Y-m-d.',
+            ], 422);
+        }
+
+        $dateExpr = 'COALESCE(occurred_at, created_at)';
+        $from = $date->copy()->startOfDay();
+        $to = $date->copy()->endOfDay();
+
+        $events = SensorEvent::query()
+            ->where('device_id', $deviceId)
+            ->whereBetween(DB::raw($dateExpr), [$from, $to])
+            ->orderBy(DB::raw($dateExpr))
+            ->get([
+                'id',
+                'occurred_at',
+                'created_at',
+            ]);
+
+        $payload = $events->map(function (SensorEvent $event) use ($from) {
+            $ts = $event->occurred_at ?? $event->created_at;
+
+            $tsCarbon = $ts ? Carbon::parse($ts) : null;
+
+            return [
+                'id' => $event->id,
+                'occurred_at' => $tsCarbon ? $tsCarbon->toIso8601String() : null,
+                'seconds' => $tsCarbon ? $from->diffInSeconds($tsCarbon) : null,
+            ];
+        })->values();
+
+        return response()->json([
+            'device_id' => $deviceId,
+            'day' => $date->format('Y-m-d'),
+            'count' => $payload->count(),
+            'events' => $payload,
+        ]);
+    }
 }
