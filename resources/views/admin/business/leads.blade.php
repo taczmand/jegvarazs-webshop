@@ -203,7 +203,7 @@
                 $('#leader_phone').text(lead_data.phone || 'Nem adott meg telefon');
                 $('#leader_city').text(lead_data.city || 'Nem adott meg várost');
                 $('#leader_form').text(lead_data.form_name || 'Nincs form név');
-                $('#leader_campaign').val(lead_data.campaign_name || 'Nem kampány része');
+                $('#leader_campaign').text(lead_data.campaign_name || 'Nem kampány része');
 
                 $('#lead_status').val(lead_data.status);
                 $('#lead_comment').val(lead_data.comment || '');
