@@ -116,6 +116,7 @@
                                         <div class="col-md-4">
                                             <label class="form-label">Cím*</label>
                                             <input type="text" class="form-control" name="contact_address_line" id="contact_address_line">
+                                            <div id="street_suggestions" class="list-group position-absolute w-100" style="z-index: 1000;"></div>
                                         </div>
                                         <div class="col-md-6">
                                             <label class="form-label">Telefonszám</label>
@@ -995,6 +996,55 @@
                 $('#contact_city').val($(this).text().trim());
                 $('#zip_suggestions').hide();
                 loadDefaultData();
+            });
+
+            let streetDebounceTimeout;
+
+            $('#contact_address_line').on('input', function () {
+                clearTimeout(streetDebounceTimeout);
+
+                streetDebounceTimeout = setTimeout(() => {
+                    const city = ($('#contact_city').val() || '').trim();
+                    const q = ($('#contact_address_line').val() || '').trim();
+
+                    const $suggestions = $('#street_suggestions');
+                    $suggestions.empty();
+
+                    if (!city || q.length < 2) {
+                        $suggestions.hide();
+                        return;
+                    }
+
+                    $.ajax({
+                        url: window.appConfig.APP_URL + 'api/streets/search?city=' + encodeURIComponent(city) + '&q=' + encodeURIComponent(q),
+                        type: 'GET',
+                        success: function (data) {
+                            $suggestions.empty();
+
+                            if (Array.isArray(data) && data.length > 0) {
+                                data.forEach(function (name) {
+                                    $suggestions.append(`
+                                        <button type="button" class="list-group-item list-group-item-action street-item">
+                                            ${name}
+                                        </button>
+                                    `);
+                                });
+
+                                $suggestions.show();
+                            } else {
+                                $suggestions.hide();
+                            }
+                        },
+                        error: function () {
+                            $suggestions.hide();
+                        }
+                    });
+                }, 300);
+            });
+
+            $('#street_suggestions').on('click', 'button', function () {
+                $('#contact_address_line').val($(this).text().trim());
+                $('#street_suggestions').hide();
             });
 
             // Form kiörítése és modal cím beállítása
