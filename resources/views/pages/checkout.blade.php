@@ -33,6 +33,22 @@
         </div>
     @endif
 
+    @if(!empty($price_changes))
+        <div class="alert alert-warning">
+            <div><strong>Árváltozás történt a kosaradban.</strong> A pénztár megnyitása óta az alábbi termék(ek) ára megváltozott:</div>
+            <ul class="mt-2 mb-0">
+                @foreach($price_changes as $change)
+                    <li>
+                        {{ $change['title'] }}:
+                        {{ number_format($change['old_price'], 0, ',', ' ') }} Ft
+                        →
+                        {{ number_format($change['new_price'], 0, ',', ' ') }} Ft
+                    </li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
     @php
         $total_item_amount = 0;
         $subtotal = 0;

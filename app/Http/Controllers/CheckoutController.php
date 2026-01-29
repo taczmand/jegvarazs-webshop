@@ -17,6 +17,34 @@ class CheckoutController extends Controller
 
         $cart_items = $customer->cart()->with('items.product')->first();
 
+        $snapshot = session()->get('cart_price_snapshot', []);
+        $priceChanges = [];
+
+        if ($cart_items && $cart_items->items) {
+            foreach ($cart_items->items as $item) {
+                if (!$item->product) {
+                    continue;
+                }
+
+                if ((int) $item->product_id === 1) {
+                    continue;
+                }
+
+                $productId = (int) $item->product_id;
+                $old = array_key_exists($productId, $snapshot) ? (float) $snapshot[$productId] : null;
+                $current = (float) $item->product->display_gross_price;
+
+                if ($old !== null && round($old, 2) !== round($current, 2)) {
+                    $priceChanges[] = [
+                        'product_id' => $productId,
+                        'title' => $item->product->title,
+                        'old_price' => $old,
+                        'new_price' => $current,
+                    ];
+                }
+            }
+        }
+
         $gls_fee = Product::find(1)?->gross_price ?? 0; // GLS futarszolgaltatas termek
 
         return view('pages.checkout', [
@@ -26,6 +54,7 @@ class CheckoutController extends Controller
             'cart_items' => $cart_items,
             'company_sites' => CompanySite::all(),
             'gls_fee' => $gls_fee,
+            'price_changes' => $priceChanges,
         ]);
     }
 

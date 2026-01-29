@@ -90,6 +90,14 @@
                             <div class="tab-pane fade show active" id="basic">
                                 <input type="hidden" id="product_id" name="id">
                                 <div class="row">
+                                    <div class="col-12">
+                                        <div id="product_in_carts_wrapper" class="alert alert-warning d-none">
+                                            <div class="fw-bold mb-2">Kosárban van</div>
+                                            <div id="product_in_carts_list"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
 
                                     <div class="col-md-6">
                                         <div class="mb-3">
@@ -212,6 +220,11 @@
                 serverSide: true,
                 ajax: '{{ route('admin.products.data') }}',
                 order: [[0, 'desc']],
+                createdRow: function (row, data) {
+                    if (data && data.in_cart) {
+                        $(row).addClass('table-warning');
+                    }
+                },
                 columns: [
                     { data: 'id' },
                     { data: 'title', className: 'no-ellipsis' },
@@ -375,6 +388,21 @@
                     const assignedAttributes = Object.fromEntries(assigned_attributes.map(a => [a.id, a.pivot.value]));
                     const assigned_tags = data.original.assigned_tags;
                     const assigned_photos = data.original.product_photos;
+                    const cartOwners = data.original.cart_owners || [];
+
+                    if (cartOwners.length) {
+                        const html = cartOwners.map(function (owner) {
+                            const name = owner?.name || 'Nincs név';
+                            const email = owner?.email || 'Nincs email';
+                            const phone = owner?.phone || 'Nincs telefon';
+                            return `<div class="mb-2"><div><strong>${name}</strong></div><div class="text-muted" style="font-size: 0.9rem">${email} • ${phone}</div></div>`;
+                        }).join('');
+                        $('#product_in_carts_list').html(html);
+                        $('#product_in_carts_wrapper').removeClass('d-none');
+                    } else {
+                        $('#product_in_carts_list').empty();
+                        $('#product_in_carts_wrapper').addClass('d-none');
+                    }
 
                     // Alapadatok betöltése
                     $('#product_id').val(product.id);
@@ -703,12 +731,18 @@
                 $('#product_id').val('');
                 $('#attribute-fields').empty();
                 $('#tags-checkboxes').empty();
-                $('#productModalLabel').text(title);
+                $('#productPhotos').empty();
+                tinymce.get('description').setContent('');
+                $('#product_in_carts_list').empty();
+                $('#product_in_carts_wrapper').addClass('d-none');
 
-                // Visszakapcsolás az első tabra (Alapadatok)
-                const firstTab = new bootstrap.Tab(document.querySelector('#productTab .nav-link[data-bs-target="#basic"]'));
-                firstTab.show();
+                if(title){
+                    $('#productModalLabel').text(title);
+                }
             }
+
+            const firstTab = new bootstrap.Tab(document.querySelector('#productTab .nav-link[data-bs-target="#basic"]'));
+            firstTab.show();
         });
     </script>
 @endsection

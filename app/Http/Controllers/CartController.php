@@ -24,6 +24,19 @@ class CartController extends Controller
             }, 'items.product'])
             ->first();
 
+        $snapshot = [];
+        if ($cart && $cart->items) {
+            foreach ($cart->items as $item) {
+                if (!$item->product) {
+                    continue;
+                }
+
+                $snapshot[(int) $item->product_id] = (float) $item->product->display_gross_price;
+            }
+        }
+
+        session()->put('cart_price_snapshot', $snapshot);
+
 
         return view('pages.cart',compact('cart'));
     }

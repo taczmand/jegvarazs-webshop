@@ -4,6 +4,7 @@ namespace App\Services\Admin;
 
 use App\Models\Attribute;
 use App\Models\Brand;
+use App\Models\CartItem;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\Tag;
@@ -23,11 +24,38 @@ class ProductService
     {
         $product = Product::findOrFail($id);
 
+        $cartOwners = CartItem::query()
+            ->where('product_id', $product->id)
+            ->with(['cart.user'])
+            ->get()
+            ->map(function (CartItem $item) {
+                return $item->cart?->user;
+            })
+            ->filter()
+            ->unique('id')
+            ->values()
+            ->map(function ($customer) {
+                $name = $customer->getAttribute('name');
+                if (!$name) {
+                    $first = (string) ($customer->getAttribute('first_name') ?? '');
+                    $last = (string) ($customer->getAttribute('last_name') ?? '');
+                    $name = trim($first . ' ' . $last);
+                }
+
+                return [
+                    'id' => $customer->getAttribute('id'),
+                    'name' => $name ?: null,
+                    'email' => $customer->getAttribute('email'),
+                    'phone' => $customer->getAttribute('phone'),
+                ];
+            });
+
         return response()->json([
             'product' => $product->getAttributes(),
             'product_photos' => $product->photos()->get(),
             'assigned_tags' => $product->tags()->select('tags.id')->pluck('tags.id'), // csak hozzárendelt tag ID-k
             'assigned_attributes' => $product->attributes()->get(),  // hozzárendelt attribútumok pivot adattal (value),
+            'cart_owners' => $cartOwners,
         ]);
     }
 

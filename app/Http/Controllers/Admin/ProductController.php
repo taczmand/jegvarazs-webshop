@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ProductRequest;
+use App\Models\CartItem;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\ProductPhoto;
@@ -39,6 +40,11 @@ class ProductController extends Controller
                 'created_at',
                 'cat_id',
                 'tax_id'
+            ])
+            ->addSelect([
+                'in_cart_count' => CartItem::query()
+                    ->selectRaw('COUNT(*)')
+                    ->whereColumn('cart_items.product_id', 'products.id'),
             ]);
 
         return DataTables::of($products)
@@ -70,6 +76,9 @@ class ProductController extends Controller
             })
             ->editColumn('created_at', function ($product) {
                 return $product->created_at ? $product->created_at->format('Y-m-d H:i:s') : '';
+            })
+            ->addColumn('in_cart', function ($product) {
+                return (int) ($product->in_cart_count ?? 0) > 0;
             })
             ->addColumn('action', function ($product) {
                 $user = auth('admin')->user();
