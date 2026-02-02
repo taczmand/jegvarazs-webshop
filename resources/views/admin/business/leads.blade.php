@@ -371,6 +371,7 @@
                 $('#adminModalForm')[0].reset();
                 $('#lead_id').val('');
                 $('#adminModalLabel').text(title);
+                $('#leader_data').html('');
             }
         });
     </script>
