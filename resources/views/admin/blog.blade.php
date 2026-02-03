@@ -87,6 +87,16 @@
                         </div>
 
                         <div class="mb-3">
+                            <label for="cta_title" class="form-label">CTA gomb címe</label>
+                            <input type="text" class="form-control" id="cta_title" name="cta_title">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="cta_url" class="form-label">CTA URL</label>
+                            <input type="text" class="form-control" id="cta_url" name="cta_url">
+                        </div>
+
+                        <div class="mb-3">
                             <label for="blog_status" class="form-label">Állapot</label>
                             <select name="status" id="blog_status" class="form-select">
                                 <option value="draft">Szerkesztés alatt</option>
@@ -152,6 +162,9 @@
                 resetForm('Új blog bejegyzés létrehozása');
                 $('#empty_image_area').removeClass('d-none');
 
+                $('#cta_title').val('Érdeklődés');
+                $('#cta_url').val('{{ url('/ajanlatkeres') }}');
+
                 adminModal.show();
             });
 
@@ -167,6 +180,8 @@
                 $('#blog_id').val(blog_data.id);
                 $('#blog_title').val(blog_data.title);
                 $('#blog_status').val(blog_data.status);
+                $('#cta_title').val(blog_data.cta_title || 'Érdeklődés');
+                $('#cta_url').val(blog_data.cta_url || '{{ url('/ajanlatkeres') }}');
 
                 tinymce.get('blog_content').setContent(blog_data.content);
 
@@ -301,6 +316,9 @@
                 $('#adminModalForm')[0].reset();
                 $('#adminModalLabel').text(title);
                 $('#blog_id').val('');
+
+                $('#cta_title').val('Érdeklődés');
+                $('#cta_url').val('{{ url('/ajanlatkeres') }}');
             }
         });
     </script>

@@ -14,6 +14,8 @@ return new class extends Migration {
             $table->string('slug')->unique();
             $table->longText('content');
             $table->string('featured_image')->nullable(); // fő kép útvonala
+            $table->string('cta_title')->nullable(); // CTA gomb címe
+            $table->string('cta_url')->nullable(); // CTA gomb URL
             $table->enum('status', ['draft', 'published', 'archived'])->default('draft');
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->timestamp('created_at')->default(DB::raw('CURRENT_TIMESTAMP'));

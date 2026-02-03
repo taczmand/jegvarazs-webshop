@@ -84,6 +84,8 @@ class BlogsController extends Controller
             $request->validate([
                 'blog_title' => 'required|string|max:255',
                 'blog_content' => 'required|string',
+                'cta_title' => 'nullable|string|max:255',
+                'cta_url' => 'nullable|string|max:255',
                 'image_upload' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:10000',
             ]);
 
@@ -163,6 +165,8 @@ class BlogsController extends Controller
                 'slug' => Str::slug($request->input('blog_title')),
                 'content' => $request->input('blog_content'),
                 'featured_image' => $path,
+                'cta_title' => trim((string) $request->input('cta_title')) !== '' ? $request->input('cta_title') : 'Érdeklődés',
+                'cta_url' => trim((string) $request->input('cta_url')) !== '' ? $request->input('cta_url') : url('/ajanlatkeres'),
                 'status' => $request->input('status') ?? 'draft',
                 'user_id' => auth('admin')->id()
             ]);
@@ -192,6 +196,8 @@ class BlogsController extends Controller
             'title' => $blog->title,
             'content' => $blog->content,
             'featured_image' => $blog->featured_image,
+            'cta_title' => $blog->cta_title,
+            'cta_url' => $blog->cta_url,
             'status' => $blog->status,
         ]);
     }
@@ -218,10 +224,20 @@ class BlogsController extends Controller
         try {
             $blogpost = BlogPost::findOrFail($request->id);
 
+            $request->validate([
+                'blog_title' => 'required|string|max:255',
+                'blog_content' => 'required|string',
+                'cta_title' => 'nullable|string|max:255',
+                'cta_url' => 'nullable|string|max:255',
+                'image_upload' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:10000',
+            ]);
+
             $blogpost->update([
                 'title' => $request['blog_title'],
                 'slug' => Str::slug($request['blog_title']),
                 'content' => $request['blog_content'],
+                'cta_title' => trim((string) $request->input('cta_title')) !== '' ? $request->input('cta_title') : 'Érdeklődés',
+                'cta_url' => trim((string) $request->input('cta_url')) !== '' ? $request->input('cta_url') : url('/ajanlatkeres'),
                 'status' => $request['status'] ?? 'draft',
                 'user_id' => auth('admin')->id()
             ]);
