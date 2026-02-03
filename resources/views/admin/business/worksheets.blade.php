@@ -205,11 +205,17 @@
                                     </tr>
                                     <tr>
                                         <td>Város</td>
-                                        <td><input type="text" class="form-control" id="contact_city" name="contact_city" {{ $readonly }}></td>
+                                        <td>
+                                            <input type="text" class="form-control" id="contact_city" name="contact_city" {{ $readonly }}>
+                                            <div id="zip_suggestions" class="list-group position-absolute w-100" style="z-index: 1000;"></div>
+                                        </td>
                                     </tr>
                                     <tr>
                                         <td>Cím</td>
-                                        <td><input type="text" class="form-control" id="contact_address_line" name="contact_address_line" {{ $readonly }}></td>
+                                        <td>
+                                            <input type="text" class="form-control" id="contact_address_line" name="contact_address_line" {{ $readonly }}>
+                                            <div id="street_suggestions" class="list-group position-absolute w-100" style="z-index: 1000;"></div>
+                                        </td>
                                     </tr>
                                     <tr>
                                         <td>Telefonszám <span class="ml-3 btn btn-primary" id="call_phone_number"><i class="fa fa-phone"></i> Hívás</span></td>
@@ -506,6 +512,103 @@
             $('#work_type').change(function() {
                 const workType = $(this).val();
                 renderWorkTypeFields(workType);
+            });
+
+            let zipDebounceTimeout;
+
+            $('#contact_zip_code').on('input', function () {
+                clearTimeout(zipDebounceTimeout);
+
+                zipDebounceTimeout = setTimeout(() => {
+                    const zip = ($('#contact_zip_code').val() || '').trim();
+                    const $suggestions = $('#zip_suggestions');
+                    $suggestions.empty();
+
+                    if (!zip) {
+                        $suggestions.hide();
+                        return;
+                    }
+
+                    $.ajax({
+                        url: window.appConfig.APP_URL + 'api/postal-codes/search?zip=' + encodeURIComponent(zip),
+                        type: 'GET',
+                        success: function (data) {
+                            $suggestions.empty();
+
+                            if (Array.isArray(data) && data.length > 0) {
+                                data.forEach(function (row) {
+                                    $suggestions.append(`
+                                        <button type="button" class="list-group-item list-group-item-action city-item" data_zip="${row.zip}">
+                                            ${row.city}
+                                        </button>
+                                    `);
+                                });
+
+                                $suggestions.show();
+                            } else {
+                                $suggestions.hide();
+                            }
+                        },
+                        error: function () {
+                            $suggestions.hide();
+                        }
+                    });
+                }, 300);
+            });
+
+            $('#zip_suggestions').on('click', 'button', function () {
+                $('#contact_zip_code').val($(this).attr('data_zip'));
+                $('#contact_city').val($(this).text().trim());
+                $('#zip_suggestions').hide();
+            });
+
+            let streetDebounceTimeout;
+
+            $('#contact_address_line').on('input', function () {
+                clearTimeout(streetDebounceTimeout);
+
+                streetDebounceTimeout = setTimeout(() => {
+                    const city = ($('#contact_city').val() || '').trim();
+                    const q = ($('#contact_address_line').val() || '').trim();
+
+                    const $suggestions = $('#street_suggestions');
+                    $suggestions.empty();
+
+                    if (!city || q.length < 2) {
+                        $suggestions.hide();
+                        return;
+                    }
+
+                    $.ajax({
+                        url: window.appConfig.APP_URL + 'api/streets/search?city=' + encodeURIComponent(city) + '&q=' + encodeURIComponent(q),
+                        type: 'GET',
+                        success: function (data) {
+                            $suggestions.empty();
+
+                            if (Array.isArray(data) && data.length > 0) {
+                                data.forEach(function (name) {
+                                    $suggestions.append(`
+                                        <button type="button" class="list-group-item list-group-item-action street-item">
+                                            ${name}
+                                        </button>
+                                    `);
+                                });
+
+                                $suggestions.show();
+                            } else {
+                                $suggestions.hide();
+                            }
+                        },
+                        error: function () {
+                            $suggestions.hide();
+                        }
+                    });
+                }, 300);
+            });
+
+            $('#street_suggestions').on('click', 'button', function () {
+                $('#contact_address_line').val($(this).text().trim());
+                $('#street_suggestions').hide();
             });
 
             function renderWorkTypeFields(workType) {
@@ -1040,6 +1143,8 @@
                     $('#worksheetCertificatePhotos').empty();
                     $('#worksheetInstallPhotos').empty();
                     $('#worksheet_id').val(''); // Munkalap ID törlése
+                    $('#zip_suggestions').empty().hide();
+                    $('#street_suggestions').empty().hide();
                 }
             }
         });
