@@ -362,7 +362,7 @@
                         }
                     });
                 } catch (error) {
-                    showToast(error.message || 'Hiba történt az érdeklődő megtekintésének visszavonásakor', 'danger');
+                    showToast(error.message || 'Hiba történt az érdeklődő megtekintésének visszavonásakor!', 'danger');
                 }
 
             });
