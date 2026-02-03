@@ -118,10 +118,12 @@
                                     <div class="col-md-6 mb-3">
                                         <label for="city" class="form-label">Város*</label>
                                         <input type="text" class="form-control" id="city" name="city" required>
+                                        <div id="zip_suggestions" class="list-group position-absolute w-100" style="z-index: 1000;"></div>
                                     </div>
                                     <div class="col-md-6 mb-3">
                                         <label for="address_line" class="form-label">Cím*</label>
                                         <input type="text" class="form-control" id="address_line" name="address_line" required>
+                                        <div id="street_suggestions" class="list-group position-absolute w-100" style="z-index: 1000;"></div>
                                     </div>
 
                                     <div class="col-md-6 mb-3">
@@ -237,6 +239,103 @@
                     showToast(error, 'danger');
                 }
                 appointmentModal.show();
+            });
+
+            let zipDebounceTimeout;
+
+            $('#zip_code').on('input', function () {
+                clearTimeout(zipDebounceTimeout);
+
+                zipDebounceTimeout = setTimeout(() => {
+                    const zip = ($('#zip_code').val() || '').trim();
+                    const $suggestions = $('#zip_suggestions');
+                    $suggestions.empty();
+
+                    if (!zip) {
+                        $suggestions.hide();
+                        return;
+                    }
+
+                    $.ajax({
+                        url: window.appConfig.APP_URL + 'api/postal-codes/search?zip=' + encodeURIComponent(zip),
+                        type: 'GET',
+                        success: function (data) {
+                            $suggestions.empty();
+
+                            if (Array.isArray(data) && data.length > 0) {
+                                data.forEach(function (row) {
+                                    $suggestions.append(`
+                                        <button type="button" class="list-group-item list-group-item-action city-item" data_zip="${row.zip}">
+                                            ${row.city}
+                                        </button>
+                                    `);
+                                });
+
+                                $suggestions.show();
+                            } else {
+                                $suggestions.hide();
+                            }
+                        },
+                        error: function () {
+                            $suggestions.hide();
+                        }
+                    });
+                }, 300);
+            });
+
+            $('#zip_suggestions').on('click', 'button', function () {
+                $('#zip_code').val($(this).attr('data_zip'));
+                $('#city').val($(this).text().trim());
+                $('#zip_suggestions').hide();
+            });
+
+            let streetDebounceTimeout;
+
+            $('#address_line').on('input', function () {
+                clearTimeout(streetDebounceTimeout);
+
+                streetDebounceTimeout = setTimeout(() => {
+                    const city = ($('#city').val() || '').trim();
+                    const q = ($('#address_line').val() || '').trim();
+
+                    const $suggestions = $('#street_suggestions');
+                    $suggestions.empty();
+
+                    if (!city || q.length < 2) {
+                        $suggestions.hide();
+                        return;
+                    }
+
+                    $.ajax({
+                        url: window.appConfig.APP_URL + 'api/streets/search?city=' + encodeURIComponent(city) + '&q=' + encodeURIComponent(q),
+                        type: 'GET',
+                        success: function (data) {
+                            $suggestions.empty();
+
+                            if (Array.isArray(data) && data.length > 0) {
+                                data.forEach(function (name) {
+                                    $suggestions.append(`
+                                        <button type="button" class="list-group-item list-group-item-action street-item">
+                                            ${name}
+                                        </button>
+                                    `);
+                                });
+
+                                $suggestions.show();
+                            } else {
+                                $suggestions.hide();
+                            }
+                        },
+                        error: function () {
+                            $suggestions.hide();
+                        }
+                    });
+                }, 300);
+            });
+
+            $('#street_suggestions').on('click', 'button', function () {
+                $('#address_line').val($(this).text().trim());
+                $('#street_suggestions').hide();
             });
 
             // Időpontfoglalás mentése
@@ -426,8 +525,11 @@
 
             function resetForm(title = null) {
                 $('#appointmentForm')[0].reset();
-                $('#appontment_id').val('');
+                $('#appointment_id').val('');
                 $('#appointmentModalLabel').text(title);
+
+                $('#zip_suggestions').empty().hide();
+                $('#street_suggestions').empty().hide();
 
                 // Visszakapcsolás az első tabra (Alapadatok)
                 const firstTab = new bootstrap.Tab(document.querySelector('#appointmentTab .nav-link[data-bs-target="#basic"]'));
