@@ -825,9 +825,15 @@
                 const workerManagerTable = $('#workerManagerTable tbody');
                 workerManagerTable.empty();
 
+                const isEditMode = Array.isArray(workers) && workers.length > 0;
+
                 fetch(`${window.appConfig.APP_URL}admin/fetch-felhasznalok`)
                     .then(response => response.json())
                     .then(data => {
+                        if (!isEditMode) {
+                            data = (Array.isArray(data) ? data : []).filter(u => (u?.status ?? 'active') !== 'inactive');
+                        }
+
                         // Átalakítjuk a meglévő workers tömböt egy gyors lookup objektummá
                         const selectedWorkers = {};
                         workers.forEach(w => {
@@ -836,17 +842,30 @@
 
                         data.forEach(worker => {
                             const isChecked = selectedWorkers.hasOwnProperty(worker.id);
-                            const row = `
-                                <tr>
-                                    <td>
-                                        <input
-                                            readonly
+                            const isInactive = (worker?.status ?? 'active') === 'inactive';
+
+                            const selectionCell = isEditMode
+                                ? (isInactive
+                                    ? (isChecked
+                                        ? `<i class="fa-solid fa-check text-success"></i>
+                                           <input type="hidden" name="workers[${worker.id}][selected]" value="1">`
+                                        : ``)
+                                    : `<input
                                             type="checkbox"
                                             name="workers[${worker.id}][selected]"
                                             value="1"
                                             ${isChecked ? 'checked' : ''}
-                                        >
-                                    </td>
+                                       >`)
+                                : `<input
+                                        type="checkbox"
+                                        name="workers[${worker.id}][selected]"
+                                        value="1"
+                                        ${isChecked ? 'checked' : ''}
+                                   >`;
+
+                            const row = `
+                                <tr>
+                                    <td>${selectionCell}</td>
                                     <td>${worker.name}</td>
                                 </tr>
                             `;

@@ -64,7 +64,7 @@
                         <th data-priority="4">Email</th>
                         <th data-priority="5">Telefon</th>
                         <th data-priority="6">Város</th>
-                        <th>Form</th>
+                        <th data-priority="7">Form</th>
                         <th>Kampány</th>
                         <th>Állapot</th>
                         <th data-priority="3">Létrehozva</th>
