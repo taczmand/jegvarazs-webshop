@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\BasicMediaController;
 use App\Http\Controllers\Admin\BlogsController;
 use App\Http\Controllers\Admin\BrandController;
 use App\Http\Controllers\Admin\CategoryController;
+use App\Http\Controllers\Admin\ClientController;
 use App\Http\Controllers\Admin\CompanySiteController;
 use App\Http\Controllers\Admin\ContractController;
 use App\Http\Controllers\Admin\CouponController;
@@ -248,6 +249,18 @@ Route::get('/automatizacio/kuldes', [AutomatedEmailController::class, 'sendToday
             Route::post('/leads/{id}', [LeadController::class, 'update'])->name('leads.update');
             Route::delete('/leads/{id}', [LeadController::class, 'destroy'])->name('leads.destroy');
             Route::post('/leads/{id}/reset-viewed', [LeadController::class, 'resetViewed'])->name('leads.reset-viewed');
+
+            // Ügyfelek
+            Route::get('/ugyfelek', [ClientController::class, 'index'])->name('clients.index');
+            Route::get('/ugyfelek/data', [ClientController::class, 'data'])->name('clients.data');
+            Route::post('/ugyfelek', [ClientController::class, 'store'])->name('clients.store');
+            Route::put('/ugyfelek/{id}', [ClientController::class, 'update'])->name('clients.update');
+            Route::delete('/ugyfelek/{id}', [ClientController::class, 'destroy'])->name('clients.destroy');
+
+            Route::get('/ugyfelek/{id}/cimek', [ClientController::class, 'addresses'])->name('clients.addresses.index');
+            Route::post('/ugyfelek/{id}/cimek', [ClientController::class, 'storeAddress'])->name('clients.addresses.store');
+            Route::put('/ugyfelek/cimek/{addressId}', [ClientController::class, 'updateAddress'])->name('clients.addresses.update');
+            Route::delete('/ugyfelek/cimek/{addressId}', [ClientController::class, 'destroyAddress'])->name('clients.addresses.destroy');
 
             // E-mail automatizációk beállítása
             Route::get('/automatizacio', [AutomatedEmailController::class, 'index'])->name('automated-emails.index');
