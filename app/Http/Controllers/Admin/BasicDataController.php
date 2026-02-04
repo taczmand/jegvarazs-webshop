@@ -113,10 +113,21 @@ class BasicDataController extends Controller
 
             $user = auth('admin')->user();
 
-            $record->update([
-                'viewed_by' => $user ? $user->name : null,
-                'viewed_at' => now(),
-            ]);
+            if (!empty($record->viewed_by)) {
+                return response()->json(['message' => 'A rekord már meg volt tekintve']);
+            }
+
+            $updated = $modelClass::query()
+                ->where('id', $record->id)
+                ->whereNull('viewed_by')
+                ->update([
+                    'viewed_by' => $user ? $user->name : null,
+                    'viewed_at' => now(),
+                ]);
+
+            if (!$updated) {
+                return response()->json(['message' => 'A rekord már meg volt tekintve']);
+            }
 
             return response()->json(['message' => 'A rekord megjelölve mint megtekintett']);
         } catch (\Exception $e) {
