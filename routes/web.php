@@ -205,6 +205,7 @@ Route::get('/automatizacio/kuldes', [AutomatedEmailController::class, 'sendToday
             Route::get('/ajanlatok/data', [OfferController::class, 'data'])->name('offers.data');
             Route::get('/ajanlatok/termekek/{id}', [OfferController::class, 'showProductsToOffer'])->name('offers.show_products_to_offer');
             Route::post('/ajanlatok', [OfferController::class, 'store'])->name('offers.store');
+            Route::post('/ajanlatok/preview-pdf', [OfferController::class, 'previewPdf'])->name('offers.preview-pdf');
             Route::delete('/ajanlatok/{id}', [OfferController::class, 'destroy'])->name('offers.destroy');
             Route::get('/ajanlatok/ajanlat-termekek', [OfferController::class, 'fetchWithCategories'])->name('offers.list-with-categories');
 

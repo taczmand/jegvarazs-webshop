@@ -45,7 +45,7 @@
                     <thead>
                     <tr>
                         <th>ID</th>
-                        <th data-priority="3">Cím</th>
+                        <th data-priority="3">Ajánlat megnevezése</th>
                         <th data-priority="1">Név</th>
                         <th>Ország</th>
                         <th>Irányítószám</th>
@@ -82,7 +82,7 @@
                         <ul class="nav nav-tabs" id="productTab" role="tablist">
                             <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#contact" type="button">Kapcsolati adatok</button></li>
                             <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#productmanager" type="button">Termékek</button></li>
-                            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#offer" type="button">Ajánlat generálás</button></li>
+                            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#offer" type="button">Ajánlat generálása</button></li>
                         </ul>
 
                         <div class="tab-content mt-3">
@@ -93,7 +93,7 @@
                                 <table class="table table-bordered offer-contact-table">
                                     <tbody>
                                     <tr>
-                                        <td class="w-25">Cím*</td>
+                                        <td class="w-25">Ajánlat megnevezése*</td>
                                         <td><input type="text" class="form-control" id="title" name="title" required></td>
                                     </tr>
                                     <tr>
@@ -111,21 +111,21 @@
                                         </td>
                                     </tr>
                                     <tr>
-                                        <td>Irányítószám*</td>
-                                        <td><input type="text" class="form-control" id="contact_zip_code" name="contact_zip_code" required></td>
+                                        <td>Irányítószám</td>
+                                        <td><input type="text" class="form-control" id="contact_zip_code" name="contact_zip_code"></td>
                                     </tr>
                                     <tr>
-                                        <td>Város*</td>
+                                        <td>Város</td>
                                         <td>
-                                            <input type="text" class="form-control" id="contact_city" name="contact_city" required>
+                                            <input type="text" class="form-control" id="contact_city" name="contact_city">
                                             <div id="zip_suggestions" class="list-group position-absolute w-100" style="z-index: 1000;"></div>
                                         </td>
 
                                     </tr>
                                     <tr>
-                                        <td>Cím*</td>
+                                        <td>Cím</td>
                                         <td>
-                                            <input type="text" class="form-control" id="contact_address_line" name="contact_address_line" required>
+                                            <input type="text" class="form-control" id="contact_address_line" name="contact_address_line">
                                             <div id="street_suggestions" class="list-group position-absolute w-100" style="z-index: 1000;"></div>
                                         </td>
                                     </tr>
@@ -134,8 +134,8 @@
                                         <td><input type="text" class="form-control" id="contact_phone" name="contact_phone"></td>
                                     </tr>
                                     <tr>
-                                        <td>E-mail cím</td>
-                                        <td><input type="email" class="form-control" id="contact_email" name="contact_email"></td>
+                                        <td>E-mail cím*</td>
+                                        <td><input type="email" class="form-control" id="contact_email" name="contact_email" required></td>
                                     </tr>
                                     <tr>
                                         <td>Megjegyzés</td>
@@ -165,6 +165,9 @@
                             <div class="tab-pane fade" id="offer">
                                 <button type="submit" class="btn btn-primary d-none" id="generateOffer">
                                     <i class="fas fa-file-pdf"></i> Ajánlat generálása
+                                </button>
+                                <button type="button" class="btn btn-secondary d-none" id="previewOfferPdf">
+                                    <i class="fas fa-eye"></i> PDF előnézet
                                 </button>
                                 <a href="" id="offer_pdf_link" target="_blank" class="btn btn-primary d-none">Generált PDF megtekintése</a>
                             </div>
@@ -207,6 +210,48 @@
                 ],
             });
 
+            $('#previewOfferPdf').on('click', function (e) {
+                e.preventDefault();
+
+                const modalForm = document.getElementById('adminModalForm');
+                const formData = new FormData(modalForm);
+                formData.append('_token', csrfToken);
+
+                fetch('{{ route('admin.offers.preview-pdf') }}', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                }).then(async (response) => {
+                    if (response.status === 422) {
+                        const payload = await response.json();
+                        const errors = payload.errors || {};
+                        const messages = [];
+
+                        Object.keys(errors).forEach((key) => {
+                            (errors[key] || []).forEach((msg) => messages.push(msg));
+                        });
+
+                        showToast(messages.length ? messages.join('\n') : (payload.message || 'Hibás adatok.'), 'danger');
+                        return;
+                    }
+
+                    if (!response.ok) {
+                        showToast('Hiba történt a PDF előnézet generálása során.', 'danger');
+                        return;
+                    }
+
+                    const blob = await response.blob();
+                    const blobUrl = URL.createObjectURL(blob);
+                    window.open(blobUrl, '_blank');
+                    setTimeout(() => URL.revokeObjectURL(blobUrl), 60 * 1000);
+                }).catch(() => {
+                    showToast('Hiba történt a PDF előnézet generálása során.', 'danger');
+                });
+            });
+
             // Új ajánlat létrehozása modal megjelenítése
             $('#addButton').on('click', async function () {
                 try {
@@ -215,6 +260,7 @@
                     $('.offer-contact-table').find('input, select, textarea').prop('disabled', false);
 
                     $('#generateOffer').removeClass('d-none');
+                    $('#previewOfferPdf').removeClass('d-none');
                     $('#offer_pdf_link').addClass('d-none').removeAttr('href');
                 } catch (error) {
                     showToast(error, 'danger');
@@ -345,6 +391,7 @@
                 $('.offer-contact-table').find('input, select, textarea').prop('disabled', true);
 
                 $('#generateOffer').addClass('d-none');
+                $('#previewOfferPdf').addClass('d-none');
 
 
                 const row_data = $('#adminTable').DataTable().row($(this).parents('tr')).data();

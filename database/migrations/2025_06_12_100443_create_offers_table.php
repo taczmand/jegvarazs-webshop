@@ -17,9 +17,9 @@ return new class extends Migration
             $table->string('title');
             $table->string('name');
             $table->string('country')->default('HU');
-            $table->string('zip_code');
-            $table->string('city');
-            $table->string('address_line');
+            $table->string('zip_code')->nullable();
+            $table->string('city')->nullable();
+            $table->string('address_line')->nullable();
             $table->string('phone')->nullable();
             $table->string('email');
             $table->text('description')->nullable();

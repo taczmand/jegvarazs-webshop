@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 use Yajra\DataTables\Facades\DataTables;
 
 class OfferController extends Controller
@@ -20,6 +21,82 @@ class OfferController extends Controller
     public function index()
     {
         return view('admin.business.offers');
+    }
+
+    public function previewPdf(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'title' => 'required|string|max:255',
+            'contact_name' => 'required|string|max:255',
+            'contact_email' => 'required|email',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Hibás adatok.',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        try {
+            $offer = new Offer([
+                'title' => $request->input('title'),
+                'name' => $request->input('contact_name'),
+                'country' => $request->input('contact_country'),
+                'zip_code' => $request->input('contact_zip_code'),
+                'city' => $request->input('contact_city'),
+                'address_line' => $request->input('contact_address_line'),
+                'phone' => $request->input('contact_phone'),
+                'email' => $request->input('contact_email'),
+                'description' => $request->input('contact_description'),
+            ]);
+
+            $productsInput = (array) $request->input('products', []);
+            $selectedProductIds = [];
+            foreach ($productsInput as $productId => $data) {
+                if (isset($data['selected'])) {
+                    $selectedProductIds[] = (int) $productId;
+                }
+            }
+
+            $titlesById = Product::whereIn('id', $selectedProductIds)
+                ->pluck('title', 'id')
+                ->toArray();
+
+            $products = [];
+            foreach ($productsInput as $productId => $data) {
+                if (!isset($data['selected'])) {
+                    continue;
+                }
+
+                $quantity = (int) ($data['quantity'] ?? 1);
+                $grossPrice = (float) ($data['gross_price'] ?? 0);
+                $products[] = [
+                    'title' => $titlesById[(int) $productId] ?? 'N/A',
+                    'quantity' => $quantity > 0 ? $quantity : 1,
+                    'gross_price' => $grossPrice,
+                ];
+            }
+
+            $data = [
+                'offer' => $offer,
+                'products' => $products,
+            ];
+
+            $pdf = Pdf::loadView('pdf.offer_20250613', $data);
+
+            return response($pdf->output(), 200, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'inline; filename="ajanlat_elonezet.pdf"',
+            ]);
+        } catch (\Throwable $e) {
+            \Log::error('Ajánlat PDF előnézet hiba: ' . $e->getMessage());
+
+            return response()->json([
+                'message' => 'Hiba történt a PDF előnézet generálása során.',
+                'errors' => $e->getMessage(),
+            ], 500);
+        }
     }
 
     public function data()
@@ -98,11 +175,13 @@ class OfferController extends Controller
 
     public function store(Request $request)
     {
-        /*$validated = $request->validate([
+        $validated = $request->validate([
             'contact_name' => 'required|string|max:255',
+            'title' => 'required|string|max:255',
+            'contact_email' => 'required|email',
             'products' => 'required|array',
             'products.*.gross_price' => 'nullable|numeric|min:0',
-        ]);*/
+        ]);
 
         DB::beginTransaction();
 
