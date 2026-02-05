@@ -437,7 +437,7 @@
                         <tr>
                             <td>${item.id}</td>
                             <td>${item.title}</td>
-                            <td>${item.gross_price}</td>
+                            <td>${item.pivot.gross_price}</td>
                             <td>${product_qty}</td>
                         </tr>`;
                     productManagerTable.append(row);
