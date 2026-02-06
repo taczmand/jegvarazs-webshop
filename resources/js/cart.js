@@ -16,6 +16,16 @@ async function addToCart(productId, quantity = 1) {
         const res = await response.json();
         if (res.result === 'success') {
             showToast('A termék kosárba került!', 'success');
+
+            if (typeof fbq === 'function') {
+                fbq('track', 'AddToCart', {
+                    content_ids: [String(productId)],
+                    content_type: 'product',
+                    quantity: Number(quantity) || 1,
+                    currency: 'HUF',
+                });
+            }
+
             fetchCartSummary();
         } else if (res.result === 'error') {
             showToast(res.message, 'error');
@@ -42,6 +52,14 @@ async function removeItemFromCart(itemId) {
         const res = await response.json();
         if (res.result === 'success') {
             showToast('A termék eltávolításra került a kosárból!', 'success');
+
+            if (typeof fbq === 'function') {
+                fbq('track', 'RemoveFromCart', {
+                    content_type: 'product',
+                    currency: 'HUF',
+                });
+            }
+
             location.reload(); // Refresh the cart summary
         } else if (res.result === 'error') {
             showToast(res.result, 'error');
@@ -65,6 +83,13 @@ async function changeQuantity(itemId, quantity) {
         const res = await response.json();
         if (res.result === 'success') {
             showToast('A mennyiség frissítve!', 'success');
+
+            if (typeof fbq === 'function') {
+                fbq('trackCustom', 'UpdateCart', {
+                    currency: 'HUF',
+                });
+            }
+
             return 'success';
         } else if (res.result === 'error') {
             showToast(res.message, 'error');

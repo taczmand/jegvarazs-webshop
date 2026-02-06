@@ -328,6 +328,15 @@
                             throw new Error(data.error_message || 'Ismeretlen hiba történt.');
                         }
                         showToast(data.message, 'success');
+
+                        if (typeof fbq === 'function') {
+                            fbq('trackCustom', 'ProductInquirySent', {
+                                content_ids: [String($('.interesting-badge').attr('product-id'))],
+                                content_type: 'product',
+                                inquiry_type: String($('#sendInteresting').attr('interesting_type') || ''),
+                            });
+                        }
+
                         $('#interesting_message').val("");
                         $('#modal').modal('hide');
                     })

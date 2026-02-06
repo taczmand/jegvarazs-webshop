@@ -12,6 +12,12 @@
         <div class="alert alert-success">
             {{ session('success') }}
         </div>
+
+        <script>
+            if (typeof fbq === 'function') {
+                fbq('track', 'Lead');
+            }
+        </script>
     @endif
 
     <script src="https://www.google.com/recaptcha/api.js"></script>

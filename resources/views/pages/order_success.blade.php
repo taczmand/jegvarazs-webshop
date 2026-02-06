@@ -20,7 +20,29 @@
         $customer = auth('customer')->user();
         $cart = $customer->cart;
         $cart->items()->delete();
+
+        $pixelPurchaseValue = 0;
+        $pixelPurchaseContentIds = [];
+        foreach ($order->items as $item) {
+            $pixelPurchaseValue += ((float) $item->gross_price) * ((int) $item->quantity);
+            if (!empty($item->product_id)) {
+                $pixelPurchaseContentIds[] = (string) $item->product_id;
+            }
+        }
     @endphp
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            if (typeof fbq === 'function') {
+                fbq('track', 'Purchase', {
+                    value: {{ (float) $pixelPurchaseValue }},
+                    currency: 'HUF',
+                    content_ids: @json($pixelPurchaseContentIds),
+                    content_type: 'product',
+                });
+            }
+        });
+    </script>
 
     <div class="w-100 p-4 bg-light rounded shadow-sm">
         <h3>Köszönjük a rendelést!</h3>

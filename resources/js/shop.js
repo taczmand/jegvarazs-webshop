@@ -587,6 +587,11 @@ import * as bootstrap from "bootstrap";
 
             if (res.result === 'success') {
                 showToast(res.message, 'success');
+
+                if (typeof fbq === 'function') {
+                    fbq('trackCustom', 'NewsletterSubscribe');
+                }
+
                 emailInput.value = '';
             } else {
                 showToast(res.message || 'Ismeretlen hiba történt.', 'error');
@@ -643,6 +648,11 @@ import * as bootstrap from "bootstrap";
                         throw new Error(data.error_message || 'Ismeretlen hiba történt.');
                     }
                     showToast(data.message, 'success');
+
+                    if (typeof fbq === 'function') {
+                        fbq('track', 'Contact');
+                    }
+
                     form.reset();
                 })
                 .catch(error => {

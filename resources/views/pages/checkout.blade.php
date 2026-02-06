@@ -19,6 +19,36 @@
         $customer = auth('customer')->user();
     @endphp
 
+    @php
+        $pixelContentIds = [];
+        if (!empty($cart_items) && !empty($cart_items->items)) {
+            foreach ($cart_items->items as $item) {
+                if (!$item->product) {
+                    continue;
+                }
+                if ((int) $item->product_id === 1) {
+                    continue;
+                }
+                $pixelContentIds[] = (string) $item->product_id;
+            }
+        }
+    @endphp
+
+    @if(!empty($pixelContentIds))
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                if (typeof fbq === 'function') {
+                    fbq('track', 'InitiateCheckout', {
+                        content_ids: @json($pixelContentIds),
+                        content_type: 'product',
+                        value: {{ (float) $total_item_amount }},
+                        currency: 'HUF',
+                    });
+                }
+            });
+        </script>
+    @endif
+
     @if(session('debug'))
         <pre>{{ print_r(session('debug'), true) }}</pre>
     @endif
