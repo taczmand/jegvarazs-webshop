@@ -103,11 +103,11 @@
                                     <thead>
                                     <tr>
                                         <th>Alapértelmezett</th>
-                                        <th>Megnevezés</th>
                                         <th>Ország</th>
                                         <th>Irányítószám</th>
                                         <th>Város</th>
                                         <th>Cím</th>
+                                        <th>Megjegyzés</th>
                                         <th>Műveletek</th>
                                     </tr>
                                     </thead>
@@ -118,10 +118,6 @@
                             <div class="border rounded p-3" id="addressFormWrap" style="display:none;">
                                 <input type="hidden" id="address_id">
                                 <div class="row g-3">
-                                    <div class="col-md-4">
-                                        <label for="address_label" class="form-label">Megnevezés</label>
-                                        <input type="text" class="form-control" id="address_label" name="address_label">
-                                    </div>
                                     <div class="col-md-2">
                                         <label for="address_country" class="form-label">Ország</label>
                                         <select class="form-control w-100" id="address_country" name="address_country">
@@ -149,6 +145,10 @@
                                             <input class="form-check-input" type="checkbox" value="1" id="address_is_default">
                                             <label class="form-check-label" for="address_is_default">Alapértelmezett cím</label>
                                         </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <label for="address_comment" class="form-label">Megjegyzés</label>
+                                        <textarea class="form-control" id="address_comment" name="address_comment" rows="2"></textarea>
                                     </div>
                                 </div>
 
@@ -210,11 +210,11 @@
                 $('#addressesTable').closest('.table-responsive').hide();
                 openAddressForm({
                     id: null,
-                    label: '',
                     country: 'HU',
                     zip_code: '',
                     city: '',
                     address_line: '',
+                    comment: '',
                     is_default: true,
                 });
                 $('#address_is_default').prop('checked', true);
@@ -264,11 +264,11 @@
 
                 const addressId = $('#address_id').val();
                 const payload = {
-                    label: $('#address_label').val() || null,
                     country: $('#address_country').val() || 'HU',
                     zip_code: $('#address_zip_code').val() || null,
                     city: $('#address_city').val() || null,
                     address_line: $('#address_address_line').val() || null,
+                    comment: $('#address_comment').val() || null,
                     is_default: $('#address_is_default').is(':checked') ? 1 : 0,
                     _token: csrfToken,
                 };
@@ -306,11 +306,11 @@
                 const row = $(this).closest('tr');
                 openAddressForm({
                     id: row.data('id'),
-                    label: row.data('label'),
                     country: row.data('country'),
                     zip_code: row.data('zip'),
                     city: row.data('city'),
                     address_line: row.data('line'),
+                    comment: row.data('comment'),
                     is_default: row.data('default') == 1,
                 });
             });
@@ -551,13 +551,13 @@
                 addresses.forEach(a => {
                     const isDefault = a.is_default ? '<span class="badge bg-success">Igen</span>' : '';
                     tbody.append(`
-                        <tr data-id="${a.id}" data-label="${escapeHtml(a.label || '')}" data-country="${escapeHtml(a.country || '')}" data-zip="${escapeHtml(a.zip_code || '')}" data-city="${escapeHtml(a.city || '')}" data-line="${escapeHtml(a.address_line || '')}" data-default="${a.is_default ? 1 : 0}">
+                        <tr data-id="${a.id}" data-comment="${escapeHtml(a.comment || '')}" data-country="${escapeHtml(a.country || '')}" data-zip="${escapeHtml(a.zip_code || '')}" data-city="${escapeHtml(a.city || '')}" data-line="${escapeHtml(a.address_line || '')}" data-default="${a.is_default ? 1 : 0}">
                             <td>${isDefault}</td>
-                            <td>${escapeHtml(a.label || '')}</td>
                             <td>${escapeHtml(a.country || '')}</td>
                             <td>${escapeHtml(a.zip_code || '')}</td>
                             <td>${escapeHtml(a.city || '')}</td>
                             <td>${escapeHtml(a.address_line || '')}</td>
+                            <td>${escapeHtml(a.comment || '')}</td>
                             <td>
                                 <button type="button" class="btn btn-sm btn-primary edit-address" title="Szerkesztés"><i class="fas fa-edit"></i></button>
                                 <button type="button" class="btn btn-sm btn-danger delete-address" title="Törlés"><i class="fas fa-trash"></i></button>
@@ -570,11 +570,11 @@
             function openAddressForm(address = null) {
                 $('#addressFormWrap').show();
                 $('#address_id').val(address?.id || '');
-                $('#address_label').val(address?.label || '');
                 $('#address_country').val(address?.country || 'HU');
                 $('#address_zip_code').val(address?.zip_code || '');
                 $('#address_city').val(address?.city || '');
                 $('#address_address_line').val(address?.address_line || '');
+                $('#address_comment').val(address?.comment || '');
                 $('#address_is_default').prop('checked', !!address?.is_default);
 
                 const isCreateMode = !($('#client_id').val() || '').trim();
@@ -587,11 +587,11 @@
             function closeAddressForm() {
                 $('#addressFormWrap').hide();
                 $('#address_id').val('');
-                $('#address_label').val('');
                 $('#address_country').val('HU');
                 $('#address_zip_code').val('');
                 $('#address_city').val('');
                 $('#address_address_line').val('');
+                $('#address_comment').val('');
                 $('#address_is_default').prop('checked', false);
             }
 

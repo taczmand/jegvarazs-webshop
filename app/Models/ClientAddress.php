@@ -12,11 +12,11 @@ class ClientAddress extends Model
 
     protected $fillable = [
         'client_id',
-        'label',
         'country',
         'zip_code',
         'city',
         'address_line',
+        'comment',
         'is_default',
     ];
 

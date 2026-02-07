@@ -69,6 +69,23 @@ Route::get('/facebook/refresh-token', function () {
     ]);
 });
 
+Route::get('/clients/sync', function () {
+    $requestKey = request('secret-key') ?? request('secret_key') ?? request('key');
+    $expectedKey = env('SYNC_CLIENTS_KEY') ?: env('ARTISAN_SECRET_KEY');
+
+    abort_unless(
+        $expectedKey && hash_equals((string) $expectedKey, (string) $requestKey),
+        403
+    );
+
+    Artisan::call('clients:sync');
+
+    return response()->json([
+        'status' => 'ok',
+        'output' => Artisan::output(),
+    ]);
+});
+
 
 Route::get('/automatizacio/kuldes', [AutomatedEmailController::class, 'sendTodayEmails'])->name('automated-emails.send-today-emails');
 

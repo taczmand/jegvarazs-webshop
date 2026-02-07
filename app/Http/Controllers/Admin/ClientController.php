@@ -66,7 +66,7 @@ class ClientController extends Controller
             'address_zip_code' => 'required|string|max:20',
             'address_city' => 'required|string|max:100',
             'address_address_line' => 'required|string|max:255',
-            'address_label' => 'nullable|string|max:255',
+            'address_comment' => 'nullable|string',
         ]);
 
         try {
@@ -89,11 +89,11 @@ class ClientController extends Controller
 
             ClientAddress::create([
                 'client_id' => $client->id,
-                'label' => $request->input('address_label') ?: null,
                 'country' => $request->input('address_country') ?: 'HU',
                 'zip_code' => $request->input('address_zip_code') ?: null,
                 'city' => $request->input('address_city') ?: null,
                 'address_line' => $request->input('address_address_line') ?: null,
+                'comment' => $request->input('address_comment') ?: null,
                 'is_default' => true,
             ]);
 
@@ -176,11 +176,11 @@ class ClientController extends Controller
     public function storeAddress(Request $request, $id)
     {
         $request->validate([
-            'label' => 'nullable|string|max:255',
             'country' => 'nullable|string|max:10',
             'zip_code' => 'nullable|string|max:20',
             'city' => 'nullable|string|max:100',
             'address_line' => 'nullable|string|max:255',
+            'comment' => 'nullable|string',
             'is_default' => 'nullable|boolean',
         ]);
 
@@ -194,11 +194,11 @@ class ClientController extends Controller
 
             $address = ClientAddress::create([
                 'client_id' => $client->id,
-                'label' => $request->input('label') ?: null,
                 'country' => $request->input('country') ?: 'HU',
                 'zip_code' => $request->input('zip_code') ?: null,
                 'city' => $request->input('city') ?: null,
                 'address_line' => $request->input('address_line') ?: null,
+                'comment' => $request->input('comment') ?: null,
                 'is_default' => $isDefault,
             ]);
 
@@ -219,11 +219,11 @@ class ClientController extends Controller
     public function updateAddress(Request $request, $addressId)
     {
         $request->validate([
-            'label' => 'nullable|string|max:255',
             'country' => 'nullable|string|max:10',
             'zip_code' => 'nullable|string|max:20',
             'city' => 'nullable|string|max:100',
             'address_line' => 'nullable|string|max:255',
+            'comment' => 'nullable|string',
             'is_default' => 'nullable|boolean',
         ]);
 
@@ -238,11 +238,11 @@ class ClientController extends Controller
             }
 
             $address->update([
-                'label' => $request->input('label') ?: null,
                 'country' => $request->input('country') ?: 'HU',
                 'zip_code' => $request->input('zip_code') ?: null,
                 'city' => $request->input('city') ?: null,
                 'address_line' => $request->input('address_line') ?: null,
+                'comment' => $request->input('comment') ?: null,
                 'is_default' => $isDefault,
             ]);
 
