@@ -34,6 +34,29 @@
         }
     @endphp
 
+    @php
+        $total_item_amount = 0;
+        $subtotal = 0;
+        if(0 < $cart_items->items->count()) {
+            foreach($cart_items->items as $item) {
+                $subtotal = $item->product->display_gross_price * $item->quantity;
+                $total_item_amount += $subtotal;
+            }
+        }
+
+        // Amíg 1 szabály és futárszolgálat van, addig fix a szállítási költség
+        $shipping_cost = 0;
+
+        $shipping_methods = config('shipping_methods');
+        $gls = collect($shipping_methods)->firstWhere('code', 'gls');
+        $cost_limit = $gls['cost_limit'] ?? 0;
+
+        if ($total_item_amount < $cost_limit) {
+            $shipping_cost = $gls_fee;
+        }
+
+    @endphp
+
     @if(!empty($pixelContentIds))
         <script>
             document.addEventListener('DOMContentLoaded', function () {
@@ -78,30 +101,6 @@
             </ul>
         </div>
     @endif
-
-    @php
-        $total_item_amount = 0;
-        $subtotal = 0;
-        if(0 < $cart_items->items->count()) {
-            foreach($cart_items->items as $item) {
-                $subtotal = $item->product->display_gross_price * $item->quantity;
-                $total_item_amount += $subtotal;
-            }
-        }
-
-        // Amíg 1 szabály és futárszolgálat van, addig fix a szállítási költség
-        $shipping_cost = 0;
-
-        $shipping_methods = config('shipping_methods');
-        $gls = collect($shipping_methods)->firstWhere('code', 'gls');
-        $cost_limit = $gls['cost_limit'] ?? 0;
-
-        if ($total_item_amount < $cost_limit) {
-            $shipping_cost = $gls_fee;
-        }
-
-    @endphp
-
 
     <!-- Checkout Section Begin -->
     <section class="checkout spad">
