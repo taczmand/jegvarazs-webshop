@@ -59,6 +59,10 @@ class FacebookWebhookController extends Controller
             $leadData = $this->getLeadDetails($leadId);
             Log::info('leadData: ', [$leadData]);
 
+            if (!empty($leadData['field_data'])) {
+                $leadData['field_data'] = $this->normalizeLeadFieldData($formId, $leadData['field_data']);
+            }
+
             // Mezők kinyerése field_data-ból
             $mapped = $this->mapLeadFields($leadData['field_data'] ?? []);
 
@@ -142,6 +146,70 @@ class FacebookWebhookController extends Controller
         }
 
         return null;
+    }
+
+    private function normalizeLeadFieldData($formId, array $fieldData): array
+    {
+        $optionMap = $this->getFormOptionMap($formId);
+        if (empty($optionMap)) {
+            return $fieldData;
+        }
+
+        foreach ($fieldData as $i => $field) {
+            if (!isset($field['values']) || !is_array($field['values'])) {
+                continue;
+            }
+
+            $fieldData[$i]['values'] = array_map(function ($value) use ($optionMap) {
+                $value = is_scalar($value) ? (string) $value : $value;
+                return (is_string($value) && isset($optionMap[$value])) ? $optionMap[$value] : $value;
+            }, $field['values']);
+        }
+
+        return $fieldData;
+    }
+
+    private function getFormOptionMap($formId): array
+    {
+        try {
+            $response = Http::get("https://graph.facebook.com/v19.0/$formId", [
+                'fields' => 'questions',
+                'access_token' => $this->facebook_options['facebook_page_token'],
+            ]);
+
+            if (!$response->successful()) {
+                return [];
+            }
+
+            $questions = $response->json('questions') ?? [];
+            if (!is_array($questions)) {
+                return [];
+            }
+
+            $map = [];
+            foreach ($questions as $q) {
+                $options = $q['options'] ?? null;
+                if (!is_array($options)) {
+                    continue;
+                }
+
+                foreach ($options as $opt) {
+                    $key = $opt['key'] ?? null;
+                    $label = $opt['value'] ?? null;
+                    if (is_string($key) && $key !== '' && is_string($label) && $label !== '') {
+                        $map[$key] = $label;
+                    }
+                }
+            }
+
+            return $map;
+        } catch (\Throwable $e) {
+            Log::error('Failed to fetch form questions', [
+                'form_id' => $formId,
+                'error' => $e->getMessage(),
+            ]);
+            return [];
+        }
     }
 
     /**
