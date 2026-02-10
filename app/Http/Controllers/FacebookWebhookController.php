@@ -153,6 +153,8 @@ class FacebookWebhookController extends Controller
         $meta = $this->getFormMeta($formId);
         $optionMap = $meta['option_map'] ?? [];
         $allowedNames = $meta['allowed_names'] ?? [];
+        $nameMap = $meta['name_map'] ?? [];
+        $standardNames = $this->getStandardLeadFieldNames();
 
         if (!empty($allowedNames)) {
             $unknown = [];
@@ -184,6 +186,22 @@ class FacebookWebhookController extends Controller
             $fieldData = $filtered;
         }
 
+        foreach ($fieldData as $i => $field) {
+            $rawName = $field['name'] ?? null;
+            if (!is_string($rawName)) {
+                continue;
+            }
+
+            $normalized = mb_strtolower(trim($rawName));
+            if ($normalized === '' || isset($standardNames[$normalized])) {
+                continue;
+            }
+
+            if (isset($nameMap[$normalized])) {
+                $fieldData[$i]['name'] = $nameMap[$normalized];
+            }
+        }
+
         if (empty($optionMap)) {
             return $fieldData;
         }
@@ -205,35 +223,78 @@ class FacebookWebhookController extends Controller
     private function getFormMeta($formId): array
     {
         try {
-            $response = Http::get("https://graph.facebook.com/v19.0/$formId", [
+            $token = $this->facebook_options['facebook_page_token'];
+
+            $responses = [];
+
+            $responses['fields_questions'] = Http::get("https://graph.facebook.com/v19.0/$formId", [
                 'fields' => 'questions',
-                'access_token' => $this->facebook_options['facebook_page_token'],
+                'access_token' => $token,
             ]);
 
-            if (!$response->successful()) {
-                return [
-                    'option_map' => [],
-                    'allowed_names' => [],
-                ];
+            $responses['fields_questions_expanded'] = Http::get("https://graph.facebook.com/v19.0/$formId", [
+                'fields' => 'questions{key,label,question,text,title,name,options}',
+                'access_token' => $token,
+            ]);
+
+            $responses['edge_questions'] = Http::get("https://graph.facebook.com/v19.0/$formId/questions", [
+                'fields' => 'key,label,question,text,title,name,options',
+                'access_token' => $token,
+            ]);
+
+            $questions = null;
+
+            foreach ($responses as $key => $response) {
+                if (!$response->successful()) {
+                    Log::warning('Failed to fetch form questions variant', [
+                        'form_id' => $formId,
+                        'variant' => $key,
+                        'status' => $response->status(),
+                        'body' => $response->body(),
+                    ]);
+                    continue;
+                }
+
+                $json = $response->json();
+
+                $candidate = $json['questions'] ?? null;
+                if (is_array($candidate)) {
+                    $questions = $candidate;
+                    break;
+                }
+
+                $candidate = $json['data'] ?? null;
+                if (is_array($candidate)) {
+                    $questions = $candidate;
+                    break;
+                }
             }
 
-            $questions = $response->json('questions') ?? [];
             if (!is_array($questions)) {
                 return [
                     'option_map' => [],
                     'allowed_names' => [],
+                    'name_map' => [],
                 ];
             }
 
             $optionMap = [];
             $allowedNames = $this->getStandardLeadFieldNames();
+            $nameMap = [];
             foreach ($questions as $q) {
+                $label = $this->getQuestionLabel($q);
+                $labelNormalized = is_string($label) ? mb_strtolower(trim($label)) : null;
+
                 foreach (['key', 'name', 'label', 'question', 'text', 'title'] as $nameKey) {
                     $candidate = $q[$nameKey] ?? null;
                     if (is_string($candidate)) {
                         $candidate = mb_strtolower(trim($candidate));
                         if ($candidate !== '') {
                             $allowedNames[$candidate] = true;
+
+                            if ($labelNormalized && $candidate !== $labelNormalized) {
+                                $nameMap[$candidate] = $label;
+                            }
                         }
                     }
                 }
@@ -255,6 +316,7 @@ class FacebookWebhookController extends Controller
             return [
                 'option_map' => $optionMap,
                 'allowed_names' => $allowedNames,
+                'name_map' => $nameMap,
             ];
         } catch (\Throwable $e) {
             Log::error('Failed to fetch form questions', [
@@ -264,8 +326,24 @@ class FacebookWebhookController extends Controller
             return [
                 'option_map' => [],
                 'allowed_names' => [],
+                'name_map' => [],
             ];
         }
+    }
+
+    private function getQuestionLabel(array $question): ?string
+    {
+        foreach (['label', 'question', 'text', 'title', 'name', 'key'] as $k) {
+            $v = $question[$k] ?? null;
+            if (is_string($v)) {
+                $v = trim($v);
+                if ($v !== '') {
+                    return $v;
+                }
+            }
+        }
+
+        return null;
     }
 
     private function getStandardLeadFieldNames(): array
