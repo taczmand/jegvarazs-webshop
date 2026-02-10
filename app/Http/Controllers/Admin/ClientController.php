@@ -10,6 +10,55 @@ use Yajra\DataTables\Facades\DataTables;
 
 class ClientController extends Controller
 {
+    public function search(Request $request)
+    {
+        $q = trim((string) $request->query('q', ''));
+        if ($q === '') {
+            return response()->json(['clients' => []]);
+        }
+
+        $clients = Client::query()
+            ->where(function ($query) use ($q) {
+                $query->where('name', 'like', "%{$q}%")
+                    ->orWhere('email', 'like', "%{$q}%")
+                    ->orWhere('phone', 'like', "%{$q}%");
+            })
+            ->orderBy('name')
+            ->limit(10)
+            ->get();
+
+        $clientIds = $clients->pluck('id')->toArray();
+
+        $defaultAddressesByClientId = ClientAddress::query()
+            ->whereIn('client_id', $clientIds)
+            ->orderByDesc('is_default')
+            ->orderByDesc('id')
+            ->get()
+            ->groupBy('client_id')
+            ->map(fn ($rows) => $rows->first());
+
+        $payload = $clients->map(function ($client) use ($defaultAddressesByClientId) {
+            $address = $defaultAddressesByClientId[$client->id] ?? null;
+
+            return [
+                'id' => $client->id,
+                'name' => $client->name,
+                'email' => $client->email,
+                'phone' => $client->phone,
+                'address' => $address ? [
+                    'country' => $address->country,
+                    'zip_code' => $address->zip_code,
+                    'city' => $address->city,
+                    'address_line' => $address->address_line,
+                ] : null,
+            ];
+        })->values();
+
+        return response()->json([
+            'clients' => $payload,
+        ]);
+    }
+
     public function index()
     {
         return view('admin.business.clients');
@@ -20,6 +69,10 @@ class ClientController extends Controller
         $clients = Client::select([
             'id',
             'name',
+            'mothers_name',
+            'place_of_birth',
+            'date_of_birth',
+            'id_number',
             'email',
             'phone',
             'comment',
@@ -58,6 +111,10 @@ class ClientController extends Controller
     {
         $request->validate([
             'name' => 'nullable|string|max:255',
+            'mothers_name' => 'nullable|string|max:255',
+            'place_of_birth' => 'nullable|string|max:255',
+            'date_of_birth' => 'nullable|date',
+            'id_number' => 'nullable|string|max:50',
             'email' => 'required|email|max:255',
             'phone' => 'nullable|string|max:50',
             'comment' => 'nullable|string',
@@ -82,6 +139,10 @@ class ClientController extends Controller
 
             $client = Client::create([
                 'name' => $request->input('name') ?: null,
+                'mothers_name' => $request->input('mothers_name') ?: null,
+                'place_of_birth' => $request->input('place_of_birth') ?: null,
+                'date_of_birth' => $request->input('date_of_birth') ?: null,
+                'id_number' => $request->input('id_number') ?: null,
                 'email' => $request->input('email'),
                 'phone' => $request->input('phone') ?: null,
                 'comment' => $request->input('comment') ?: null,
@@ -116,6 +177,10 @@ class ClientController extends Controller
         $request->validate([
             'id' => 'required|integer',
             'name' => 'nullable|string|max:255',
+            'mothers_name' => 'nullable|string|max:255',
+            'place_of_birth' => 'nullable|string|max:255',
+            'date_of_birth' => 'nullable|date',
+            'id_number' => 'nullable|string|max:50',
             'email' => 'required|email|max:255|unique:clients,email,' . $request->input('id'),
             'phone' => 'nullable|string|max:50',
             'comment' => 'nullable|string',
@@ -126,6 +191,10 @@ class ClientController extends Controller
 
             $client->update([
                 'name' => $request->input('name') ?: null,
+                'mothers_name' => $request->input('mothers_name') ?: null,
+                'place_of_birth' => $request->input('place_of_birth') ?: null,
+                'date_of_birth' => $request->input('date_of_birth') ?: null,
+                'id_number' => $request->input('id_number') ?: null,
                 'email' => $request->input('email'),
                 'phone' => $request->input('phone') ?: null,
                 'comment' => $request->input('comment') ?: null,

@@ -75,6 +75,22 @@
                                 <input type="text" class="form-control" id="name" name="name">
                             </div>
                             <div class="col-md-6">
+                                <label for="mothers_name" class="form-label">Anyja neve</label>
+                                <input type="text" class="form-control" id="mothers_name" name="mothers_name">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="place_of_birth" class="form-label">Születési hely</label>
+                                <input type="text" class="form-control" id="place_of_birth" name="place_of_birth">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="date_of_birth" class="form-label">Születési idő</label>
+                                <input type="date" class="form-control" id="date_of_birth" name="date_of_birth">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="id_number" class="form-label">Személyi szám</label>
+                                <input type="text" class="form-control" id="id_number" name="id_number">
+                            </div>
+                            <div class="col-md-6">
                                 <label for="email" class="form-label">E-mail cím*</label>
                                 <input type="email" class="form-control" id="email" name="email" required>
                             </div>
@@ -234,6 +250,10 @@
 
                 $('#client_id').val(row_data.id);
                 $('#name').val(row_data.name);
+                $('#mothers_name').val(row_data.mothers_name);
+                $('#place_of_birth').val(row_data.place_of_birth);
+                $('#date_of_birth').val(row_data.date_of_birth);
+                $('#id_number').val(row_data.id_number);
                 $('#email').val(row_data.email);
                 $('#phone').val(row_data.phone);
                 $('#comment').val(row_data.comment);
@@ -421,6 +441,10 @@
                 $('#adminForm')[0].reset();
                 $('#adminModalLabel').text(title);
                 $('#client_id').val('');
+                $('#mothers_name').val('');
+                $('#place_of_birth').val('');
+                $('#date_of_birth').val('');
+                $('#id_number').val('');
                 $('#comment').val('');
                 $('#addressesTable tbody').empty();
                 closeAddressForm();

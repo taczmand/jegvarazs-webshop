@@ -64,6 +64,10 @@ class SyncClients extends Command
 
             $clientData = [
                 'name' => $this->normalizeString($payload['name'] ?? null),
+                'mothers_name' => $this->normalizeString($payload['mothers_name'] ?? null),
+                'place_of_birth' => $this->normalizeString($payload['place_of_birth'] ?? null),
+                'date_of_birth' => $payload['date_of_birth'] ?? null,
+                'id_number' => $this->normalizeString($payload['id_number'] ?? null),
                 'phone' => $this->normalizeString($payload['phone'] ?? null),
             ];
 
@@ -97,10 +101,26 @@ class SyncClients extends Command
             $this->syncAddress($client, $addressData, $stats);
         };
 
-        foreach (Contract::query()->select(['name', 'email', 'phone', 'country', 'zip_code', 'city', 'address_line'])->cursor() as $contract) {
+        foreach (Contract::query()->select([
+            'name',
+            'mothers_name',
+            'place_of_birth',
+            'date_of_birth',
+            'id_number',
+            'email',
+            'phone',
+            'country',
+            'zip_code',
+            'city',
+            'address_line',
+        ])->cursor() as $contract) {
             $stats['sources']['contracts']++;
             $syncOne([
                 'name' => $contract->name,
+                'mothers_name' => $contract->mothers_name,
+                'place_of_birth' => $contract->place_of_birth,
+                'date_of_birth' => $contract->date_of_birth,
+                'id_number' => $contract->id_number,
                 'email' => $contract->email,
                 'phone' => $contract->phone,
                 'country' => $contract->country,
