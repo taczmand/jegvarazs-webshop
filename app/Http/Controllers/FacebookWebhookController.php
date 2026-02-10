@@ -60,7 +60,7 @@ class FacebookWebhookController extends Controller
             Log::info('leadData: ', [$leadData]);
 
             if (!empty($leadData['field_data'])) {
-                $leadData['field_data'] = $this->normalizeLeadFieldData($formId, $leadData['field_data']);
+                $leadData['field_data'] = $this->normalizeLeadFieldData($formId, $leadId, $leadData['field_data']);
             }
 
             // Mezők kinyerése field_data-ból
@@ -148,9 +148,42 @@ class FacebookWebhookController extends Controller
         return null;
     }
 
-    private function normalizeLeadFieldData($formId, array $fieldData): array
+    private function normalizeLeadFieldData($formId, $leadId, array $fieldData): array
     {
-        $optionMap = $this->getFormOptionMap($formId);
+        $meta = $this->getFormMeta($formId);
+        $optionMap = $meta['option_map'] ?? [];
+        $allowedNames = $meta['allowed_names'] ?? [];
+
+        if (!empty($allowedNames)) {
+            $unknown = [];
+            $filtered = [];
+
+            foreach ($fieldData as $field) {
+                $rawName = $field['name'] ?? null;
+                $name = is_string($rawName) ? mb_strtolower(trim($rawName)) : null;
+                if (!$name) {
+                    continue;
+                }
+
+                if (!isset($allowedNames[$name])) {
+                    $unknown[] = $rawName;
+                    continue;
+                }
+
+                $filtered[] = $field;
+            }
+
+            if (!empty($unknown)) {
+                Log::warning('FB lead field_data contains unknown field names for form', [
+                    'lead_id' => $leadId,
+                    'form_id' => $formId,
+                    'unknown_names' => array_values(array_unique($unknown)),
+                ]);
+            }
+
+            $fieldData = $filtered;
+        }
+
         if (empty($optionMap)) {
             return $fieldData;
         }
@@ -169,7 +202,7 @@ class FacebookWebhookController extends Controller
         return $fieldData;
     }
 
-    private function getFormOptionMap($formId): array
+    private function getFormMeta($formId): array
     {
         try {
             $response = Http::get("https://graph.facebook.com/v19.0/$formId", [
@@ -178,16 +211,33 @@ class FacebookWebhookController extends Controller
             ]);
 
             if (!$response->successful()) {
-                return [];
+                return [
+                    'option_map' => [],
+                    'allowed_names' => [],
+                ];
             }
 
             $questions = $response->json('questions') ?? [];
             if (!is_array($questions)) {
-                return [];
+                return [
+                    'option_map' => [],
+                    'allowed_names' => [],
+                ];
             }
 
-            $map = [];
+            $optionMap = [];
+            $allowedNames = $this->getStandardLeadFieldNames();
             foreach ($questions as $q) {
+                foreach (['key', 'name', 'label', 'question', 'text', 'title'] as $nameKey) {
+                    $candidate = $q[$nameKey] ?? null;
+                    if (is_string($candidate)) {
+                        $candidate = mb_strtolower(trim($candidate));
+                        if ($candidate !== '') {
+                            $allowedNames[$candidate] = true;
+                        }
+                    }
+                }
+
                 $options = $q['options'] ?? null;
                 if (!is_array($options)) {
                     continue;
@@ -197,19 +247,48 @@ class FacebookWebhookController extends Controller
                     $key = $opt['key'] ?? null;
                     $label = $opt['value'] ?? null;
                     if (is_string($key) && $key !== '' && is_string($label) && $label !== '') {
-                        $map[$key] = $label;
+                        $optionMap[$key] = $label;
                     }
                 }
             }
 
-            return $map;
+            return [
+                'option_map' => $optionMap,
+                'allowed_names' => $allowedNames,
+            ];
         } catch (\Throwable $e) {
             Log::error('Failed to fetch form questions', [
                 'form_id' => $formId,
                 'error' => $e->getMessage(),
             ]);
-            return [];
+            return [
+                'option_map' => [],
+                'allowed_names' => [],
+            ];
         }
+    }
+
+    private function getStandardLeadFieldNames(): array
+    {
+        $names = [
+            // FB standard lead fields
+            'full_name',
+            'first_name',
+            'last_name',
+            'email',
+            'email_address',
+            'phone_number',
+            'phone',
+            'city',
+            'location',
+        ];
+
+        $set = [];
+        foreach ($names as $n) {
+            $set[mb_strtolower($n)] = true;
+        }
+
+        return $set;
     }
 
     /**
