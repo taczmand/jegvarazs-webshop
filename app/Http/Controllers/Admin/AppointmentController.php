@@ -6,7 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Mail\NewAppointment;
 use App\Models\Appointment;
 use App\Models\AppointmentPhoto;
+use App\Models\Client;
+use App\Models\ClientAddress;
 use App\Models\ProductPhoto;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -23,6 +26,7 @@ class AppointmentController extends Controller
     {
         $appointments = Appointment::select([
             'id',
+            'client_id',
             'name',
             'email',
             'phone',
@@ -84,7 +88,94 @@ class AppointmentController extends Controller
     public function store(Request $request)
     {
         try {
+            $request->validate([
+                'client_id' => 'nullable|integer|exists:clients,id',
+                'create_client' => 'nullable|boolean',
+                'client_address_id' => 'nullable|integer',
+                'use_custom_address' => 'nullable|boolean',
+                'name' => 'required|string|max:255',
+                'email' => 'nullable|email|max:255',
+                'phone' => 'nullable|string|max:50',
+                'zip_code' => 'nullable|string|max:20',
+                'city' => 'nullable|string|max:100',
+                'address_line' => 'nullable|string|max:255',
+                'appointment_date' => 'nullable|date',
+                'appointment_type' => 'nullable|string|max:50',
+                'message' => 'nullable|string',
+                'status' => 'nullable|string|max:50',
+            ]);
+
+            DB::beginTransaction();
+
+            $clientId = $request->input('client_id');
+            $shouldCreateClient = (bool) $request->input('create_client');
+            $clientAddressId = $request->input('client_address_id');
+            $useCustomAddress = (bool) $request->input('use_custom_address');
+
+            $client = null;
+            $address = null;
+
+            if ($shouldCreateClient) {
+                $client = Client::create([
+                    'name' => $request->input('name') ?: null,
+                    'email' => $request->input('email') ?: null,
+                    'phone' => $request->input('phone') ?: null,
+                    'comment' => null,
+                ]);
+
+                $address = ClientAddress::create([
+                    'client_id' => $client->id,
+                    'country' => 'HU',
+                    'zip_code' => $request->input('zip_code') ?: null,
+                    'city' => $request->input('city') ?: null,
+                    'address_line' => $request->input('address_line') ?: null,
+                    'comment' => null,
+                    'is_default' => true,
+                ]);
+
+                $request->merge([
+                    'client_id' => $client->id,
+                    'create_client' => false,
+                    'client_address_id' => $address->id,
+                    'use_custom_address' => false,
+                ]);
+            } elseif ($clientId) {
+                $client = Client::find($clientId);
+
+                if ($clientAddressId) {
+                    $address = ClientAddress::query()
+                        ->where('client_id', $client->id)
+                        ->where('id', $clientAddressId)
+                        ->first();
+                }
+
+                if (!$address && !$useCustomAddress) {
+                    $address = ClientAddress::query()
+                        ->where('client_id', $client->id)
+                        ->orderByDesc('is_default')
+                        ->orderByDesc('id')
+                        ->first();
+                }
+
+                if ($client) {
+                    $request->merge([
+                        'name' => $client->name ?: $request->input('name'),
+                        'email' => $client->email ?: $request->input('email'),
+                        'phone' => $client->phone ?: $request->input('phone'),
+                    ]);
+                }
+
+                if ($address && !$useCustomAddress) {
+                    $request->merge([
+                        'zip_code' => $address->zip_code ?: $request->input('zip_code'),
+                        'city' => $address->city ?: $request->input('city'),
+                        'address_line' => $address->address_line ?: $request->input('address_line'),
+                    ]);
+                }
+            }
+
             $appointment = Appointment::create([
+                'client_id'         => $request->input('client_id') ?: null,
                 'name'             => $request->input('name'),
                 'email'            => $request->input('email'),
                 'phone'            => $request->input('phone'),
@@ -156,11 +247,14 @@ class AppointmentController extends Controller
 
             }
 
+            DB::commit();
+
             return response()->json([
                 'message' => 'Sikeres mentés!',
                 'appointment' => $appointment,
             ], 200);
         } catch (\Exception $e) {
+            DB::rollBack();
             \Log::error('Időpont mentési hiba: ' . $e->getMessage());
 
             return response()->json([
@@ -173,9 +267,97 @@ class AppointmentController extends Controller
     public function update(Request $request)
     {
         try {
+            $request->validate([
+                'id' => 'required|integer|exists:appointments,id',
+                'client_id' => 'nullable|integer|exists:clients,id',
+                'create_client' => 'nullable|boolean',
+                'client_address_id' => 'nullable|integer',
+                'use_custom_address' => 'nullable|boolean',
+                'name' => 'required|string|max:255',
+                'email' => 'nullable|email|max:255',
+                'phone' => 'nullable|string|max:50',
+                'zip_code' => 'nullable|string|max:20',
+                'city' => 'nullable|string|max:100',
+                'address_line' => 'nullable|string|max:255',
+                'appointment_date' => 'nullable|date',
+                'appointment_type' => 'nullable|string|max:50',
+                'message' => 'nullable|string',
+                'status' => 'nullable|string|max:50',
+            ]);
+
+            DB::beginTransaction();
+
+            $clientId = $request->input('client_id');
+            $shouldCreateClient = (bool) $request->input('create_client');
+            $clientAddressId = $request->input('client_address_id');
+            $useCustomAddress = (bool) $request->input('use_custom_address');
+
+            $client = null;
+            $address = null;
+
+            if ($shouldCreateClient) {
+                $client = Client::create([
+                    'name' => $request->input('name') ?: null,
+                    'email' => $request->input('email') ?: null,
+                    'phone' => $request->input('phone') ?: null,
+                    'comment' => null,
+                ]);
+
+                $address = ClientAddress::create([
+                    'client_id' => $client->id,
+                    'country' => 'HU',
+                    'zip_code' => $request->input('zip_code') ?: null,
+                    'city' => $request->input('city') ?: null,
+                    'address_line' => $request->input('address_line') ?: null,
+                    'comment' => null,
+                    'is_default' => true,
+                ]);
+
+                $request->merge([
+                    'client_id' => $client->id,
+                    'create_client' => false,
+                    'client_address_id' => $address->id,
+                    'use_custom_address' => false,
+                ]);
+            } elseif ($clientId) {
+                $client = Client::find($clientId);
+
+                if ($clientAddressId) {
+                    $address = ClientAddress::query()
+                        ->where('client_id', $client->id)
+                        ->where('id', $clientAddressId)
+                        ->first();
+                }
+
+                if (!$address && !$useCustomAddress) {
+                    $address = ClientAddress::query()
+                        ->where('client_id', $client->id)
+                        ->orderByDesc('is_default')
+                        ->orderByDesc('id')
+                        ->first();
+                }
+
+                if ($client) {
+                    $request->merge([
+                        'name' => $client->name ?: $request->input('name'),
+                        'email' => $client->email ?: $request->input('email'),
+                        'phone' => $client->phone ?: $request->input('phone'),
+                    ]);
+                }
+
+                if ($address && !$useCustomAddress) {
+                    $request->merge([
+                        'zip_code' => $address->zip_code ?: $request->input('zip_code'),
+                        'city' => $address->city ?: $request->input('city'),
+                        'address_line' => $address->address_line ?: $request->input('address_line'),
+                    ]);
+                }
+            }
+
             $appointment = Appointment::findOrFail($request->input('id'));
 
             $appointment->update([
+                'client_id'         => $request->input('client_id') ?: null,
                 'name'             => $request->input('name'),
                 'email'            => $request->input('email'),
                 'phone'            => $request->input('phone'),
@@ -241,11 +423,14 @@ class AppointmentController extends Controller
 
             }
 
+            DB::commit();
+
             return response()->json([
                 'message' => 'Sikeres mentés!',
                 'appointment' => $appointment,
             ], 200);
         } catch (\Exception $e) {
+            DB::rollBack();
             \Log::error('Időpont mentési hiba: ' . $e->getMessage());
 
             return response()->json([

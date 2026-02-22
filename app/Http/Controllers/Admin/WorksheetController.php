@@ -7,6 +7,8 @@ use App\Mail\WorksheetToCustomer;
 use App\Models\Appointment;
 use App\Models\AutomatedEmail;
 use App\Models\Category;
+use App\Models\Client;
+use App\Models\ClientAddress;
 use App\Models\Worksheet;
 use App\Models\User;
 use App\Models\Contract;
@@ -289,6 +291,11 @@ class WorksheetController extends Controller
         $request->validate([
             'work_name' => 'required|string',
             'installation_date' => 'required|date',
+            'client_id' => 'nullable|integer|exists:clients,id',
+            'create_client' => 'nullable|boolean',
+            'client_address_id' => 'nullable|integer',
+            'use_custom_address' => 'nullable|boolean',
+
             'contact_name' => 'required|string|max:255',
             'contact_country' => 'required|string|max:100',
             'contact_zip_code' => 'required|string|max:20',
@@ -313,16 +320,150 @@ class WorksheetController extends Controller
         try {
             $worksheetId = $request->input('worksheet_id');
 
+            $clientId = $request->input('client_id');
+            $shouldCreateClient = (bool) $request->input('create_client');
+            $clientAddressId = $request->input('client_address_id');
+            $useCustomAddress = (bool) $request->input('use_custom_address');
+
+            if (!$clientId && !$shouldCreateClient) {
+                return response()->json([
+                    'message' => 'Kérlek válassz ügyfelet (keresővel), vagy hozd létre újként.',
+                ], 422);
+            }
+
+            $snapshot = [
+                'name' => $request->input('contact_name'),
+                'email' => $request->input('contact_email'),
+                'phone' => $request->input('contact_phone'),
+                'country' => $request->input('contact_country'),
+                'zip_code' => $request->input('contact_zip_code'),
+                'city' => $request->input('contact_city'),
+                'address_line' => $request->input('contact_address_line'),
+            ];
+
+            if ($clientId) {
+                $client = Client::findOrFail($clientId);
+
+                $snapshot = [
+                    'name' => $client->name,
+                    'email' => $client->email,
+                    'phone' => $client->phone,
+                    'country' => $snapshot['country'],
+                    'zip_code' => $snapshot['zip_code'],
+                    'city' => $snapshot['city'],
+                    'address_line' => $snapshot['address_line'],
+                ];
+
+                $address = null;
+                if ($clientAddressId) {
+                    $address = ClientAddress::query()
+                        ->where('client_id', $client->id)
+                        ->where('id', $clientAddressId)
+                        ->first();
+                }
+
+                if (!$address && !$useCustomAddress) {
+                    $address = ClientAddress::query()
+                        ->where('client_id', $client->id)
+                        ->orderByDesc('is_default')
+                        ->orderByDesc('id')
+                        ->first();
+                }
+
+                if ($address) {
+                    $snapshot['country'] = $address->country;
+                    $snapshot['zip_code'] = $address->zip_code;
+                    $snapshot['city'] = $address->city;
+                    $snapshot['address_line'] = $address->address_line;
+                } elseif ($useCustomAddress) {
+                    $existingAddress = ClientAddress::query()
+                        ->where('client_id', $client->id)
+                        ->where('country', $request->input('contact_country') ?: 'HU')
+                        ->where('zip_code', $request->input('contact_zip_code') ?: null)
+                        ->where('city', $request->input('contact_city') ?: null)
+                        ->where('address_line', $request->input('contact_address_line') ?: null)
+                        ->first();
+
+                    if (!$existingAddress) {
+                        $hasDefault = ClientAddress::where('client_id', $client->id)->where('is_default', true)->exists();
+
+                        $existingAddress = ClientAddress::create([
+                            'client_id' => $client->id,
+                            'country' => $request->input('contact_country') ?: 'HU',
+                            'zip_code' => $request->input('contact_zip_code') ?: null,
+                            'city' => $request->input('contact_city') ?: null,
+                            'address_line' => $request->input('contact_address_line') ?: null,
+                            'comment' => null,
+                            'is_default' => !$hasDefault,
+                        ]);
+                    }
+
+                    $snapshot['country'] = $existingAddress->country;
+                    $snapshot['zip_code'] = $existingAddress->zip_code;
+                    $snapshot['city'] = $existingAddress->city;
+                    $snapshot['address_line'] = $existingAddress->address_line;
+                }
+
+                if (!$snapshot['country'] || !$snapshot['zip_code'] || !$snapshot['city'] || !$snapshot['address_line']) {
+                    return response()->json([
+                        'message' => 'A kiválasztott ügyfélhez nincs kiválasztva cím, és nem adtál meg új címet. Válassz címet, vagy vedd fel újként.',
+                    ], 422);
+                }
+            } elseif ($shouldCreateClient) {
+                $email = $request->input('contact_email');
+                if (!$email || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                    return response()->json([
+                        'message' => 'Új ügyfél létrehozásához érvényes e-mail cím kötelező.',
+                    ], 422);
+                }
+
+                $email = mb_strtolower(trim($email));
+
+                $client = Client::firstOrCreate(
+                    ['email' => $email],
+                    [
+                        'name' => $request->input('contact_name') ?: null,
+                        'phone' => $request->input('contact_phone') ?: null,
+                        'comment' => null,
+                    ]
+                );
+
+                $existingAddress = ClientAddress::query()
+                    ->where('client_id', $client->id)
+                    ->where('country', $request->input('contact_country') ?: 'HU')
+                    ->where('zip_code', $request->input('contact_zip_code') ?: null)
+                    ->where('city', $request->input('contact_city') ?: null)
+                    ->where('address_line', $request->input('contact_address_line') ?: null)
+                    ->first();
+
+                if (!$existingAddress) {
+                    $hasDefault = ClientAddress::where('client_id', $client->id)->where('is_default', true)->exists();
+
+                    ClientAddress::create([
+                        'client_id' => $client->id,
+                        'country' => $request->input('contact_country') ?: 'HU',
+                        'zip_code' => $request->input('contact_zip_code') ?: null,
+                        'city' => $request->input('contact_city') ?: null,
+                        'address_line' => $request->input('contact_address_line') ?: null,
+                        'comment' => null,
+                        'is_default' => !$hasDefault,
+                    ]);
+                }
+
+                $clientId = $client->id;
+            }
+
             $data = [
                 'work_name'         => $request->input('work_name'),
                 'work_type'         => $request->input('work_type'),
-                'name'              => $request->input('contact_name'),
-                'email'             => $request->input('contact_email'),
-                'phone'             => $request->input('contact_phone'),
-                'country'           => $request->input('contact_country'),
-                'zip_code'          => $request->input('contact_zip_code'),
-                'city'              => $request->input('contact_city'),
-                'address_line'      => $request->input('contact_address_line'),
+                'client_id'         => $clientId,
+                'name'              => $snapshot['name'],
+                'email'             => $snapshot['email'],
+                'phone'             => $snapshot['phone'],
+                'country'           => $snapshot['country'],
+                'zip_code'          => $snapshot['zip_code'],
+                'city'              => $snapshot['city'],
+                'address_line'      => $snapshot['address_line'],
                 'description'       => $request->input('contact_description') ?? null,
                 'worker_report'     => $request->input('worker_report') ?? null,
                 'installation_date' => $request->input('installation_date'),

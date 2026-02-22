@@ -53,3 +53,207 @@
     color: white;
     padding: 16px 24px;
 }
+
+/* Admin UI: Responsive modal tabs */
+@media (max-width: 768px) {
+    .admin-modal-tabs {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        position: sticky;
+        top: 0;
+        z-index: 5;
+        background: #fff;
+    }
+
+    .admin-modal-tabs::-webkit-scrollbar {
+        display: none;
+    }
+
+    .admin-modal-tabs .nav-link {
+        white-space: nowrap;
+        padding: .6rem .85rem;
+    }
+}
+
+/* Admin UI: Make modal table-forms easier to use on mobile */
+.admin-modal-form-table {
+    td > .form-control,
+    td > .form-select,
+    td > select.form-control,
+    td > textarea.form-control,
+    td > .input-group {
+        width: 100%;
+    }
+}
+
+/* Admin UI: Soft modal chrome (opt-in via .admin-modal-soft on the modal root) */
+.admin-modal-soft {
+    .admin-modal-tabs {
+        margin-bottom: 0;
+        border-bottom: 0;
+    }
+
+    .admin-modal-tabs .nav-link {
+        color: #000;
+        border: 0;
+    }
+
+    .admin-modal-tabs .nav-link.active {
+        background: #f1f3f5;
+        color: #000;
+        font-weight: 600;
+        border: 0;
+    }
+
+    .tab-content {
+        margin-top: 0 !important;
+    }
+
+    .tab-content > .tab-pane {
+        background: #f1f3f5;
+        padding: 1rem;
+    }
+
+    .modal-body {
+        padding-top: 1rem;
+    }
+
+    .modal-footer {
+        margin-top: 0;
+        border-top: 0;
+        padding-top: 0;
+        background: #fff;
+    }
+
+    select {
+        cursor: pointer;
+    }
+
+    .modal-header.bg-gradient-custom .btn-close {
+        filter: invert(1) grayscale(100%) brightness(200%);
+    }
+
+    .admin-modal-form-table {
+        border: 0;
+    }
+
+    .admin-modal-form-table > :not(caption) > * > * {
+        border: 0 !important;
+        background: #f1f3f5;
+    }
+
+    .admin-modal-form-table > :not(caption) > * > tr:last-child > * {
+        border-bottom: 0;
+    }
+
+    .admin-modal-form-table td:first-child {
+        background: #f1f3f5;
+        font-weight: 400;
+    }
+}
+
+.snapshot-locked {
+    pointer-events: none;
+}
+
+/* Admin UI: Client search results list (used in modals like worksheets/contracts) */
+.admin-client-search-results {
+    max-width: 100%;
+    box-sizing: border-box;
+    background: #fff;
+    padding: .25rem;
+
+    .list-group-item {
+        background: #fff;
+    }
+
+    .client-search-header {
+        background: #f8f9fa;
+        border-left: 4px solid #0d6efd;
+        border-top: 1px solid #dee2e6;
+        border-bottom: 1px solid #dee2e6;
+        margin-top: .5rem;
+        border-radius: .25rem;
+    }
+
+    .client-search-header:first-child {
+        margin-top: 0;
+    }
+
+    .client-address-item,
+    .client-new-address {
+        padding-left: 1.75rem;
+        border-left: 3px solid #dee2e6;
+        background: #fff;
+    }
+
+    .client-create-item {
+        margin-top: .75rem;
+        border-top: 2px dashed #ced4da;
+        background: #fff;
+    }
+}
+
+@media (max-width: 768px) {
+    .admin-modal-soft {
+        .admin-modal-form-table tr {
+            margin-bottom: 0 !important;
+        }
+
+        .admin-modal-form-table td,
+        .admin-modal-form-table th {
+            padding-top: .25rem;
+            padding-bottom: .25rem;
+        }
+
+        .admin-modal-tabs {
+            position: relative;
+        }
+
+        .admin-modal-tabs::before,
+        .admin-modal-tabs::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            height: 100%;
+            width: 28px;
+            pointer-events: none;
+            z-index: 6;
+        }
+
+        .admin-modal-tabs::before {
+            left: 0;
+            background: linear-gradient(to right, rgba(255, 255, 255, 1), rgba(255, 255, 255, 0));
+        }
+
+        .admin-modal-tabs::after {
+            right: 0;
+            background: linear-gradient(to left, rgba(255, 255, 255, 1), rgba(255, 255, 255, 0));
+        }
+    }
+}
+
+@media (max-width: 768px) {
+    .admin-modal-form-table,
+    .admin-modal-form-table tbody,
+    .admin-modal-form-table tr,
+    .admin-modal-form-table th,
+    .admin-modal-form-table td {
+        display: block;
+        width: 100%;
+    }
+
+    .admin-modal-form-table tr {
+        margin-bottom: .5rem;
+    }
+
+    .admin-modal-form-table th,
+    .admin-modal-form-table td.w-25 {
+        width: 100% !important;
+        background: #f8f9fa;
+        font-weight: 600;
+    }
+}

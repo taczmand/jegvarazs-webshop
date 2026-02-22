@@ -68,18 +68,24 @@
 
 
     <!-- Modális ablak -->
-    <div class="modal fade" id="adminModal" tabindex="-1" aria-labelledby="adminModalLabel" aria-hidden="true">
+    <div class="modal fade admin-modal-soft" id="adminModal" tabindex="-1" aria-labelledby="adminModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-xl">
             <form id="adminModalForm" action="" method="POST">
 
+                <input type="hidden" id="offer_id" name="offer_id">
+                <input type="hidden" id="client_id" name="client_id">
+                <input type="hidden" id="client_address_id" name="client_address_id">
+                <input type="hidden" id="create_client" name="create_client" value="0">
+                <input type="hidden" id="use_custom_address" name="use_custom_address" value="0">
+
                 <div class="modal-content">
-                    <div class="modal-header">
+                    <div class="modal-header bg-gradient-custom">
                         <h5 class="modal-title" id="adminModalLabel">Vevő/partner szerkesztése</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Bezárás"></button>
                     </div>
                     <div class="modal-body">
 
-                        <ul class="nav nav-tabs" id="productTab" role="tablist">
+                        <ul class="nav nav-tabs admin-modal-tabs" id="productTab" role="tablist">
                             <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#contact" type="button">Kapcsolati adatok</button></li>
                             <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#productmanager" type="button">Termékek</button></li>
                             <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#offer" type="button">Ajánlat generálása</button></li>
@@ -90,17 +96,24 @@
                             <!-- Kapcsolati adatok tab -->
 
                             <div class="tab-pane fade show active" id="contact">
-                                <table class="table table-bordered offer-contact-table">
+                                <table class="table offer-contact-table admin-modal-form-table">
                                     <tbody>
                                     <tr>
+                                        <td class="w-25">Ügyfél keresés</td>
+                                        <td class="position-relative">
+                                            <input type="text" class="form-control" id="client_search" placeholder="Név / e-mail / telefon..." autocomplete="off">
+                                            <div id="client_search_results" class="list-group position-absolute w-100 admin-client-search-results" style="z-index: 1100; display:none; max-height: 260px; overflow-y: auto;"></div>
+                                        </td>
+                                    </tr>
+                                    <tr class="offer-client-fields" style="display:none;">
                                         <td class="w-25">Ajánlat megnevezése*</td>
                                         <td><input type="text" class="form-control" id="title" name="title" required></td>
                                     </tr>
-                                    <tr>
+                                    <tr class="offer-client-fields" style="display:none;">
                                         <td class="w-25">Név*</td>
                                         <td><input type="text" class="form-control" id="contact_name" name="contact_name" required></td>
                                     </tr>
-                                    <tr>
+                                    <tr class="offer-client-fields" style="display:none;">
                                         <td>Ország*</td>
                                         <td>
                                             <select name="contact_country" class="form-control w-100" id="contact_country">
@@ -110,11 +123,11 @@
                                             </select>
                                         </td>
                                     </tr>
-                                    <tr>
+                                    <tr class="offer-client-fields" style="display:none;">
                                         <td>Irányítószám</td>
                                         <td><input type="text" class="form-control" id="contact_zip_code" name="contact_zip_code"></td>
                                     </tr>
-                                    <tr>
+                                    <tr class="offer-client-fields" style="display:none;">
                                         <td>Város</td>
                                         <td>
                                             <input type="text" class="form-control" id="contact_city" name="contact_city">
@@ -122,22 +135,22 @@
                                         </td>
 
                                     </tr>
-                                    <tr>
+                                    <tr class="offer-client-fields" style="display:none;">
                                         <td>Cím</td>
                                         <td>
                                             <input type="text" class="form-control" id="contact_address_line" name="contact_address_line">
                                             <div id="street_suggestions" class="list-group position-absolute w-100" style="z-index: 1000;"></div>
                                         </td>
                                     </tr>
-                                    <tr>
+                                    <tr class="offer-client-fields" style="display:none;">
                                         <td>Telefonszám</td>
                                         <td><input type="text" class="form-control" id="contact_phone" name="contact_phone"></td>
                                     </tr>
-                                    <tr>
+                                    <tr class="offer-client-fields" style="display:none;">
                                         <td>E-mail cím*</td>
                                         <td><input type="email" class="form-control" id="contact_email" name="contact_email" required></td>
                                     </tr>
-                                    <tr>
+                                    <tr class="offer-client-fields" style="display:none;">
                                         <td>Megjegyzés</td>
                                         <td><textarea class="form-control" id="contact_description" name="contact_description" rows="3"></textarea></td>
                                     </tbody>
@@ -259,8 +272,9 @@
                     loadProducts();
                     $('.offer-contact-table').find('input, select, textarea').prop('disabled', false);
 
-                    $('#generateOffer').removeClass('d-none');
-                    $('#previewOfferPdf').removeClass('d-none');
+                    setClientFieldsVisible(false);
+
+                    setOfferActionsVisible(false);
                     $('#offer_pdf_link').addClass('d-none').removeAttr('href');
                 } catch (error) {
                     showToast(error, 'danger');
@@ -390,8 +404,7 @@
                 resetForm('Ajánlat megtekintése');
                 $('.offer-contact-table').find('input, select, textarea').prop('disabled', true);
 
-                $('#generateOffer').addClass('d-none');
-                $('#previewOfferPdf').addClass('d-none');
+                setOfferActionsVisible(false);
 
 
                 const row_data = $('#adminTable').DataTable().row($(this).parents('tr')).data();
@@ -414,6 +427,17 @@
                 $('#contact_phone').val(offer.phone);
                 $('#contact_email').val(offer.email);
                 $('#contact_description').val(offer.description);
+
+                $('#client_id').val(offer.client_id || '');
+                $('#client_address_id').val('');
+                $('#create_client').val('0');
+                $('#use_custom_address').val('0');
+
+                setClientFieldsVisible(true);
+                setSnapshotMode(!!offer.client_id);
+                const display = `${offer.name || ''}${offer.email ? ' (' + offer.email + ')' : ''}`.trim();
+                $('#client_search').val(display);
+                $('#client_search_results').hide().empty();
 
                 // Termékek
 
@@ -583,10 +607,298 @@
                 }
             }
 
+            function setClientFieldsVisible(visible) {
+                if (visible) {
+                    $('.offer-client-fields').show();
+                } else {
+                    $('.offer-client-fields').hide();
+                }
+
+                $('#title').prop('required', !!visible);
+                $('#contact_name').prop('required', !!visible);
+                $('#contact_email').prop('required', !!visible);
+            }
+
+            function setOfferActionsVisible(visible) {
+                if (visible) {
+                    $('#generateOffer').removeClass('d-none');
+                    $('#previewOfferPdf').removeClass('d-none');
+                } else {
+                    $('#generateOffer').addClass('d-none');
+                    $('#previewOfferPdf').addClass('d-none');
+                }
+            }
+
             function resetForm(title = null) {
                 $('#adminModalLabel').text(title);
                 $('#adminModalForm')[0].reset();
+
+                $('#offer_id').val('');
+                clearClientSelection();
+                $('#client_search').val('');
+                $('#client_search_results').hide().empty();
+
+                setClientFieldsVisible(false);
+                setOfferActionsVisible(false);
             }
+
+            function escapeHtml(str) {
+                return String(str || '')
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#039;');
+            }
+
+            function setSnapshotMode(isSnapshot) {
+                const disable = !!isSnapshot;
+
+                const $inputs = $('#contact_name, #contact_zip_code, #contact_city, #contact_address_line');
+                const $alwaysEditableInputs = $('#contact_phone, #contact_email');
+                const $selects = $('#contact_country');
+
+                $inputs.prop('readonly', disable);
+                $alwaysEditableInputs.prop('readonly', false);
+                $selects.toggleClass('snapshot-locked', disable);
+
+                if (disable) {
+                    $inputs.addClass('bg-light');
+                    $alwaysEditableInputs.removeClass('bg-light');
+                    $selects.addClass('bg-light');
+                } else {
+                    $inputs.removeClass('bg-light');
+                    $alwaysEditableInputs.removeClass('bg-light');
+                    $selects.removeClass('bg-light');
+                }
+            }
+
+            function clearClientSelection() {
+                $('#client_id').val('');
+                $('#client_address_id').val('');
+                $('#create_client').val('0');
+                $('#use_custom_address').val('0');
+
+                $('#contact_name').val('');
+                $('#contact_email').val('');
+                $('#contact_phone').val('');
+                $('#contact_country').val('HU');
+                $('#contact_zip_code').val('');
+                $('#contact_city').val('');
+                $('#contact_address_line').val('');
+
+                setClientFieldsVisible(false);
+                setOfferActionsVisible(false);
+                setSnapshotMode(false);
+            }
+
+            let clientSearchDebounce;
+
+            $('#client_search').on('input', function () {
+                const q = ($(this).val() || '').trim();
+                clearTimeout(clientSearchDebounce);
+
+                $('#client_search_results').hide().empty();
+
+                if ($('#client_id').val() || $('#create_client').val() === '1') {
+                    clearClientSelection();
+                }
+
+                if (!q || q.length < 2) {
+                    return;
+                }
+
+                clientSearchDebounce = setTimeout(() => {
+                    $.ajax({
+                        url: `${window.appConfig.APP_URL}admin/ugyfelek/kereses?q=${encodeURIComponent(q)}`,
+                        method: 'GET',
+                        success: function (response) {
+                            const clients = response?.clients || [];
+                            const $list = $('#client_search_results');
+                            $list.empty();
+
+                            if (clients.length) {
+                                clients.forEach(c => {
+                                    const name = c.name || '';
+                                    const idNumber = c.id_number || '';
+                                    const email = c.email || '';
+                                    const phone = c.phone || '';
+
+                                    const headerParts = [idNumber, email].filter(Boolean).join(', ');
+                                    const addresses = Array.isArray(c.addresses) ? c.addresses : [];
+
+                                    $list.append(`
+                                        <div class="list-group-item client-search-header">
+                                            <div class="fw-bold">${escapeHtml(name || email || 'N/A')}${headerParts ? ' (' + escapeHtml(headerParts) + ')' : ''}</div>
+                                        </div>
+                                    `);
+
+                                    if (!addresses.length) {
+                                        $list.append(`
+                                            <button type="button" class="list-group-item list-group-item-action client-new-address"
+                                                data-id="${c.id}"
+                                                data-id-number="${escapeHtml(idNumber)}"
+                                                data-name="${escapeHtml(name)}"
+                                                data-email="${escapeHtml(email)}"
+                                                data-phone="${escapeHtml(phone)}">
+                                                <div class="fw-bold"><i class="fa-solid fa-circle-plus me-2"></i>Új cím</div>
+                                                <div class="small text-muted">Nincs rögzített cím</div>
+                                            </button>
+                                        `);
+                                        return;
+                                    }
+
+                                    addresses.forEach(a => {
+                                        const addrText = `${a.zip_code || ''} ${a.city || ''}, ${a.address_line || ''}`.trim();
+                                        const subtitle = [addrText].filter(Boolean).join(' | ');
+
+                                        $list.append(`
+                                            <button type="button" class="list-group-item list-group-item-action client-address-item"
+                                                data-id="${c.id}"
+                                                data-address-id="${a?.id || ''}"
+                                                data-id-number="${escapeHtml(idNumber)}"
+                                                data-name="${escapeHtml(name)}"
+                                                data-email="${escapeHtml(email)}"
+                                                data-phone="${escapeHtml(phone)}"
+                                                data-country="${escapeHtml(a?.country || '')}"
+                                                data-zip="${escapeHtml(a?.zip_code || '')}"
+                                                data-city="${escapeHtml(a?.city || '')}"
+                                                data-line="${escapeHtml(a?.address_line || '')}">
+                                                <div class="fw-bold">${escapeHtml(subtitle || 'N/A')}${a?.is_default ? ' (alapértelmezett)' : ''}</div>
+                                            </button>
+                                        `);
+                                    });
+
+                                    $list.append(`
+                                        <button type="button" class="list-group-item list-group-item-action client-new-address"
+                                            data-id="${c.id}"
+                                            data-id-number="${escapeHtml(idNumber)}"
+                                            data-name="${escapeHtml(name)}"
+                                            data-email="${escapeHtml(email)}"
+                                            data-phone="${escapeHtml(phone)}">
+                                            <div class="fw-bold"><i class="fa-solid fa-circle-plus me-2"></i>Új cím</div>
+                                        </button>
+                                    `);
+                                });
+                            }
+
+                            $list.append(`
+                                <button type="button" class="list-group-item list-group-item-action client-create client-create-item">
+                                    <div class="fw-bold">Új ügyfél létrehozása</div>
+                                    <div class="small text-muted">Az alábbi mezőkben megadott adatokkal</div>
+                                </button>
+                            `);
+
+                            $list.show();
+                        },
+                        error: function () {
+                            const $list = $('#client_search_results');
+                            $list.empty();
+                            $list.append(`
+                                <button type="button" class="list-group-item list-group-item-action client-create client-create-item">
+                                    <div class="fw-bold">Új ügyfél létrehozása</div>
+                                    <div class="small text-muted">A keresés sikertelen volt</div>
+                                </button>
+                            `);
+                            $list.show();
+                        }
+                    });
+                }, 300);
+            });
+
+            $('#client_search_results').on('click', '.client-address-item', function () {
+                const $btn = $(this);
+
+                const clientId = $btn.data('id');
+                const addressId = $btn.data('address-id') || null;
+                const idNumber = $btn.data('id-number') || null;
+                const name = $btn.data('name') || null;
+                const email = $btn.data('email') || null;
+                const phone = $btn.data('phone') || null;
+                const country = $btn.data('country') || null;
+                const zip = $btn.data('zip') || null;
+                const city = $btn.data('city') || null;
+                const line = $btn.data('line') || null;
+
+                $('#client_id').val(clientId);
+                $('#client_address_id').val(addressId);
+                $('#create_client').val('0');
+                $('#use_custom_address').val('0');
+
+                $('#contact_name').val(name);
+                $('#contact_email').val(email);
+                $('#contact_phone').val(phone);
+                $('#contact_country').val(country || 'HU');
+                $('#contact_zip_code').val(zip);
+                $('#contact_city').val(city);
+                $('#contact_address_line').val(line);
+
+                setClientFieldsVisible(true);
+                setSnapshotMode(true);
+
+                setOfferActionsVisible(true);
+
+                const headerParts = [idNumber, email].filter(Boolean).join(', ');
+                const display = `${name || ''}${headerParts ? ' (' + headerParts + ')' : ''}`.trim();
+                $('#client_search').val(display);
+                $('#client_search_results').hide().empty();
+            });
+
+            $('#client_search_results').on('click', '.client-new-address', function () {
+                const $btn = $(this);
+
+                const clientId = $btn.data('id');
+                const idNumber = $btn.data('id-number') || null;
+                const name = $btn.data('name') || null;
+                const email = $btn.data('email') || null;
+                const phone = $btn.data('phone') || null;
+
+                $('#client_id').val(clientId);
+                $('#client_address_id').val('');
+                $('#create_client').val('0');
+                $('#use_custom_address').val('1');
+
+                $('#contact_name').val(name);
+                $('#contact_email').val(email);
+                $('#contact_phone').val(phone);
+                $('#contact_country').val('HU');
+                $('#contact_zip_code').val('');
+                $('#contact_city').val('');
+                $('#contact_address_line').val('');
+
+                setClientFieldsVisible(true);
+                setSnapshotMode(false);
+
+                setOfferActionsVisible(true);
+
+                const headerParts = [idNumber, email].filter(Boolean).join(', ');
+                const display = `${name || ''}${headerParts ? ' (' + headerParts + ')' : ''}`.trim();
+                $('#client_search').val(display);
+                $('#client_search_results').hide().empty();
+
+                setTimeout(() => {
+                    $('#contact_zip_code').trigger('focus');
+                }, 0);
+            });
+
+            $('#client_search_results').on('click', '.client-create', function () {
+                $('#create_client').val('1');
+                $('#client_id').val('');
+                $('#client_address_id').val('');
+                $('#use_custom_address').val('0');
+
+                setClientFieldsVisible(true);
+                setSnapshotMode(false);
+
+                setOfferActionsVisible(true);
+
+                $('#client_search').val('');
+                $('#client_search_results').hide().empty();
+
+                setTimeout(() => {
+                    $('#contact_name').trigger('focus');
+                }, 0);
+            });
         });
     </script>
 @endsection

@@ -29,28 +29,32 @@ class ClientController extends Controller
 
         $clientIds = $clients->pluck('id')->toArray();
 
-        $defaultAddressesByClientId = ClientAddress::query()
+        $addressesByClientId = ClientAddress::query()
             ->whereIn('client_id', $clientIds)
             ->orderByDesc('is_default')
             ->orderByDesc('id')
             ->get()
-            ->groupBy('client_id')
-            ->map(fn ($rows) => $rows->first());
+            ->groupBy('client_id');
 
-        $payload = $clients->map(function ($client) use ($defaultAddressesByClientId) {
-            $address = $defaultAddressesByClientId[$client->id] ?? null;
+        $payload = $clients->map(function ($client) use ($addressesByClientId) {
+            $addresses = $addressesByClientId[$client->id] ?? collect();
 
             return [
                 'id' => $client->id,
                 'name' => $client->name,
+                'id_number' => $client->id_number,
                 'email' => $client->email,
                 'phone' => $client->phone,
-                'address' => $address ? [
-                    'country' => $address->country,
-                    'zip_code' => $address->zip_code,
-                    'city' => $address->city,
-                    'address_line' => $address->address_line,
-                ] : null,
+                'addresses' => $addresses->map(function ($address) {
+                    return [
+                        'id' => $address->id,
+                        'is_default' => (bool) $address->is_default,
+                        'country' => $address->country,
+                        'zip_code' => $address->zip_code,
+                        'city' => $address->city,
+                        'address_line' => $address->address_line,
+                    ];
+                })->values(),
             ];
         })->values();
 

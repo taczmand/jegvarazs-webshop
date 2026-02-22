@@ -59,8 +59,9 @@
                     </div>
 
                     <div class="modal-body">
-                        <ul class="nav nav-tabs" id="userTab" role="tablist">
-                            <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#basic" type="button">Felhasználói adatok</button></li>
+                        <ul class="nav nav-tabs admin-modal-tabs" id="userTab" role="tablist">
+                            <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#basic" type="button">Alapadatok</button></li>
+                            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#permissions" type="button">Jogosultságok</button></li>
                         </ul>
 
                         <div class="tab-content mt-3">

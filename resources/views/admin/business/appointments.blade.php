@@ -78,82 +78,98 @@
 
 
     <!-- Modális ablak -->
-    <div class="modal fade" id="appointmentModal" tabindex="-1" aria-labelledby="appointmentModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
+    <div class="modal fade admin-modal-soft" id="appointmentModal" tabindex="-1" aria-labelledby="appointmentModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
             <form id="appointmentForm" enctype="multipart/form-data">
                 <div class="modal-content">
-                    <div class="modal-header">
+                    <div class="modal-header bg-gradient-custom">
                         <h5 class="modal-title" id="appointmentModalLabel">Időpontfoglalás szerkesztése</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Bezárás"></button>
                     </div>
                     <div class="modal-body">
                         <input type="hidden" id="appointment_id" name="id">
+                        <input type="hidden" id="client_id" name="client_id">
+                        <input type="hidden" id="client_address_id" name="client_address_id">
+                        <input type="hidden" id="create_client" name="create_client" value="0">
+                        <input type="hidden" id="use_custom_address" name="use_custom_address" value="0">
 
-                        <ul class="nav nav-tabs" id="appointmentTab" role="tablist">
+                        <ul class="nav nav-tabs admin-modal-tabs" id="appointmentTab" role="tablist">
                             <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#basic" type="button">Alapadatok</button></li>
                             <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#images" type="button">Képek</button></li>
                         </ul>
 
                         <div class="tab-content mt-3">
                             <div class="tab-pane fade show active" id="basic">
-                                <div class="row">
-                                    <div class="col-md-6 mb-3">
-                                        <label for="name" class="form-label">Ügyfélnév*</label>
-                                        <input type="text" class="form-control" id="name" name="name" required>
-                                    </div>
-                                    <div class="col-md-6 mb-3">
-                                        <label for="email" class="form-label">E-mail cím</label>
-                                        <input type="email" class="form-control" id="email" name="email">
-                                    </div>
-
-                                    <div class="col-md-6 mb-3">
-                                        <label for="phone" class="form-label">Telefonszám*</label>
-                                        <input type="text" class="form-control" id="phone" name="phone" required>
-                                    </div>
-                                    <div class="col-md-6 mb-3">
-                                        <label for="zip_code" class="form-label">Irányítószám*</label>
-                                        <input type="text" class="form-control" id="zip_code" name="zip_code" required>
-                                    </div>
-
-                                    <div class="col-md-6 mb-3">
-                                        <label for="city" class="form-label">Város*</label>
-                                        <input type="text" class="form-control" id="city" name="city" required>
-                                        <div id="zip_suggestions" class="list-group position-absolute w-100" style="z-index: 1000;"></div>
-                                    </div>
-                                    <div class="col-md-6 mb-3">
-                                        <label for="address_line" class="form-label">Cím*</label>
-                                        <input type="text" class="form-control" id="address_line" name="address_line" required>
-                                        <div id="street_suggestions" class="list-group position-absolute w-100" style="z-index: 1000;"></div>
-                                    </div>
-
-                                    <div class="col-md-6 mb-3">
-                                        <label for="appointment_date" class="form-label">Dátum*</label>
-                                        <input type="date" class="form-control" id="appointment_date" name="appointment_date" required>
-                                    </div>
-                                    <div class="col-md-6 mb-3">
-                                        <label for="appointment_type" class="form-label">Típus*</label>
-                                        <select id="appointment_type" name="appointment_type" class="form-control">
-                                            <option value="Karbantartás">Karbantartás</option>
-                                            <option value="Felmérés">Felmérés</option>
-                                            <option value="Egyéb">Egyéb</option>
-                                        </select>
-                                    </div>
-
-                                    <div class="col-md-6 mb-3">
-                                        <label for="status" class="form-label">Állapot*</label>
-                                        <select id="status" name="status" class="form-control">
-                                            <option value="Függőben">Függőben</option>
-                                            <option value="Folyamatban">Folyamatban</option>
-                                            <option value="Kész">Kész</option>
-                                            <option value="Törölve">Törölve</option>
-                                        </select>
-                                    </div>
-
-                                    <div class="col-md-12 mb-3">
-                                        <label for="message" class="form-label">Üzenet</label>
-                                        <textarea name="message" id="message" rows="3" class="form-control"></textarea>
-                                    </div>
-                                </div>
+                                <table class="table admin-modal-form-table">
+                                    <tbody>
+                                    <tr>
+                                        <td class="w-25">Ügyfél keresés</td>
+                                        <td class="position-relative">
+                                            <input type="text" class="form-control" id="client_search" placeholder="Név / e-mail / telefon..." autocomplete="off">
+                                            <div id="client_search_results" class="list-group position-absolute w-100 admin-client-search-results" style="z-index: 1100; display:none; max-height: 260px; overflow-y: auto;"></div>
+                                        </td>
+                                    </tr>
+                                    <tr class="appointment-client-fields" style="display:none;">
+                                        <td>Ügyfélnév*</td>
+                                        <td><input type="text" class="form-control" id="name" name="name" required></td>
+                                    </tr>
+                                    <tr class="appointment-client-fields" style="display:none;">
+                                        <td>E-mail cím</td>
+                                        <td><input type="email" class="form-control" id="email" name="email"></td>
+                                    </tr>
+                                    <tr class="appointment-client-fields" style="display:none;">
+                                        <td>Telefonszám*</td>
+                                        <td><input type="text" class="form-control" id="phone" name="phone" required></td>
+                                    </tr>
+                                    <tr class="appointment-client-fields" style="display:none;">
+                                        <td>Irányítószám*</td>
+                                        <td><input type="text" class="form-control" id="zip_code" name="zip_code" required></td>
+                                    </tr>
+                                    <tr class="appointment-client-fields" style="display:none;">
+                                        <td>Város*</td>
+                                        <td class="position-relative">
+                                            <input type="text" class="form-control" id="city" name="city" required>
+                                            <div id="zip_suggestions" class="list-group position-absolute w-100" style="z-index: 1000;"></div>
+                                        </td>
+                                    </tr>
+                                    <tr class="appointment-client-fields" style="display:none;">
+                                        <td>Cím*</td>
+                                        <td class="position-relative">
+                                            <input type="text" class="form-control" id="address_line" name="address_line" required>
+                                            <div id="street_suggestions" class="list-group position-absolute w-100" style="z-index: 1000;"></div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Dátum*</td>
+                                        <td><input type="date" class="form-control" id="appointment_date" name="appointment_date" required></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Típus*</td>
+                                        <td>
+                                            <select id="appointment_type" name="appointment_type" class="form-control">
+                                                <option value="Karbantartás">Karbantartás</option>
+                                                <option value="Felmérés">Felmérés</option>
+                                                <option value="Egyéb">Egyéb</option>
+                                            </select>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Állapot*</td>
+                                        <td>
+                                            <select id="status" name="status" class="form-control">
+                                                <option value="Függőben">Függőben</option>
+                                                <option value="Folyamatban">Folyamatban</option>
+                                                <option value="Kész">Kész</option>
+                                                <option value="Törölve">Törölve</option>
+                                            </select>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Üzenet</td>
+                                        <td><textarea name="message" id="message" rows="3" class="form-control"></textarea></td>
+                                    </tr>
+                                    </tbody>
+                                </table>
                             </div>
 
                             <div class="tab-pane fade" id="images">
@@ -395,6 +411,7 @@
 
                     // Alapadatok betöltése
                     $('#appointment_id').val(data.id);
+                    $('#client_id').val(data.client_id || '');
                     $('#name').val(data.name);
                     $('#email').val(data.email);
                     $('#phone').val(data.phone);
@@ -405,6 +422,10 @@
                     $('#appointment_type').val(data.appointment_type);
                     $('#status').val(data.status);
                     $('#message').val(data.message);
+
+                    setClientFieldsVisible(true);
+                    setSnapshotMode(!!data.client_id);
+                    $('#client_search').val(data.name || '');
 
 
                     renderPhotos(assigned_photos);
@@ -528,6 +549,10 @@
                 $('#appointment_id').val('');
                 $('#appointmentModalLabel').text(title);
 
+                clearClientSelection();
+                $('#client_search').val('');
+                $('#client_search_results').hide().empty();
+
                 $('#zip_suggestions').empty().hide();
                 $('#street_suggestions').empty().hide();
 
@@ -535,6 +560,257 @@
                 const firstTab = new bootstrap.Tab(document.querySelector('#appointmentTab .nav-link[data-bs-target="#basic"]'));
                 firstTab.show();
             }
+
+            function escapeHtml(str) {
+                return String(str || '')
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#039;');
+            }
+
+            function setSnapshotMode(isSnapshot) {
+                const disable = !!isSnapshot;
+
+                const $inputs = $('#name, #zip_code, #city, #address_line');
+                const $alwaysEditableInputs = $('#phone, #email');
+
+                $inputs.prop('readonly', disable);
+                $alwaysEditableInputs.prop('readonly', false);
+
+                if (disable) {
+                    $inputs.addClass('bg-light');
+                    $alwaysEditableInputs.removeClass('bg-light');
+                } else {
+                    $inputs.removeClass('bg-light');
+                    $alwaysEditableInputs.removeClass('bg-light');
+                }
+            }
+
+            function setClientFieldsVisible(visible) {
+                if (visible) {
+                    $('.appointment-client-fields').show();
+                } else {
+                    $('.appointment-client-fields').hide();
+                }
+            }
+
+            function clearClientSelection() {
+                $('#client_id').val('');
+                $('#client_address_id').val('');
+                $('#create_client').val('0');
+                $('#use_custom_address').val('0');
+
+                $('#name').val('');
+                $('#email').val('');
+                $('#phone').val('');
+                $('#zip_code').val('');
+                $('#city').val('');
+                $('#address_line').val('');
+
+                setClientFieldsVisible(false);
+                setSnapshotMode(false);
+            }
+
+            let clientSearchDebounce;
+
+            $('#client_search').on('input', function () {
+                const q = ($(this).val() || '').trim();
+                clearTimeout(clientSearchDebounce);
+
+                $('#client_search_results').hide().empty();
+
+                if ($('#client_id').val() || $('#create_client').val() === '1') {
+                    clearClientSelection();
+                }
+
+                if (!q || q.length < 2) {
+                    return;
+                }
+
+                clientSearchDebounce = setTimeout(() => {
+                    $.ajax({
+                        url: `${window.appConfig.APP_URL}admin/ugyfelek/kereses?q=${encodeURIComponent(q)}`,
+                        method: 'GET',
+                        success: function (response) {
+                            const clients = response?.clients || [];
+                            const $list = $('#client_search_results');
+                            $list.empty();
+
+                            if (clients.length) {
+                                clients.forEach(c => {
+                                    const name = c.name || '';
+                                    const idNumber = c.id_number || '';
+                                    const email = c.email || '';
+                                    const phone = c.phone || '';
+
+                                    const headerParts = [idNumber, email].filter(Boolean).join(', ');
+                                    const addresses = Array.isArray(c.addresses) ? c.addresses : [];
+
+                                    $list.append(`
+                                        <div class="list-group-item client-search-header">
+                                            <div class="fw-bold">${escapeHtml(name || email || 'N/A')}${headerParts ? ' (' + escapeHtml(headerParts) + ')' : ''}</div>
+                                        </div>
+                                    `);
+
+                                    if (!addresses.length) {
+                                        $list.append(`
+                                            <button type="button" class="list-group-item list-group-item-action client-new-address"
+                                                data-id="${c.id}"
+                                                data-id-number="${escapeHtml(idNumber)}"
+                                                data-name="${escapeHtml(name)}"
+                                                data-email="${escapeHtml(email)}"
+                                                data-phone="${escapeHtml(phone)}">
+                                                <div class="fw-bold"><i class="fa-solid fa-circle-plus me-2"></i>Új cím</div>
+                                                <div class="small text-muted">Nincs rögzített cím</div>
+                                            </button>
+                                        `);
+                                        return;
+                                    }
+
+                                    addresses.forEach(a => {
+                                        const addrText = `${a.zip_code || ''} ${a.city || ''}, ${a.address_line || ''}`.trim();
+                                        const subtitle = [addrText].filter(Boolean).join(' | ');
+
+                                        $list.append(`
+                                            <button type="button" class="list-group-item list-group-item-action client-address-item"
+                                                data-id="${c.id}"
+                                                data-address-id="${a?.id || ''}"
+                                                data-id-number="${escapeHtml(idNumber)}"
+                                                data-name="${escapeHtml(name)}"
+                                                data-email="${escapeHtml(email)}"
+                                                data-phone="${escapeHtml(phone)}"
+                                                data-zip="${escapeHtml(a?.zip_code || '')}"
+                                                data-city="${escapeHtml(a?.city || '')}"
+                                                data-line="${escapeHtml(a?.address_line || '')}">
+                                                <div class="fw-bold">${escapeHtml(subtitle || 'N/A')}${a?.is_default ? ' (alapértelmezett)' : ''}</div>
+                                            </button>
+                                        `);
+                                    });
+
+                                    $list.append(`
+                                        <button type="button" class="list-group-item list-group-item-action client-new-address"
+                                            data-id="${c.id}"
+                                            data-id-number="${escapeHtml(idNumber)}"
+                                            data-name="${escapeHtml(name)}"
+                                            data-email="${escapeHtml(email)}"
+                                            data-phone="${escapeHtml(phone)}">
+                                            <div class="fw-bold"><i class="fa-solid fa-circle-plus me-2"></i>Új cím</div>
+                                        </button>
+                                    `);
+                                });
+                            }
+
+                            $list.append(`
+                                <button type="button" class="list-group-item list-group-item-action client-create client-create-item">
+                                    <div class="fw-bold">Új ügyfél létrehozása</div>
+                                    <div class="small text-muted">Az alábbi mezőkben megadott adatokkal</div>
+                                </button>
+                            `);
+
+                            $list.show();
+                        },
+                        error: function () {
+                            const $list = $('#client_search_results');
+                            $list.empty();
+                            $list.append(`
+                                <button type="button" class="list-group-item list-group-item-action client-create client-create-item">
+                                    <div class="fw-bold">Új ügyfél létrehozása</div>
+                                    <div class="small text-muted">A keresés sikertelen volt</div>
+                                </button>
+                            `);
+                            $list.show();
+                        }
+                    });
+                }, 300);
+            });
+
+            $('#client_search_results').on('click', '.client-address-item', function () {
+                const $btn = $(this);
+
+                const clientId = $btn.data('id');
+                const addressId = $btn.data('address-id') || null;
+                const idNumber = $btn.data('id-number') || null;
+                const name = $btn.data('name') || null;
+                const email = $btn.data('email') || null;
+                const phone = $btn.data('phone') || null;
+                const zip = $btn.data('zip') || null;
+                const city = $btn.data('city') || null;
+                const line = $btn.data('line') || null;
+
+                $('#client_id').val(clientId);
+                $('#client_address_id').val(addressId);
+                $('#create_client').val('0');
+                $('#use_custom_address').val('0');
+
+                $('#name').val(name);
+                $('#email').val(email);
+                $('#phone').val(phone);
+                $('#zip_code').val(zip);
+                $('#city').val(city);
+                $('#address_line').val(line);
+
+                setClientFieldsVisible(true);
+                setSnapshotMode(true);
+
+                const headerParts = [idNumber, email].filter(Boolean).join(', ');
+                const display = `${name || ''}${headerParts ? ' (' + headerParts + ')' : ''}`.trim();
+                $('#client_search').val(display);
+                $('#client_search_results').hide().empty();
+            });
+
+            $('#client_search_results').on('click', '.client-new-address', function () {
+                const $btn = $(this);
+
+                const clientId = $btn.data('id');
+                const idNumber = $btn.data('id-number') || null;
+                const name = $btn.data('name') || null;
+                const email = $btn.data('email') || null;
+                const phone = $btn.data('phone') || null;
+
+                $('#client_id').val(clientId);
+                $('#client_address_id').val('');
+                $('#create_client').val('0');
+                $('#use_custom_address').val('1');
+
+                $('#name').val(name);
+                $('#email').val(email);
+                $('#phone').val(phone);
+                $('#zip_code').val('');
+                $('#city').val('');
+                $('#address_line').val('');
+
+                setClientFieldsVisible(true);
+                setSnapshotMode(false);
+
+                const headerParts = [idNumber, email].filter(Boolean).join(', ');
+                const display = `${name || ''}${headerParts ? ' (' + headerParts + ')' : ''}`.trim();
+                $('#client_search').val(display);
+                $('#client_search_results').hide().empty();
+
+                setTimeout(() => {
+                    $('#zip_code').trigger('focus');
+                }, 0);
+            });
+
+            $('#client_search_results').on('click', '.client-create', function () {
+                $('#create_client').val('1');
+                $('#client_id').val('');
+                $('#client_address_id').val('');
+                $('#use_custom_address').val('0');
+
+                setClientFieldsVisible(true);
+                setSnapshotMode(false);
+
+                $('#client_search').val('');
+                $('#client_search_results').hide().empty();
+
+                setTimeout(() => {
+                    $('#name').trigger('focus');
+                }, 0);
+            });
+
         });
 
     </script>

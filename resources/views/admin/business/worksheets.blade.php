@@ -130,19 +130,23 @@
 
 
     <!-- Modális ablak -->
-    <div class="modal fade" id="adminModal" tabindex="-1" aria-labelledby="adminModalLabel" aria-hidden="true">
+    <div class="modal fade admin-modal-soft" id="adminModal" tabindex="-1" aria-labelledby="adminModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-xl">
             <form id="adminModalForm" action="" enctype="multipart/form-data">
                 <input type="hidden" id="worksheet_id" name="worksheet_id">
+                <input type="hidden" id="client_id" name="client_id">
+                <input type="hidden" id="client_address_id" name="client_address_id">
+                <input type="hidden" id="create_client" name="create_client" value="0">
+                <input type="hidden" id="use_custom_address" name="use_custom_address" value="0">
 
                 <div class="modal-content">
-                    <div class="modal-header">
+                    <div class="modal-header bg-gradient-custom">
                         <h5 class="modal-title" id="adminModalLabel">Munkalap szerkesztése</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Bezárás"></button>
                     </div>
                     <div class="modal-body">
 
-                        <ul class="nav nav-tabs" id="productTab" role="tablist">
+                        <ul class="nav nav-tabs admin-modal-tabs" id="productTab" role="tablist">
                             <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#basic" type="button">Alapadatok</button></li>
                             <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#workers" type="button">Szerelők</button></li>
                             <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#products" type="button">Termékek</button></li>
@@ -165,8 +169,15 @@
                                 <!-- Alapadatok tab -->
 
                             <div class="tab-pane fade show active" id="basic">
-                                <table class="table table-bordered worksheet-basic-table">
+                                <table class="table worksheet-basic-table admin-modal-form-table">
                                     <tbody>
+                                    <tr>
+                                        <td class="w-25">Ügyfél keresés</td>
+                                        <td class="position-relative">
+                                            <input type="text" class="form-control" id="client_search" placeholder="Név / e-mail / telefon..." autocomplete="off" {{ $readonly }}>
+                                            <div id="client_search_results" class="list-group position-absolute w-100 admin-client-search-results" style="z-index: 1100; display:none; max-height: 260px; overflow-y: auto;"></div>
+                                        </td>
+                                    </tr>
                                     <tr>
                                         <td class="w-25">Munka megnevezése</td>
                                         <td><input type="text" class="form-control" id="work_name" name="work_name" {{ $readonly }} required></td>
@@ -185,11 +196,12 @@
                                         <td class="w-25">Munka dátuma</td>
                                         <td><input type="date" class="form-control" id="installation_date" name="installation_date" {{ $readonly }} required></td>
                                     </tr>
-                                    <tr>
+
+                                    <tr class="worksheet-client-fields" style="display:none;">
                                         <td class="w-25">Ügyfélnév</td>
                                         <td><input type="text" class="form-control" id="contact_name" name="contact_name" {{ $readonly }} required></td>
                                     </tr>
-                                    <tr>
+                                    <tr class="worksheet-client-fields" style="display:none;">
                                         <td>Ország</td>
                                         <td>
                                             <select name="contact_country" class="form-control w-100" id="contact_country" {{ $readonly }}>
@@ -199,29 +211,29 @@
                                             </select>
                                         </td>
                                     </tr>
-                                    <tr>
+                                    <tr class="worksheet-client-fields" style="display:none;">
                                         <td>Irányítószám</td>
                                         <td><input type="text" class="form-control" id="contact_zip_code" name="contact_zip_code" {{ $readonly }}></td>
                                     </tr>
-                                    <tr>
+                                    <tr class="worksheet-client-fields" style="display:none;">
                                         <td>Város</td>
                                         <td>
                                             <input type="text" class="form-control" id="contact_city" name="contact_city" {{ $readonly }}>
                                             <div id="zip_suggestions" class="list-group position-absolute w-100" style="z-index: 1000;"></div>
                                         </td>
                                     </tr>
-                                    <tr>
+                                    <tr class="worksheet-client-fields" style="display:none;">
                                         <td>Cím</td>
                                         <td>
                                             <input type="text" class="form-control" id="contact_address_line" name="contact_address_line" {{ $readonly }}>
                                             <div id="street_suggestions" class="list-group position-absolute w-100" style="z-index: 1000;"></div>
                                         </td>
                                     </tr>
-                                    <tr>
+                                    <tr class="worksheet-client-fields" style="display:none;">
                                         <td>Telefonszám <span class="ml-3 btn btn-primary" id="call_phone_number"><i class="fa fa-phone"></i> Hívás</span></td>
                                         <td><input type="text" class="form-control" id="contact_phone" name="contact_phone" {{ $readonly }}></td>
                                     </tr>
-                                    <tr>
+                                    <tr class="worksheet-client-fields" style="display:none;">
                                         <td>E-mail cím</td>
                                         <td><input type="email" class="form-control" id="contact_email" name="contact_email" {{ $readonly }}></td>
                                     </tr>
@@ -431,7 +443,7 @@
                     <div class="modal-footer d-flex align-items-center gap-2">
                         <label for="work_status" class="mb-0">Állapot:</label>
 
-                        <select class="form-control form-control-sm w-auto" name="work_status" id="work_status">
+                        <select class="form-select form-select-sm w-auto" name="work_status" id="work_status">
                             <option value="Folyamatban">Folyamatban</option>
                             <option value="Kész">Kész</option>
                             <option value="Lezárva">Lezárva</option>
@@ -448,6 +460,11 @@
 @endsection
 
 @section('scripts')
+    <style>
+        select.snapshot-locked {
+            pointer-events: none;
+        }
+    </style>
     <script type="module">
 
         $(document).ready(function() {
@@ -639,15 +656,271 @@
                     if (installation_date) {
                         $('#installation_date').val(installation_date);
                     }
-                    loadProducts();
-                    loadWorkers();
 
-                    $('.worksheet-basic-table').find('input, select, textarea').prop('disabled', false);
+                    setSnapshotMode(true);
 
                 } catch (error) {
                     showToast(error, 'danger');
                 }
                 adminModal.show();
+            }
+
+            let clientSearchDebounce;
+
+            function clearClientSelection() {
+                $('#client_id').val('');
+                $('#client_address_id').val('');
+                $('#create_client').val('0');
+                $('#use_custom_address').val('0');
+
+                $('#contact_name').val('');
+                $('#contact_email').val('');
+                $('#contact_phone').val('');
+                $('#contact_country').val('HU');
+                $('#contact_zip_code').val('');
+                $('#contact_city').val('');
+                $('#contact_address_line').val('');
+
+                setClientFieldsVisible(false);
+                setSnapshotMode(true);
+            }
+
+            $('#client_search').on('input', function () {
+                const q = ($(this).val() || '').trim();
+                clearTimeout(clientSearchDebounce);
+
+                $('#client_search_results').hide().empty();
+
+                if ($('#client_id').val() || $('#create_client').val() === '1') {
+                    clearClientSelection();
+                }
+
+                if (!q || q.length < 2) {
+                    return;
+                }
+
+                clientSearchDebounce = setTimeout(() => {
+                    $.ajax({
+                        url: `${window.appConfig.APP_URL}admin/ugyfelek/kereses?q=${encodeURIComponent(q)}`,
+                        method: 'GET',
+                        success: function (response) {
+                            const clients = response?.clients || [];
+                            const $list = $('#client_search_results');
+                            $list.empty();
+
+                            if (clients.length) {
+                                clients.forEach(c => {
+                                    const name = c.name || '';
+                                    const idNumber = c.id_number || '';
+                                    const email = c.email || '';
+                                    const phone = c.phone || '';
+
+                                    const headerParts = [idNumber, email].filter(Boolean).join(', ');
+
+                                    const addresses = Array.isArray(c.addresses) ? c.addresses : [];
+
+                                    $list.append(`
+                                        <div class="list-group-item client-search-header">
+                                            <div class="fw-bold">${escapeHtml(name || email || 'N/A')}${headerParts ? ' (' + escapeHtml(headerParts) + ')' : ''}</div>
+                                        </div>
+                                    `);
+
+                                    if (!addresses.length) {
+                                        $list.append(`
+                                            <button type="button" class="list-group-item list-group-item-action client-new-address"
+                                                data-id="${c.id}"
+                                                data-id-number="${escapeHtml(idNumber)}"
+                                                data-name="${escapeHtml(name)}"
+                                                data-email="${escapeHtml(email)}"
+                                                data-phone="${escapeHtml(phone)}">
+                                                <div class="fw-bold"><i class="fa-solid fa-circle-plus me-2"></i>Új cím</div>
+                                                <div class="small text-muted">Nincs rögzített cím</div>
+                                            </button>
+                                        `);
+                                        return;
+                                    }
+
+                                    addresses.forEach(a => {
+                                        const addrText = `${a.zip_code || ''} ${a.city || ''}, ${a.address_line || ''}`.trim();
+
+                                        const subtitle = [addrText].filter(Boolean).join(' | ');
+
+                                        $list.append(`
+                                            <button type="button" class="list-group-item list-group-item-action client-address-item"
+                                                data-id="${c.id}"
+                                                data-address-id="${a?.id || ''}"
+                                                data-id-number="${escapeHtml(idNumber)}"
+                                                data-name="${escapeHtml(name)}"
+                                                data-email="${escapeHtml(email)}"
+                                                data-phone="${escapeHtml(phone)}"
+                                                data-country="${escapeHtml(a?.country || '')}"
+                                                data-zip="${escapeHtml(a?.zip_code || '')}"
+                                                data-city="${escapeHtml(a?.city || '')}"
+                                                data-line="${escapeHtml(a?.address_line || '')}">
+                                                <div class="fw-bold">${escapeHtml(subtitle || 'N/A')}${a?.is_default ? ' (alapértelmezett)' : ''}</div>
+                                            </button>
+                                        `);
+                                    });
+
+                                    $list.append(`
+                                        <button type="button" class="list-group-item list-group-item-action client-new-address"
+                                            data-id="${c.id}"
+                                            data-id-number="${escapeHtml(idNumber)}"
+                                            data-name="${escapeHtml(name)}"
+                                            data-email="${escapeHtml(email)}"
+                                            data-phone="${escapeHtml(phone)}">
+                                            <div class="fw-bold"><i class="fa-solid fa-circle-plus me-2"></i>Új cím</div>
+                                        </button>
+                                    `);
+                                });
+                            }
+
+                            $list.append(`
+                                <button type="button" class="list-group-item list-group-item-action client-create client-create-item">
+                                    <div class="fw-bold">Új ügyfél létrehozása</div>
+                                    <div class="small text-muted">Az alábbi mezőkben megadott adatokkal</div>
+                                </button>
+                            `);
+
+                            $list.show();
+                        },
+                        error: function () {
+                            const $list = $('#client_search_results');
+                            $list.empty();
+                            $list.append(`
+                                <button type="button" class="list-group-item list-group-item-action client-create client-create-item">
+                                    <div class="fw-bold">Új ügyfél létrehozása</div>
+                                    <div class="small text-muted">A keresés sikertelen volt</div>
+                                </button>
+                            `);
+                            $list.show();
+                        }
+                    });
+                }, 300);
+            });
+
+            $('#client_search_results').on('click', '.client-address-item', function () {
+                const $btn = $(this);
+
+                const clientId = $btn.data('id');
+                const addressId = $btn.data('address-id') || null;
+                const idNumber = $btn.data('id-number') || null;
+                const name = $btn.data('name') || null;
+                const email = $btn.data('email') || null;
+                const phone = $btn.data('phone') || null;
+                const country = $btn.data('country') || null;
+                const zip = $btn.data('zip') || null;
+                const city = $btn.data('city') || null;
+                const line = $btn.data('line') || null;
+
+                $('#client_id').val(clientId);
+                $('#client_address_id').val(addressId);
+                $('#create_client').val('0');
+                $('#use_custom_address').val('0');
+
+                $('#contact_name').val(name);
+                $('#contact_email').val(email);
+                $('#contact_phone').val(phone);
+                $('#contact_country').val(country || 'HU');
+                $('#contact_zip_code').val(zip);
+                $('#contact_city').val(city);
+                $('#contact_address_line').val(line);
+
+                setClientFieldsVisible(true);
+                setSnapshotMode(true);
+
+                const headerParts = [idNumber, email].filter(Boolean).join(', ');
+                const display = `${name || ''}${headerParts ? ' (' + headerParts + ')' : ''}`.trim();
+                $('#client_search').val(display);
+                $('#client_search_results').hide().empty();
+            });
+
+            $('#client_search_results').on('click', '.client-new-address', function () {
+                const $btn = $(this);
+
+                const clientId = $btn.data('id');
+                const idNumber = $btn.data('id-number') || null;
+                const name = $btn.data('name') || null;
+                const email = $btn.data('email') || null;
+                const phone = $btn.data('phone') || null;
+
+                $('#client_id').val(clientId);
+                $('#client_address_id').val('');
+                $('#create_client').val('0');
+                $('#use_custom_address').val('1');
+
+                $('#contact_name').val(name);
+                $('#contact_email').val(email);
+                $('#contact_phone').val(phone);
+                $('#contact_country').val('HU');
+                $('#contact_zip_code').val('');
+                $('#contact_city').val('');
+                $('#contact_address_line').val('');
+
+                setClientFieldsVisible(true);
+                setSnapshotMode(false);
+
+                const headerParts = [idNumber, email].filter(Boolean).join(', ');
+                const display = `${name || ''}${headerParts ? ' (' + headerParts + ')' : ''}`.trim();
+                $('#client_search').val(display);
+                $('#client_search_results').hide().empty();
+
+                setTimeout(() => {
+                    $('#contact_zip_code').trigger('focus');
+                }, 0);
+            });
+
+            $('#client_search_results').on('click', '.client-create', function () {
+                $('#create_client').val('1');
+                $('#client_id').val('');
+                $('#client_address_id').val('');
+                $('#use_custom_address').val('0');
+
+                setClientFieldsVisible(true);
+                setSnapshotMode(false);
+
+                $('#client_search').val('');
+                $('#client_search_results').hide().empty();
+
+                setTimeout(() => {
+                    $('#contact_name').trigger('focus');
+                }, 0);
+            });
+
+            function setClientFieldsVisible(visible) {
+                $('.worksheet-client-fields').toggle(!!visible);
+                $('#contact_name').prop('required', !!visible);
+            }
+
+            function setSnapshotMode(isSnapshot) {
+                const disable = !!isSnapshot;
+
+                const $inputs = $('#contact_name, #contact_zip_code, #contact_city, #contact_address_line');
+                const $alwaysEditableInputs = $('#contact_phone, #contact_email');
+                const $selects = $('#contact_country');
+
+                $inputs.prop('readonly', disable);
+                $alwaysEditableInputs.prop('readonly', false);
+                $selects.toggleClass('snapshot-locked', disable);
+
+                if (disable) {
+                    $inputs.addClass('bg-light');
+                    $alwaysEditableInputs.removeClass('bg-light');
+                    $selects.addClass('bg-light');
+                } else {
+                    $inputs.removeClass('bg-light');
+                    $alwaysEditableInputs.removeClass('bg-light');
+                    $selects.removeClass('bg-light');
+                }
+            }
+
+            function escapeHtml(str) {
+                return String(str)
+                    .replaceAll('&', '&amp;')
+                    .replaceAll('<', '&lt;')
+                    .replaceAll('>', '&gt;')
+                    .replaceAll('"', '&quot;')
+                    .replaceAll("'", '&#039;');
             }
 
             // Munkalap szerkesztése
@@ -688,6 +961,18 @@
                 $('#worker_report').val(worksheet.worker_report);
                 $('#contact_phone').val(worksheet.phone);
                 $('#contact_email').val(worksheet.email);
+
+                $('#client_id').val(worksheet.client_id || '');
+                if (worksheet.client_id) {
+                    const display = `${worksheet.name || ''}${worksheet.email ? ' (' + worksheet.email + ')' : ''}`.trim();
+                    $('#client_search').val(display);
+                } else {
+                    $('#client_search').val('');
+                }
+
+                setClientFieldsVisible(true);
+                setSnapshotMode(true);
+                $('#create_client').val('0');
                 $('#contract_id').val(worksheet.contract_id);
                 $('#work_status').val(worksheet.work_status);
                 $('#payment_method').val(worksheet.payment_method);
@@ -762,31 +1047,69 @@
                 let url = '{{ route('admin.worksheet.store') }}';
                 let method = 'POST';
 
-
-                $.ajax({
-                    url: url,
-                    method: method,
-                    data: formData,
-                    contentType: false,
-                    processData: false,
-                    success(response) {
-                        showToast(response.message || 'Sikeres!', 'success');
-                        table.ajax.reload(null, false);
-                        adminModal.hide();
-                    },
-                    error(xhr) {
-                        let msg = 'Hiba!';
-                        if (xhr.responseJSON?.errors) {
-                            msg = Object.values(xhr.responseJSON.errors).flat().join(' ');
-                        } else if (xhr.responseJSON?.message) {
-                            msg = xhr.responseJSON.message;
+                const saveWorksheetAjax = () => {
+                    return $.ajax({
+                        url: url,
+                        method: method,
+                        data: formData,
+                        contentType: false,
+                        processData: false,
+                        success(response) {
+                            showToast(response.message || 'Sikeres!', 'success');
+                            table.ajax.reload(null, false);
+                            adminModal.hide();
+                        },
+                        error(xhr) {
+                            let msg = 'Hiba!';
+                            if (xhr.responseJSON?.errors) {
+                                msg = Object.values(xhr.responseJSON.errors).flat().join(' ');
+                            } else if (xhr.responseJSON?.message) {
+                                msg = xhr.responseJSON.message;
+                            }
+                            showToast(msg, 'danger');
+                        },
+                        complete: () => {
+                            $('#saveWorksheet').html(originalSaveButtonHtml).prop('disabled', false);
                         }
-                        showToast(msg, 'danger');
-                    },
-                    complete: () => {
-                        $(this).html(originalSaveButtonHtml).prop('disabled', false);
-                    }
-                });
+                    });
+                };
+
+                const clientId = ($('#client_id').val() || '').toString().trim();
+                const isCreateClient = ($('#create_client').val() || '').toString() === '1';
+
+                if (clientId && !isCreateClient) {
+                    const payload = {
+                        id: clientId,
+                        name: ($('#contact_name').val() || '').toString().trim() || null,
+                        email: ($('#contact_email').val() || '').toString().trim(),
+                        phone: ($('#contact_phone').val() || '').toString().trim() || null,
+                        _token: csrfToken,
+                    };
+
+                    $.ajax({
+                        url: `${window.appConfig.APP_URL}admin/ugyfelek/${encodeURIComponent(clientId)}`,
+                        method: 'PUT',
+                        data: payload,
+                        headers: {
+                            'X-CSRF-TOKEN': csrfToken,
+                        },
+                    })
+                        .done(() => saveWorksheetAjax())
+                        .fail((xhr) => {
+                            let msg = 'Hiba az ügyfél adatainak mentésekor!';
+                            if (xhr.responseJSON?.errors) {
+                                msg = Object.values(xhr.responseJSON.errors).flat().join(' ');
+                            } else if (xhr.responseJSON?.message) {
+                                msg = xhr.responseJSON.message;
+                            }
+                            showToast(msg, 'danger');
+                            $('#saveWorksheet').html(originalSaveButtonHtml).prop('disabled', false);
+                        });
+
+                    return;
+                }
+
+                saveWorksheetAjax();
 
             });
 
@@ -1162,8 +1485,14 @@
                     $('#worksheetCertificatePhotos').empty();
                     $('#worksheetInstallPhotos').empty();
                     $('#worksheet_id').val(''); // Munkalap ID törlése
+                    $('#client_id').val('');
+                    $('#create_client').val('0');
+                    $('#client_search').val('');
+                    $('#client_search_results').hide().empty();
                     $('#zip_suggestions').empty().hide();
                     $('#street_suggestions').empty().hide();
+
+                    setClientFieldsVisible(false);
                 }
             }
         });

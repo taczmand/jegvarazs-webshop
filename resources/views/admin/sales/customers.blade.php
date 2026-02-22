@@ -86,7 +86,7 @@
                 </div>
                 <div class="modal-body">
 
-                    <ul class="nav nav-tabs" id="productTab" role="tablist">
+                    <ul class="nav nav-tabs admin-modal-tabs" id="productTab" role="tablist">
                         <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#basic" type="button">Alapadatok</button></li>
                         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#cart" type="button">Kosár tartalma</button></li>
                         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#orders" type="button">Rendelések</button></li>
@@ -100,7 +100,7 @@
                         <!-- Alapadatok -->
 
                         <div class="tab-pane fade show active" id="basic">
-                            <table class="table table-bordered">
+                            <table class="table table-bordered admin-modal-form-table">
                                 <tbody>
                                 <tr>
                                     <th>ID</th>

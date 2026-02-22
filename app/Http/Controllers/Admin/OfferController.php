@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Mail\NewOffer;
 use App\Models\Category;
+use App\Models\Client;
+use App\Models\ClientAddress;
 use App\Models\Offer;
 use App\Models\OfferProduct;
 use App\Models\Product;
@@ -176,6 +178,10 @@ class OfferController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
+            'client_id' => 'nullable|integer|exists:clients,id',
+            'create_client' => 'nullable|boolean',
+            'client_address_id' => 'nullable|integer',
+            'use_custom_address' => 'nullable|boolean',
             'contact_name' => 'required|string|max:255',
             'title' => 'required|string|max:255',
             'contact_email' => 'required|email',
@@ -186,7 +192,76 @@ class OfferController extends Controller
         DB::beginTransaction();
 
         try {
+            $clientId = $request->input('client_id');
+            $shouldCreateClient = (bool) $request->input('create_client');
+            $clientAddressId = $request->input('client_address_id');
+            $useCustomAddress = (bool) $request->input('use_custom_address');
+
+            $client = null;
+            $address = null;
+
+            if ($shouldCreateClient) {
+                $client = Client::create([
+                    'name' => $request->input('contact_name') ?: null,
+                    'email' => $request->input('contact_email') ?: null,
+                    'phone' => $request->input('contact_phone') ?: null,
+                    'comment' => null,
+                ]);
+
+                $address = ClientAddress::create([
+                    'client_id' => $client->id,
+                    'country' => $request->input('contact_country') ?: 'HU',
+                    'zip_code' => $request->input('contact_zip_code') ?: null,
+                    'city' => $request->input('contact_city') ?: null,
+                    'address_line' => $request->input('contact_address_line') ?: null,
+                    'comment' => null,
+                    'is_default' => true,
+                ]);
+
+                $request->merge([
+                    'client_id' => $client->id,
+                    'create_client' => false,
+                    'client_address_id' => $address->id,
+                    'use_custom_address' => false,
+                ]);
+            } elseif ($clientId) {
+                $client = Client::find($clientId);
+
+                if ($clientAddressId) {
+                    $address = ClientAddress::query()
+                        ->where('client_id', $client->id)
+                        ->where('id', $clientAddressId)
+                        ->first();
+                }
+
+                if (!$address && !$useCustomAddress) {
+                    $address = ClientAddress::query()
+                        ->where('client_id', $client->id)
+                        ->orderByDesc('is_default')
+                        ->orderByDesc('id')
+                        ->first();
+                }
+
+                if ($client) {
+                    $request->merge([
+                        'contact_name' => $client->name ?: $request->input('contact_name'),
+                        'contact_email' => $client->email ?: $request->input('contact_email'),
+                        'contact_phone' => $client->phone ?: $request->input('contact_phone'),
+                    ]);
+                }
+
+                if ($address && !$useCustomAddress) {
+                    $request->merge([
+                        'contact_country' => $address->country ?: $request->input('contact_country'),
+                        'contact_zip_code' => $address->zip_code ?: $request->input('contact_zip_code'),
+                        'contact_city' => $address->city ?: $request->input('contact_city'),
+                        'contact_address_line' => $address->address_line ?: $request->input('contact_address_line'),
+                    ]);
+                }
+            }
+
             $offer = Offer::create([
+                'client_id' => $request->input('client_id') ?: null,
                 'title' => $request->input('title'),
                 'name' => $request->input('contact_name'),
                 'country' => $request->input('contact_country'),

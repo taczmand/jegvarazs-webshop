@@ -65,19 +65,23 @@
     </div>
 
     <!-- Modális ablak -->
-    <div class="modal fade" id="adminModal" tabindex="-1" aria-labelledby="adminModalLabel" aria-hidden="true">
+    <div class="modal fade admin-modal-soft" id="adminModal" tabindex="-1" aria-labelledby="adminModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-xl">
             <form id="adminModalForm" action="" method="POST" enctype="multipart/form-data">
                 @csrf
                 <input type="hidden" name="contract_id" id="contract_id">
+                <input type="hidden" id="client_id" name="client_id">
+                <input type="hidden" id="client_address_id" name="client_address_id">
+                <input type="hidden" id="create_client" name="create_client" value="0">
+                <input type="hidden" id="use_custom_address" name="use_custom_address" value="0">
                 <div class="modal-content">
-                    <div class="modal-header">
+                    <div class="modal-header bg-gradient-custom">
                         <h5 class="modal-title" id="adminModalLabel">Szerződés szerkesztése</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Bezárás"></button>
                     </div>
                     <div class="modal-body">
 
-                        <ul class="nav nav-tabs" id="productTab" role="tablist">
+                        <ul class="nav nav-tabs admin-modal-tabs" id="productTab" role="tablist">
                             <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#contact" type="button">Kapcsolati adatok</button></li>
                             <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#contractDataManager" type="button">Szerződés adatok</button></li>
                             <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#productManager" type="button">Termékek</button></li>
@@ -89,72 +93,79 @@
                             <!-- Kapcsolati adatok tab -->
 
                             <div class="tab-pane fade show active" id="contact">
-                                <div class="container contract-contact">
-                                    <h5 class="mt-4">Kapcsolattartó adatok</h5>
-                                    <div class="row g-3">
-                                        <div class="col-md-6">
-                                            <label class="form-label">Név / Cégnév*</label>
-                                            <input type="text" class="form-control" name="contact_name" id="contact_name" required>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <label class="form-label">Ország*</label>
-                                            <select name="contact_country" class="form-control w-100" id="contact_country">
-                                                @foreach(config('countries') as $code => $name)
-                                                    <option value="{{ $code }}">{{ $name }}</option>
-                                                @endforeach
-                                            </select>
-                                        </div>
-                                        <div class="col-md-4">
-                                            <label class="form-label">Irányítószám*</label>
-                                            <input type="text" class="form-control" name="contact_zip_code" id="contact_zip_code" autocomplete="off">
-                                        </div>
-                                        <div class="col-md-4">
-                                            <label class="form-label">Város*</label>
-                                            <input type="text" class="form-control" name="contact_city" id="contact_city">
-                                            <div id="zip_suggestions" class="list-group position-absolute w-100" style="z-index: 1000;"></div>
-                                        </div>
-                                        <div class="col-md-4">
-                                            <label class="form-label">Cím*</label>
-                                            <input type="text" class="form-control" name="contact_address_line" id="contact_address_line">
-                                            <div id="street_suggestions" class="list-group position-absolute w-100" style="z-index: 1000;"></div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <label class="form-label">Telefonszám</label>
-                                            <input type="text" class="form-control" name="contact_phone" id="contact_phone">
-                                        </div>
-                                        <div class="col-md-6">
-                                            <label class="form-label">E-mail cím</label>
-                                            <input type="email" class="form-control" name="contact_email" id="contact_email">
-                                        </div>
-                                    </div>
+                                <div class="contract-contact">
+                                    <table class="table admin-modal-form-table">
+                                        <tbody>
+                                        <tr>
+                                            <td class="w-25">Ügyfél keresés</td>
+                                            <td class="position-relative">
+                                                <input type="text" class="form-control" id="client_search" placeholder="Név / e-mail / telefon..." autocomplete="off">
+                                                <div id="client_search_results" class="list-group position-absolute w-100 admin-client-search-results" style="z-index: 1100; display:none; max-height: 260px; overflow-y: auto;"></div>
+                                            </td>
+                                        </tr>
 
-                                    <h5 class="mt-4">Személyes adatok</h5>
-                                    <div class="row g-3">
-                                        <div class="col-md-3">
-                                            <label class="form-label">Anyja neve</label>
-                                            <input type="text" class="form-control" name="mothers_name" id="mothers_name">
-                                        </div>
-                                        <div class="col-md-3">
-                                            <label class="form-label">Születési hely</label>
-                                            <input type="text" class="form-control" name="place_of_birth" id="place_of_birth">
-                                        </div>
-                                        <div class="col-md-3">
-                                            <label class="form-label">Születési idő</label>
-                                            <input type="date" class="form-control" name="date_of_birth" id="date_of_birth">
-                                        </div>
-                                        <div class="col-md-3">
-                                            <label class="form-label">Személyi igazolványszám</label>
-                                            <input type="text" class="form-control" name="id_number" id="id_number">
-                                        </div>
-                                    </div>
-
-                                    <h5 class="mt-4">Egyéb adatok</h5>
-                                    <div class="row g-3">
-                                        <div class="col-md-3">
-                                            <label class="form-label">Szerelés időpontja</label>
-                                            <input type="date" class="form-control" name="installation_date" id="installation_date">
-                                        </div>
-                                    </div>
+                                        <tr class="contract-client-fields" style="display:none;">
+                                            <td class="w-25">Név / Cégnév*</td>
+                                            <td><input type="text" class="form-control" name="contact_name" id="contact_name" required></td>
+                                        </tr>
+                                        <tr class="contract-client-fields" style="display:none;">
+                                            <td>Ország*</td>
+                                            <td>
+                                                <select name="contact_country" class="form-control w-100" id="contact_country">
+                                                    @foreach(config('countries') as $code => $name)
+                                                        <option value="{{ $code }}">{{ $name }}</option>
+                                                    @endforeach
+                                                </select>
+                                            </td>
+                                        </tr>
+                                        <tr class="contract-client-fields" style="display:none;">
+                                            <td>Irányítószám*</td>
+                                            <td><input type="text" class="form-control" name="contact_zip_code" id="contact_zip_code" autocomplete="off"></td>
+                                        </tr>
+                                        <tr class="contract-client-fields" style="display:none;">
+                                            <td>Város*</td>
+                                            <td class="position-relative">
+                                                <input type="text" class="form-control" name="contact_city" id="contact_city">
+                                                <div id="zip_suggestions" class="list-group position-absolute w-100" style="z-index: 1000;"></div>
+                                            </td>
+                                        </tr>
+                                        <tr class="contract-client-fields" style="display:none;">
+                                            <td>Cím*</td>
+                                            <td class="position-relative">
+                                                <input type="text" class="form-control" name="contact_address_line" id="contact_address_line">
+                                                <div id="street_suggestions" class="list-group position-absolute w-100" style="z-index: 1000;"></div>
+                                            </td>
+                                        </tr>
+                                        <tr class="contract-client-fields" style="display:none;">
+                                            <td>Telefonszám</td>
+                                            <td><input type="text" class="form-control" name="contact_phone" id="contact_phone"></td>
+                                        </tr>
+                                        <tr class="contract-client-fields" style="display:none;">
+                                            <td>E-mail cím</td>
+                                            <td><input type="email" class="form-control" name="contact_email" id="contact_email"></td>
+                                        </tr>
+                                        <tr class="contract-client-fields" style="display:none;">
+                                            <td>Anyja neve</td>
+                                            <td><input type="text" class="form-control" name="mothers_name" id="mothers_name"></td>
+                                        </tr>
+                                        <tr class="contract-client-fields" style="display:none;">
+                                            <td>Születési hely</td>
+                                            <td><input type="text" class="form-control" name="place_of_birth" id="place_of_birth"></td>
+                                        </tr>
+                                        <tr class="contract-client-fields" style="display:none;">
+                                            <td>Születési idő</td>
+                                            <td><input type="date" class="form-control" name="date_of_birth" id="date_of_birth"></td>
+                                        </tr>
+                                        <tr class="contract-client-fields" style="display:none;">
+                                            <td>Személyi igazolványszám</td>
+                                            <td><input type="text" class="form-control" name="id_number" id="id_number"></td>
+                                        </tr>
+                                        <tr class="contract-client-fields" style="display:none;">
+                                            <td>Szerelés időpontja</td>
+                                            <td><input type="date" class="form-control" name="installation_date" id="installation_date"></td>
+                                        </tr>
+                                        </tbody>
+                                    </table>
                                 </div>
 
                             </div>
@@ -237,6 +248,11 @@
 
 @section('scripts')
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+    <style>
+        select.snapshot-locked {
+            pointer-events: none;
+        }
+    </style>
     <script type="module">
 
         const adminModalDOM = document.getElementById('adminModal');
@@ -377,6 +393,14 @@
                 $('#date_of_birth').val(contract.date_of_birth);
                 $('#id_number').val(contract.id_number);
                 $('#installation_date').val(contract.installation_date);
+
+                setClientFieldsVisible(true);
+                setSnapshotMode(true);
+                $('#create_client').val('0');
+
+                const display = `${contract.name || ''}${contract.email ? ' (' + contract.email + ')' : ''}`.trim();
+                $('#client_search').val(display);
+                $('#client_search_results').hide().empty();
 
 
                 // Szerződés adatok
@@ -530,6 +554,9 @@
                     loadProducts();
                     $('.contract-contact').find('input, select, textarea').prop('disabled', false);
 
+                    setClientFieldsVisible(false);
+                    setSnapshotMode(true);
+
                     $('#generateContract').removeClass('d-none');
                     $('#clear_signature').removeClass('d-none');
                     $('#preview_contract').removeClass('d-none');
@@ -565,6 +592,10 @@
                     $('#date_of_birth').val(contract.date_of_birth);
                     $('#id_number').val(contract.id_number);
                     $('#installation_date').val(contract.installation_date);
+
+                    setClientFieldsVisible(true);
+                    setSnapshotMode(true);
+                    $('#create_client').val('0');
 
                     $('#show_signature').addClass('d-none');
                     $('#clear_signature').removeClass('d-none');
@@ -606,44 +637,7 @@
                 const formData = new FormData(form);
                 formData.append('_token', csrfToken);
 
-                $.ajax({
-                    url: '{{ route('admin.contracts.store') }}',
-                    method: 'POST',
-                    data: formData,
-                    contentType: false,
-                    processData: false,
-                    beforeSend: () => {
-                        showLoader();
-                    },
-                    success(response) {
-                        showToast(response.message || 'Sikeres!', 'success');
-                        table.ajax.reload(null, false);
-                        adminModal.hide();
-                        const worksheet = response?.data?.worksheet;
-
-                        if (worksheet && worksheet.id) {
-                            const worksheet_id = worksheet.id;
-                            window.location.href = `{{ url('/admin/munkalapok') }}?id=${worksheet_id}`;
-                        } else {
-                            console.warn('Nincs elérhető munkalap az átvett adatokban:', response);
-                        }
-
-                    },
-                    error(xhr) {
-                        let msg = 'Hiba!';
-                        if (xhr.responseJSON?.errors) {
-                            msg = Object.values(xhr.responseJSON.errors).flat().join(' ');
-                        } else if (xhr.responseJSON?.message) {
-                            msg = xhr.responseJSON.message;
-                        }
-                        showToast(msg, 'danger');
-                    },
-                    complete: () => {
-                        signaturePad.clear();
-                        hideLoader();
-                        $("#fullscreen_signature").hide();
-                    }
-                });
+                submitContractForm(formData);
 
             });
 
@@ -651,79 +645,92 @@
             $('#generateContractWithOutSignature').on('click', function (e) {
                 e.preventDefault();
 
+                document.getElementById('signature-input').value = '';
                 const form = document.getElementById('adminModalForm');
                 const formData = new FormData(form);
                 formData.append('_token', csrfToken);
 
-                $.ajax({
-                    url: '{{ route('admin.contracts.store') }}',
-                    method: 'POST',
-                    data: formData,
-                    contentType: false,
-                    processData: false,
-                    beforeSend: () => {
-                        showLoader();
-                    },
-                    success(response) {
-                        showToast(response.message || 'Sikeres!', 'success');
-                        table.ajax.reload(null, false);
-                        adminModal.hide();
-                        const worksheet_id = response.data.worksheet.id;
-                        window.location.href = `{{ url('/admin/munkalapok') }}?id=${worksheet_id}`;
-                    },
-                    error(xhr) {
-                        let msg = 'Hiba!';
-                        if (xhr.responseJSON?.errors) {
-                            msg = Object.values(xhr.responseJSON.errors).flat().join(' ');
-                        } else if (xhr.responseJSON?.message) {
-                            msg = xhr.responseJSON.message;
-                        }
-                        showToast(msg, 'danger');
-                    },
-                    complete: () => {
-                        hideLoader();
-                    }
-                });
+                submitContractForm(formData);
             });
 
-            // Szerződés újragenerálása
+            function submitContractForm(formData) {
+                const doSubmit = () => {
+                    $.ajax({
+                        url: '{{ route('admin.contracts.store') }}',
+                        method: 'POST',
+                        data: formData,
+                        contentType: false,
+                        processData: false,
+                        beforeSend: () => {
+                            showLoader();
+                        },
+                        success(response) {
+                            showToast(response.message || 'Sikeres!', 'success');
+                            table.ajax.reload(null, false);
+                            adminModal.hide();
 
-            $('#regenarate').on('click', function (e) {
-                e.preventDefault();
-
-                const form = document.getElementById('adminModalForm');
-                const formData = new FormData(form);
-                formData.append('_token', csrfToken);
-
-                $.ajax({
-                    url: '{{ route('admin.contracts.store') }}',
-                    method: 'POST',
-                    data: formData,
-                    contentType: false,
-                    processData: false,
-                    beforeSend: () => {
-                        showLoader();
-                    },
-                    success(response) {
-                        showToast(response.message || 'Sikeres!', 'success');
-                        table.ajax.reload(null, false);
-                        adminModal.hide();
-                    },
-                    error(xhr) {
-                        let msg = 'Hiba!';
-                        if (xhr.responseJSON?.errors) {
-                            msg = Object.values(xhr.responseJSON.errors).flat().join(' ');
-                        } else if (xhr.responseJSON?.message) {
-                            msg = xhr.responseJSON.message;
+                            const worksheet = response?.data?.worksheet;
+                            if (worksheet && worksheet.id) {
+                                const worksheet_id = worksheet.id;
+                                window.location.href = `{{ url('/admin/munkalapok') }}?id=${worksheet_id}`;
+                            }
+                        },
+                        error(xhr) {
+                            let msg = 'Hiba!';
+                            if (xhr.responseJSON?.errors) {
+                                msg = Object.values(xhr.responseJSON.errors).flat().join(' ');
+                            } else if (xhr.responseJSON?.message) {
+                                msg = xhr.responseJSON.message;
+                            }
+                            showToast(msg, 'danger');
+                        },
+                        complete: () => {
+                            hideLoader();
                         }
-                        showToast(msg, 'danger');
-                    },
-                    complete: () => {
-                        hideLoader();
-                    }
-                });
+                    });
+                };
 
-            });
+                const clientId = ($('#client_id').val() || '').toString().trim();
+                const isCreateClient = ($('#create_client').val() || '').toString() === '1';
+
+                if (clientId && !isCreateClient) {
+                    const payload = {
+                        id: clientId,
+                        name: ($('#contact_name').val() || '').toString().trim() || null,
+                        email: ($('#contact_email').val() || '').toString().trim(),
+                        phone: ($('#contact_phone').val() || '').toString().trim() || null,
+                        mothers_name: ($('#mothers_name').val() || '').toString().trim() || null,
+                        place_of_birth: ($('#place_of_birth').val() || '').toString().trim() || null,
+                        date_of_birth: ($('#date_of_birth').val() || '').toString().trim() || null,
+                        id_number: ($('#id_number').val() || '').toString().trim() || null,
+                        _token: csrfToken,
+                    };
+
+                    $.ajax({
+                        url: `${window.appConfig.APP_URL}admin/ugyfelek/${encodeURIComponent(clientId)}`,
+                        method: 'PUT',
+                        data: payload,
+                        headers: {
+                            'X-CSRF-TOKEN': csrfToken,
+                        },
+                    })
+                        .done(() => doSubmit())
+                        .fail((xhr) => {
+                            let msg = 'Hiba az ügyfél adatainak mentésekor!';
+                            if (xhr.responseJSON?.errors) {
+                                msg = Object.values(xhr.responseJSON.errors).flat().join(' ');
+                            } else if (xhr.responseJSON?.message) {
+                                msg = xhr.responseJSON.message;
+                            }
+                            showToast(msg, 'danger');
+                            hideLoader();
+                        });
+
+                    return;
+                }
+
+                doSubmit();
+            }
 
             // Betölti a szerződés verziókat
 
@@ -1047,12 +1054,252 @@
                 $('#street_suggestions').hide();
             });
 
-            // Form kiörítése és modal cím beállítása
+            function setSnapshotMode(isSnapshot) {
+                const disable = !!isSnapshot;
+
+                const $inputs = $('#contact_name, #contact_zip_code, #contact_city, #contact_address_line');
+                const $alwaysEditableInputs = $('#contact_phone, #contact_email');
+                const $selects = $('#contact_country');
+
+                $inputs.prop('readonly', disable);
+                $alwaysEditableInputs.prop('readonly', false);
+                $selects.toggleClass('snapshot-locked', disable);
+
+                if (disable) {
+                    $inputs.addClass('bg-light');
+                    $alwaysEditableInputs.removeClass('bg-light');
+                    $selects.addClass('bg-light');
+                } else {
+                    $inputs.removeClass('bg-light');
+                    $alwaysEditableInputs.removeClass('bg-light');
+                    $selects.removeClass('bg-light');
+                }
+            }
+
+            function escapeHtml(str) {
+                return String(str)
+                    .replaceAll('&', '&amp;')
+                    .replaceAll('<', '&lt;')
+                    .replaceAll('>', '&gt;')
+                    .replaceAll('"', '&quot;')
+                    .replaceAll("'", '&#039;');
+            }
+
+            function setClientFieldsVisible(visible) {
+                $('.contract-client-fields').toggle(!!visible);
+                $('#contact_name').prop('required', !!visible);
+            }
+
+            let clientSearchDebounce;
+
+            $('#client_search').on('input', function () {
+                const q = ($(this).val() || '').trim();
+                clearTimeout(clientSearchDebounce);
+
+                $('#client_search_results').hide().empty();
+
+                if ($('#client_id').val() || $('#create_client').val() === '1') {
+                    clearClientSelection();
+                }
+
+                if (q.length < 2) return;
+
+                clientSearchDebounce = setTimeout(() => {
+                    $.ajax({
+                        url: `${window.appConfig.APP_URL}admin/ugyfelek/kereses?q=${encodeURIComponent(q)}`,
+                        method: 'GET',
+                        success: function (response) {
+                            const clients = response?.clients || [];
+                            const $list = $('#client_search_results');
+                            $list.empty();
+
+                            if (clients.length) {
+                                clients.forEach(function (c) {
+                                    const name = c?.name || '';
+                                    const email = c?.email || '';
+                                    const idNumber = c?.id_number || '';
+                                    const phone = c?.phone || '';
+                                    const addresses = Array.isArray(c.addresses) ? c.addresses : [];
+
+                                    const headerParts = [idNumber, email].filter(Boolean).join(', ');
+                                    $list.append(`
+                                        <div class="list-group-item client-search-header">
+                                            <div class="fw-bold">${escapeHtml(name || email || 'N/A')}${headerParts ? ' (' + escapeHtml(headerParts) + ')' : ''}</div>
+                                        </div>
+                                    `);
+
+                                    addresses.forEach(function (a) {
+                                        const addrText = [a?.zip_code, a?.city, a?.address_line].filter(Boolean).join(' ');
+                                        $list.append(`
+                                            <button type="button" class="list-group-item list-group-item-action client-address-item"
+                                                data-id="${c.id}"
+                                                data-address-id="${a?.id || ''}"
+                                                data-name="${escapeHtml(name)}"
+                                                data-email="${escapeHtml(email)}"
+                                                data-phone="${escapeHtml(phone)}"
+                                                data-country="${escapeHtml(a?.country || 'HU')}"
+                                                data-zip="${escapeHtml(a?.zip_code || '')}"
+                                                data-city="${escapeHtml(a?.city || '')}"
+                                                data-line="${escapeHtml(a?.address_line || '')}"
+                                                data-id-number="${escapeHtml(idNumber)}"
+                                            >
+                                                ${escapeHtml(addrText || 'Cím nélkül')}
+                                            </button>
+                                        `);
+                                    });
+
+                                    $list.append(`
+                                        <button type="button" class="list-group-item list-group-item-action client-new-address"
+                                            data-id="${c.id}"
+                                            data-name="${escapeHtml(name)}"
+                                            data-email="${escapeHtml(email)}"
+                                            data-phone="${escapeHtml(phone)}"
+                                            data-id-number="${escapeHtml(idNumber)}"
+                                        >
+                                            + Új cím ehhez az ügyfélhez
+                                        </button>
+                                    `);
+                                });
+                            } else {
+                                $list.append(`
+                                    <button type="button" class="list-group-item list-group-item-action client-create client-create-item">
+                                        + Új ügyfél létrehozása: <strong>${escapeHtml(q)}</strong>
+                                    </button>
+                                `);
+                            }
+
+                            $list.show();
+                        },
+                        error: function () {
+                            const $list = $('#client_search_results');
+                            $list.empty();
+                            $list.append(`
+                                <button type="button" class="list-group-item list-group-item-action client-create client-create-item">
+                                    + Új ügyfél létrehozása
+                                </button>
+                            `);
+                            $list.show();
+                        }
+                    });
+                }, 300);
+            });
+
+            $('#client_search_results').on('click', '.client-address-item', function () {
+                const $btn = $(this);
+
+                const clientId = $btn.data('id');
+                const addressId = $btn.data('address-id');
+                const name = ($btn.data('name') || '').toString();
+                const email = ($btn.data('email') || '').toString();
+                const phone = ($btn.data('phone') || '').toString();
+                const country = ($btn.data('country') || 'HU').toString();
+                const zip = ($btn.data('zip') || '').toString();
+                const city = ($btn.data('city') || '').toString();
+                const line = ($btn.data('line') || '').toString();
+                const idNumber = ($btn.data('id-number') || '').toString();
+
+                $('#client_id').val(clientId);
+                $('#client_address_id').val(addressId);
+                $('#create_client').val('0');
+                $('#use_custom_address').val('0');
+
+                $('#contact_name').val(name);
+                $('#contact_email').val(email);
+                $('#contact_phone').val(phone);
+                $('#contact_country').val(country);
+                $('#contact_zip_code').val(zip);
+                $('#contact_city').val(city);
+                $('#contact_address_line').val(line);
+
+                setClientFieldsVisible(true);
+                setSnapshotMode(true);
+
+                const headerParts = [idNumber, email].filter(Boolean).join(', ');
+                const display = `${name || ''}${headerParts ? ' (' + headerParts + ')' : ''}`.trim();
+                $('#client_search').val(display);
+                $('#client_search_results').hide().empty();
+            });
+
+            $('#client_search_results').on('click', '.client-new-address', function () {
+                const $btn = $(this);
+
+                const clientId = $btn.data('id');
+                const name = ($btn.data('name') || '').toString();
+                const email = ($btn.data('email') || '').toString();
+                const phone = ($btn.data('phone') || '').toString();
+                const idNumber = ($btn.data('id-number') || '').toString();
+
+                $('#client_id').val(clientId);
+                $('#client_address_id').val('');
+                $('#create_client').val('0');
+                $('#use_custom_address').val('1');
+
+                $('#contact_name').val(name);
+                $('#contact_email').val(email);
+                $('#contact_phone').val(phone);
+                $('#contact_country').val('HU');
+                $('#contact_zip_code').val('');
+                $('#contact_city').val('');
+                $('#contact_address_line').val('');
+
+                setClientFieldsVisible(true);
+                setSnapshotMode(false);
+
+                const headerParts = [idNumber, email].filter(Boolean).join(', ');
+                const display = `${name || ''}${headerParts ? ' (' + headerParts + ')' : ''}`.trim();
+                $('#client_search').val(display);
+                $('#client_search_results').hide().empty();
+
+                setTimeout(() => {
+                    $('#contact_zip_code').trigger('focus');
+                }, 0);
+            });
+
+            $('#client_search_results').on('click', '.client-create', function () {
+                $('#create_client').val('1');
+                $('#client_id').val('');
+                $('#client_address_id').val('');
+                $('#use_custom_address').val('0');
+
+                $('#client_search').val('');
+                $('#client_search_results').hide().empty();
+
+                setClientFieldsVisible(true);
+                setSnapshotMode(false);
+
+                setTimeout(() => {
+                    $('#contact_name').trigger('focus');
+                }, 0);
+            });
+
+            function clearClientSelection() {
+                $('#client_id').val('');
+                $('#client_address_id').val('');
+                $('#create_client').val('0');
+                $('#use_custom_address').val('0');
+
+                $('#contact_name').val('');
+                $('#contact_email').val('');
+                $('#contact_phone').val('');
+                $('#contact_country').val('HU');
+                $('#contact_zip_code').val('');
+                $('#contact_city').val('');
+                $('#contact_address_line').val('');
+
+                setClientFieldsVisible(false);
+                setSnapshotMode(true);
+            }
 
             function resetForm(title = null) {
                 $('#adminModalLabel').text(title);
+
                 $('#adminModalForm')[0].reset();
                 $('#contract_id').val('');
+
+                clearClientSelection();
+
+                $('#client_search').val('');
+                $('#client_search_results').hide().empty();
             }
 
             // Szerződés törlése

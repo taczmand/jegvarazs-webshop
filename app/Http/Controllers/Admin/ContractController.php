@@ -6,6 +6,8 @@ use App\Helpers\AmountToText;
 use App\Http\Controllers\Controller;
 use App\Mail\NewContract;
 use App\Models\Category;
+use App\Models\Client;
+use App\Models\ClientAddress;
 use App\Models\Contract;
 use App\Models\ContractProduct;
 use App\Models\Product;
@@ -130,6 +132,10 @@ class ContractController extends Controller
     {
         // Validáció
         $request->validate([
+            'client_id' => 'nullable|integer|exists:clients,id',
+            'create_client' => 'nullable|boolean',
+            'client_address_id' => 'nullable|integer',
+            'use_custom_address' => 'nullable|boolean',
             'contract_version' => 'required|string',
             'contact_name' => 'required|string|max:255',
             'contact_country' => 'required|string|max:100',
@@ -174,6 +180,108 @@ class ContractController extends Controller
         DB::beginTransaction();
 
         try {
+            $clientId = $request->input('client_id');
+            $shouldCreateClient = (bool) $request->input('create_client');
+            $clientAddressId = $request->input('client_address_id');
+            $useCustomAddress = (bool) $request->input('use_custom_address');
+
+            $client = null;
+            $address = null;
+
+            if ($shouldCreateClient) {
+                $client = Client::create([
+                    'name' => $request->input('contact_name') ?: null,
+                    'mothers_name' => $request->input('mothers_name') ?: null,
+                    'place_of_birth' => $request->input('place_of_birth') ?: null,
+                    'date_of_birth' => $request->input('date_of_birth') ?: null,
+                    'id_number' => $request->input('id_number') ?: null,
+                    'email' => $request->input('contact_email') ?: null,
+                    'phone' => $request->input('contact_phone') ?: null,
+                    'comment' => null,
+                ]);
+
+                $address = ClientAddress::create([
+                    'client_id' => $client->id,
+                    'country' => $request->input('contact_country') ?: 'HU',
+                    'zip_code' => $request->input('contact_zip_code') ?: null,
+                    'city' => $request->input('contact_city') ?: null,
+                    'address_line' => $request->input('contact_address_line') ?: null,
+                    'comment' => null,
+                    'is_default' => true,
+                ]);
+
+                $request->merge([
+                    'client_id' => $client->id,
+                    'create_client' => false,
+                    'client_address_id' => $address->id,
+                    'use_custom_address' => false,
+                ]);
+            } elseif ($clientId) {
+                $client = Client::find($clientId);
+
+                if ($clientAddressId) {
+                    $address = ClientAddress::query()
+                        ->where('client_id', $client->id)
+                        ->where('id', $clientAddressId)
+                        ->first();
+                }
+
+                if (!$address && !$useCustomAddress) {
+                    $address = ClientAddress::query()
+                        ->where('client_id', $client->id)
+                        ->orderByDesc('is_default')
+                        ->orderByDesc('id')
+                        ->first();
+                }
+
+                if (!$address && $useCustomAddress) {
+                    $existingAddress = ClientAddress::query()
+                        ->where('client_id', $client->id)
+                        ->where('country', $request->input('contact_country') ?: 'HU')
+                        ->where('zip_code', $request->input('contact_zip_code') ?: null)
+                        ->where('city', $request->input('contact_city') ?: null)
+                        ->where('address_line', $request->input('contact_address_line') ?: null)
+                        ->first();
+
+                    if (!$existingAddress) {
+                        $hasDefault = ClientAddress::where('client_id', $client->id)->where('is_default', true)->exists();
+
+                        $existingAddress = ClientAddress::create([
+                            'client_id' => $client->id,
+                            'country' => $request->input('contact_country') ?: 'HU',
+                            'zip_code' => $request->input('contact_zip_code') ?: null,
+                            'city' => $request->input('contact_city') ?: null,
+                            'address_line' => $request->input('contact_address_line') ?: null,
+                            'comment' => null,
+                            'is_default' => !$hasDefault,
+                        ]);
+                    }
+
+                    $address = $existingAddress;
+                }
+            }
+
+            $resolvedName = $request->input('contact_name');
+            $resolvedEmail = $request->input('contact_email');
+            $resolvedPhone = $request->input('contact_phone');
+            $resolvedCountry = $request->input('contact_country');
+            $resolvedZip = $request->input('contact_zip_code');
+            $resolvedCity = $request->input('contact_city');
+            $resolvedAddressLine = $request->input('contact_address_line');
+
+            if ($client) {
+                $resolvedName = $client->name ?: $resolvedName;
+                $resolvedEmail = $client->email ?: $resolvedEmail;
+                $resolvedPhone = $client->phone ?: $resolvedPhone;
+            }
+
+            if ($address) {
+                $resolvedCountry = $address->country;
+                $resolvedZip = $address->zip_code;
+                $resolvedCity = $address->city;
+                $resolvedAddressLine = $address->address_line;
+            }
+
             // Aláírás mentése, ha van
             $signatureName = null;
             if ($request->filled('signature')) {
@@ -191,15 +299,16 @@ class ContractController extends Controller
                 $contract = Contract::findOrFail($request->input('contract_id'));
 
                 $contract->update([
+                    'client_id' => $request->input('client_id') ?: null,
                     'version' => $request->input('contract_version'),
-                    'name' => $request->input('contact_name'),
-                    'country' => $request->input('contact_country'),
-                    'zip_code' => $request->input('contact_zip_code'),
-                    'city' => $request->input('contact_city'),
-                    'address_line' => $request->input('contact_address_line'),
+                    'name' => $resolvedName,
+                    'country' => $resolvedCountry,
+                    'zip_code' => $resolvedZip,
+                    'city' => $resolvedCity,
+                    'address_line' => $resolvedAddressLine,
                     'installation_date' => $request->input('installation_date'),
-                    'phone' => $request->input('contact_phone'),
-                    'email' => $request->input('contact_email'),
+                    'phone' => $resolvedPhone,
+                    'email' => $resolvedEmail,
                     'mothers_name' => $request->input('mothers_name') ?? null,
                     'place_of_birth' => $request->input('place_of_birth') ?? null,
                     'date_of_birth' => $request->input('date_of_birth') ?? null,
@@ -260,6 +369,7 @@ class ContractController extends Controller
                 $worksheet = Worksheet::where('contract_id', $contract->id)->first();
                 if ($worksheet) {
                     $worksheet->update([
+                        'client_id' => $contract->client_id,
                         'work_name' => "Szerződéses munkalap - {$contract->name}",
                         'work_type' => "Szerelés",
                         'name' => $contract->name,
@@ -307,15 +417,16 @@ class ContractController extends Controller
 
                 // Ha nincs contract_id → új szerződés és munkalap
                 $contract = Contract::create([
+                    'client_id' => $request->input('client_id') ?: null,
                     'version' => $request->input('contract_version'),
-                    'name' => $request->input('contact_name'),
-                    'country' => $request->input('contact_country'),
-                    'zip_code' => $request->input('contact_zip_code'),
-                    'city' => $request->input('contact_city'),
-                    'address_line' => $request->input('contact_address_line'),
+                    'name' => $resolvedName,
+                    'country' => $resolvedCountry,
+                    'zip_code' => $resolvedZip,
+                    'city' => $resolvedCity,
+                    'address_line' => $resolvedAddressLine,
                     'installation_date' => $request->input('installation_date'),
-                    'phone' => $request->input('contact_phone'),
-                    'email' => $request->input('contact_email'),
+                    'phone' => $resolvedPhone,
+                    'email' => $resolvedEmail,
                     'mothers_name' => $request->input('mothers_name') ?? null,
                     'place_of_birth' => $request->input('place_of_birth') ?? null,
                     'date_of_birth' => $request->input('date_of_birth') ?? null,
@@ -367,6 +478,7 @@ class ContractController extends Controller
 
                 // Munkalap létrehozása
                 $worksheet = Worksheet::create([
+                    'client_id' => $contract->client_id,
                     'work_name' => "Szerződéses munkalap - {$contract->name}",
                     'work_type' => "Szerelés",
                     'name' => $contract->name,
