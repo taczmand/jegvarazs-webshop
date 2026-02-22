@@ -778,8 +778,16 @@
                     let input = '';
                     let wrapperClass = 'col-12 col-md-6 col-lg-3'; // mobil: 1 oszlop, tablet: 2 oszlop, desktop: 4 oszlop
 
+                    const isCommentField = /megjegy|megjegyz|comment|note|remark/i.test(field.key || '')
+                        || /megjegy|megjegyz|comment|note|remark/i.test(field.label || '');
+
                     const inputName = `contract_data[${field.key}]`;
                     const value = existingData?.contract?.data?.[field.key] ?? '';
+
+                    if (isCommentField) {
+                        input = `<textarea name="${inputName}" class="form-control" rows="4">${value}</textarea>`;
+                        wrapperClass = 'col-12';
+                    } else {
 
                     switch (field.type) {
                         case 'text':
@@ -829,6 +837,8 @@
 
                         default:
                             input = `<input type="text" name="${inputName}" value="${value}" class="form-control">`;
+                    }
+
                     }
 
                     let fieldHtml;
