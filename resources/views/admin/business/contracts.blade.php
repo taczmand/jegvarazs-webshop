@@ -776,7 +776,7 @@
 
                 fields.forEach(field => {
                     let input = '';
-                    let wrapperClass = 'col-md-3'; // Négy oszlopos elrendezés
+                    let wrapperClass = 'col-12 col-md-6 col-lg-3'; // mobil: 1 oszlop, tablet: 2 oszlop, desktop: 4 oszlop
 
                     const inputName = `contract_data[${field.key}]`;
                     const value = existingData?.contract?.data?.[field.key] ?? '';
