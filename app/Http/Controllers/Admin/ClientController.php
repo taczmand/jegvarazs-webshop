@@ -133,6 +133,20 @@ class ClientController extends Controller
 
         $client = Client::query()->select(['id', 'name', 'email', 'phone'])->findOrFail($id);
 
+        $formatMaybeDateOnly = function ($value) {
+            if (is_null($value) || $value === '') {
+                return '';
+            }
+
+            $raw = (string) $value;
+            $isDateOnly = preg_match('/^\d{4}-\d{2}-\d{2}$/', $raw) === 1;
+            $carbon = Carbon::parse($raw);
+
+            return $isDateOnly
+                ? $carbon->format('Y-m-d')
+                : $carbon->format('Y-m-d H:i:s');
+        };
+
         $items = collect();
 
         $contracts = Contract::query()
@@ -146,6 +160,8 @@ class ClientController extends Controller
                 $date = $contract->installation_date
                     ? Carbon::parse($contract->installation_date)
                     : Carbon::parse($contract->created_at);
+
+                $installationDateFormatted = $contract->installation_date ? $formatMaybeDateOnly($contract->installation_date) : '';
 
                 $note = '';
                 $data = is_array($contract->data) ? $contract->data : (array) $contract->data;
@@ -170,7 +186,7 @@ class ClientController extends Controller
 
                 $lines = [
                     ['label' => 'Azonosító', 'value' => '#' . $contract->id],
-                    ['label' => 'Telepítés dátuma', 'value' => $contract->installation_date ? Carbon::parse($contract->installation_date)->format('Y-m-d H:i:s') : ''],
+                    ['label' => 'Telepítés dátuma', 'value' => $installationDateFormatted],
                     ['label' => 'E-mail', 'value' => (string) ($contract->email ?? '')],
                     ['label' => 'Telefon', 'value' => (string) ($contract->phone ?? '')],
                     ['label' => 'Létrehozva', 'value' => $contract->created_at ? Carbon::parse($contract->created_at)->format('Y-m-d H:i:s') : ''],
@@ -180,7 +196,7 @@ class ClientController extends Controller
                 return [
                     'type' => 'contract',
                     'title' => 'Szerződés #' . $contract->id,
-                    'date' => $date ? $date->format('Y-m-d H:i:s') : null,
+                    'date' => $contract->installation_date ? $installationDateFormatted : ($date ? $date->format('Y-m-d H:i:s') : null),
                     'timestamp' => $date ? $date->timestamp : 0,
                     'url' => route('admin.contracts.index', ['id' => $contract->id, 'modal' => true]),
                     'lines' => $lines,
@@ -201,12 +217,14 @@ class ClientController extends Controller
                     ? Carbon::parse($worksheet->installation_date)
                     : Carbon::parse($worksheet->created_at);
 
+                $installationDateFormatted = $worksheet->installation_date ? $formatMaybeDateOnly($worksheet->installation_date) : '';
+
                 $typeLabel = $worksheet->work_type ? (' (' . $worksheet->work_type . ')') : '';
 
                 $lines = [
                     ['label' => 'Azonosító', 'value' => '#' . $worksheet->id],
                     ['label' => 'Típus', 'value' => (string) ($worksheet->work_type ?? '')],
-                    ['label' => 'Telepítés dátuma', 'value' => $worksheet->installation_date ? Carbon::parse($worksheet->installation_date)->format('Y-m-d H:i:s') : ''],
+                    ['label' => 'Telepítés dátuma', 'value' => $installationDateFormatted],
                     ['label' => 'Létrehozva', 'value' => $worksheet->created_at ? Carbon::parse($worksheet->created_at)->format('Y-m-d H:i:s') : ''],
                     ['label' => 'Módosítva', 'value' => $worksheet->updated_at ? Carbon::parse($worksheet->updated_at)->format('Y-m-d H:i:s') : ''],
                 ];
@@ -234,7 +252,7 @@ class ClientController extends Controller
                 return [
                     'type' => 'worksheet',
                     'title' => 'Munkalap #' . $worksheet->id . $typeLabel,
-                    'date' => $date ? $date->format('Y-m-d H:i:s') : null,
+                    'date' => $worksheet->installation_date ? $installationDateFormatted : ($date ? $date->format('Y-m-d H:i:s') : null),
                     'timestamp' => $date ? $date->timestamp : 0,
                     'url' => route('admin.worksheets.index', ['id' => $worksheet->id]),
                     'lines' => $lines,
