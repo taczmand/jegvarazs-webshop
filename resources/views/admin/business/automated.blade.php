@@ -93,6 +93,10 @@
                                 <option value="évente">évente</option>
                             </select>
                         </div>
+                        <div class="mb-3">
+                            <label for="last_sent_at" class="form-label">Utolsó küldés</label>
+                            <input type="datetime-local" id="last_sent_at" name="last_sent_at" class="form-control">
+                        </div>
                     </div>
                     <div class="modal-footer">
                         <button type="submit" class="btn btn-primary save-btn" id="saveAutomated">Mentés</button>
@@ -151,6 +155,11 @@
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
         $(document).ready(function() {
+            function toDatetimeLocal(value) {
+                if (!value) return '';
+                return String(value).replace(' ', 'T').slice(0, 16);
+            }
+
             const table = $('#adminTable').DataTable({
                 language: {
                     url: '/lang/datatables/hu.json'
@@ -205,6 +214,7 @@
                 $('#email_template').val(row_data.email_template);
                 $('#frequency_interval').val(row_data.frequency_interval);
                 $('#frequency_unit').val(row_data.frequency_unit);
+                $('#last_sent_at').val(toDatetimeLocal(row_data.last_sent_at));
 
                 adminModal.show();
             });

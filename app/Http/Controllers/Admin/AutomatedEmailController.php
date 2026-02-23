@@ -41,6 +41,9 @@ class AutomatedEmailController extends Controller
         ]);
 
         return DataTables::of($leads)
+            ->editColumn('last_sent_at', function ($item) {
+                return $item->last_sent_at ? Carbon::parse($item->last_sent_at)->format('Y-m-d H:i:s') : '';
+            })
             ->editColumn('created_at', function ($item) {
                 return $item->created_at ? $item->created_at->format('Y-m-d H:i:s') : '';
             })
@@ -79,12 +82,24 @@ class AutomatedEmailController extends Controller
     public function store(Request $request)
     {
         try {
+            $validated = $request->validate([
+                'email_template' => ['required', 'string'],
+                'email_address' => ['required', 'string'],
+                'frequency_interval' => ['required'],
+                'frequency_unit' => ['required', 'string'],
+                'last_sent_at' => ['nullable', 'date'],
+            ]);
+
+            $lastSentAt = isset($validated['last_sent_at'])
+                ? Carbon::parse($validated['last_sent_at'])
+                : Carbon::now();
+
             $automatedEmail = AutomatedEmail::create([
-                'email_template' => $request['email_template'],
-                'email_address' => $request['email_address'],
-                'frequency_interval' => $request['frequency_interval'],
-                'frequency_unit' => $request['frequency_unit'],
-                'last_sent_at' => Carbon::now(), // Amikor létrehozzuk még nem akarjuk küldeni
+                'email_template' => $validated['email_template'],
+                'email_address' => $validated['email_address'],
+                'frequency_interval' => $validated['frequency_interval'],
+                'frequency_unit' => $validated['frequency_unit'],
+                'last_sent_at' => $lastSentAt,
             ]);
 
             return response()->json([
@@ -103,14 +118,29 @@ class AutomatedEmailController extends Controller
     public function update(Request $request)
     {
         try {
+            $validated = $request->validate([
+                'id' => ['required'],
+                'email_template' => ['required', 'string'],
+                'email_address' => ['required', 'string'],
+                'frequency_interval' => ['required'],
+                'frequency_unit' => ['required', 'string'],
+                'last_sent_at' => ['nullable', 'date'],
+            ]);
+
             $automatedEmail = AutomatedEmail::findOrFail($request['id']);
 
-            $automatedEmail->update([
-                'email_template' => $request['email_template'],
-                'email_address' => $request['email_address'],
-                'frequency_interval' => $request['frequency_interval'],
-                'frequency_unit' => $request['frequency_unit'],
-            ]);
+            $updateData = [
+                'email_template' => $validated['email_template'],
+                'email_address' => $validated['email_address'],
+                'frequency_interval' => $validated['frequency_interval'],
+                'frequency_unit' => $validated['frequency_unit'],
+            ];
+
+            if (!is_null($validated['last_sent_at'] ?? null)) {
+                $updateData['last_sent_at'] = Carbon::parse($validated['last_sent_at']);
+            }
+
+            $automatedEmail->update($updateData);
 
             return response()->json([
                 'message' => 'Sikeres mentés!',
