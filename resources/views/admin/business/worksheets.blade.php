@@ -278,6 +278,23 @@
                             <!-- Termékek tab-->
 
                             <div class="tab-pane fade" id="products">
+                                <div id="selectedProductsSummary" class="mb-3" style="display: none">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <strong>Hozzárendelt termékek</strong>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" id="toggleSelectedProducts">Elrejt</button>
+                                    </div>
+                                    <div id="selectedProductsBody" class="mt-2">
+                                        <table class="table table-sm table-bordered mb-0" id="selectedProductsTable">
+                                            <thead>
+                                            <tr>
+                                                <th>Termék</th>
+                                                <th style="width: 120px">Darabszám</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody></tbody>
+                                        </table>
+                                    </div>
+                                </div>
                                 <input type="text" class="form-control mb-3" id="productSearch" placeholder="Keresés a termékek között...">
                                 <div style="max-height: 300px; overflow-y: auto">
                                     <table id="productTableForWorker" class="table table-bordered" style="display: none">
@@ -1033,6 +1050,62 @@
                 });
             });
 
+            $('#toggleSelectedProducts').on('click', function () {
+                const $body = $('#selectedProductsBody');
+                const isVisible = $body.is(':visible');
+                $body.toggle(!isVisible);
+                $(this).text(isVisible ? 'Mutat' : 'Elrejt');
+            });
+
+            function refreshSelectedProductsSummary() {
+                const $summary = $('#selectedProductsSummary');
+                const $tbody = $('#selectedProductsTable tbody');
+                $tbody.empty();
+
+                const selected = [];
+                $('#productManagerTable tbody input[type="checkbox"][name$="[selected]"]:checked').each(function () {
+                    const checkboxName = $(this).attr('name') || '';
+                    const match = checkboxName.match(/^products\[(\d+)\]\[selected\]$/);
+                    if (!match) return;
+                    const id = match[1];
+                    const title = $(`#product_${id}`).closest('tr').find('label').text().trim();
+                    const qty = $(`input[name="products[${id}][qty]"]`).val() || 1;
+                    selected.push({ title, qty: qty });
+                });
+
+                if (!selected.length) {
+                    $summary.hide();
+                    return;
+                }
+
+                selected.forEach(item => {
+                    $tbody.append(`<tr><td>${item.title}</td><td>${item.qty}</td></tr>`);
+                });
+
+                $summary.show();
+                if (!$('#selectedProductsBody').is(':visible')) {
+                    $('#selectedProductsBody').show();
+                    $('#toggleSelectedProducts').text('Elrejt');
+                }
+            }
+
+            $('#productManagerTable').on('change input', 'input', function () {
+                $('#productManagerTable tbody input[type="checkbox"][name$="[selected]"]').each(function () {
+                    const $cb = $(this);
+                    const checked = $cb.is(':checked');
+                    const $row = $cb.closest('tr');
+                    $row.toggleClass('table-success', checked);
+
+                    const checkboxName = $cb.attr('name') || '';
+                    const match = checkboxName.match(/^products\[(\d+)\]\[selected\]$/);
+                    if (match) {
+                        const id = match[1];
+                        $(`input[name="products[${id}][qty]"]`).prop('disabled', !checked);
+                    }
+                });
+                refreshSelectedProductsSummary();
+            });
+
             // Munkalap mentése
 
             $('#saveWorksheet').on('click', function (e) {
@@ -1235,14 +1308,14 @@
                                 }
 
                                 const row = `
-                                    <tr>
+                                    <tr class="${isChecked ? 'table-success' : ''}">
                                         <td>
                                             <input
-                                                readonly
                                                 type="checkbox"
                                                 name="products[${item.id}][selected]"
                                                 value="1"
                                                 id="product_${item.id}"
+                                                ${isWorker == 'readonly' ? 'disabled' : ''}
                                                 ${isChecked ? 'checked' : ''}
                                             >
                                         </td>
@@ -1254,6 +1327,7 @@
                                                 name="products[${item.id}][qty]"
                                                 value="${quantity}"
                                                 step="1"
+                                                ${(isWorker == 'readonly' || !isChecked) ? 'disabled' : ''}
                                             >
                                         </td>
                                     </tr>
@@ -1268,6 +1342,8 @@
                         } else {
                             $('#productTableForWorker').hide();
                         }
+
+                        refreshSelectedProductsSummary();
                     })
                     .catch(error => {
                         console.error('Hiba a termékek betöltésekor:', error);
