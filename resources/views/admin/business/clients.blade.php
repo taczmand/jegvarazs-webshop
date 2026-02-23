@@ -353,7 +353,7 @@
                             ${items.map((item, idx) => {
                                 const label = typeLabels[item.type] || (item.type || 'Esemény');
                                 const title = escapeHtml(item.title || label);
-                                const date = escapeHtml(item.date || '');
+                                const date = escapeHtml(item.created_at || item.date || '');
                                 const url = escapeHtml(item.url || '#');
                                 const itemId = `timeline_item_${idx}`;
                                 const collapseId = `timeline_collapse_${idx}`;
