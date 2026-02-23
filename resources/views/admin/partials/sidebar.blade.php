@@ -165,7 +165,6 @@
         </a>
         <div id="collapseCRMAnalytics" class="collapse" data-bs-parent="#accordionSidebar">
             <div class="bg-white py-2 collapse-inner rounded">
-                <a class="collapse-item" href="{{ route('admin.stats.contacts') }}">Kapcsolatok</a>
                 <a class="collapse-item" href="{{ route('admin.stats.installations') }}">Szerelések</a>
             </div>
         </div>
