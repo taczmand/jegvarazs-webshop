@@ -48,6 +48,8 @@
                     </tr>
                     </thead>
                 </table>
+
+                <div id="emails-list" style="margin-top:10px; font-weight:bold; background-color: #f5f5f5; padding: 10px; border-radius: 5px;"></div>
             @else
                 <div class="alert alert-warning">
                     <i class="fa-solid fa-exclamation-triangle me-2"></i> Nincs jogosultságod az ügyfelek megtekintéséhez.
@@ -239,6 +241,17 @@
                     { data: 'updated' },
                     { data: 'action', orderable: false, searchable: false }
                 ],
+                drawCallback: function(settings) {
+                    const emails = table.column(2, { page: 'current' })
+                        .data()
+                        .toArray()
+                        .filter(email => email)
+                        .map(email => String(email).trim())
+                        .filter(email => email !== '')
+                        .join('; ');
+
+                    $('#emails-list').text(emails);
+                }
             });
 
             $('.filter-input').on('change keyup', function () {
