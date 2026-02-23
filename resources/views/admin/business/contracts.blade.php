@@ -1170,13 +1170,14 @@
                                         </button>
                                     `);
                                 });
-                            } else {
-                                $list.append(`
-                                    <button type="button" class="list-group-item list-group-item-action client-create client-create-item">
-                                        + Új ügyfél létrehozása: <strong>${escapeHtml(q)}</strong>
-                                    </button>
-                                `);
                             }
+
+                            $list.append(`
+                                <button type="button" class="list-group-item list-group-item-action client-create client-create-item">
+                                    <div class="fw-bold">Új ügyfél létrehozása</div>
+                                    <div class="small text-muted">Az alábbi mezőkben megadott adatokkal</div>
+                                </button>
+                            `);
 
                             $list.show();
                         },
@@ -1185,7 +1186,8 @@
                             $list.empty();
                             $list.append(`
                                 <button type="button" class="list-group-item list-group-item-action client-create client-create-item">
-                                    + Új ügyfél létrehozása
+                                    <div class="fw-bold">Új ügyfél létrehozása</div>
+                                    <div class="small text-muted">A keresés sikertelen volt</div>
                                 </button>
                             `);
                             $list.show();
