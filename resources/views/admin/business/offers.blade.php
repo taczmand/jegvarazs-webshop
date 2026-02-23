@@ -200,6 +200,10 @@
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
         $(document).ready(function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const searchId = urlParams.get('id');
+            const showModal = urlParams.get('modal');
+
             const table = $('#adminTable').DataTable({
                 language: {
                     url: '/lang/datatables/hu.json'
@@ -222,6 +226,77 @@
                     { data: 'action', orderable: false, searchable: false }
                 ],
             });
+
+            if (searchId) {
+                const idFilter = $('.filter-input[data-column="0"]');
+                idFilter.val(searchId);
+                table.columns(0).search(searchId).draw();
+
+                if (showModal) {
+                    let opened = false;
+                    table.one('draw', function () {
+                        if (opened) return;
+                        const data = table.row(0).data();
+                        if (!data) return;
+                        opened = true;
+
+                        resetForm('Ajánlat megtekintése');
+                        $('.offer-contact-table').find('input, select, textarea').prop('disabled', true);
+                        setOfferActionsVisible(false);
+
+                        (async () => {
+                            try {
+                                const offer_data = await loadOfferProducts(data.id);
+                                const offer = offer_data.offer || {};
+                                const offer_products = offer.products || [];
+
+                                $('#offer_id').val(offer.id);
+                                $('#title').val(offer.title);
+                                $('#contact_name').val(offer.name);
+                                $('#contact_country').val(offer.country);
+                                $('#contact_zip_code').val(offer.zip_code);
+                                $('#contact_city').val(offer.city);
+                                $('#contact_address_line').val(offer.address_line);
+                                $('#contact_phone').val(offer.phone);
+                                $('#contact_email').val(offer.email);
+                                $('#contact_description').val(offer.description);
+
+                                $('#client_id').val(offer.client_id || '');
+                                $('#client_address_id').val('');
+                                $('#create_client').val('0');
+                                $('#use_custom_address').val('0');
+
+                                setClientFieldsVisible(true);
+                                setSnapshotMode(!!offer.client_id);
+                                const display = `${offer.name || ''}${offer.email ? ' (' + offer.email + ')' : ''}`.trim();
+                                $('#client_search').val(display);
+                                $('#client_search_results').hide().empty();
+
+                                const productManagerTable = $('#productManagerTable tbody');
+                                productManagerTable.empty();
+                                offer_products.forEach(item => {
+                                    const row = `
+                                        <tr>
+                                            <td>${item.id}</td>
+                                            <td>${item.title}</td>
+                                            <td>${item.pivot.quantity}</td>
+                                            <td>${item.pivot.gross_price}</td>
+                                        </tr>`;
+                                    productManagerTable.append(row);
+                                });
+
+                                $('#offer_pdf_link').removeClass('d-none').attr('href', `${offer.pdf_path}`);
+
+                                sendViewRequest("offer", data.id);
+                                table.ajax.reload(null, false);
+                                adminModal.show();
+                            } catch (e) {
+                                showToast('Hiba történt az ajánlat betöltésekor.', 'danger');
+                            }
+                        })();
+                    });
+                }
+            }
 
             $('#previewOfferPdf').on('click', function (e) {
                 e.preventDefault();

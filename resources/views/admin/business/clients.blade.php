@@ -184,6 +184,20 @@
             </form>
         </div>
     </div>
+
+    <div class="modal fade" id="timelineModal" tabindex="-1" aria-labelledby="timelineModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="timelineModalLabel"></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Bezárás"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="clientTimelineList" style="max-height: 65vh; overflow-y: auto;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
 @endsection
 
 @section('scripts')
@@ -191,9 +205,22 @@
 
         const adminModalDOM = document.getElementById('adminModal');
         const adminModal = new bootstrap.Modal(adminModalDOM);
+
+        const timelineModalDOM = document.getElementById('timelineModal');
+        const timelineModal = new bootstrap.Modal(timelineModalDOM);
+
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
         $(document).ready(function() {
+            function escapeHtml(str) {
+                return String(str)
+                    .replaceAll('&', '&amp;')
+                    .replaceAll('<', '&lt;')
+                    .replaceAll('>', '&gt;')
+                    .replaceAll('"', '&quot;')
+                    .replaceAll("'", '&#039;');
+            }
+
             const table = $('#adminTable').DataTable({
                 language: {
                     url: '/lang/datatables/hu.json'
@@ -265,6 +292,142 @@
                 await loadAddresses(row_data.id);
 
                 adminModal.show();
+            });
+
+            $('#adminTable').on('click', '.timeline', async function () {
+                const row_data = $('#adminTable').DataTable().row($(this).parents('tr')).data();
+                const clientId = row_data.id;
+
+                const clientName = (row_data.name || '').trim();
+                const clientEmail = (row_data.email || '').trim();
+                const clientPhone = (row_data.phone || '').trim();
+                const parts = [clientName, clientEmail || clientPhone ? `(${[clientEmail, clientPhone].filter(Boolean).join(' / ')})` : ''].filter(Boolean);
+                $('#timelineModalLabel').text(parts.length ? `Ügyfél előzmények – ${parts.join(' ')}` : 'Ügyfél előzmények');
+
+                $('#clientTimelineList').html('<div class="text-muted">Betöltés...</div>');
+                timelineModal.show();
+
+                try {
+                    const response = await fetch(`${window.appConfig.APP_URL}admin/ugyfelek/${clientId}/timeline`, {
+                        headers: {
+                            'X-CSRF-TOKEN': csrfToken,
+                            'Accept': 'application/json',
+                        }
+                    });
+
+                    if (!response.ok) {
+                        $('#clientTimelineList').html('<div class="text-danger">Hiba történt az előzmények betöltésekor.</div>');
+                        return;
+                    }
+
+                    const payload = await response.json();
+                    const items = payload?.items || [];
+
+                    if (!items.length) {
+                        $('#clientTimelineList').html('<div class="text-muted">Nincs előzmény.</div>');
+                        return;
+                    }
+
+                    const typeLabels = {
+                        contract: 'Szerződés',
+                        worksheet: 'Munkalap',
+                        appointment: 'Időpont',
+                        offer: 'Ajánlat',
+                    };
+
+                    const html = `
+                        <div class="accordion" id="clientTimelineAccordion">
+                            ${items.map((item, idx) => {
+                                const label = typeLabels[item.type] || (item.type || 'Esemény');
+                                const title = escapeHtml(item.title || label);
+                                const date = escapeHtml(item.date || '');
+                                const url = escapeHtml(item.url || '#');
+                                const itemId = `timeline_item_${idx}`;
+                                const collapseId = `timeline_collapse_${idx}`;
+                                const lines = Array.isArray(item.lines) ? item.lines : [];
+                                const note = (item.note || '').trim();
+                                const products = Array.isArray(item.products) ? item.products : [];
+
+                                const linesHtml = lines
+                                    .filter(l => (l?.label || '').trim() !== '' || (l?.value || '').trim() !== '')
+                                    .map(l => {
+                                        const lLabel = escapeHtml(l.label || '');
+                                        const lValue = escapeHtml(l.value || '');
+                                        return `
+                                            <div class="row mb-1">
+                                                <div class="col-4 text-muted">${lLabel}</div>
+                                                <div class="col-8">${lValue}</div>
+                                            </div>
+                                        `;
+                                    }).join('');
+
+                                const noteHtml = note ? `
+                                    <hr class="my-2" />
+                                    <div class="mb-2">
+                                        <div class="text-muted mb-1">Megjegyzés</div>
+                                        <div style="white-space: pre-wrap;">${escapeHtml(note)}</div>
+                                    </div>
+                                ` : '';
+
+                                const productsHtml = products.length ? `
+                                    <hr class="my-2" />
+                                    <div class="text-muted mb-1">Termékek</div>
+                                    <div class="table-responsive">
+                                        <table class="table table-sm table-bordered mb-0">
+                                            <thead>
+                                                <tr>
+                                                    <th>Termék</th>
+                                                    <th style="width: 90px">Db</th>
+                                                    <th style="width: 140px">Bruttó ár</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                ${products.map(p => {
+                                                    const pTitle = escapeHtml(p.title || '');
+                                                    const pQty = escapeHtml(String(p.qty ?? ''));
+                                                    const pPrice = (p.gross_price === null || p.gross_price === undefined || p.gross_price === '')
+                                                        ? ''
+                                                        : escapeHtml(String(p.gross_price));
+                                                    return `<tr><td>${pTitle}</td><td>${pQty}</td><td>${pPrice}</td></tr>`;
+                                                }).join('')}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                ` : '';
+
+                                return `
+                                    <div class="accordion-item" id="${itemId}">
+                                        <h2 class="accordion-header">
+                                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#${collapseId}" aria-expanded="false" aria-controls="${collapseId}">
+                                                <div class="w-100 d-flex justify-content-between align-items-center">
+                                                    <div>
+                                                        <span class="badge bg-secondary me-2">${escapeHtml(label)}</span>
+                                                        ${title}
+                                                    </div>
+                                                    <small class="text-muted ms-2">${date}</small>
+                                                </div>
+                                            </button>
+                                        </h2>
+                                        <div id="${collapseId}" class="accordion-collapse collapse" data-bs-parent="#clientTimelineAccordion">
+                                            <div class="accordion-body">
+                                                <div class="mb-2">
+                                                    <a class="btn btn-sm btn-outline-primary" href="${url}" target="_blank" rel="noopener">Megnyitás új lapon</a>
+                                                </div>
+                                                ${linesHtml || '<div class="text-muted">Nincs részletes adat.</div>'}
+                                                ${noteHtml}
+                                                ${productsHtml}
+                                            </div>
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    `;
+
+                    $('#clientTimelineList').html(html);
+                } catch (e) {
+                    $('#clientTimelineList').html('<div class="text-danger">Hiba történt az előzmények betöltésekor.</div>');
+                }
             });
 
             $('#addAddressButton').on('click', function () {
@@ -617,15 +780,6 @@
                 $('#address_address_line').val('');
                 $('#address_comment').val('');
                 $('#address_is_default').prop('checked', false);
-            }
-
-            function escapeHtml(str) {
-                return String(str)
-                    .replaceAll('&', '&amp;')
-                    .replaceAll('<', '&lt;')
-                    .replaceAll('>', '&gt;')
-                    .replaceAll('"', '&quot;')
-                    .replaceAll("'", '&#039;');
             }
         });
     </script>

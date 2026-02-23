@@ -3,8 +3,13 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Appointment;
 use App\Models\Client;
 use App\Models\ClientAddress;
+use App\Models\Contract;
+use App\Models\Offer;
+use App\Models\Worksheet;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
 
@@ -97,6 +102,14 @@ class ClientController extends Controller
                     ';
                 }
 
+                if ($user && $user->can('edit-client')) {
+                    $buttons .= '
+                        <button class="btn btn-sm btn-secondary timeline" data-id="' . $client->id . '" title="Megtekintés">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    ';
+                }
+
                 if ($user && $user->can('delete-client')) {
                     $buttons .= '
                         <button class="btn btn-sm btn-danger delete" data-id="' . $client->id . '" title="Törlés">
@@ -109,6 +122,217 @@ class ClientController extends Controller
             })
             ->rawColumns(['action'])
             ->make(true);
+    }
+
+    public function timeline($id)
+    {
+        $user = auth('admin')->user();
+        if (!$user || !$user->can('edit-client')) {
+            return response()->json(['message' => 'Nincs jogosultságod megtekinteni.'], 403);
+        }
+
+        $client = Client::query()->select(['id', 'name', 'email', 'phone'])->findOrFail($id);
+
+        $items = collect();
+
+        $contracts = Contract::query()
+            ->where('client_id', $id)
+            ->select(['id', 'installation_date', 'created_at', 'updated_at', 'email', 'phone', 'data'])
+            ->with(['products' => function ($q) {
+                $q->select(['products.id', 'title']);
+            }])
+            ->get()
+            ->map(function ($contract) {
+                $date = $contract->installation_date
+                    ? Carbon::parse($contract->installation_date)
+                    : Carbon::parse($contract->created_at);
+
+                $note = '';
+                $data = is_array($contract->data) ? $contract->data : (array) $contract->data;
+                foreach (['comment', 'description', 'note', 'megjegyzes', 'megjegyzés'] as $key) {
+                    $value = $data[$key] ?? '';
+                    if (is_string($value) && trim($value) !== '') {
+                        $note = trim($value);
+                        break;
+                    }
+                }
+
+                $products = $contract->products
+                    ? $contract->products->map(function ($p) {
+                        return [
+                            'id' => $p->id,
+                            'title' => (string) ($p->title ?? ''),
+                            'qty' => (int) ($p->pivot->product_qty ?? 0),
+                            'gross_price' => $p->pivot->gross_price ?? null,
+                        ];
+                    })->values()
+                    : collect();
+
+                $lines = [
+                    ['label' => 'Azonosító', 'value' => '#' . $contract->id],
+                    ['label' => 'Telepítés dátuma', 'value' => $contract->installation_date ? Carbon::parse($contract->installation_date)->format('Y-m-d H:i:s') : ''],
+                    ['label' => 'E-mail', 'value' => (string) ($contract->email ?? '')],
+                    ['label' => 'Telefon', 'value' => (string) ($contract->phone ?? '')],
+                    ['label' => 'Létrehozva', 'value' => $contract->created_at ? Carbon::parse($contract->created_at)->format('Y-m-d H:i:s') : ''],
+                    ['label' => 'Módosítva', 'value' => $contract->updated_at ? Carbon::parse($contract->updated_at)->format('Y-m-d H:i:s') : ''],
+                ];
+
+                return [
+                    'type' => 'contract',
+                    'title' => 'Szerződés #' . $contract->id,
+                    'date' => $date ? $date->format('Y-m-d H:i:s') : null,
+                    'timestamp' => $date ? $date->timestamp : 0,
+                    'url' => route('admin.contracts.index', ['id' => $contract->id, 'modal' => true]),
+                    'lines' => $lines,
+                    'note' => $note,
+                    'products' => $products,
+                ];
+            });
+
+        $worksheets = Worksheet::query()
+            ->where('client_id', $id)
+            ->select(['id', 'work_type', 'installation_date', 'description', 'worker_report', 'created_at', 'updated_at'])
+            ->with(['products' => function ($q) {
+                $q->select(['products.id', 'title']);
+            }])
+            ->get()
+            ->map(function ($worksheet) {
+                $date = $worksheet->installation_date
+                    ? Carbon::parse($worksheet->installation_date)
+                    : Carbon::parse($worksheet->created_at);
+
+                $typeLabel = $worksheet->work_type ? (' (' . $worksheet->work_type . ')') : '';
+
+                $lines = [
+                    ['label' => 'Azonosító', 'value' => '#' . $worksheet->id],
+                    ['label' => 'Típus', 'value' => (string) ($worksheet->work_type ?? '')],
+                    ['label' => 'Telepítés dátuma', 'value' => $worksheet->installation_date ? Carbon::parse($worksheet->installation_date)->format('Y-m-d H:i:s') : ''],
+                    ['label' => 'Létrehozva', 'value' => $worksheet->created_at ? Carbon::parse($worksheet->created_at)->format('Y-m-d H:i:s') : ''],
+                    ['label' => 'Módosítva', 'value' => $worksheet->updated_at ? Carbon::parse($worksheet->updated_at)->format('Y-m-d H:i:s') : ''],
+                ];
+
+                $noteParts = [];
+                if (is_string($worksheet->description ?? null) && trim($worksheet->description) !== '') {
+                    $noteParts[] = trim($worksheet->description);
+                }
+                if (is_string($worksheet->worker_report ?? null) && trim($worksheet->worker_report) !== '') {
+                    $noteParts[] = 'Dolgozói jelentés: ' . trim($worksheet->worker_report);
+                }
+                $note = trim(implode("\n", $noteParts));
+
+                $products = $worksheet->products
+                    ? $worksheet->products->map(function ($p) {
+                        return [
+                            'id' => $p->id,
+                            'title' => (string) ($p->title ?? ''),
+                            'qty' => (int) ($p->pivot->quantity ?? 0),
+                            'gross_price' => null,
+                        ];
+                    })->values()
+                    : collect();
+
+                return [
+                    'type' => 'worksheet',
+                    'title' => 'Munkalap #' . $worksheet->id . $typeLabel,
+                    'date' => $date ? $date->format('Y-m-d H:i:s') : null,
+                    'timestamp' => $date ? $date->timestamp : 0,
+                    'url' => route('admin.worksheets.index', ['id' => $worksheet->id]),
+                    'lines' => $lines,
+                    'note' => $note,
+                    'products' => $products,
+                ];
+            });
+
+        $appointments = Appointment::query()
+            ->where('client_id', $id)
+            ->select(['id', 'appointment_date', 'created_at', 'updated_at'])
+            ->get()
+            ->map(function ($appointment) {
+                $date = $appointment->appointment_date
+                    ? Carbon::parse($appointment->appointment_date)
+                    : Carbon::parse($appointment->created_at);
+
+                $lines = [
+                    ['label' => 'Azonosító', 'value' => '#' . $appointment->id],
+                    ['label' => 'Időpont', 'value' => $appointment->appointment_date ? Carbon::parse($appointment->appointment_date)->format('Y-m-d H:i:s') : ''],
+                    ['label' => 'Létrehozva', 'value' => $appointment->created_at ? Carbon::parse($appointment->created_at)->format('Y-m-d H:i:s') : ''],
+                    ['label' => 'Módosítva', 'value' => $appointment->updated_at ? Carbon::parse($appointment->updated_at)->format('Y-m-d H:i:s') : ''],
+                ];
+
+                return [
+                    'type' => 'appointment',
+                    'title' => 'Időpontfoglalás #' . $appointment->id,
+                    'date' => $date ? $date->format('Y-m-d H:i:s') : null,
+                    'timestamp' => $date ? $date->timestamp : 0,
+                    'url' => route('admin.appointments.index', ['id' => $appointment->id]),
+                    'lines' => $lines,
+                ];
+            });
+
+        $offers = Offer::query()
+            ->where('client_id', $id)
+            ->select(['id', 'title', 'name', 'email', 'phone', 'country', 'zip_code', 'city', 'address_line', 'description', 'created_at', 'updated_at'])
+            ->with(['products' => function ($q) {
+                $q->select(['products.id', 'title']);
+            }])
+            ->get()
+            ->map(function ($offer) {
+                $date = $offer->created_at ? Carbon::parse($offer->created_at) : null;
+
+                $lines = [
+                    ['label' => 'Azonosító', 'value' => '#' . $offer->id],
+                    ['label' => 'Cím', 'value' => (string) ($offer->title ?? '')],
+                    ['label' => 'Név', 'value' => (string) ($offer->name ?? '')],
+                    ['label' => 'E-mail', 'value' => (string) ($offer->email ?? '')],
+                    ['label' => 'Telefon', 'value' => (string) ($offer->phone ?? '')],
+                    ['label' => 'Ország', 'value' => (string) ($offer->country ?? '')],
+                    ['label' => 'Irányítószám', 'value' => (string) ($offer->zip_code ?? '')],
+                    ['label' => 'Város', 'value' => (string) ($offer->city ?? '')],
+                    ['label' => 'Cím', 'value' => (string) ($offer->address_line ?? '')],
+                    ['label' => 'Létrehozva', 'value' => $offer->created_at ? Carbon::parse($offer->created_at)->format('Y-m-d H:i:s') : ''],
+                    ['label' => 'Módosítva', 'value' => $offer->updated_at ? Carbon::parse($offer->updated_at)->format('Y-m-d H:i:s') : ''],
+                ];
+
+                $products = $offer->products
+                    ? $offer->products->map(function ($p) {
+                        return [
+                            'id' => $p->id,
+                            'title' => (string) ($p->title ?? ''),
+                            'qty' => (int) ($p->pivot->quantity ?? 0),
+                            'gross_price' => $p->pivot->gross_price ?? null,
+                        ];
+                    })->values()
+                    : collect();
+
+                return [
+                    'type' => 'offer',
+                    'title' => 'Ajánlat #' . $offer->id,
+                    'date' => $date ? $date->format('Y-m-d H:i:s') : null,
+                    'timestamp' => $date ? $date->timestamp : 0,
+                    'url' => route('admin.offers.index', ['id' => $offer->id, 'modal' => true]),
+                    'lines' => $lines,
+                    'note' => (string) ($offer->description ?? ''),
+                    'products' => $products,
+                ];
+            });
+
+        $items = $items
+            ->merge($contracts)
+            ->merge($worksheets)
+            ->merge($appointments)
+            ->merge($offers)
+            ->sortByDesc('timestamp')
+            ->values();
+
+        return response()->json([
+            'client' => [
+                'id' => $client->id,
+                'name' => $client->name,
+                'email' => $client->email,
+                'phone' => $client->phone,
+            ],
+            'items' => $items,
+        ]);
     }
 
     public function store(Request $request)
