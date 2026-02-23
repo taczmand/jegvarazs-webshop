@@ -156,7 +156,7 @@ class ClientController extends Controller
                 $q->select(['products.id', 'title']);
             }])
             ->get()
-            ->map(function ($contract) {
+            ->map(function ($contract) use ($formatMaybeDateOnly) {
                 $date = $contract->installation_date
                     ? Carbon::parse($contract->installation_date)
                     : Carbon::parse($contract->created_at);
@@ -212,7 +212,7 @@ class ClientController extends Controller
                 $q->select(['products.id', 'title']);
             }])
             ->get()
-            ->map(function ($worksheet) {
+            ->map(function ($worksheet) use ($formatMaybeDateOnly) {
                 $date = $worksheet->installation_date
                     ? Carbon::parse($worksheet->installation_date)
                     : Carbon::parse($worksheet->created_at);
