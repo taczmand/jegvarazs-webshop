@@ -198,6 +198,7 @@ class ClientController extends Controller
                     'title' => 'Szerződés #' . $contract->id,
                     'date' => $contract->installation_date ? $installationDateFormatted : ($date ? $date->format('Y-m-d H:i:s') : null),
                     'created_at' => $contract->created_at ? Carbon::parse($contract->created_at)->format('Y-m-d H:i:s') : null,
+                    'created_timestamp' => $contract->created_at ? Carbon::parse($contract->created_at)->timestamp : 0,
                     'timestamp' => $date ? $date->timestamp : 0,
                     'url' => route('admin.contracts.index', ['id' => $contract->id, 'modal' => true]),
                     'lines' => $lines,
@@ -255,6 +256,7 @@ class ClientController extends Controller
                     'title' => 'Munkalap #' . $worksheet->id . $typeLabel,
                     'date' => $worksheet->installation_date ? $installationDateFormatted : ($date ? $date->format('Y-m-d H:i:s') : null),
                     'created_at' => $worksheet->created_at ? Carbon::parse($worksheet->created_at)->format('Y-m-d H:i:s') : null,
+                    'created_timestamp' => $worksheet->created_at ? Carbon::parse($worksheet->created_at)->timestamp : 0,
                     'timestamp' => $date ? $date->timestamp : 0,
                     'url' => route('admin.worksheets.index', ['id' => $worksheet->id]),
                     'lines' => $lines,
@@ -284,6 +286,7 @@ class ClientController extends Controller
                     'title' => 'Időpontfoglalás #' . $appointment->id,
                     'date' => $date ? $date->format('Y-m-d H:i:s') : null,
                     'created_at' => $appointment->created_at ? Carbon::parse($appointment->created_at)->format('Y-m-d H:i:s') : null,
+                    'created_timestamp' => $appointment->created_at ? Carbon::parse($appointment->created_at)->timestamp : 0,
                     'timestamp' => $date ? $date->timestamp : 0,
                     'url' => route('admin.appointments.index', ['id' => $appointment->id]),
                     'lines' => $lines,
@@ -330,6 +333,7 @@ class ClientController extends Controller
                     'title' => 'Ajánlat #' . $offer->id,
                     'date' => $date ? $date->format('Y-m-d H:i:s') : null,
                     'created_at' => $offer->created_at ? Carbon::parse($offer->created_at)->format('Y-m-d H:i:s') : null,
+                    'created_timestamp' => $offer->created_at ? Carbon::parse($offer->created_at)->timestamp : 0,
                     'timestamp' => $date ? $date->timestamp : 0,
                     'url' => route('admin.offers.index', ['id' => $offer->id, 'modal' => true]),
                     'lines' => $lines,
@@ -343,7 +347,7 @@ class ClientController extends Controller
             ->merge($worksheets)
             ->merge($appointments)
             ->merge($offers)
-            ->sortByDesc('timestamp')
+            ->sortByDesc('created_timestamp')
             ->values();
 
         return response()->json([
