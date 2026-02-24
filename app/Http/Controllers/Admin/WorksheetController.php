@@ -325,7 +325,7 @@ class WorksheetController extends Controller
             $clientAddressId = $request->input('client_address_id');
             $useCustomAddress = (bool) $request->input('use_custom_address');
 
-            if (!$clientId && !$shouldCreateClient) {
+            if (!$clientId && !$shouldCreateClient && !$worksheetId) {
                 return response()->json([
                     'message' => 'Kérlek válassz ügyfelet (keresővel), vagy hozd létre újként.',
                 ], 422);
