@@ -676,6 +676,11 @@
 
                     setSnapshotMode(true);
 
+                    loadWorkers([]);
+                    loadProducts([]);
+                    renderPhotos([]);
+                    renderWorkTypeFields($('#work_type').val());
+
                 } catch (error) {
                     showToast(error, 'danger');
                 }
