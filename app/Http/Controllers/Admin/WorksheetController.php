@@ -33,6 +33,115 @@ class WorksheetController extends Controller
         $this->user = Auth::guard('admin')->user();
     }
 
+    public function clientIdFix(Request $request)
+    {
+        $user = auth('admin')->user();
+        if (!$user || !$user->can('edit-worksheet')) {
+            abort(403);
+        }
+
+        $limit = (int) ($request->query('limit') ?? 200);
+        if ($limit < 1) {
+            $limit = 1;
+        }
+        if ($limit > 2000) {
+            $limit = 2000;
+        }
+
+        $worksheets = Worksheet::query()
+            ->whereNull('client_id')
+            ->select([
+                'id',
+                'installation_date',
+                'name',
+                'email',
+                'phone',
+                'country',
+                'zip_code',
+                'city',
+                'address_line',
+                'created_at',
+            ])
+            ->orderBy('id')
+            ->limit($limit)
+            ->get();
+
+        $rows = [];
+        $sqlLines = [];
+
+        foreach ($worksheets as $w) {
+            $email = is_string($w->email) ? trim(mb_strtolower($w->email)) : null;
+            $phone = is_string($w->phone) ? preg_replace('/\s+/', '', trim($w->phone)) : null;
+            $name = is_string($w->name) ? trim($w->name) : null;
+
+            $client = null;
+            $reason = '';
+            $confidence = 0;
+
+            if ($email && filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                $client = Client::query()->where('email', $email)->first();
+                if ($client) {
+                    $reason = 'email';
+                    $confidence = 100;
+                }
+            }
+
+            if (!$client && $phone) {
+                $q = Client::query()->where('phone', $w->phone);
+                if ($name) {
+                    $q->where('name', $name);
+                }
+                $client = $q->first();
+                if ($client) {
+                    $reason = $name ? 'phone+name' : 'phone';
+                    $confidence = $name ? 85 : 70;
+                }
+            }
+
+            if (!$client && $name) {
+                $q = Client::query()->where('name', $name);
+
+                if ($w->zip_code) {
+                    $q->whereHas('addresses', function ($q2) use ($w) {
+                        $q2->where('zip_code', $w->zip_code);
+                        if ($w->city) {
+                            $q2->where('city', $w->city);
+                        }
+                        if ($w->address_line) {
+                            $q2->where('address_line', $w->address_line);
+                        }
+                    });
+                }
+
+                $client = $q->first();
+                if ($client) {
+                    $reason = 'name+address';
+                    $confidence = 60;
+                }
+            }
+
+            $sql = null;
+            if ($client) {
+                $sql = 'UPDATE worksheets SET client_id = ' . (int) $client->id . ' WHERE id = ' . (int) $w->id . ' AND client_id IS NULL;';
+                $sqlLines[] = $sql;
+            }
+
+            $rows[] = [
+                'worksheet' => $w,
+                'client' => $client,
+                'reason' => $reason,
+                'confidence' => $confidence,
+                'sql' => $sql,
+            ];
+        }
+
+        return view('admin.business.worksheets_clientid_fix', [
+            'limit' => $limit,
+            'rows' => $rows,
+            'sql' => implode("\n", $sqlLines),
+        ]);
+    }
+
     public function index()
     {
         $contracts = Contract::orderBy('name')->get();
