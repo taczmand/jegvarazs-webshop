@@ -369,7 +369,7 @@ class ClientController extends Controller
             'place_of_birth' => 'nullable|string|max:255',
             'date_of_birth' => 'nullable|date',
             'id_number' => 'nullable|string|max:50',
-            'email' => 'required|email|max:255',
+            'email' => 'nullable|email|max:255',
             'phone' => 'nullable|string|max:50',
             'comment' => 'nullable|string',
 
@@ -381,14 +381,20 @@ class ClientController extends Controller
         ]);
 
         try {
-            $existing = Client::where('email', $request->input('email'))->first();
-            if ($existing) {
-                return response()->json([
-                    'message' => 'Ezzel az e-mail címmel már létezik ügyfél.',
-                    'errors' => [
-                        'email' => ['Ezzel az e-mail címmel már létezik ügyfél.'],
-                    ],
-                ], 422);
+            $email = $request->input('email');
+            $email = is_string($email) ? trim($email) : null;
+            $email = $email !== '' ? mb_strtolower($email) : null;
+
+            if (!is_null($email)) {
+                $existing = Client::where('email', $email)->first();
+                if ($existing) {
+                    return response()->json([
+                        'message' => 'Ezzel az e-mail címmel már létezik ügyfél.',
+                        'errors' => [
+                            'email' => ['Ezzel az e-mail címmel már létezik ügyfél.'],
+                        ],
+                    ], 422);
+                }
             }
 
             $client = Client::create([
@@ -397,7 +403,7 @@ class ClientController extends Controller
                 'place_of_birth' => $request->input('place_of_birth') ?: null,
                 'date_of_birth' => $request->input('date_of_birth') ?: null,
                 'id_number' => $request->input('id_number') ?: null,
-                'email' => $request->input('email'),
+                'email' => $email,
                 'phone' => $request->input('phone') ?: null,
                 'comment' => $request->input('comment') ?: null,
             ]);
@@ -435,7 +441,7 @@ class ClientController extends Controller
             'place_of_birth' => 'nullable|string|max:255',
             'date_of_birth' => 'nullable|date',
             'id_number' => 'nullable|string|max:50',
-            'email' => 'required|email|max:255|unique:clients,email,' . $request->input('id'),
+            'email' => 'nullable|email|max:255|unique:clients,email,' . $request->input('id'),
             'phone' => 'nullable|string|max:50',
             'comment' => 'nullable|string',
         ]);
@@ -443,13 +449,17 @@ class ClientController extends Controller
         try {
             $client = Client::findOrFail($request->input('id'));
 
+            $email = $request->input('email');
+            $email = is_string($email) ? trim($email) : null;
+            $email = $email !== '' ? mb_strtolower($email) : null;
+
             $client->update([
                 'name' => $request->input('name') ?: null,
                 'mothers_name' => $request->input('mothers_name') ?: null,
                 'place_of_birth' => $request->input('place_of_birth') ?: null,
                 'date_of_birth' => $request->input('date_of_birth') ?: null,
                 'id_number' => $request->input('id_number') ?: null,
-                'email' => $request->input('email'),
+                'email' => $email,
                 'phone' => $request->input('phone') ?: null,
                 'comment' => $request->input('comment') ?: null,
             ]);

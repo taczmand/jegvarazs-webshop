@@ -325,12 +325,6 @@ class WorksheetController extends Controller
             $clientAddressId = $request->input('client_address_id');
             $useCustomAddress = (bool) $request->input('use_custom_address');
 
-            if (!$clientId && !$shouldCreateClient && !$worksheetId) {
-                return response()->json([
-                    'message' => 'Kérlek válassz ügyfelet (keresővel), vagy hozd létre újként.',
-                ], 422);
-            }
-
             $snapshot = [
                 'name' => $request->input('contact_name'),
                 'email' => $request->input('contact_email'),
@@ -411,22 +405,28 @@ class WorksheetController extends Controller
                 }
             } elseif ($shouldCreateClient) {
                 $email = $request->input('contact_email');
-                if (!$email || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                    return response()->json([
-                        'message' => 'Új ügyfél létrehozásához érvényes e-mail cím kötelező.',
-                    ], 422);
-                }
+                $email = is_string($email) ? trim($email) : null;
+                $hasValidEmail = $email && filter_var($email, FILTER_VALIDATE_EMAIL);
 
-                $email = mb_strtolower(trim($email));
+                if ($hasValidEmail) {
+                    $email = mb_strtolower($email);
 
-                $client = Client::firstOrCreate(
-                    ['email' => $email],
-                    [
+                    $client = Client::firstOrCreate(
+                        ['email' => $email],
+                        [
+                            'name' => $request->input('contact_name') ?: null,
+                            'phone' => $request->input('contact_phone') ?: null,
+                            'comment' => null,
+                        ]
+                    );
+                } else {
+                    $client = Client::create([
                         'name' => $request->input('contact_name') ?: null,
+                        'email' => null,
                         'phone' => $request->input('contact_phone') ?: null,
                         'comment' => null,
-                    ]
-                );
+                    ]);
+                }
 
                 $existingAddress = ClientAddress::query()
                     ->where('client_id', $client->id)

@@ -93,8 +93,8 @@
                                 <input type="text" class="form-control" id="id_number" name="id_number">
                             </div>
                             <div class="col-md-6">
-                                <label for="email" class="form-label">E-mail cím*</label>
-                                <input type="email" class="form-control" id="email" name="email" required>
+                                <label for="email" class="form-label">E-mail cím</label>
+                                <input type="email" class="form-control" id="email" name="email">
                             </div>
                             <div class="col-md-6">
                                 <label for="phone" class="form-label">Telefonszám</label>
