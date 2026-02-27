@@ -11,6 +11,73 @@
 .color-light-blue {
     color: $logo-blue-color-light;
 }
+
+body#page-top {
+    .modal {
+        .modal-header {
+            background: linear-gradient(to bottom, $logo-blue-color-dark, $logo-blue-color-mid) !important;
+            color: #fff;
+        }
+
+        .modal-header .btn-close {
+            filter: invert(1) grayscale(100%) brightness(200%);
+        }
+
+        .nav-tabs {
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            overflow-y: hidden;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+            position: sticky;
+            top: 0;
+            z-index: 5;
+            background: #fff;
+            margin-bottom: 0;
+            border-bottom: 0;
+        }
+
+        .nav-tabs::-webkit-scrollbar {
+            display: none;
+        }
+
+        .nav-tabs .nav-link {
+            white-space: nowrap;
+            padding: .6rem .85rem;
+            color: #000;
+            border: 0;
+        }
+
+        .nav-tabs .nav-link.active {
+            background: #f1f3f5;
+            color: #000;
+            font-weight: 600;
+            border: 0;
+        }
+
+        .tab-content {
+            margin-top: 0 !important;
+        }
+
+        .tab-content > .tab-pane {
+            background: #f1f3f5;
+            padding: 1rem;
+        }
+
+        .modal-body {
+            padding-top: 1rem;
+            max-height: 75vh;
+            overflow-y: auto;
+        }
+
+        .modal-footer {
+            margin-top: 0;
+            border-top: 0;
+            padding-top: 0;
+            background: #fff;
+        }
+    }
+}
 .color-mid-blue {
     color: $logo-blue-color-mid;
 }
