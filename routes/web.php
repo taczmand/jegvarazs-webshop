@@ -242,6 +242,7 @@ Route::get('/automatizacio/kuldes', [AutomatedEmailController::class, 'sendToday
             Route::get('/munkalapok/data', [WorksheetController::class, 'data'])->name('worksheets.data');
             Route::get('/munkalapok/byweek', [WorksheetController::class, 'getDataToCalendarByWeek'])->name('worksheets.byweek'); // nem csak worksheets
             Route::get('/munkalapok/clientid-fix', [WorksheetController::class, 'clientIdFix'])->name('worksheets.clientid-fix');
+            Route::post('/munkalapok/clientid-fix/apply', [WorksheetController::class, 'clientIdFixApply'])->name('worksheets.clientid-fix.apply');
             Route::post('/munkalapok/update-orderdate', [WorksheetController::class, 'updateItemDateAndOrder'])->name('worksheets.update.order-date'); // nem csak worksheets
             Route::put('/munkalapok/{id}', [WorksheetController::class, 'update'])->name('worksheets.update');
             Route::post('/munkalapok', [WorksheetController::class, 'store'])->name('worksheet.store');

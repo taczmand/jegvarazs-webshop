@@ -142,6 +142,37 @@ class WorksheetController extends Controller
         ]);
     }
 
+    public function clientIdFixApply(Request $request)
+    {
+        $user = auth('admin')->user();
+        if (!$user || !$user->can('edit-worksheet')) {
+            abort(403);
+        }
+
+        $request->validate([
+            'worksheet_id' => 'required|integer|exists:worksheets,id',
+            'client_id' => 'required|integer|exists:clients,id',
+        ]);
+
+        $worksheetId = (int) $request->input('worksheet_id');
+        $clientId = (int) $request->input('client_id');
+
+        $updated = Worksheet::query()
+            ->where('id', $worksheetId)
+            ->whereNull('client_id')
+            ->update(['client_id' => $clientId]);
+
+        if ($updated < 1) {
+            return response()->json([
+                'message' => 'Nem történt frissítés (lehet, hogy már ki van töltve a client_id).',
+            ], 422);
+        }
+
+        return response()->json([
+            'message' => 'Sikeres frissítés!',
+        ], 200);
+    }
+
     public function index()
     {
         $contracts = Contract::orderBy('name')->get();

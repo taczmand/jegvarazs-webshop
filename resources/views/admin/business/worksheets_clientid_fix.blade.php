@@ -40,6 +40,7 @@
                             <th>Talált ügyfél</th>
                             <th>Ok</th>
                             <th>Bizalom</th>
+                            <th>Művelet</th>
                             <th>SQL</th>
                         </tr>
                         </thead>
@@ -70,6 +71,18 @@
                                 <td>{{ $row['reason'] ?: '-' }}</td>
                                 <td>{{ (int) ($row['confidence'] ?? 0) }}%</td>
                                 <td>
+                                    @if($c)
+                                        <button
+                                            type="button"
+                                            class="btn btn-sm btn-success js-apply-clientid-fix"
+                                            data-worksheet-id="{{ (int) $w->id }}"
+                                            data-client-id="{{ (int) $c->id }}"
+                                        >Hozzárendelés</button>
+                                    @else
+                                        <span class="text-muted">-</span>
+                                    @endif
+                                </td>
+                                <td>
                                     @if($row['sql'])
                                         <code style="white-space: nowrap;">{{ $row['sql'] }}</code>
                                     @else
@@ -85,4 +98,53 @@
         </div>
 
     </div>
+
+    <script>
+        document.addEventListener('click', async function (e) {
+            const btn = e.target.closest('.js-apply-clientid-fix');
+            if (!btn) return;
+
+            const worksheetId = btn.getAttribute('data-worksheet-id');
+            const clientId = btn.getAttribute('data-client-id');
+
+            if (!worksheetId || !clientId) {
+                showToast('Hiányzó azonosítók (worksheet_id/client_id).', 'danger');
+                return;
+            }
+
+            btn.disabled = true;
+
+            try {
+                const tokenMeta = document.querySelector('meta[name="csrf-token"]');
+                const csrf = tokenMeta ? tokenMeta.getAttribute('content') : null;
+
+                const res = await fetch(`{{ route('admin.worksheets.clientid-fix.apply') }}` , {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        ...(csrf ? { 'X-CSRF-TOKEN': csrf } : {}),
+                    },
+                    body: JSON.stringify({
+                        worksheet_id: worksheetId,
+                        client_id: clientId,
+                    }),
+                });
+
+                const data = await res.json().catch(() => ({}));
+
+                if (!res.ok) {
+                    showToast(data.message || 'Hiba történt a frissítés során.', 'danger');
+                    btn.disabled = false;
+                    return;
+                }
+
+                showToast(data.message || 'Sikeres frissítés!', 'success');
+                setTimeout(() => window.location.reload(), 300);
+            } catch (err) {
+                showToast(err, 'danger');
+                btn.disabled = false;
+            }
+        });
+    </script>
 @endsection
