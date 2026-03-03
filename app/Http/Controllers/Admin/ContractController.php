@@ -383,18 +383,20 @@ class ContractController extends Controller
                     ]);
 
                     // Munkalap termékek módosítása
-                    $worksheet->products()->detach();
+                    if ($request->has('products')) {
+                        $worksheet->products()->detach();
 
-                    foreach ($request->input('products') as $productId => $data) {
-                        if (!isset($data['selected'])) {
-                            continue;
+                        foreach ($request->input('products') as $productId => $data) {
+                            if (!isset($data['selected'])) {
+                                continue;
+                            }
+
+                            WorksheetProduct::create([
+                                'worksheet_id' => $worksheet->id,
+                                'product_id' => $productId,
+                                'quantity' => $data['product_qty']
+                            ]);
                         }
-
-                        WorksheetProduct::create([
-                            'worksheet_id' => $worksheet->id,
-                            'product_id' => $productId,
-                            'quantity' => $data['product_qty']
-                        ]);
                     }
 
                 }

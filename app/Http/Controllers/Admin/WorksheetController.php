@@ -776,7 +776,11 @@ class WorksheetController extends Controller
                 $worksheet->update($data);
 
                 $worksheet->workers()->detach(); // előző dolgozók törlése
-                $worksheet->products()->detach(); // előző termékek törlése
+                // Előző termékek törlése csak akkor, ha ténylegesen kaptunk termék adatokat.
+                // Különben (pl. disabled inputok/readonly mód) a mentés véletlenül lenullázná a munkalap termékeit.
+                if ($request->has('products')) {
+                    $worksheet->products()->detach(); // előző termékek törlése
+                }
 
             } else {
                 if ($request->input('work_status') === "Folyamatban") {
@@ -807,14 +811,16 @@ class WorksheetController extends Controller
 
 
             // Termékek mentése
-            foreach ($request->input('products', []) as $productId => $data) {
-                if (!isset($data['selected'])) continue;
+            if ($request->has('products')) {
+                foreach ($request->input('products', []) as $productId => $data) {
+                    if (!isset($data['selected'])) continue;
 
-                WorksheetProduct::create([
-                    'worksheet_id' => $worksheet->id,
-                    'product_id'   => $productId,
-                    'quantity'     => $data['qty'],
-                ]);
+                    WorksheetProduct::create([
+                        'worksheet_id' => $worksheet->id,
+                        'product_id'   => $productId,
+                        'quantity'     => $data['qty'],
+                    ]);
+                }
             }
 
             // Képek és fájlok mentése
