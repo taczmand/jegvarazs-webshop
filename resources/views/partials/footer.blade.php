@@ -16,7 +16,7 @@
             </div>
             <div class="col-lg-4 col-md-6 col-sm-6 offset-lg-1">
                 <div class="footer__widget">
-                    <h6>Szabályzatok</h6>
+                    <h6 id="aszf">Szabályzatok</h6>
 
                     <ul>
                         @foreach ($regulations as $regulation)

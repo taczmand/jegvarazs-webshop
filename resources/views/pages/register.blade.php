@@ -53,8 +53,19 @@
             <input type="password" name="password_confirmation" id="password_confirmation" class="form-control" placeholder="" required>
         </div>
         <div class="mb-3">
-            <label for="name" class="form-label">Szerelőként regisztrálok</label>
-            <input type="checkbox" name="is_partner" id="is_partner" class="" value="1">
+            <label class="form-label" for="accept_terms">
+                <input type="checkbox" name="accept_terms" id="accept_terms" value="1" required>
+                Elfogadom az Általános szerződési feltételeket
+            </label>
+            <div>
+                <a href="#aszf">Általános szerződési feltételek megtekinthetők az oldal alján</a>
+            </div>
+        </div>
+        <div class="mb-3">
+            <label class="form-label" for="is_partner">
+                <input type="checkbox" name="is_partner" id="is_partner" value="1">
+                Szerelőként regisztrálok
+            </label>
         </div>
 
         <div class="d-none" id="only_partner_fields">
