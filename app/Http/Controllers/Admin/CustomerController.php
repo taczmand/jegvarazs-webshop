@@ -186,8 +186,13 @@ class CustomerController extends Controller
 
     public function setProductPricePercentToPartner(Request $request)
     {
-        $customer_id = $request->input('customer_id');
-        $percent = (float)$request->input('discount_percentage');
+        $request->validate([
+            'customer_id' => 'required|integer|exists:customers,id',
+            'discount_percentage' => 'required|numeric|min:0|max:100',
+        ]);
+
+        $customer_id = (int) $request->input('customer_id');
+        $percent = (float) $request->input('discount_percentage');
 
         $products = Product::all(['id', 'gross_price', 'partner_gross_price']);
 

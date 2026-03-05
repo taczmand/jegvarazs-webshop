@@ -72,7 +72,21 @@ class Product extends Model
 
     public function getPartnerSelectedPriceAttribute()
     {
-        return $this->partnerProducts->first()->discount_gross_price ?? null;
+        $customer = auth('customer')->user();
+        if (!$customer || !$customer->is_partner) {
+            return null;
+        }
+
+        if ($this->relationLoaded('partnerProducts')) {
+            return $this->partnerProducts
+                ->firstWhere('customer_id', $customer->id)
+                ->discount_gross_price ?? null;
+        }
+
+        return PartnerProduct::query()
+            ->where('customer_id', $customer->id)
+            ->where('product_id', $this->id)
+            ->value('discount_gross_price');
     }
     public function getDisplayGrossPriceAttribute()
     {
