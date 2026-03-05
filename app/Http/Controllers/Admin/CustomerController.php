@@ -189,14 +189,19 @@ class CustomerController extends Controller
         $customer_id = $request->input('customer_id');
         $percent = (float)$request->input('discount_percentage');
 
-        $products = Product::all(['id', 'gross_price']);
+        $products = Product::all(['id', 'gross_price', 'partner_gross_price']);
 
         foreach ($products as $product) {
+
+            $basePrice = $product->partner_gross_price;
+            if ($basePrice === null) {
+                $basePrice = $product->gross_price;
+            }
 
             if(100 === $percent) {
                 $discounted_price = 0.00;
             } else {
-                $discounted_price = round($product->gross_price * (1 - $percent / 100), 2);
+                $discounted_price = round($basePrice * (1 - $percent / 100), 2);
             }
 
             PartnerProduct::updateOrInsert(
@@ -237,13 +242,18 @@ class CustomerController extends Controller
 
         $products = Product::query()
             ->whereIn('cat_id', $categoryIds)
-            ->get(['id', 'gross_price']);
+            ->get(['id', 'gross_price', 'partner_gross_price']);
 
         foreach ($products as $product) {
+            $basePrice = $product->partner_gross_price;
+            if ($basePrice === null) {
+                $basePrice = $product->gross_price;
+            }
+
             if (100 === $percent) {
                 $discounted_price = 0.00;
             } else {
-                $discounted_price = round($product->gross_price * (1 - $percent / 100), 2);
+                $discounted_price = round($basePrice * (1 - $percent / 100), 2);
             }
 
             PartnerProduct::updateOrInsert(

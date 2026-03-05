@@ -372,6 +372,9 @@
             $('#adminTable').on('click', '.edit', async function () {
 
                 const row_data = $('#adminTable').DataTable().row($(this).parents('tr')).data();
+
+                $('#discount_percentage').val('');
+
                 const customer_all_data = await getCustomerData(row_data.id);
                 customer_data = customer_all_data.customer;
 
