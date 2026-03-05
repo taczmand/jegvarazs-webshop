@@ -8,6 +8,7 @@ use App\Models\CartItem;
 use App\Models\Customer;
 use App\Models\CustomerBillingAddress;
 use App\Models\CustomerShippingAddress;
+use App\Models\Category;
 use App\Models\PartnerProduct;
 use App\Models\Product;
 use Illuminate\Http\Request;
@@ -18,7 +19,13 @@ class CustomerController extends Controller
 {
     public function index()
     {
-        return view('admin.sales.customers');
+        $categories = Category::active()
+            ->orderBy('title')
+            ->get(['id', 'title']);
+
+        return view('admin.sales.customers', [
+            'categories' => $categories,
+        ]);
     }
 
     public function data()
@@ -119,10 +126,26 @@ class CustomerController extends Controller
     public function showProductsToPartner(Request $request, $id)
     {
         $search = $request->query('product_search');
+        $categoryId = $request->query('category_id');
+
+        $categoryIds = null;
+        if (is_string($categoryId) && is_numeric($categoryId)) {
+            $category = Category::with('children')->find((int) $categoryId);
+            if ($category) {
+                $categoryIds = collect([$category->id])
+                    ->merge($category->children->pluck('id'))
+                    ->unique()
+                    ->values()
+                    ->toArray();
+            }
+        }
 
         $products = Product::with(['partnerProducts' => function ($query) use ($id) {
             $query->where('customer_id', $id);
         }])
+            ->when($categoryIds, function ($query) use ($categoryIds) {
+                $query->whereIn('cat_id', $categoryIds);
+            })
             ->when($search, function ($query) use ($search) {
                 $query->where('title', 'like', "%{$search}%");
             })
@@ -191,6 +214,58 @@ class CustomerController extends Controller
 
 
         return response()->json(['success' => true, 'message' => 'Egyedi partnerár százalékos beállítása sikeres volt.']);
+    }
+
+    public function setProductPricePercentToPartnerByCategory(Request $request)
+    {
+        $request->validate([
+            'customer_id' => 'required|integer|exists:customers,id',
+            'category_id' => 'required|integer|exists:categories,id',
+            'discount_percentage' => 'required|numeric|min:0|max:100',
+        ]);
+
+        $customer_id = (int) $request->input('customer_id');
+        $categoryId = (int) $request->input('category_id');
+        $percent = (float) $request->input('discount_percentage');
+
+        $category = Category::with('children')->findOrFail($categoryId);
+        $categoryIds = collect([$category->id])
+            ->merge($category->children->pluck('id'))
+            ->unique()
+            ->values()
+            ->toArray();
+
+        $products = Product::query()
+            ->whereIn('cat_id', $categoryIds)
+            ->get(['id', 'gross_price']);
+
+        foreach ($products as $product) {
+            if (100 === $percent) {
+                $discounted_price = 0.00;
+            } else {
+                $discounted_price = round($product->gross_price * (1 - $percent / 100), 2);
+            }
+
+            PartnerProduct::updateOrInsert(
+                [
+                    'customer_id' => $customer_id,
+                    'product_id' => $product->id,
+                ],
+                [
+                    'discount_gross_price' => $discounted_price,
+                    'updated_at' => now(),
+                    'created_at' => now(),
+                ]
+            );
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Kategória szerinti százalékos partnerár beállítása sikeres volt.',
+            'data' => [
+                'updated_products' => $products->count(),
+            ],
+        ]);
     }
 
     public function destroyAllProductPriceToPartner(Request $request)

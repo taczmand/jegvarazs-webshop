@@ -145,6 +145,7 @@ Route::get('/automatizacio/kuldes', [AutomatedEmailController::class, 'sendToday
             Route::get('/ertekesites/partner/arazo/{id}/', [CustomerController::class, 'showProductsToPartner'])->name('customers.show_products_to_partner');
             Route::post('/ertekesites/partner/arazo', [CustomerController::class, 'setProductPriceToPartner'])->name('customers.set_product_price_to_partner');
             Route::post('/ertekesites/partner/szazalek', [CustomerController::class, 'setProductPricePercentToPartner'])->name('customers.set_product_price_percent_to_partner');
+            Route::post('/ertekesites/partner/szazalek-kategoria', [CustomerController::class, 'setProductPricePercentToPartnerByCategory'])->name('customers.set_product_price_percent_to_partner_by_category');
             Route::delete('/ertekesites/partner/arazo', [CustomerController::class, 'destroyProductPriceToPartner'])->name('customers.destroy_product_price_to_partner');
             Route::delete('/ertekesites/partner/arazo/torol', [CustomerController::class, 'destroyAllProductPriceToPartner'])->name('customers.destroy_all_product_price_to_partner');
 

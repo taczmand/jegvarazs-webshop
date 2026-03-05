@@ -284,6 +284,16 @@
                                 <label for="discount_percentage" class="form-label">Kedvezményes százalékos ár beállítása az összes termékre az alap bruttó árból számolva:</label>
                                 <input type="number" class="form-control" id="discount_percentage" name="discount_percentage" min="0" max="100" step="0.01" value="0">
                                 <button class="btn btn-success mt-2" id="applyDiscount">Százalékos ár beállítása az összes termékre</button>
+                                <div class="mt-3">
+                                    <label for="discount_category_id" class="form-label">Kategória kiválasztása (csak a kiválasztott kategória termékeire):</label>
+                                    <select class="form-select" id="discount_category_id" name="discount_category_id">
+                                        <option value="">Válassz kategóriát...</option>
+                                        @foreach(($categories ?? []) as $category)
+                                            <option value="{{ $category->id }}">{{ $category->title }}</option>
+                                        @endforeach
+                                    </select>
+                                    <button class="btn btn-success mt-2" id="applyDiscountByCategory">Százalékos ár beállítása a kiválasztott kategóriára</button>
+                                </div>
                                 <button class="btn btn-danger mt-2" id="resetPartnerPrices">Egyedi árak törlése az összes terméknél</button>
                                 <input type="text" class="form-control mt-2" id="searchProduct" placeholder="Termék keresése...">
                                 <div style="max-height: 400px; overflow-y: auto;" class="mt-2">
@@ -390,6 +400,10 @@
             });
 
             $(document).on('input', '#searchProduct', function() {
+                loadProductsWithPartnerPrices($('#customer_id_display').text(), $('#customer_is_partner').val());
+            });
+
+            $(document).on('change', '#discount_category_id', function() {
                 loadProductsWithPartnerPrices($('#customer_id_display').text(), $('#customer_is_partner').val());
             });
 
@@ -528,7 +542,15 @@
                     const priceManagerTable = $('#priceManagerTable tbody');
                     priceManagerTable.empty();
 
-                    fetch(`{{ url('/admin/ertekesites/partner/arazo') }}/${customer_id}/?product_search=${$('#searchProduct').val()}`)
+                    const category_id = $('#discount_category_id').val();
+                    const qs = new URLSearchParams({
+                        product_search: ($('#searchProduct').val() || ''),
+                    });
+                    if (category_id) {
+                        qs.set('category_id', category_id);
+                    }
+
+                    fetch(`{{ url('/admin/ertekesites/partner/arazo') }}/${customer_id}/?${qs.toString()}`)
                         .then(response => response.json())
                         .then(data => {
                             data.forEach(item => {
@@ -867,6 +889,46 @@
                     }
 
                     showToast('Kedvezmény sikeresen alkalmazva!', 'success');
+                    loadProductsWithPartnerPrices(customer_data.id, customer_data.is_partner);
+                } catch (error) {
+                    showToast(error.message || 'Hiba történt a kedvezmény alkalmazásakor', 'danger');
+                }
+            });
+
+            $('#applyDiscountByCategory').on('click', async function () {
+                const category_id = $('#discount_category_id').val();
+                if (!category_id) {
+                    showToast('Válassz kategóriát!', 'danger');
+                    return;
+                }
+
+                if (!confirm('Biztosan beállítod a kiválasztott kategóriánál a százalékos árat?')) return;
+
+                const discount_percentage = $('#discount_percentage').val();
+                if (discount_percentage < 0 || discount_percentage > 100) {
+                    showToast('Kedvezmény százalék 0 és 100 között kell legyen!', 'danger');
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`{{ url('/admin/ertekesites/partner/szazalek-kategoria') }}`, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': csrfToken,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            customer_id: customer_data.id,
+                            category_id: category_id,
+                            discount_percentage: discount_percentage
+                        })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Hiba a kedvezmény alkalmazásakor');
+                    }
+
+                    showToast('Kedvezmény sikeresen alkalmazva a kategóriára!', 'success');
                     loadProductsWithPartnerPrices(customer_data.id, customer_data.is_partner);
                 } catch (error) {
                     showToast(error.message || 'Hiba történt a kedvezmény alkalmazásakor', 'danger');
