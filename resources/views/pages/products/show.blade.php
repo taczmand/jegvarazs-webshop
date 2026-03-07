@@ -66,9 +66,9 @@
                 <div class="col-lg-6 col-md-6">
                     <div class="product__details__text">
                         @if($product->tags->isNotEmpty())
-                            <div class="mb-3">
+                            <div class="mb-3 product-tag-pills">
                                 @foreach($product->tags as $tag)
-                                    <span class="badge bg-success p-2 text-dark">#{{ $tag->name }}</span>
+                                    <span class="product-tag-pill">{{ $tag->name }}</span>
                                 @endforeach
                             </div>
                         @endif

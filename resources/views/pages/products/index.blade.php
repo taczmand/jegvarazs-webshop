@@ -267,6 +267,15 @@
                                         <div class="product__item" onclick="window.location.href='{{ route('products.resolve', ['slugs' => $fullSlug]) }}'">
 
                                                 <div class="product__item__pic set-bg" data-setbg="{{ asset('storage/' . $mainPhoto?->path ?? 'static_media/no-image.jpg') }}">
+                                                    @if($product->tags->isNotEmpty())
+                                                        <div class="product-tag-pills product-tag-pills--overlay">
+                                                            @foreach($product->tags as $tag)
+                                                                <span class="product-tag-pill product-tag-pill--sm">
+                                                                    {{ $tag->name }}
+                                                                </span>
+                                                            @endforeach
+                                                        </div>
+                                                    @endif
                                                     @auth('customer')
                                                         <ul class="product__item__pic__hover">
                                                             <!--<li><a href="#"><i class="fa fa-heart"></i></a></li>-->

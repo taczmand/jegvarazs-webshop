@@ -1330,6 +1330,38 @@ a {
     visibility: hidden;
 }
 
+.product-tag-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.product-tag-pill {
+    background: linear-gradient(45deg, $logo-blue-color-dark 0%, $logo-blue-color-light 100%);
+    color: #fff;
+    font-weight: 600;
+    font-size: 12px;
+    line-height: 1;
+    padding: 7px 12px;
+    border-radius: 999px;
+    display: inline-block;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+}
+
+.product-tag-pill--sm {
+    font-size: 11px;
+    padding: 6px 10px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.product__item__pic .product-tag-pills--overlay {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    right: 10px;
+    z-index: 2;
+}
+
 /*---------------------
   Shop Grid
 -----------------------*/

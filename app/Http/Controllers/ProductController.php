@@ -22,7 +22,7 @@ class ProductController extends Controller
         $itemsPerPage = $request->query('itemsPerPage', 24);
 
         // Alap query
-        $query = Product::with('category')
+        $query = Product::with(['category', 'photos', 'tags'])
             ->where('status', 'active');
 
         $allProductIds = $query->pluck('id');
@@ -198,7 +198,7 @@ class ProductController extends Controller
         $itemsPerPage = $request->query('itemsPerPage', 24);
 
         // 🔎 Alap lekérdezés
-        $query = Product::with('category')
+        $query = Product::with(['category', 'photos', 'tags'])
             ->whereIn('cat_id', $categoryIds)
             ->where('status', 'active');
 
