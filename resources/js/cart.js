@@ -28,7 +28,7 @@ async function addToCart(productId, quantity = 1) {
 
             fetchCartSummary();
         } else if (res.result === 'error') {
-            showToast(res.message, 'error');
+            showToast(res.message || res.error_message || 'Ismeretlen hiba történt.', 'error');
         }
     } catch (error) {
         console.error('Hiba:', error);

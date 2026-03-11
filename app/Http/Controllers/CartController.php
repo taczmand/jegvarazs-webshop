@@ -78,7 +78,7 @@ class CartController extends Controller
             }
             $cart->touch();
         } catch (\Exception $e) {
-            return response()->json(['result' => 'error', 'error_message' => $e->getMessage()], 200);
+            return response()->json(['result' => 'error', 'message' => $e->getMessage()], 200);
         }
 
         return response()->json(['result' => 'success', 'cart_count' => $cart->items()->count()], 200);
