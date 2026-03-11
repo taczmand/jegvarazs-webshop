@@ -19,7 +19,6 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
-use Spatie\LaravelImageOptimizer\Facades\ImageOptimizer;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -848,28 +847,54 @@ class WorksheetController extends Controller
                             // Teljes fájlút
                             $fullPath = Storage::disk('local')->path($storagePath);
 
-                            // Csak képek optimalizálása (ne pdf/doc)
-                            if (!in_array($extension, ['pdf', 'doc', 'docx'])) {
+                            // Csak JPG/PNG → WEBP + vízjel (pdf/doc/docx marad változatlan)
+                            if (in_array($extension, ['jpg', 'jpeg', 'png'])) {
                                 try {
                                     $imagick = new \Imagick($fullPath);
 
-                                    // Tömörítési beállítások
-                                    if (in_array($extension, ['jpg', 'jpeg'])) {
-                                        $imagick->setImageCompression(\Imagick::COMPRESSION_JPEG);
-                                        $imagick->setImageCompressionQuality(75);
-                                    } elseif ($extension === 'png') {
-                                        $imagick->setImageCompression(\Imagick::COMPRESSION_ZIP);
-                                        $imagick->setImageCompressionQuality(75);
-                                    }
-
-                                    // Metaadatok törlése
+                                    // WEBP beállítások
+                                    $imagick->setImageFormat('webp');
+                                    $imagick->setImageCompressionQuality(75);
                                     $imagick->stripImage();
 
-                                    // Felülírás optimalizált változattal
-                                    $imagick->writeImage($fullPath);
+                                    // Vízjel betöltése
+                                    $watermark = new \Imagick(env('STATIC_MEDIA_PATH') . '/uj_logo_szeles_transzparens.png');
+
+                                    // Halványítás
+                                    $watermark->evaluateImage(\Imagick::EVALUATE_MULTIPLY, 0.1, \Imagick::CHANNEL_ALPHA);
+
+                                    // Méretezés
+                                    $watermark->thumbnailImage($imagick->getImageWidth() / 1.5, 0);
+
+                                    // Pozicionálás
+                                    $x = ($imagick->getImageWidth() - $watermark->getImageWidth()) / 2;
+                                    $y = ($imagick->getImageHeight() - $watermark->getImageHeight()) / 2;
+
+                                    // Alpha csatorna
+                                    $imagick->setImageAlphaChannel(\Imagick::ALPHACHANNEL_SET);
+
+                                    // Rákompozitálás
+                                    $imagick->compositeImage($watermark, \Imagick::COMPOSITE_OVER, $x, $y);
+
+                                    $filenameWithoutExt = pathinfo($filename, PATHINFO_FILENAME);
+                                    $webpFilename = $filenameWithoutExt . '.webp';
+                                    $webpStoragePath = 'worksheet_images/' . $webpFilename;
+                                    $fullWebpPath = Storage::disk('local')->path($webpStoragePath);
+
+                                    // Mentés új webp fájlba
+                                    $imagick->writeImage($fullWebpPath);
+                                    $imagick->clear();
                                     $imagick->destroy();
+
+                                    // Eredeti törlése
+                                    Storage::disk('local')->delete($storagePath);
+
+                                    // DB-ben már a webp-t tároljuk
+                                    $filename = $webpFilename;
+                                    $storagePath = $webpStoragePath;
+
                                 } catch (\Exception $e) {
-                                    \Log::error("Kép optimalizálás sikertelen: {$fullPath} - {$e->getMessage()}");
+                                    \Log::error("WEBP konverzió sikertelen: {$fullPath} - {$e->getMessage()}");
                                 }
                             }
 
