@@ -852,13 +852,10 @@ class WorksheetController extends Controller
                                 try {
                                     $imagick = new \Imagick($fullPath);
 
-                                    // JPEG beállítások
-                                    $imagick->setImageFormat('jpeg');
-                                    $imagick->setInterlaceScheme(\Imagick::INTERLACE_JPEG);
-                                    $imagick->setImageCompression(\Imagick::COMPRESSION_JPEG);
-                                    $imagick->setImageProperty('jpeg:sampling-factor', '4:2:0');
-                                    $imagick->setImageCompressionQuality(85);
-                                    $imagick->stripImage();
+                                    // Kép orientáció javítása (telefonos fotóknál gyakori)
+                                    if (method_exists($imagick, 'autoOrient')) {
+                                        $imagick->autoOrient();
+                                    }
 
                                     // Méretkorlátozás: max 1600px szélesség (csak kicsinyítés)
                                     $maxWidth = 1600;
@@ -871,6 +868,15 @@ class WorksheetController extends Controller
                                         $imagick->setImageBackgroundColor('white');
                                         $imagick = $imagick->mergeImageLayers(\Imagick::LAYERMETHOD_FLATTEN);
                                     }
+
+                                    // JPEG beállítások
+                                    $imagick->setImageFormat('jpeg');
+                                    $imagick->setInterlaceScheme(\Imagick::INTERLACE_JPEG);
+                                    $imagick->setImageCompression(\Imagick::COMPRESSION_JPEG);
+                                    $imagick->setImageProperty('jpeg:sampling-factor', '4:2:0');
+                                    $imagick->setOption('jpeg:optimize-coding', 'true');
+                                    $imagick->setImageCompressionQuality(80);
+                                    $imagick->stripImage();
 
                                     $filenameWithoutExt = pathinfo($filename, PATHINFO_FILENAME);
                                     $jpegFilename = $filenameWithoutExt . '.jpeg';
