@@ -100,7 +100,7 @@
                                             <td class="w-25">Ügyfél keresés</td>
                                             <td class="position-relative">
                                                 <input type="text" class="form-control" id="client_search" placeholder="Név / e-mail / telefon..." autocomplete="off">
-                                                <div id="client_search_results" class="list-group position-absolute w-100 admin-client-search-results" style="z-index: 1100; display:none; max-height: 260px; overflow-y: auto;"></div>
+                                                <div id="client_search_results" class="list-group w-100 admin-client-search-results" style="z-index: 1100; display:none; max-height: 260px; overflow-y: auto;"></div>
                                             </td>
                                         </tr>
 
