@@ -856,8 +856,15 @@ class WorksheetController extends Controller
                                     $imagick->setImageFormat('jpeg');
                                     $imagick->setInterlaceScheme(\Imagick::INTERLACE_JPEG);
                                     $imagick->setImageCompression(\Imagick::COMPRESSION_JPEG);
+                                    $imagick->setImageProperty('jpeg:sampling-factor', '4:2:0');
                                     $imagick->setImageCompressionQuality(85);
                                     $imagick->stripImage();
+
+                                    // Méretkorlátozás: max 1600px szélesség (csak kicsinyítés)
+                                    $maxWidth = 1600;
+                                    if ($imagick->getImageWidth() > $maxWidth) {
+                                        $imagick->resizeImage($maxWidth, 0, \Imagick::FILTER_LANCZOS, 1, true);
+                                    }
 
                                     // PNG áttetszőség kezelése: fehér háttérre lapítás JPEG-hez
                                     if ($extension === 'png') {
