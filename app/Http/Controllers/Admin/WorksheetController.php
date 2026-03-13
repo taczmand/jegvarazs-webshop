@@ -847,54 +847,43 @@ class WorksheetController extends Controller
                             // Teljes fájlút
                             $fullPath = Storage::disk('local')->path($storagePath);
 
-                            // Csak JPG/PNG → WEBP + vízjel (pdf/doc/docx marad változatlan)
+                            // Csak JPG/PNG → JPEG (pdf/doc/docx marad változatlan)
                             if (in_array($extension, ['jpg', 'jpeg', 'png'])) {
                                 try {
                                     $imagick = new \Imagick($fullPath);
 
-                                    // WEBP beállítások
-                                    $imagick->setImageFormat('webp');
-                                    $imagick->setImageCompressionQuality(75);
+                                    // JPEG beállítások
+                                    $imagick->setImageFormat('jpeg');
+                                    $imagick->setInterlaceScheme(\Imagick::INTERLACE_JPEG);
+                                    $imagick->setImageCompression(\Imagick::COMPRESSION_JPEG);
+                                    $imagick->setImageCompressionQuality(85);
                                     $imagick->stripImage();
 
-                                    // Vízjel betöltése
-                                    $watermark = new \Imagick(env('STATIC_MEDIA_PATH') . '/uj_logo_szeles_transzparens.png');
-
-                                    // Halványítás
-                                    $watermark->evaluateImage(\Imagick::EVALUATE_MULTIPLY, 0.1, \Imagick::CHANNEL_ALPHA);
-
-                                    // Méretezés
-                                    $watermark->thumbnailImage($imagick->getImageWidth() / 1.5, 0);
-
-                                    // Pozicionálás
-                                    $x = ($imagick->getImageWidth() - $watermark->getImageWidth()) / 2;
-                                    $y = ($imagick->getImageHeight() - $watermark->getImageHeight()) / 2;
-
-                                    // Alpha csatorna
-                                    $imagick->setImageAlphaChannel(\Imagick::ALPHACHANNEL_SET);
-
-                                    // Rákompozitálás
-                                    $imagick->compositeImage($watermark, \Imagick::COMPOSITE_OVER, $x, $y);
+                                    // PNG áttetszőség kezelése: fehér háttérre lapítás JPEG-hez
+                                    if ($extension === 'png') {
+                                        $imagick->setImageBackgroundColor('white');
+                                        $imagick = $imagick->mergeImageLayers(\Imagick::LAYERMETHOD_FLATTEN);
+                                    }
 
                                     $filenameWithoutExt = pathinfo($filename, PATHINFO_FILENAME);
-                                    $webpFilename = $filenameWithoutExt . '.webp';
-                                    $webpStoragePath = 'worksheet_images/' . $webpFilename;
-                                    $fullWebpPath = Storage::disk('local')->path($webpStoragePath);
+                                    $jpegFilename = $filenameWithoutExt . '.jpeg';
+                                    $jpegStoragePath = 'worksheet_images/' . $jpegFilename;
+                                    $fullJpegPath = Storage::disk('local')->path($jpegStoragePath);
 
-                                    // Mentés új webp fájlba
-                                    $imagick->writeImage($fullWebpPath);
+                                    // Mentés új jpeg fájlba
+                                    $imagick->writeImage($fullJpegPath);
                                     $imagick->clear();
                                     $imagick->destroy();
 
                                     // Eredeti törlése
                                     Storage::disk('local')->delete($storagePath);
 
-                                    // DB-ben már a webp-t tároljuk
-                                    $filename = $webpFilename;
-                                    $storagePath = $webpStoragePath;
+                                    // DB-ben már a jpeg-et tároljuk
+                                    $filename = $jpegFilename;
+                                    $storagePath = $jpegStoragePath;
 
                                 } catch (\Exception $e) {
-                                    \Log::error("WEBP konverzió sikertelen: {$fullPath} - {$e->getMessage()}");
+                                    \Log::error("JPEG konverzió sikertelen: {$fullPath} - {$e->getMessage()}");
                                 }
                             }
 
