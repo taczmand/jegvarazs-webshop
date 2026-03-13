@@ -859,15 +859,16 @@ class WorksheetController extends Controller
                                     }
 
                                     // Méretkorlátozás: max 1600px a hosszabbik oldalon (csak kicsinyítés)
+                                    // (Prod Imagick buildnél a 0-s width/height "Invalid image geometry" hibát okozhat,
+                                    // ezért mindig konkrét, kiszámolt méretet adunk meg.)
                                     $maxSide = 1600;
-                                    $w = $imagick->getImageWidth();
-                                    $h = $imagick->getImageHeight();
-                                    if ($w > $maxSide || $h > $maxSide) {
-                                        if ($w >= $h) {
-                                            $imagick->resizeImage($maxSide, 0, \Imagick::FILTER_LANCZOS, 1, true);
-                                        } else {
-                                            $imagick->resizeImage(0, $maxSide, \Imagick::FILTER_LANCZOS, 1, true);
-                                        }
+                                    $w = (int) $imagick->getImageWidth();
+                                    $h = (int) $imagick->getImageHeight();
+                                    if ($w > 0 && $h > 0 && ($w > $maxSide || $h > $maxSide)) {
+                                        $scale = $maxSide / max($w, $h);
+                                        $newW = max(1, (int) round($w * $scale));
+                                        $newH = max(1, (int) round($h * $scale));
+                                        $imagick->resizeImage($newW, $newH, \Imagick::FILTER_LANCZOS, 1, true);
                                     }
 
                                     // PNG áttetszőség kezelése: fehér háttérre lapítás JPEG-hez
