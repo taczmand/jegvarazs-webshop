@@ -13,12 +13,12 @@ class AdminBulkEmail extends Mailable
     use Queueable, SerializesModels;
 
     protected string $subjectLine;
-    protected string $html;
+    protected string $htmlBody;
 
-    public function __construct(string $subjectLine, string $html)
+    public function __construct(string $subjectLine, string $htmlBody)
     {
         $this->subjectLine = $subjectLine;
-        $this->html = $html;
+        $this->htmlBody = $htmlBody;
     }
 
     public function envelope(): Envelope
@@ -33,7 +33,7 @@ class AdminBulkEmail extends Mailable
         return new Content(
             view: 'emails.admin-bulk-email',
             with: [
-                'html' => $this->html,
+                'htmlBody' => $this->htmlBody,
             ]
         );
     }
