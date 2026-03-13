@@ -850,6 +850,7 @@ class WorksheetController extends Controller
                             // Csak JPG/PNG → JPEG (pdf/doc/docx marad változatlan)
                             if (in_array($extension, ['jpg', 'jpeg', 'png'])) {
                                 try {
+                                    $beforeBytes = @filesize($fullPath) ?: null;
                                     $imagick = new \Imagick($fullPath);
 
                                     // Kép orientáció javítása (telefonos fotóknál gyakori)
@@ -857,10 +858,16 @@ class WorksheetController extends Controller
                                         $imagick->autoOrient();
                                     }
 
-                                    // Méretkorlátozás: max 1600px szélesség (csak kicsinyítés)
-                                    $maxWidth = 1600;
-                                    if ($imagick->getImageWidth() > $maxWidth) {
-                                        $imagick->resizeImage($maxWidth, 0, \Imagick::FILTER_LANCZOS, 1, true);
+                                    // Méretkorlátozás: max 1600px a hosszabbik oldalon (csak kicsinyítés)
+                                    $maxSide = 1600;
+                                    $w = $imagick->getImageWidth();
+                                    $h = $imagick->getImageHeight();
+                                    if ($w > $maxSide || $h > $maxSide) {
+                                        if ($w >= $h) {
+                                            $imagick->resizeImage($maxSide, 0, \Imagick::FILTER_LANCZOS, 1, true);
+                                        } else {
+                                            $imagick->resizeImage(0, $maxSide, \Imagick::FILTER_LANCZOS, 1, true);
+                                        }
                                     }
 
                                     // PNG áttetszőség kezelése: fehér háttérre lapítás JPEG-hez
@@ -885,6 +892,17 @@ class WorksheetController extends Controller
 
                                     // Mentés új jpeg fájlba
                                     $imagick->writeImage($fullJpegPath);
+
+                                    $afterBytes = @filesize($fullJpegPath) ?: null;
+                                    \Log::info('Worksheet image converted to JPEG', [
+                                        'original_extension' => $extension,
+                                        'before_bytes' => $beforeBytes,
+                                        'after_bytes' => $afterBytes,
+                                        'width' => $imagick->getImageWidth(),
+                                        'height' => $imagick->getImageHeight(),
+                                        'output' => $jpegFilename,
+                                    ]);
+
                                     $imagick->clear();
                                     $imagick->destroy();
 
