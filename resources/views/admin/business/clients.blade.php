@@ -50,6 +50,24 @@
                 </table>
 
                 <div id="emails-list" style="margin-top:10px; font-weight:bold; background-color: #f5f5f5; padding: 10px; border-radius: 5px;"></div>
+
+                <div class="mt-3" id="bulk-email-panel">
+                    <div class="fw-bold mb-2">Tömeges e-mail küldés (aktuális lista)</div>
+                    <div class="mb-2">
+                        <label for="bulk_email_subject" class="form-label">Tárgy</label>
+                        <input type="text" class="form-control" id="bulk_email_subject" placeholder="Tárgy...">
+                    </div>
+                    <div class="mb-2">
+                        <label for="bulk_email_body" class="form-label">Üzenet</label>
+                        <textarea class="form-control" id="bulk_email_body" rows="10"></textarea>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <button type="button" class="btn btn-primary" id="bulkEmailSend">
+                            <i class="fa-solid fa-paper-plane me-1"></i> Küldés
+                        </button>
+                        <div id="bulkEmailStatus" class="small"></div>
+                    </div>
+                </div>
             @else
                 <div class="alert alert-warning">
                     <i class="fa-solid fa-exclamation-triangle me-2"></i> Nincs jogosultságod az ügyfelek megtekintéséhez.
@@ -203,6 +221,7 @@
 @endsection
 
 @section('scripts')
+    <script src="https://cdn.tiny.cloud/1/k486ypuedp01hfc64g7mn3t9rc5lp8h53a5korymr6qvuvb9/tinymce/7/tinymce.min.js" referrerpolicy="origin"></script>
     <script type="module">
 
         const adminModalDOM = document.getElementById('adminModal');
@@ -251,6 +270,85 @@
                         .join('; ');
 
                     $('#emails-list').text(emails);
+                }
+            });
+
+            tinymce.init({
+                selector: 'textarea#bulk_email_body',
+                plugins: 'anchor autolink charmap codesample emoticons image link lists media searchreplace table visualblocks wordcount',
+                toolbar: 'undo redo | blocks | bold italic | alignleft aligncenter alignright | indent outdent | bullist numlist | code | table'
+            });
+
+            function getBulkEmails() {
+                const raw = ($('#emails-list').text() || '').trim();
+                if (!raw) return [];
+                const parts = raw
+                    .split(/[;,\s]+/g)
+                    .map(x => (x || '').trim())
+                    .filter(Boolean);
+                const unique = Array.from(new Set(parts.map(e => e.toLowerCase())));
+                return unique;
+            }
+
+            function setBulkStatus(text, type = 'muted') {
+                const $el = $('#bulkEmailStatus');
+                $el.removeClass('text-muted text-danger text-success');
+                if (type === 'success') $el.addClass('text-success');
+                else if (type === 'danger') $el.addClass('text-danger');
+                else $el.addClass('text-muted');
+                $el.text(text || '');
+            }
+
+            $('#bulkEmailSend').on('click', async function () {
+                const emails = getBulkEmails();
+                const subject = ($('#bulk_email_subject').val() || '').toString().trim();
+
+                const editor = tinymce.get('bulk_email_body');
+                const html = editor ? (editor.getContent() || '').toString() : ($('#bulk_email_body').val() || '').toString();
+
+                if (!emails.length) {
+                    setBulkStatus('Nincs e-mail cím a listában.', 'danger');
+                    return;
+                }
+                if (!subject) {
+                    setBulkStatus('A tárgy mező kötelező.', 'danger');
+                    return;
+                }
+                if (!html || html.trim() === '') {
+                    setBulkStatus('Az üzenet mező üres.', 'danger');
+                    return;
+                }
+
+                setBulkStatus(`Küldés folyamatban... (${emails.length} címzett)`, 'muted');
+                $('#bulkEmailSend').prop('disabled', true);
+
+                try {
+                    const response = await fetch(`{{ route('admin.clients.bulk-email') }}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': csrfToken,
+                            'Accept': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            emails,
+                            subject,
+                            html,
+                        })
+                    });
+
+                    const payload = await response.json().catch(() => ({}));
+                    if (!response.ok) {
+                        const msg = payload?.message || 'Hiba történt a küldés során.';
+                        setBulkStatus(msg, 'danger');
+                        return;
+                    }
+
+                    setBulkStatus(payload?.message || 'E-mail kiküldve.', 'success');
+                } catch (e) {
+                    setBulkStatus('Hálózati hiba történt a küldés során.', 'danger');
+                } finally {
+                    $('#bulkEmailSend').prop('disabled', false);
                 }
             });
 

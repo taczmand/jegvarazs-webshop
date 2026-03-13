@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Mail\AdminBulkEmail;
 use App\Models\Appointment;
 use App\Models\Client;
 use App\Models\ClientAddress;
@@ -11,6 +12,7 @@ use App\Models\Offer;
 use App\Models\Worksheet;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 use Yajra\DataTables\Facades\DataTables;
 
 class ClientController extends Controller
@@ -71,6 +73,56 @@ class ClientController extends Controller
     public function index()
     {
         return view('admin.business.clients');
+    }
+
+    public function bulkEmail(Request $request)
+    {
+        $user = auth('admin')->user();
+        if (!$user || !$user->can('edit-client')) {
+            return response()->json(['message' => 'Nincs jogosultságod e-mailt küldeni.'], 403);
+        }
+
+        $validated = $request->validate([
+            'emails' => 'required|array|min:1|max:200',
+            'emails.*' => 'required|email:rfc,dns',
+            'subject' => 'required|string|max:180',
+            'html' => 'required|string|max:200000',
+        ]);
+
+        $emails = collect($validated['emails'])
+            ->map(fn($e) => mb_strtolower(trim((string) $e)))
+            ->filter(fn($e) => $e !== '')
+            ->unique()
+            ->values()
+            ->all();
+
+        if (count($emails) === 0) {
+            return response()->json(['message' => 'Nincs érvényes e-mail cím.'], 422);
+        }
+
+        $to = config('mail.from.address') ?: (env('MAIL_FROM_ADDRESS') ?: null);
+        if (!$to) {
+            return response()->json(['message' => 'Nincs beállítva feladó e-mail cím (MAIL_FROM_ADDRESS).'], 500);
+        }
+
+        try {
+            Mail::to($to)->bcc($emails)->send(new AdminBulkEmail($validated['subject'], $validated['html']));
+
+            return response()->json([
+                'message' => 'E-mail elküldve.',
+                'count' => count($emails),
+            ]);
+        } catch (\Throwable $e) {
+            \Log::error('Bulk email send failed', [
+                'error' => $e->getMessage(),
+                'count' => count($emails),
+                'user_id' => $user?->id,
+            ]);
+
+            return response()->json([
+                'message' => 'Hiba történt az e-mail küldése során.',
+            ], 500);
+        }
     }
 
     public function data()
