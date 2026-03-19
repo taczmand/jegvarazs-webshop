@@ -909,7 +909,7 @@
                 $('#contact_address_line').val(line);
 
                 setClientFieldsVisible(true);
-                setSnapshotMode(true);
+                setSnapshotMode(false);
 
                 setOfferActionsVisible(true);
 

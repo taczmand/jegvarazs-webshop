@@ -674,7 +674,7 @@
                         $('#installation_date').val(installation_date);
                     }
 
-                    setSnapshotMode(true);
+                    setSnapshotMode(false);
 
                     loadWorkers([]);
                     loadProducts([]);
@@ -704,7 +704,7 @@
                 $('#contact_address_line').val('');
 
                 setClientFieldsVisible(false);
-                setSnapshotMode(true);
+                setSnapshotMode(false);
             }
 
             $('#client_search').on('input', function () {
@@ -849,7 +849,7 @@
                 $('#contact_address_line').val(line);
 
                 setClientFieldsVisible(true);
-                setSnapshotMode(true);
+                setSnapshotMode(false);
 
                 const headerParts = [idNumber, email].filter(Boolean).join(', ');
                 const display = `${name || ''}${headerParts ? ' (' + headerParts + ')' : ''}`.trim();
@@ -993,7 +993,7 @@
                 }
 
                 setClientFieldsVisible(true);
-                setSnapshotMode(true);
+                setSnapshotMode(false);
                 $('#create_client').val('0');
                 $('#contract_id').val(worksheet.contract_id);
                 $('#work_status').val(worksheet.work_status);

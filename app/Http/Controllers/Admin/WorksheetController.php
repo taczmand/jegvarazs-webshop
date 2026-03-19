@@ -477,6 +477,12 @@ class WorksheetController extends Controller
             if ($clientId) {
                 $client = Client::findOrFail($clientId);
 
+                $client->update([
+                    'name' => $request->input('contact_name') ?: $client->name,
+                    'email' => $request->input('contact_email') ?: $client->email,
+                    'phone' => $request->input('contact_phone') ?: $client->phone,
+                ]);
+
                 $snapshot = [
                     'name' => $client->name,
                     'email' => $client->email,
@@ -504,6 +510,15 @@ class WorksheetController extends Controller
                 }
 
                 if ($address) {
+                    if (!$useCustomAddress) {
+                        $address->update([
+                            'country' => $request->input('contact_country') ?: $address->country,
+                            'zip_code' => $request->input('contact_zip_code') ?: $address->zip_code,
+                            'city' => $request->input('contact_city') ?: $address->city,
+                            'address_line' => $request->input('contact_address_line') ?: $address->address_line,
+                        ]);
+                    }
+
                     $snapshot['country'] = $address->country;
                     $snapshot['zip_code'] = $address->zip_code;
                     $snapshot['city'] = $address->city;

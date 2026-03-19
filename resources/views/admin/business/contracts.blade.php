@@ -395,7 +395,7 @@
                 $('#installation_date').val(contract.installation_date);
 
                 setClientFieldsVisible(true);
-                setSnapshotMode(true);
+                setSnapshotMode(false);
                 $('#create_client').val('0');
 
                 const display = `${contract.name || ''}${contract.email ? ' (' + contract.email + ')' : ''}`.trim();
@@ -594,7 +594,7 @@
                     $('#installation_date').val(contract.installation_date);
 
                     setClientFieldsVisible(true);
-                    setSnapshotMode(true);
+                    setSnapshotMode(false);
                     $('#create_client').val('0');
 
                     $('#show_signature').addClass('d-none');
@@ -1224,7 +1224,7 @@
                 $('#contact_address_line').val(line);
 
                 setClientFieldsVisible(true);
-                setSnapshotMode(true);
+                setSnapshotMode(false);
 
                 const headerParts = [idNumber, email].filter(Boolean).join(', ');
                 const display = `${name || ''}${headerParts ? ' (' + headerParts + ')' : ''}`.trim();

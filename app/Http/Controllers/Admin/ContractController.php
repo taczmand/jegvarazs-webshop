@@ -259,6 +259,27 @@ class ContractController extends Controller
 
                     $address = $existingAddress;
                 }
+
+                if ($client) {
+                    $client->update([
+                        'name' => $request->input('contact_name') ?: $client->name,
+                        'email' => $request->input('contact_email') ?: $client->email,
+                        'phone' => $request->input('contact_phone') ?: $client->phone,
+                        'mothers_name' => $request->input('mothers_name') ?: $client->mothers_name,
+                        'place_of_birth' => $request->input('place_of_birth') ?: $client->place_of_birth,
+                        'date_of_birth' => $request->input('date_of_birth') ?: $client->date_of_birth,
+                        'id_number' => $request->input('id_number') ?: $client->id_number,
+                    ]);
+                }
+
+                if ($address && !$useCustomAddress) {
+                    $address->update([
+                        'country' => $request->input('contact_country') ?: $address->country,
+                        'zip_code' => $request->input('contact_zip_code') ?: $address->zip_code,
+                        'city' => $request->input('contact_city') ?: $address->city,
+                        'address_line' => $request->input('contact_address_line') ?: $address->address_line,
+                    ]);
+                }
             }
 
             $resolvedName = $request->input('contact_name');
@@ -270,9 +291,9 @@ class ContractController extends Controller
             $resolvedAddressLine = $request->input('contact_address_line');
 
             if ($client) {
-                $resolvedName = $client->name ?: $resolvedName;
-                $resolvedEmail = $client->email ?: $resolvedEmail;
-                $resolvedPhone = $client->phone ?: $resolvedPhone;
+                $resolvedName = $client->name;
+                $resolvedEmail = $client->email;
+                $resolvedPhone = $client->phone;
             }
 
             if ($address) {

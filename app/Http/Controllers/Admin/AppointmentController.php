@@ -158,18 +158,34 @@ class AppointmentController extends Controller
                 }
 
                 if ($client) {
+                    $client->update([
+                        'name' => $request->input('name') ?: $client->name,
+                        'email' => $request->input('email') ?: $client->email,
+                        'phone' => $request->input('phone') ?: $client->phone,
+                    ]);
+                }
+
+                if ($address && !$useCustomAddress) {
+                    $address->update([
+                        'zip_code' => $request->input('zip_code') ?: $address->zip_code,
+                        'city' => $request->input('city') ?: $address->city,
+                        'address_line' => $request->input('address_line') ?: $address->address_line,
+                    ]);
+                }
+
+                if ($client) {
                     $request->merge([
-                        'name' => $client->name ?: $request->input('name'),
-                        'email' => $client->email ?: $request->input('email'),
-                        'phone' => $client->phone ?: $request->input('phone'),
+                        'name' => $client->name,
+                        'email' => $client->email,
+                        'phone' => $client->phone,
                     ]);
                 }
 
                 if ($address && !$useCustomAddress) {
                     $request->merge([
-                        'zip_code' => $address->zip_code ?: $request->input('zip_code'),
-                        'city' => $address->city ?: $request->input('city'),
-                        'address_line' => $address->address_line ?: $request->input('address_line'),
+                        'zip_code' => $address->zip_code,
+                        'city' => $address->city,
+                        'address_line' => $address->address_line,
                     ]);
                 }
             }
@@ -338,18 +354,34 @@ class AppointmentController extends Controller
                 }
 
                 if ($client) {
+                    $client->update([
+                        'name' => $request->input('name') ?: $client->name,
+                        'email' => $request->input('email') ?: $client->email,
+                        'phone' => $request->input('phone') ?: $client->phone,
+                    ]);
+                }
+
+                if ($address && !$useCustomAddress) {
+                    $address->update([
+                        'zip_code' => $request->input('zip_code') ?: $address->zip_code,
+                        'city' => $request->input('city') ?: $address->city,
+                        'address_line' => $request->input('address_line') ?: $address->address_line,
+                    ]);
+                }
+
+                if ($client) {
                     $request->merge([
-                        'name' => $client->name ?: $request->input('name'),
-                        'email' => $client->email ?: $request->input('email'),
-                        'phone' => $client->phone ?: $request->input('phone'),
+                        'name' => $client->name,
+                        'email' => $client->email,
+                        'phone' => $client->phone,
                     ]);
                 }
 
                 if ($address && !$useCustomAddress) {
                     $request->merge([
-                        'zip_code' => $address->zip_code ?: $request->input('zip_code'),
-                        'city' => $address->city ?: $request->input('city'),
-                        'address_line' => $address->address_line ?: $request->input('address_line'),
+                        'zip_code' => $address->zip_code,
+                        'city' => $address->city,
+                        'address_line' => $address->address_line,
                     ]);
                 }
             }

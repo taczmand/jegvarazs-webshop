@@ -243,19 +243,36 @@ class OfferController extends Controller
                 }
 
                 if ($client) {
+                    $client->update([
+                        'name' => $request->input('contact_name') ?: $client->name,
+                        'email' => $request->input('contact_email') ?: $client->email,
+                        'phone' => $request->input('contact_phone') ?: $client->phone,
+                    ]);
+                }
+
+                if ($address && !$useCustomAddress) {
+                    $address->update([
+                        'country' => $request->input('contact_country') ?: $address->country,
+                        'zip_code' => $request->input('contact_zip_code') ?: $address->zip_code,
+                        'city' => $request->input('contact_city') ?: $address->city,
+                        'address_line' => $request->input('contact_address_line') ?: $address->address_line,
+                    ]);
+                }
+
+                if ($client) {
                     $request->merge([
-                        'contact_name' => $client->name ?: $request->input('contact_name'),
-                        'contact_email' => $client->email ?: $request->input('contact_email'),
-                        'contact_phone' => $client->phone ?: $request->input('contact_phone'),
+                        'contact_name' => $client->name,
+                        'contact_email' => $client->email,
+                        'contact_phone' => $client->phone,
                     ]);
                 }
 
                 if ($address && !$useCustomAddress) {
                     $request->merge([
-                        'contact_country' => $address->country ?: $request->input('contact_country'),
-                        'contact_zip_code' => $address->zip_code ?: $request->input('contact_zip_code'),
-                        'contact_city' => $address->city ?: $request->input('contact_city'),
-                        'contact_address_line' => $address->address_line ?: $request->input('contact_address_line'),
+                        'contact_country' => $address->country,
+                        'contact_zip_code' => $address->zip_code,
+                        'contact_city' => $address->city,
+                        'contact_address_line' => $address->address_line,
                     ]);
                 }
             }

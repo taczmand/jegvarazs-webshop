@@ -424,7 +424,7 @@
                     $('#message').val(data.message);
 
                     setClientFieldsVisible(true);
-                    setSnapshotMode(!!data.client_id);
+                    setSnapshotMode(false);
                     $('#client_search').val(data.name || '');
 
 
@@ -752,7 +752,7 @@
                 $('#address_line').val(line);
 
                 setClientFieldsVisible(true);
-                setSnapshotMode(true);
+                setSnapshotMode(false);
 
                 const headerParts = [idNumber, email].filter(Boolean).join(', ');
                 const display = `${name || ''}${headerParts ? ' (' + headerParts + ')' : ''}`.trim();
