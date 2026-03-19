@@ -120,9 +120,25 @@ class PagesController extends Controller
 
         // Validáció
         $request->validate([
-            'name'  => 'required|string|max:255',
+            'name'  => ['required', 'string', 'max:255', 'regex:/^(?!.*\d).+$/u'],
             'email' => 'required|email|max:255',
-            'phone' => 'required|string|max:20',
+            'phone' => [
+                'required',
+                'string',
+                'max:20',
+                'regex:/^[0-9+\s().-]+$/',
+                function ($attribute, $value, $fail) {
+                    $digitsOnly = preg_replace('/\D+/', '', (string) $value);
+                    $length = strlen($digitsOnly);
+
+                    if ($length < 9 || $length > 15) {
+                        $fail('A telefonszám nem megfelelő.');
+                    }
+                },
+            ],
+        ], [
+            'name.regex' => 'A név nem tartalmazhat számot.',
+            'phone.regex' => 'A telefonszám formátuma nem megfelelő.',
         ]);
 
         try {
@@ -187,9 +203,25 @@ class PagesController extends Controller
 
         // Validáció
         $request->validate([
-            'name'  => 'required|string|max:255',
+            'name'  => ['required', 'string', 'max:255', 'regex:/^(?!.*\d).+$/u'],
             'email' => 'required|email|max:255',
-            'phone' => 'required|string|max:20',
+            'phone' => [
+                'required',
+                'string',
+                'max:20',
+                'regex:/^[0-9+\s().-]+$/',
+                function ($attribute, $value, $fail) {
+                    $digitsOnly = preg_replace('/\D+/', '', (string) $value);
+                    $length = strlen($digitsOnly);
+
+                    if ($length < 9 || $length > 15) {
+                        $fail('A telefonszám nem megfelelő.');
+                    }
+                },
+            ],
+        ], [
+            'name.regex' => 'A név nem tartalmazhat számot.',
+            'phone.regex' => 'A telefonszám formátuma nem megfelelő.',
         ]);
 
         try {
