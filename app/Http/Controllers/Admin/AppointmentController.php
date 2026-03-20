@@ -116,6 +116,35 @@ class AppointmentController extends Controller
             $address = null;
 
             if ($shouldCreateClient) {
+                $email = $request->input('email');
+                $email = is_string($email) ? trim($email) : null;
+                $email = $email !== '' ? mb_strtolower($email) : null;
+
+                if (!is_null($email)) {
+                    $existingClient = Client::query()
+                        ->select(['id', 'name', 'email', 'phone', 'id_number'])
+                        ->where('email', $email)
+                        ->first();
+
+                    if ($existingClient) {
+                        DB::rollBack();
+
+                        return response()->json([
+                            'message' => 'Ezzel az e-mail címmel már létezik ügyfél.',
+                            'errors' => [
+                                'email' => ['Ezzel az e-mail címmel már létezik ügyfél.'],
+                            ],
+                            'existing_client' => [
+                                'id' => $existingClient->id,
+                                'name' => $existingClient->name,
+                                'email' => $existingClient->email,
+                                'phone' => $existingClient->phone,
+                                'id_number' => $existingClient->id_number,
+                            ],
+                        ], 422);
+                    }
+                }
+
                 $client = Client::create([
                     'name' => $request->input('name') ?: null,
                     'email' => $request->input('email') ?: null,
@@ -312,6 +341,35 @@ class AppointmentController extends Controller
             $address = null;
 
             if ($shouldCreateClient) {
+                $email = $request->input('email');
+                $email = is_string($email) ? trim($email) : null;
+                $email = $email !== '' ? mb_strtolower($email) : null;
+
+                if (!is_null($email)) {
+                    $existingClient = Client::query()
+                        ->select(['id', 'name', 'email', 'phone', 'id_number'])
+                        ->where('email', $email)
+                        ->first();
+
+                    if ($existingClient) {
+                        DB::rollBack();
+
+                        return response()->json([
+                            'message' => 'Ezzel az e-mail címmel már létezik ügyfél.',
+                            'errors' => [
+                                'email' => ['Ezzel az e-mail címmel már létezik ügyfél.'],
+                            ],
+                            'existing_client' => [
+                                'id' => $existingClient->id,
+                                'name' => $existingClient->name,
+                                'email' => $existingClient->email,
+                                'phone' => $existingClient->phone,
+                                'id_number' => $existingClient->id_number,
+                            ],
+                        ], 422);
+                    }
+                }
+
                 $client = Client::create([
                     'name' => $request->input('name') ?: null,
                     'email' => $request->input('email') ?: null,

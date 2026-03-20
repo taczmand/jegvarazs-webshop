@@ -70,6 +70,41 @@ class ClientController extends Controller
         ]);
     }
 
+    public function checkEmail(Request $request)
+    {
+        $email = $request->query('email');
+        $email = is_string($email) ? trim($email) : null;
+        $email = $email !== '' ? mb_strtolower($email) : null;
+
+        if (!$email || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return response()->json([
+                'exists' => false,
+            ], 200);
+        }
+
+        $existingClient = Client::query()
+            ->select(['id', 'name', 'email', 'phone', 'id_number'])
+            ->where('email', $email)
+            ->first();
+
+        if (!$existingClient) {
+            return response()->json([
+                'exists' => false,
+            ], 200);
+        }
+
+        return response()->json([
+            'exists' => true,
+            'existing_client' => [
+                'id' => $existingClient->id,
+                'name' => $existingClient->name,
+                'email' => $existingClient->email,
+                'phone' => $existingClient->phone,
+                'id_number' => $existingClient->id_number,
+            ],
+        ], 200);
+    }
+
     public function index()
     {
         return view('admin.business.clients');

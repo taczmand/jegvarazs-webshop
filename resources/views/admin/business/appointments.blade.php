@@ -115,7 +115,10 @@
                                     </tr>
                                     <tr class="appointment-client-fields" style="display:none;">
                                         <td>E-mail cím</td>
-                                        <td><input type="email" class="form-control" id="email" name="email"></td>
+                                        <td>
+                                            <input type="email" class="form-control" id="email" name="email">
+                                            <div id="email_duplicate_feedback" class="small mt-1" style="display:none;"></div>
+                                        </td>
                                     </tr>
                                     <tr class="appointment-client-fields" style="display:none;">
                                         <td>Telefonszám*</td>
@@ -394,6 +397,20 @@
                         } else if (xhr.responseJSON?.message) {
                             msg = xhr.responseJSON.message;
                         }
+
+                        const existing = xhr.responseJSON?.existing_client;
+                        if (existing && (existing.name || existing.email || existing.phone || existing.id)) {
+                            const details = [
+                                existing.name ? `Név: ${existing.name}` : null,
+                                existing.email ? `E-mail: ${existing.email}` : null,
+                                existing.phone ? `Telefon: ${existing.phone}` : null,
+                                existing.id ? `Ügyfél #${existing.id}` : null,
+                            ].filter(Boolean).join(' | ');
+
+                            if (details) {
+                                msg = `${msg} (${details})`;
+                            }
+                        }
                         showToast(msg, 'danger');
                     },
                     complete: () => {
@@ -595,6 +612,76 @@
                     $('.appointment-client-fields').hide();
                 }
             }
+
+            let lastCheckedClientEmail = null;
+            let lastCheckedClientEmailExists = false;
+
+            function clearDuplicateEmailState() {
+                $('#email').removeClass('bg-danger text-light');
+                $('#email_duplicate_feedback').hide().text('');
+                lastCheckedClientEmail = null;
+                lastCheckedClientEmailExists = false;
+            }
+
+            function setDuplicateEmailState(existing) {
+                if (!existing) {
+                    clearDuplicateEmailState();
+                    return;
+                }
+
+                $('#email').addClass('bg-danger text-light');
+
+                const details = [
+                    existing.name ? `Név: ${existing.name}` : null,
+                    existing.email ? `E-mail: ${existing.email}` : null,
+                    existing.phone ? `Telefon: ${existing.phone}` : null,
+                    existing.id ? `Ügyfél #${existing.id}` : null,
+                ].filter(Boolean).join(' | ');
+
+                const msg = details
+                    ? `Ezzel az e-mail címmel már létezik ügyfél. (${details})`
+                    : 'Ezzel az e-mail címmel már létezik ügyfél.';
+
+                $('#email_duplicate_feedback')
+                    .removeClass('text-muted')
+                    .addClass('text-danger')
+                    .text(msg)
+                    .show();
+            }
+
+            $('#email').on('blur', function () {
+                const isCreateClient = ($('#create_client').val() || '').toString() === '1';
+                if (!isCreateClient) {
+                    clearDuplicateEmailState();
+                    return;
+                }
+
+                let email = ($('#email').val() || '').toString().trim().toLowerCase();
+                if (!email) {
+                    clearDuplicateEmailState();
+                    return;
+                }
+
+                if (email === lastCheckedClientEmail && lastCheckedClientEmailExists) {
+                    return;
+                }
+
+                $.ajax({
+                    url: `${window.appConfig.APP_URL}admin/ugyfelek/check-email?email=${encodeURIComponent(email)}`,
+                    method: 'GET',
+                    success: function (response) {
+                        lastCheckedClientEmail = email;
+                        lastCheckedClientEmailExists = !!response?.exists;
+
+                        if (!response?.exists) {
+                            clearDuplicateEmailState();
+                            return;
+                        }
+
+                        setDuplicateEmailState(response?.existing_client);
+                    },
+                });
+            });
 
             function clearClientSelection() {
                 $('#client_id').val('');

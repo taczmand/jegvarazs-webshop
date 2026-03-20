@@ -565,14 +565,35 @@ class WorksheetController extends Controller
                 if ($hasValidEmail) {
                     $email = mb_strtolower($email);
 
-                    $client = Client::firstOrCreate(
-                        ['email' => $email],
-                        [
-                            'name' => $request->input('contact_name') ?: null,
-                            'phone' => $request->input('contact_phone') ?: null,
-                            'comment' => null,
-                        ]
-                    );
+                    $existingClient = Client::query()
+                        ->select(['id', 'name', 'email', 'phone', 'id_number'])
+                        ->where('email', $email)
+                        ->first();
+
+                    if ($existingClient) {
+                        DB::rollBack();
+
+                        return response()->json([
+                            'message' => 'Ezzel az e-mail címmel már létezik ügyfél.',
+                            'errors' => [
+                                'contact_email' => ['Ezzel az e-mail címmel már létezik ügyfél.'],
+                            ],
+                            'existing_client' => [
+                                'id' => $existingClient->id,
+                                'name' => $existingClient->name,
+                                'email' => $existingClient->email,
+                                'phone' => $existingClient->phone,
+                                'id_number' => $existingClient->id_number,
+                            ],
+                        ], 422);
+                    }
+
+                    $client = Client::create([
+                        'name' => $request->input('contact_name') ?: null,
+                        'email' => $email,
+                        'phone' => $request->input('contact_phone') ?: null,
+                        'comment' => null,
+                    ]);
                 } else {
                     $client = Client::create([
                         'name' => $request->input('contact_name') ?: null,

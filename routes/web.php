@@ -272,6 +272,7 @@ Route::get('/automatizacio/kuldes', [AutomatedEmailController::class, 'sendToday
             // Ügyfelek
             Route::get('/ugyfelek', [ClientController::class, 'index'])->name('clients.index');
             Route::get('/ugyfelek/kereses', [ClientController::class, 'search'])->name('clients.search');
+            Route::get('/ugyfelek/check-email', [ClientController::class, 'checkEmail'])->name('clients.check-email');
             Route::get('/ugyfelek/data', [ClientController::class, 'data'])->name('clients.data');
             Route::get('/ugyfelek/{id}/timeline', [ClientController::class, 'timeline'])->name('clients.timeline');
             Route::post('/ugyfelek/bulk-email', [ClientController::class, 'bulkEmail'])->name('clients.bulk-email');
