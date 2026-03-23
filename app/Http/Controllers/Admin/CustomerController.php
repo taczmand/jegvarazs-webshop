@@ -17,6 +17,41 @@ use Yajra\DataTables\Facades\DataTables;
 
 class CustomerController extends Controller
 {
+    public function search(Request $request)
+    {
+        $q = trim((string) $request->query('q', ''));
+        if ($q === '') {
+            return response()->json(['customers' => []]);
+        }
+
+        $customers = Customer::query()
+            ->where(function ($query) use ($q) {
+                $query->where('first_name', 'like', "%{$q}%")
+                    ->orWhere('last_name', 'like', "%{$q}%")
+                    ->orWhere('email', 'like', "%{$q}%")
+                    ->orWhere('phone', 'like', "%{$q}%");
+            })
+            ->orderBy('last_name')
+            ->orderBy('first_name')
+            ->limit(10)
+            ->get(['id', 'first_name', 'last_name', 'email', 'phone']);
+
+        $payload = $customers->map(function ($customer) {
+            $name = trim(($customer->last_name ?? '') . ' ' . ($customer->first_name ?? ''));
+
+            return [
+                'id' => $customer->id,
+                'name' => $name,
+                'email' => $customer->email,
+                'phone' => $customer->phone,
+            ];
+        })->values();
+
+        return response()->json([
+            'customers' => $payload,
+        ]);
+    }
+
     public function index()
     {
         $categories = Category::active()

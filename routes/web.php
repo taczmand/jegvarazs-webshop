@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\BasicDataController;
 use App\Http\Controllers\Admin\BasicMediaController;
 use App\Http\Controllers\Admin\BlogsController;
 use App\Http\Controllers\Admin\BrandController;
+use App\Http\Controllers\Admin\BulkEmailController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\ClientController;
 use App\Http\Controllers\Admin\CompanySiteController;
@@ -131,6 +132,7 @@ Route::get('/automatizacio/kuldes', [AutomatedEmailController::class, 'sendToday
 
             // Vevők és partnerek
             Route::get('/ertekesites/vevok', [CustomerController::class, 'index'])->name('customers.index');
+            Route::get('/ertekesites/vevok/kereses', [CustomerController::class, 'search'])->name('customers.search');
             Route::get('/ertekesites/vevok/data', [CustomerController::class, 'data'])->name('customers.data');
             Route::get('/ertekesites/vevo/{id}', [CustomerController::class, 'show'])->name('customers.customer');
             Route::post('/ertekesites/vevo', [CustomerController::class, 'update'])->name('customers.update');
@@ -279,6 +281,11 @@ Route::get('/automatizacio/kuldes', [AutomatedEmailController::class, 'sendToday
             Route::post('/ugyfelek', [ClientController::class, 'store'])->name('clients.store');
             Route::put('/ugyfelek/{id}', [ClientController::class, 'update'])->name('clients.update');
             Route::delete('/ugyfelek/{id}', [ClientController::class, 'destroy'])->name('clients.destroy');
+
+            // Tömeges e-mail küldés
+            Route::get('/tomeges-email', [BulkEmailController::class, 'index'])->name('bulk-emails.index');
+            Route::post('/tomeges-email/recipients', [BulkEmailController::class, 'recipients'])->name('bulk-emails.recipients');
+            Route::post('/tomeges-email', [BulkEmailController::class, 'send'])->name('bulk-emails.send');
 
             Route::get('/ugyfelek/{id}/cimek', [ClientController::class, 'addresses'])->name('clients.addresses.index');
             Route::post('/ugyfelek/{id}/cimek', [ClientController::class, 'storeAddress'])->name('clients.addresses.store');

@@ -99,6 +99,7 @@
                 <a class="collapse-item" href="{{ route('admin.leads.index') }}">Érdeklődők<span id="new_lead_badge" class="badge badge-secondary ml-2 d-none">0</span></a>
                 <a class="collapse-item" href="{{ route('admin.clients.index') }}">Ügyfelek</a>
                 <a class="collapse-item" href="{{ route('admin.automated-emails.index') }}">E-mail automatizáció</a>
+                <a class="collapse-item" href="{{ route('admin.bulk-emails.index') }}">Tömeges e-mail</a>
             </div>
         </div>
     </li>
