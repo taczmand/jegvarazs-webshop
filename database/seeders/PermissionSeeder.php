@@ -106,6 +106,7 @@ class PermissionSeeder extends Seeder
             ['id' => 94, 'name' => 'create-client', 'label' => 'Ügyfél létrehozása', 'group' => 'Ügyviteli folyamatok'],
             ['id' => 95, 'name' => 'edit-client', 'label' => 'Ügyfél szerkesztése', 'group' => 'Ügyviteli folyamatok'],
             ['id' => 96, 'name' => 'delete-client', 'label' => 'Ügyfél törlése', 'group' => 'Ügyviteli folyamatok'],
+            ['id' => 97, 'name' => 'view-own-contracts', 'label' => 'Saját szerződések megtekintése', 'group' => 'Ügyviteli folyamatok'],
 
         ];
 

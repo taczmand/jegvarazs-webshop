@@ -38,6 +38,11 @@ class ContractController extends Controller
 
     public function data(Request $request)
     {
+        $user = auth('admin')->user();
+        if (!$user || (!$user->can('view-contracts') && !$user->can('view-own-contracts'))) {
+            abort(403);
+        }
+
         $contracts = Contract::select([
             'contracts.id',
             'contracts.name',
@@ -52,6 +57,10 @@ class ContractController extends Controller
             'contracts.viewed_at',
         ])
             ->leftJoin('users', 'contracts.created_by', '=', 'users.id');
+
+        if ($user->can('view-own-contracts') && !$user->can('view-contracts')) {
+            $contracts->where('contracts.created_by', $user->id);
+        }
 
         return DataTables::of($contracts)
             ->editColumn('created_at', function ($contract) {

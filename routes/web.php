@@ -13,6 +13,7 @@ use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\ClientController;
 use App\Http\Controllers\Admin\CompanySiteController;
 use App\Http\Controllers\Admin\ContractController;
+use App\Http\Controllers\Admin\ContractProductsReportController;
 use App\Http\Controllers\Admin\CouponController;
 use App\Http\Controllers\Admin\CustomerController;
 use App\Http\Controllers\Admin\DashboardController;
@@ -203,6 +204,9 @@ Route::get('/automatizacio/kuldes', [AutomatedEmailController::class, 'sendToday
             Route::get('/statisztika/vasarolt-termekek/data', [StatController::class, 'purchasedProductsData'])->name('stats.purchased_products.data');
             Route::get('/statisztika/szerelesek', [StatController::class, 'installations'])->name('stats.installations');
             Route::get('/statisztika/szerelesek/data', [StatController::class, 'installationsData'])->name('stats.installations.data');
+
+            Route::get('/statisztika/szerzodesek-termekek', [ContractProductsReportController::class, 'index'])->name('stats.contract_products');
+            Route::get('/statisztika/szerzodesek-termekek/data', [ContractProductsReportController::class, 'data'])->name('stats.contract_products.data');
 
             Route::get('/statisztika/szenzorok', [SensorReportController::class, 'index'])->name('stats.sensors');
             Route::get('/statisztika/szenzorok/{deviceId}', [SensorReportController::class, 'show'])->name('stats.sensors.device');
