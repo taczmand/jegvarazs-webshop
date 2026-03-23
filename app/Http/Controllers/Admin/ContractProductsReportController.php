@@ -23,7 +23,7 @@ class ContractProductsReportController extends Controller
             ->distinct()
             ->orderByDesc('year');
 
-        if ($user->can('view-own-contracts') && !$user->can('view-contracts')) {
+        if ($user->can('view-own-contracts')) {
             $yearsQuery->where('created_by', $user->id);
         }
 
@@ -64,7 +64,7 @@ class ContractProductsReportController extends Controller
             ->groupBy(DB::raw('MONTH(contracts.created_at)'), DB::raw('COALESCE(users.id, 0)'), DB::raw('COALESCE(users.name, "Ismeretlen")'))
             ->orderBy('month');
 
-        if ($user->can('view-own-contracts') && !$user->can('view-contracts')) {
+        if ($user->can('view-own-contracts')) {
             $query->where('contracts.created_by', $user->id);
         }
 

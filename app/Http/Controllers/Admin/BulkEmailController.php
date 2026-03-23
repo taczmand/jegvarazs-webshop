@@ -189,20 +189,24 @@ class BulkEmailController extends Controller
     ): Collection {
         $emails = collect();
 
-        if ($recipientGroup === 'all' || $recipientGroup === 'clients') {
+        if ($recipientGroup === 'all' || $recipientGroup === 'clients' || $recipientGroup === 'custom') {
             $clientQuery = Client::query()->whereNotNull('email');
-            if ($recipientGroup === 'clients' && !empty($clientIds)) {
+            if (($recipientGroup === 'clients' || $recipientGroup === 'custom') && !empty($clientIds)) {
                 $clientQuery->whereIn('id', $clientIds);
             }
-            $emails = $emails->merge($clientQuery->pluck('email'));
+            if ($recipientGroup !== 'custom' || !empty($clientIds)) {
+                $emails = $emails->merge($clientQuery->pluck('email'));
+            }
         }
 
-        if ($recipientGroup === 'all' || $recipientGroup === 'customers') {
+        if ($recipientGroup === 'all' || $recipientGroup === 'customers' || $recipientGroup === 'custom') {
             $customerQuery = Customer::query()->whereNotNull('email');
-            if ($recipientGroup === 'customers' && !empty($customerIds)) {
+            if (($recipientGroup === 'customers' || $recipientGroup === 'custom') && !empty($customerIds)) {
                 $customerQuery->whereIn('id', $customerIds);
             }
-            $emails = $emails->merge($customerQuery->pluck('email'));
+            if ($recipientGroup !== 'custom' || !empty($customerIds)) {
+                $emails = $emails->merge($customerQuery->pluck('email'));
+            }
         }
 
         foreach ((array) $manualEmails as $e) {

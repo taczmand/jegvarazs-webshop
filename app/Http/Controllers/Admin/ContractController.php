@@ -58,7 +58,7 @@ class ContractController extends Controller
         ])
             ->leftJoin('users', 'contracts.created_by', '=', 'users.id');
 
-        if ($user->can('view-own-contracts') && !$user->can('view-contracts')) {
+        if ($user->can('view-own-contracts')) {
             $contracts->where('contracts.created_by', $user->id);
         }
 
