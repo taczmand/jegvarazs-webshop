@@ -25,6 +25,10 @@
                             <label class="form-check-label" for="recipient_group_customers">Csak vásárlók</label>
                         </div>
                         <div class="form-check">
+                            <input class="form-check-input" type="radio" name="recipient_group" id="recipient_group_partners" value="partners">
+                            <label class="form-check-label" for="recipient_group_partners">Klímaszerelő partnerek</label>
+                        </div>
+                        <div class="form-check">
                             <input class="form-check-input" type="radio" name="recipient_group" id="recipient_group_custom" value="custom">
                             <label class="form-check-label" for="recipient_group_custom">Egyedi lista</label>
                         </div>
@@ -305,7 +309,7 @@
                 const clientWrap = document.getElementById('clientPickerWrap');
                 const customerWrap = document.getElementById('customerPickerWrap');
 
-                const showPickers = (group === 'clients' || group === 'customers' || group === 'custom');
+                const showPickers = (group === 'clients' || group === 'customers' || group === 'partners' || group === 'custom');
                 clientWrap.style.display = showPickers ? '' : 'none';
                 customerWrap.style.display = showPickers ? '' : 'none';
                 updateRecipientsPreview();

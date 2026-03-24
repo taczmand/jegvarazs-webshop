@@ -28,7 +28,7 @@ class BulkEmailController extends Controller
         }
 
         $validated = $request->validate([
-            'recipient_group' => 'required|string|in:all,clients,customers,custom',
+            'recipient_group' => 'required|string|in:all,clients,customers,partners,custom',
             'client_ids' => 'nullable|array|max:2000',
             'client_ids.*' => 'integer|exists:clients,id',
             'customer_ids' => 'nullable|array|max:2000',
@@ -61,7 +61,7 @@ class BulkEmailController extends Controller
         }
 
         $validated = $request->validate([
-            'recipient_group' => 'required|string|in:all,clients,customers,custom',
+            'recipient_group' => 'required|string|in:all,clients,customers,partners,custom',
             'client_ids' => 'nullable|array|max:2000',
             'client_ids.*' => 'integer|exists:clients,id',
             'customer_ids' => 'nullable|array|max:2000',
@@ -207,6 +207,15 @@ class BulkEmailController extends Controller
             if ($recipientGroup !== 'custom' || !empty($customerIds)) {
                 $emails = $emails->merge($customerQuery->pluck('email'));
             }
+        }
+
+        if ($recipientGroup === 'partners') {
+            $emails = $emails->merge(
+                Customer::query()
+                    ->whereNotNull('email')
+                    ->where('is_partner', true)
+                    ->pluck('email')
+            );
         }
 
         foreach ((array) $manualEmails as $e) {
