@@ -163,6 +163,7 @@ Route::get('/automatizacio/kuldes', [AutomatedEmailController::class, 'sendToday
             Route::get('/termekek/{id}', [AdminProductController::class, 'show'])->name('products.get');
             Route::post('/termekek', [AdminProductController::class, 'store'])->name('products.store');
             Route::put('/termekek/{id}', [AdminProductController::class, 'update'])->name('products.update');
+            Route::get('/termekek/{id}/tortenet/data', [AdminProductController::class, 'historyData'])->name('products.history.data');
             Route::patch('/termekek/update-photo-alt', [AdminProductController::class, 'updateProductPhotoAlt'])->name('products.update_product_photo_alt');
             Route::patch('/termekek/set-primary-photo', [AdminProductController::class, 'setPrimaryProductPhoto'])->name('products.set_primary_product_photo');
             Route::post('/termekek/update-inline', [AdminProductController::class, 'setProductInline'])->name('products.set_product_inline');

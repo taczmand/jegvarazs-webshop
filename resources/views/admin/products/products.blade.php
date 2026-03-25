@@ -84,6 +84,7 @@
                             <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#attributes" type="button">Egyedi tulajdonságok</button></li>
                             <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tags" type="button">Címkék</button></li>
                             <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#images" type="button">Képek</button></li>
+                            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#history" type="button">Történet</button></li>
                         </ul>
 
                         <div class="tab-content mt-3">
@@ -185,6 +186,22 @@
 
                                 <div id="productPhotos" class="mt-3"></div>
                             </div>
+
+                            <div class="tab-pane fade" id="history">
+                                <div class="rounded bg-light p-2">
+                                    <table class="table table-bordered display responsive nowrap mb-0" id="productHistoryTable" style="width:100%">
+                                        <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Felhasználó</th>
+                                            <th>Akció</th>
+                                            <th>Változás</th>
+                                            <th>Időpont</th>
+                                        </tr>
+                                        </thead>
+                                    </table>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -204,6 +221,79 @@
         const productModalDOM = document.getElementById('productModal');
         const productModal = new bootstrap.Modal(productModalDOM);
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+        function formatValue(v) {
+            if (v === null || typeof v === 'undefined') return '-';
+            if (typeof v === 'boolean') return v ? 'Igen' : 'Nem';
+            if (typeof v === 'object') return JSON.stringify(v);
+            return String(v);
+        }
+
+        function productFieldLabel(field) {
+            const map = {
+                'title': 'Termék neve',
+                'gross_price': 'Bruttó ár',
+                'partner_gross_price': 'Partner bruttó ár',
+                'stock': 'Készlet',
+                'unit_qty': 'Kiszerelési mennyiség',
+                'status': 'Státusz',
+                'description': 'Leírás',
+                'cat_id': 'Kategória',
+                'category_id': 'Kategória',
+                'brand_id': 'Márka',
+                'tax_id': 'ÁFA',
+                'is_offerable': 'Ajánlat/Szerződéshez használható',
+                'is_selectable_by_installer': 'Munkalapnál megjelenik',
+                'updated_at': 'Módosítva',
+                'created_at': 'Létrehozva',
+            };
+
+            const f = String(field ?? '');
+            return map[f] ?? f;
+        }
+
+        function escapeHtml(unsafe) {
+            return String(unsafe)
+                .replaceAll('&', '&amp;')
+                .replaceAll('<', '&lt;')
+                .replaceAll('>', '&gt;')
+                .replaceAll('"', '&quot;')
+                .replaceAll("'", '&#039;');
+        }
+
+        function buildDetailsHtml(data) {
+            if (!data || typeof data !== 'object' || !Array.isArray(data.changes) || data.changes.length === 0) {
+                const stringData = typeof data === 'string' ? data : JSON.stringify(data ?? '');
+                return `<div class="p-3">${escapeHtml(stringData || '-')}</div>`;
+            }
+
+            const rowsHtml = data.changes.map(c => {
+                return `
+                    <tr>
+                        <td style="width: 30%; white-space: nowrap;"><strong>${escapeHtml(productFieldLabel(c.field))}</strong></td>
+                        <td style="width: 35%; color: #6b7280;">${escapeHtml(formatValue(c.old))}</td>
+                        <td style="width: 35%;">${escapeHtml(formatValue(c.new))}</td>
+                    </tr>
+                `;
+            }).join('');
+
+            return `
+                <div class="p-3 bg-white">
+                    <table class="table table-sm table-bordered mb-0">
+                        <thead>
+                            <tr>
+                                <th>Mező</th>
+                                <th>Eredeti</th>
+                                <th>Új</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${rowsHtml}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
 
         tinymce.init({
             selector: 'textarea#description',
@@ -377,6 +467,8 @@
                 await editProductModal(productId);
             });
 
+            let productHistoryTable = null;
+
             async function editProductModal(productId) {
                 const allMetaData = await getAllMetaData();
 
@@ -425,9 +517,84 @@
                     renderPhotos(assigned_photos, product.id);
                     renderTaxes(allMetaData.original.taxes, product.tax_id);
 
+                    initProductHistory(product.id);
+
                     productModal.show();
                 }).fail(function(xhr, status, error) {
                     showToast('Nem sikerült betölteni a termék adatait! ' + error, 'danger');
+                });
+            }
+
+            function initProductHistory(productId) {
+                if (!productId) {
+                    return;
+                }
+
+                if (productHistoryTable) {
+                    productHistoryTable.destroy();
+                    $('#productHistoryTable').empty();
+                }
+
+                productHistoryTable = $('#productHistoryTable').DataTable({
+                    language: {
+                        url: '/lang/datatables/hu.json'
+                    },
+                    processing: true,
+                    serverSide: true,
+                    ajax: `{{ url('/admin/termekek') }}/${productId}/tortenet/data`,
+                    order: [[0, 'desc']],
+                    columns: [
+                        { data: 'id' },
+                        { data: 'user_name', defaultContent: '' },
+                        { data: 'action' },
+                        {
+                            data: 'data',
+                            orderable: false,
+                            render: function (data, type, row) {
+                                if (type !== 'display') {
+                                    return data;
+                                }
+
+                                if (data && typeof data === 'object' && Array.isArray(data.changes)) {
+                                    const changes = data.changes;
+                                    if (changes.length === 0) {
+                                        return `<span class="text-muted">-</span>`;
+                                    }
+
+                                    const preview = changes.slice(0, 2).map(c => `${productFieldLabel(c.field)}: ${formatValue(c.old)} → ${formatValue(c.new)}`).join(' | ');
+                                    const more = changes.length > 2 ? ` (+${changes.length - 2})` : '';
+
+                                    return `
+                                        <div class="d-flex align-items-center gap-2" style="width: 100%;">
+                                            <span class="text-truncate" style="max-width: 100%;">${escapeHtml(preview)}${escapeHtml(more)}</span>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary toggle-history-details">Részletek</button>
+                                        </div>
+                                    `;
+                                }
+
+                                const stringData = typeof data === 'string' ? data : JSON.stringify(data ?? '');
+                                const shortText = stringData.length > 80 ? stringData.substring(0, 77) + '...' : stringData;
+                                return `<span>${escapeHtml(shortText)}</span>`;
+                            }
+                        },
+                        { data: 'created_at' },
+                    ],
+                });
+
+                $('#productHistoryTable').off('click.historyDetails').on('click.historyDetails', 'button.toggle-history-details', function () {
+                    const tr = $(this).closest('tr');
+                    const row = productHistoryTable.row(tr);
+                    const rowData = row.data();
+
+                    if (row.child.isShown()) {
+                        row.child.hide();
+                        tr.removeClass('shown');
+                        return;
+                    }
+
+                    const html = buildDetailsHtml(rowData?.data);
+                    row.child(html).show();
+                    tr.addClass('shown');
                 });
             }
 
@@ -730,6 +897,12 @@
                 $('#productForm')[0].reset();
                 $('#product_id').val('');
                 $('#attribute-fields').empty();
+
+                if (productHistoryTable) {
+                    productHistoryTable.destroy();
+                    productHistoryTable = null;
+                    $('#productHistoryTable').empty();
+                }
                 $('#tags-checkboxes').empty();
                 $('#productPhotos').empty();
                 tinymce.get('description').setContent('');

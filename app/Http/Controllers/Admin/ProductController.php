@@ -130,6 +130,92 @@ class ProductController extends Controller
         }
     }
 
+    public function historyData($id)
+    {
+        $user = auth('admin')->user();
+        if (!$user || !$user->can('edit-product')) {
+            return response()->json(['message' => 'Nincs jogosultságod a termék történetének megtekintéséhez.'], 403);
+        }
+
+        $productId = (int) $id;
+        if ($productId <= 0) {
+            return response()->json(['message' => 'Érvénytelen termék azonosító.'], 422);
+        }
+
+        $items = \DB::table('user_actions')
+            ->leftJoin('users', 'user_actions.user_id', '=', 'users.id')
+            ->where('user_actions.model', '=', 'products')
+            ->where('user_actions.model_id', '=', $productId)
+            ->select([
+                'user_actions.id',
+                'users.name as user_name',
+                'user_actions.action',
+                'user_actions.data',
+                'user_actions.created_at',
+            ])
+            ->orderBy('user_actions.created_at', 'desc');
+
+        return DataTables::of($items)
+            ->editColumn('action', function ($row) {
+                $map = [
+                    'created' => 'Létrehozott',
+                    'updated' => 'Frissített',
+                    'deleted' => 'Törölt',
+                ];
+                $a = (string) ($row->action ?? '');
+                return $map[$a] ?? $a;
+            })
+            ->editColumn('data', function ($row) {
+                $data = $row->data;
+                if (is_string($data)) {
+                    $decoded = json_decode($data, true);
+                    if (json_last_error() === JSON_ERROR_NONE) {
+                        $data = $decoded;
+                    }
+                }
+
+                if (!is_array($data)) {
+                    return $data;
+                }
+
+                if (!array_key_exists('old', $data) && !array_key_exists('new', $data)) {
+                    $data = [
+                        'new' => $data,
+                    ];
+                }
+
+                $old = isset($data['old']) && is_array($data['old']) ? $data['old'] : [];
+                $new = isset($data['new']) && is_array($data['new']) ? $data['new'] : [];
+
+                $keys = array_unique(array_merge(array_keys($old), array_keys($new)));
+                sort($keys);
+
+                $changes = [];
+                foreach ($keys as $k) {
+                    if ($k === '_record') {
+                        continue;
+                    }
+                    $before = $old[$k] ?? null;
+                    $after = $new[$k] ?? null;
+                    if ($before === $after) {
+                        continue;
+                    }
+                    $changes[] = [
+                        'field' => (string) $k,
+                        'old' => $before,
+                        'new' => $after,
+                    ];
+                }
+
+                return [
+                    'old' => $old,
+                    'new' => $new,
+                    'changes' => $changes,
+                ];
+            })
+            ->make(true);
+    }
+
     public function meta()
     {
         $all_meta = $this->product_service->getAllMeta();

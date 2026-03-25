@@ -173,6 +173,8 @@ export function initCrud(options) {
             },
         });
     });
+
+    return table;
 }
 
 window.initCrud = initCrud;
