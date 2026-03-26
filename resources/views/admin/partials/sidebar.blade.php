@@ -104,6 +104,13 @@
         </div>
     </li>
 
+    <li class="nav-item">
+        <a class="nav-link" href="{{ route('admin.vehicles.index') }}">
+            <i class="fa-solid fa-car"></i>
+            <span>Járműtörzs</span>
+        </a>
+    </li>
+
     <hr class="sidebar-divider">
 
     <div class="sidebar-heading">

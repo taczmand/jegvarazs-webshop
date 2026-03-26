@@ -108,6 +108,15 @@ class PermissionSeeder extends Seeder
             ['id' => 96, 'name' => 'delete-client', 'label' => 'Ügyfél törlése', 'group' => 'Ügyviteli folyamatok'],
             ['id' => 97, 'name' => 'view-own-contracts', 'label' => 'Saját szerződések megtekintése', 'group' => 'Ügyviteli folyamatok'],
 
+            ['id' => 98, 'name' => 'view-vehicles', 'label' => 'Járműtörzs megtekintése', 'group' => 'Járművek'],
+            ['id' => 99, 'name' => 'create-vehicle', 'label' => 'Jármű létrehozása', 'group' => 'Járművek'],
+            ['id' => 100, 'name' => 'edit-vehicle', 'label' => 'Jármű szerkesztése', 'group' => 'Járművek'],
+            ['id' => 101, 'name' => 'delete-vehicle', 'label' => 'Jármű törlése', 'group' => 'Járművek'],
+
+            ['id' => 102, 'name' => 'view-vehicle-events', 'label' => 'Jármű események megtekintése', 'group' => 'Járművek'],
+            ['id' => 103, 'name' => 'create-vehicle-event', 'label' => 'Jármű esemény rögzítése', 'group' => 'Járművek'],
+            ['id' => 104, 'name' => 'delete-vehicle-event', 'label' => 'Jármű esemény törlése', 'group' => 'Járművek'],
+
         ];
 
         foreach ($permissions as $perm) {

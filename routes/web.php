@@ -34,6 +34,7 @@ use App\Http\Controllers\Admin\StockStatusesController;
 use App\Http\Controllers\Admin\TagController;
 use App\Http\Controllers\Admin\TaxCategoryController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\VehicleController;
 use App\Http\Controllers\Admin\WorksheetController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
@@ -220,6 +221,17 @@ Route::get('/automatizacio/kuldes', [AutomatedEmailController::class, 'sendToday
             Route::post('/gyartok', [BrandController::class, 'store'])->name('brands.store');
             Route::put('gyartok/{id}', [BrandController::class, 'update'])->name('brands.update');
             Route::delete('/gyartok/{id}', [BrandController::class, 'destroy'])->name('brands.destroy');
+
+            // Járműtörzs
+            Route::get('/jarmuvek', [VehicleController::class, 'index'])->name('vehicles.index');
+            Route::get('/jarmuvek/data', [VehicleController::class, 'data'])->name('vehicles.data');
+            Route::post('/jarmuvek', [VehicleController::class, 'store'])->name('vehicles.store');
+            Route::put('/jarmuvek/{id}', [VehicleController::class, 'update'])->name('vehicles.update');
+            Route::delete('/jarmuvek/{id}', [VehicleController::class, 'destroy'])->name('vehicles.destroy');
+
+            Route::get('/jarmuvek/{id}/events/data', [VehicleController::class, 'eventsData'])->name('vehicles.events.data');
+            Route::post('/jarmuvek/{id}/events', [VehicleController::class, 'storeEvent'])->name('vehicles.events.store');
+            Route::delete('/jarmuvek/{vehicleId}/events/{eventId}', [VehicleController::class, 'destroyEvent'])->name('vehicles.events.destroy');
 
             /* Ügyvitel - Ügyfél folyamatok */
 

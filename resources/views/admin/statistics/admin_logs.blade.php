@@ -60,6 +60,9 @@
                             <option value="worksheet_products">Munkalap termékek</option>
                             <option value="worksheet_workers">Munkalap munkatársak</option>
                             <option value="brands">Gyártók</option>
+                            <option value="searched">Keresések</option>
+                            <option value="vehicles">Járműtörzs</option>
+                            <option value="vehicle_events">Jármű események</option>
                             <option value="tags">Címkék</option>
                             <option value="attributes">Tulajdonságok</option>
                             <option value="clients">Ügyfelek</option>

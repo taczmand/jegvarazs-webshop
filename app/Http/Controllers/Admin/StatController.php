@@ -307,6 +307,8 @@ class StatController extends Controller
                     'partner_products' => 'Partner termékek',
                     'product_photos' => 'Termék képek',
                     'searched' => 'Keresések',
+                    'vehicles' => 'Járműtörzs',
+                    'vehicle_events' => 'Jármű események',
                     'watched_products' => 'Megtekintett termékek',
                     'worksheet_images' => 'Munkalap képek',
                     'worksheet_products' => 'Munkalap termékek',
