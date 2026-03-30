@@ -42,6 +42,7 @@
                         <th>Típus</th>
                         <th>Állapot</th>
                         <th>Műszaki lejár</th>
+                        <th>Megjegyzés</th>
                         <th>Létrehozva</th>
                         <th>Módosítva</th>
                         <th data-priority="2">Műveletek</th>
@@ -97,6 +98,11 @@
                                     <div class="col-md-6 mb-3">
                                         <label for="technical_inspection_expires_at" class="form-label">Műszaki lejárati dátum</label>
                                         <input type="date" class="form-control" id="technical_inspection_expires_at" name="technical_inspection_expires_at">
+                                    </div>
+
+                                    <div class="col-md-12 mb-3">
+                                        <label for="note" class="form-label">Megjegyzés</label>
+                                        <textarea class="form-control" id="note" name="note" rows="3"></textarea>
                                     </div>
                                 </div>
                             </div>
@@ -182,6 +188,7 @@
                     { data: 'type' },
                     { data: 'status' },
                     { data: 'technical_inspection_expires_at', defaultContent: '' },
+                    { data: 'note', defaultContent: '' },
                     { data: 'created' },
                     { data: 'updated' },
                     { data: 'action', orderable: false, searchable: false }
@@ -238,6 +245,7 @@
                 $('#license_plate').val(row_data.license_plate);
                 $('#type').val(row_data.type);
                 $('#technical_inspection_expires_at').val(row_data.technical_inspection_expires_at || '');
+                $('#note').val(row_data.note || '');
 
                 document.getElementById('vehicle_events_tab_item')?.classList.remove('d-none');
                 document.getElementById('vehicle_events_tab_item')?.removeAttribute('aria-hidden');

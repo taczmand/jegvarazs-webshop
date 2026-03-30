@@ -24,7 +24,7 @@ class VehicleController extends Controller
             ], 403);
         }
 
-        $items = Vehicle::query()->select(['id', 'license_plate', 'type', 'status', 'technical_inspection_expires_at', 'created_at as created', 'updated_at as updated']);
+        $items = Vehicle::query()->select(['id', 'license_plate', 'type', 'status', 'technical_inspection_expires_at', 'note', 'created_at as created', 'updated_at as updated']);
 
         return DataTables::of($items)
             ->addColumn('status', function ($row) {
@@ -84,6 +84,7 @@ class VehicleController extends Controller
             'type' => 'nullable|string|max:255',
             'status' => 'nullable|in:active,inactive',
             'technical_inspection_expires_at' => 'nullable|date',
+            'note' => 'nullable|string|max:20000',
         ]);
 
         $vehicle = Vehicle::create([
@@ -91,6 +92,7 @@ class VehicleController extends Controller
             'type' => $validated['type'] ?? null,
             'status' => $validated['status'] ?? 'active',
             'technical_inspection_expires_at' => $validated['technical_inspection_expires_at'] ?? null,
+            'note' => $validated['note'] ?? null,
         ]);
 
         return response()->json([
@@ -113,6 +115,7 @@ class VehicleController extends Controller
             'type' => 'nullable|string|max:255',
             'status' => 'nullable|in:active,inactive',
             'technical_inspection_expires_at' => 'nullable|date',
+            'note' => 'nullable|string|max:20000',
         ]);
 
         $vehicle->update([
@@ -120,6 +123,7 @@ class VehicleController extends Controller
             'type' => $validated['type'] ?? null,
             'status' => $validated['status'] ?? 'active',
             'technical_inspection_expires_at' => $validated['technical_inspection_expires_at'] ?? null,
+            'note' => $validated['note'] ?? null,
         ]);
 
         return response()->json([
