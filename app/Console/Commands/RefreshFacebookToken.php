@@ -9,54 +9,121 @@ use Illuminate\Support\Facades\Log;
 
 class RefreshFacebookToken extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
     protected $signature = 'facebook:refresh-token';
+    protected $description = 'Refresh Facebook long-lived user token and page token';
 
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
-    protected $description = 'Command description';
-
-    /**
-     * Execute the console command.
-     */
     public function handle()
     {
-        $facebook_options = BasicData::where('key', 'LIKE', 'facebook%')
-            ->pluck('value', 'key');
+        try {
+            $facebook_options = BasicData::where('key', 'LIKE', 'facebook%')
+                ->pluck('value', 'key');
 
-        $app_id = $facebook_options['facebook_app_id'];
-        $app_secret = $facebook_options['facebook_app_secret'];
-        $current_token = $facebook_options['facebook_page_token'];
-        $page_id = $facebook_options['facebook_page_id'];
+            $requiredKeys = [
+                'facebook_app_id',
+                'facebook_app_secret',
+                'facebook_page_token',
+                'facebook_page_id',
+            ];
 
-        // 1. Long-lived user token frissítés
-        $response = Http::get('https://graph.facebook.com/v19.0/oauth/access_token', [
-            'grant_type'        => 'fb_exchange_token',
-            'client_id'         => $app_id,
-            'client_secret'     => $app_secret,
-            'fb_exchange_token' => $current_token,
-        ]);
+            foreach ($requiredKeys as $key) {
+                if (!isset($facebook_options[$key])) {
+                    throw new \Exception("Missing config key: {$key}");
+                }
+            }
 
-        Log::info('FB token refresh response', $response->json());
+            $app_id        = $facebook_options['facebook_app_id'];
+            $app_secret    = $facebook_options['facebook_app_secret'];
+            $current_token = $facebook_options['facebook_page_token'];
+            $page_id       = $facebook_options['facebook_page_id'];
 
-        if (!$response->ok()) {
-            $this->error('User token refresh failed');
-            Log::error('FB token refresh failed', $response->json());
+            // 🔁 1. USER TOKEN FRISSÍTÉS
+            $response = Http::timeout(10)
+                ->retry(3, 1000)
+                ->get('https://graph.facebook.com/v19.0/oauth/access_token', [
+                    'grant_type'        => 'fb_exchange_token',
+                    'client_id'         => $app_id,
+                    'client_secret'     => $app_secret,
+                    'fb_exchange_token' => $current_token,
+                ]);
+
+            if (!$response->ok()) {
+                Log::error('FB user token refresh failed', [
+                    'status' => $response->status(),
+                    'body'   => $response->body(),
+                ]);
+
+                $this->error('User token refresh failed');
+                return 1;
+            }
+
+            $newUserToken = $response->json()['access_token'] ?? null;
+            $expiresIn    = $response->json()['expires_in'] ?? null;
+
+            if (!$newUserToken) {
+                throw new \Exception('No access_token in response');
+            }
+
+            // 🔁 2. PAGE TOKEN LEKÉRÉS
+            $pageResponse = Http::timeout(10)
+                ->retry(3, 1000)
+                ->get('https://graph.facebook.com/v19.0/me/accounts', [
+                    'access_token' => $newUserToken,
+                ]);
+
+            if (!$pageResponse->ok()) {
+                Log::error('FB page token fetch failed', [
+                    'status' => $pageResponse->status(),
+                    'body'   => $pageResponse->body(),
+                ]);
+
+                $this->error('Page token fetch failed');
+                return 1;
+            }
+
+            $pages = $pageResponse->json()['data'] ?? [];
+
+            $page = collect($pages)->firstWhere('id', $page_id);
+
+            if (!$page || empty($page['access_token'])) {
+                Log::error('FB page not found or missing token', [
+                    'page_id' => $page_id,
+                ]);
+
+                $this->error('Page token not found');
+                return 1;
+            }
+
+            $pageToken = $page['access_token'];
+
+            // 💾 3. MENTÉS
+            BasicData::where('key', 'facebook_page_token')
+                ->update(['value' => $pageToken]);
+
+            if ($expiresIn) {
+                BasicData::updateOrCreate(
+                    ['key' => 'facebook_token_expires_at'],
+                    ['value' => now()->addSeconds($expiresIn)]
+                );
+            }
+
+            // ✅ LOG (token nélkül!)
+            Log::info('Facebook token refreshed successfully', [
+                'page_id' => $page_id,
+                'expires_in' => $expiresIn,
+            ]);
+
+            $this->info('Facebook tokens refreshed successfully.');
+
+            return 0;
+
+        } catch (\Throwable $e) {
+            Log::error('Facebook token refresh exception', [
+                'message' => $e->getMessage(),
+                'trace'   => $e->getTraceAsString(),
+            ]);
+
+            $this->error($e->getMessage());
             return 1;
         }
-
-        $newPageToken = $response->json()['access_token'];
-
-        BasicData::where('key', 'facebook_page_token')->update(['value' => $newPageToken]);
-
-        $this->info('Facebook tokens refreshed successfully.');
-        return 0;
     }
 }
