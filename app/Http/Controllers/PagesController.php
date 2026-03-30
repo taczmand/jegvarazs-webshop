@@ -169,9 +169,11 @@ class PagesController extends Controller
                 ]);
             }
 
-            Mail::to($request->email)
-                ->bcc('jegvarazsiroda@gmail.com')
-                ->send(new NewAppointment($appointment));
+            $mail = Mail::to($request->email);
+            if (!app()->environment('local')) {
+                $mail->bcc('jegvarazsiroda@gmail.com');
+            }
+            $mail->send(new NewAppointment($appointment));
 
         } catch (\Exception $e) {
             return response()->json(['result' => 'error', 'error_message' => $e->getMessage()], 200);
@@ -337,8 +339,10 @@ class PagesController extends Controller
                     'contact_message' => $request->input('contact_message'),
                 ];
 
-                Mail::to('jegvarazsiroda@gmail.com')
-                    ->send(new ContactMessage($contactData));
+                if (!app()->environment('local')) {
+                    Mail::to('jegvarazsiroda@gmail.com')
+                        ->send(new ContactMessage($contactData));
+                }
             }
 
             return response()->json(['result' => 'success', 'message' => 'Sikeresen elküldve!'], 200);

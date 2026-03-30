@@ -117,6 +117,8 @@ class PermissionSeeder extends Seeder
             ['id' => 103, 'name' => 'create-vehicle-event', 'label' => 'Jármű esemény rögzítése', 'group' => 'Járművek'],
             ['id' => 104, 'name' => 'delete-vehicle-event', 'label' => 'Jármű esemény törlése', 'group' => 'Járművek'],
 
+            ['id' => 121, 'name' => 'select-contract-creator', 'label' => 'Szerződés létrehozójának megadása', 'group' => 'Ügyviteli folyamatok'],
+
         ];
 
         foreach ($permissions as $perm) {

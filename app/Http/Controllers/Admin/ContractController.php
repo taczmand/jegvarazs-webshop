@@ -11,6 +11,7 @@ use App\Models\ClientAddress;
 use App\Models\Contract;
 use App\Models\ContractProduct;
 use App\Models\Product;
+use App\Models\User;
 use App\Models\Worksheet;
 use App\Models\WorksheetProduct;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -31,8 +32,14 @@ class ContractController extends Controller
             ->map(fn($file) => basename($file, '.json'))
             ->values();
 
+        $users = User::query()
+            ->select(['id', 'name'])
+            ->orderBy('name')
+            ->get();
+
         return view('admin.business.contracts', [
             'versions' => $versions,
+            'users' => $users,
         ]);
     }
 
@@ -169,6 +176,7 @@ class ContractController extends Controller
                 }
             ],
             'products.*.selected' => ['in:1'],
+            'created_by' => 'nullable|integer|exists:users,id',
         ], [
             'contract_version.required' => 'A szerződés verzió megadása kötelező.',
             'contact_name.required' => 'A kapcsolattartó nevét kötelező megadni.',
@@ -463,7 +471,11 @@ class ContractController extends Controller
                 DB::commit();
 
                 if ($contract->email) {
-                    Mail::to($contract->email)->bcc('jegvarazsiroda@gmail.com')->send(new NewContract($contract));
+                    $mail = Mail::to($contract->email);
+                    if (!app()->environment('local')) {
+                        $mail->bcc('jegvarazsiroda@gmail.com');
+                    }
+                    $mail->send(new NewContract($contract));
                 }
 
                 return response()->json([
@@ -477,6 +489,16 @@ class ContractController extends Controller
 
 
                 // Ha nincs contract_id → új szerződés és munkalap
+                $user = auth('admin')->user();
+                $creatorId = auth('admin')->id();
+                if (
+                    $user
+                    && $user->can('select-contract-creator')
+                    && $request->filled('created_by')
+                ) {
+                    $creatorId = (int) $request->input('created_by');
+                }
+
                 $contract = Contract::create([
                     'client_id' => $request->input('client_id') ?: null,
                     'version' => $request->input('contract_version'),
@@ -494,7 +516,7 @@ class ContractController extends Controller
                     'id_number' => $request->input('id_number'),
                     'data' => $request->input('contract_data', []),
                     'signature_path' => "{$signatureName}",
-                    'created_by' => auth('admin')->id(),
+                    'created_by' => $creatorId,
                 ]);
 
                 $products = [];
@@ -552,7 +574,7 @@ class ContractController extends Controller
                     'installation_date' => $contract->installation_date,
                     'work_status' => "Folyamatban",
                     'contract_id' => $contract->id,
-                    'created_by' => auth('admin')->id(),
+                    'created_by' => $creatorId,
                 ]);
 
                 foreach ($request->input('products') as $productId => $data) {
@@ -571,7 +593,11 @@ class ContractController extends Controller
             DB::commit();
 
             if ($contract->email) {
-                Mail::to($contract->email)->bcc('jegvarazsiroda@gmail.com')->send(new NewContract($contract));
+                $mail = Mail::to($contract->email);
+                if (!app()->environment('local')) {
+                    $mail->bcc('jegvarazsiroda@gmail.com');
+                }
+                $mail->send(new NewContract($contract));
             }
 
             return response()->json([
@@ -684,6 +710,16 @@ class ContractController extends Controller
 
     public function previewPdf(Request $request) {
 
+        $user = auth('admin')->user();
+        $creatorId = auth('admin')->id();
+        if (
+            $user
+            && $user->can('select-contract-creator')
+            && $request->filled('created_by')
+        ) {
+            $creatorId = (int) $request->input('created_by');
+        }
+
         $contract = array(
             'version' => $request->input('contract_version'),
             'name' => $request->input('contact_name'),
@@ -699,7 +735,7 @@ class ContractController extends Controller
             'date_of_birth' => $request->input('date_of_birth') ?? null,
             'id_number' => $request->input('id_number'),
             'data' => $request->input('contract_data', []),
-            'created_by' => auth('admin')->id()
+            'created_by' => $creatorId
         );
 
         $products = [];

@@ -141,10 +141,12 @@ class SimplePayController extends Controller
             $order_items = $order->items;
             try {
                 Mail::to($order->contact_email)->send(new NewOrder($order, $order_items));
-                Mail::to("jegvarazsiroda@gmail.com")->send(new NewOrderToOffice(
-                    $order,
-                    $order_items
-                ));
+                if (!app()->environment('local')) {
+                    Mail::to("jegvarazsiroda@gmail.com")->send(new NewOrderToOffice(
+                        $order,
+                        $order_items
+                    ));
+                }
             } catch(Exception $e) {
                 \Log::error('E-mail küldési hiba: ' . $e->getMessage());
             }

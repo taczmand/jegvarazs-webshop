@@ -234,9 +234,11 @@ class AppointmentController extends Controller
             ]);
 
             if ($request->input('email')) {
-                Mail::to($request->input('email'))
-                    ->bcc('jegvarazsiroda@gmail.com')
-                    ->send(new NewAppointment($appointment));
+                $mail = Mail::to($request->input('email'));
+                if (!app()->environment('local')) {
+                    $mail->bcc('jegvarazsiroda@gmail.com');
+                }
+                $mail->send(new NewAppointment($appointment));
             }
 
             if (!empty($request->file('new_photos'))) {

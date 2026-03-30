@@ -167,6 +167,19 @@
                                             <td>Szerelés időpontja</td>
                                             <td><input type="date" class="form-control" name="installation_date" id="installation_date"></td>
                                         </tr>
+
+                                        @if(auth('admin')->user() && auth('admin')->user()->can('select-contract-creator'))
+                                            <tr class="contract-client-fields" style="display:none;">
+                                                <td>Létrehozó</td>
+                                                <td>
+                                                    <select class="form-control" name="created_by" id="created_by">
+                                                        @foreach($users as $u)
+                                                            <option value="{{ $u->id }}">{{ $u->name }}</option>
+                                                        @endforeach
+                                                    </select>
+                                                </td>
+                                            </tr>
+                                        @endif
                                         </tbody>
                                     </table>
                                 </div>
@@ -263,6 +276,9 @@
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
         $(document).ready(async function() {
+            const currentUserId = {{ (int) auth('admin')->id() }};
+            const canSelectContractCreator = {{ (auth('admin')->user() && auth('admin')->user()->can('select-contract-creator')) ? 'true' : 'false' }};
+
             const table = $('#adminTable').DataTable({
                 language: {
                     url: '/lang/datatables/hu.json'
@@ -396,6 +412,11 @@
                 $('#date_of_birth').val(contract.date_of_birth);
                 $('#id_number').val(contract.id_number);
                 $('#installation_date').val(contract.installation_date);
+
+                if (canSelectContractCreator) {
+                    $('#created_by').val(contract.created_by || currentUserId);
+                    $('#created_by').prop('disabled', true);
+                }
 
                 setClientFieldsVisible(true);
                 setSnapshotMode(false);
@@ -549,6 +570,11 @@
                     $('#contract_version').prop('disabled', false);
                     $('#contract_version').val('v2');
 
+                    if (canSelectContractCreator) {
+                        $('#created_by').val(currentUserId);
+                        $('#created_by').prop('disabled', false);
+                    }
+
                     const loaded_version = await loadVersions("v2");
                     renderContractForm(loaded_version.fields);
                     if (installationDate) {
@@ -595,6 +621,11 @@
                     $('#date_of_birth').val(contract.date_of_birth);
                     $('#id_number').val(contract.id_number);
                     $('#installation_date').val(contract.installation_date);
+
+                    if (canSelectContractCreator) {
+                        $('#created_by').val(contract.created_by || currentUserId);
+                        $('#created_by').prop('disabled', true);
+                    }
 
                     setClientFieldsVisible(true);
                     setSnapshotMode(false);
@@ -1394,6 +1425,11 @@
 
                 $('#adminModalForm')[0].reset();
                 $('#contract_id').val('');
+
+                if (canSelectContractCreator) {
+                    $('#created_by').val(currentUserId);
+                    $('#created_by').prop('disabled', false);
+                }
 
                 clearClientSelection();
 

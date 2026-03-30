@@ -15,10 +15,12 @@ class BankTransferHandler implements PaymentHandlerInterface
             $order_items
         ));
 
-        Mail::to("jegvarazsiroda@gmail.com")->send(new NewOrderToOffice(
-            $order,
-            $order_items
-        ));
+        if (!app()->environment('local')) {
+            Mail::to("jegvarazsiroda@gmail.com")->send(new NewOrderToOffice(
+                $order,
+                $order_items
+            ));
+        }
 
         // Banki átutalásnál nem kell redirect, csak vissza a siker oldalra, vagy rendelés visszaigazolás
         return redirect()->route('order.success', ['order' => $order])

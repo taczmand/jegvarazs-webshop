@@ -15,10 +15,12 @@ class CodHandler implements PaymentHandlerInterface
             $order_items
         ));
 
-        Mail::to("jegvarazsiroda@gmail.com")->send(new NewOrderToOffice(
-            $order,
-            $order_items
-        ));
+        if (!app()->environment('local')) {
+            Mail::to("jegvarazsiroda@gmail.com")->send(new NewOrderToOffice(
+                $order,
+                $order_items
+            ));
+        }
 
         // Utánvét esetén is vissza lehet irányítani a siker oldalra
         return redirect()->route('order.success', ['order' => $order->id])
