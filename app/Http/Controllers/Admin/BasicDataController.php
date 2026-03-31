@@ -6,8 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\BasicDataRequest;
 use App\Models\BasicData;
 use App\Models\UserAction;
+use App\Models\Vehicle;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Http\JsonResponse;
 
@@ -90,6 +92,47 @@ class BasicDataController extends Controller
             $item->latest = $item->latest ? \Carbon\Carbon::parse($item->latest)->format('Y-m-d H:i:s') : null;
             return $item;
         });
+
+        $vehiclesAttentionCount = 0;
+
+        if (Schema::hasTable('vehicles')) {
+            $hasOilCols = Schema::hasColumn('vehicles', 'current_odometer')
+                && Schema::hasColumn('vehicles', 'last_oil_change_odometer')
+                && Schema::hasColumn('vehicles', 'oil_change_interval');
+
+            $hasTechCol = Schema::hasColumn('vehicles', 'technical_inspection_expires_at');
+
+            if ($hasOilCols || $hasTechCol) {
+                $totalDays = 730;
+                $thresholdDays = (int) ceil($totalDays * 0.2);
+                $deadline = now()->startOfDay()->addDays($thresholdDays);
+
+                $vehiclesAttentionCount = Vehicle::query()
+                    ->where(function ($q) use ($deadline, $hasOilCols, $hasTechCol) {
+                        if ($hasOilCols) {
+                            $q->where(function ($qq) {
+                                $qq->whereNotNull('current_odometer')
+                                    ->whereNotNull('last_oil_change_odometer')
+                                    ->whereRaw('(current_odometer - last_oil_change_odometer) >= (oil_change_interval * ?)', [0.8]);
+                            });
+                        }
+
+                        if ($hasTechCol) {
+                            $q->orWhere(function ($qq) use ($deadline) {
+                                $qq->whereNotNull('technical_inspection_expires_at')
+                                    ->whereDate('technical_inspection_expires_at', '<=', $deadline);
+                            });
+                        }
+                    })
+                    ->count();
+            }
+        }
+
+        $results->push((object) [
+            'model' => 'vehicles_attention',
+            'count' => (int) $vehiclesAttentionCount,
+            'latest' => null,
+        ]);
 
         return response()->json($results);
     }

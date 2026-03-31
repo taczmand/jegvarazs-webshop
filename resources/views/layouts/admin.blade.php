@@ -88,6 +88,12 @@
                                 worksheets: { label: 'munkalap', badgeId: 'new_worksheet_badge' },
                                 leads: { label: 'eredklődő', badgeId: 'new_lead_badge' },
                             }
+                        },
+                        vehicles: {
+                            globalBadgeId: 'vehicles_attention_badge',
+                            models: {
+                                vehicles_attention: { label: 'jármű', badgeId: 'vehicles_attention_badge' },
+                            }
                         }
                     };
 

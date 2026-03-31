@@ -7,6 +7,7 @@ use App\Models\BasicMedia;
 use App\Models\Category;
 use App\Models\Regulation;
 use App\Models\SensorEvent;
+use App\Models\Vehicle;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;

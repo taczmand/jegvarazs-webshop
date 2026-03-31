@@ -107,7 +107,7 @@
     <li class="nav-item">
         <a class="nav-link" href="{{ route('admin.vehicles.index') }}">
             <i class="fa-solid fa-car"></i>
-            <span>Járműtörzs</span>
+            <span>Járműtörzs <span id="vehicles_attention_badge" class="badge badge-secondary ml-2 d-none">0</span></span>
         </a>
     </li>
 

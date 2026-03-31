@@ -230,6 +230,7 @@ Route::get('/automatizacio/kuldes', [AutomatedEmailController::class, 'sendToday
             Route::delete('/jarmuvek/{id}', [VehicleController::class, 'destroy'])->name('vehicles.destroy');
 
             Route::get('/jarmuvek/{id}/events/data', [VehicleController::class, 'eventsData'])->name('vehicles.events.data');
+            Route::get('/jarmuvek/{id}/timeline', [VehicleController::class, 'timeline'])->name('vehicles.timeline');
             Route::post('/jarmuvek/{id}/events', [VehicleController::class, 'storeEvent'])->name('vehicles.events.store');
             Route::delete('/jarmuvek/{vehicleId}/events/{eventId}', [VehicleController::class, 'destroyEvent'])->name('vehicles.events.destroy');
 
