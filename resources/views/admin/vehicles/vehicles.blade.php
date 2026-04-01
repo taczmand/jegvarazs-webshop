@@ -200,17 +200,19 @@
         <script src="https://cdn.canvasjs.com/canvasjs.min.js"></script>
         <style>
             .vehicle-timeline {
-                position: relative;
-                padding: 6px 0;
                 overflow-x: auto;
                 overflow-y: hidden;
                 -webkit-overflow-scrolling: touch;
             }
 
             .vehicle-timeline-inner {
+                position: relative;
+                padding: 6px 0;
                 min-width: 640px;
+                width: max-content;
             }
-            .vehicle-timeline::before {
+
+            .vehicle-timeline-inner::before {
                 content: '';
                 position: absolute;
                 left: 50%;
@@ -340,7 +342,7 @@
             }
 
             @media (max-width: 767.98px) {
-                .vehicle-timeline::before { left: 50%; transform: translateX(-1px); }
+                .vehicle-timeline-inner::before { left: 50%; transform: translateX(-1px); }
                 .vehicle-timeline-col { width: 50%; }
                 .vehicle-timeline-col.left { padding-right: 14px; }
                 .vehicle-timeline-col.right { padding-left: 14px; }
