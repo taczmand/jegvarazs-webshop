@@ -202,36 +202,26 @@ class ContractController extends Controller
             $clientAddressId = $request->input('client_address_id');
             $useCustomAddress = (bool) $request->input('use_custom_address');
 
+            $contactEmail = $request->input('contact_email');
+            $contactEmail = is_string($contactEmail) ? trim($contactEmail) : null;
+            $contactEmail = $contactEmail !== '' ? mb_strtolower($contactEmail) : null;
+
+            $warnings = [];
+            $contactEmailConflicts = false;
+
             $client = null;
             $address = null;
 
             if ($shouldCreateClient) {
-                $email = $request->input('contact_email');
-                $email = is_string($email) ? trim($email) : null;
-                $email = $email !== '' ? mb_strtolower($email) : null;
-
-                if (!is_null($email)) {
+                if (!is_null($contactEmail)) {
                     $existingClient = Client::query()
                         ->select(['id', 'name', 'email', 'phone', 'id_number'])
-                        ->where('email', $email)
+                        ->where('email', $contactEmail)
                         ->first();
 
                     if ($existingClient) {
-                        DB::rollBack();
-
-                        return response()->json([
-                            'message' => 'Ezzel az e-mail címmel már létezik ügyfél.',
-                            'errors' => [
-                                'contact_email' => ['Ezzel az e-mail címmel már létezik ügyfél.'],
-                            ],
-                            'existing_client' => [
-                                'id' => $existingClient->id,
-                                'name' => $existingClient->name,
-                                'email' => $existingClient->email,
-                                'phone' => $existingClient->phone,
-                                'id_number' => $existingClient->id_number,
-                            ],
-                        ], 422);
+                        $contactEmailConflicts = true;
+                        $warnings[] = 'Ez az e-mail cím már másik ügyfélhez tartozik, ezért az új ügyfélhez nem mentettük el, csak a szerződéshez fogjuk használni.';
                     }
                 }
 
@@ -241,7 +231,7 @@ class ContractController extends Controller
                     'place_of_birth' => $request->input('place_of_birth') ?: null,
                     'date_of_birth' => $request->input('date_of_birth') ?: null,
                     'id_number' => $request->input('id_number') ?: null,
-                    'email' => $request->input('contact_email') ?: null,
+                    'email' => $contactEmailConflicts ? null : $contactEmail,
                     'phone' => $request->input('contact_phone') ?: null,
                     'comment' => null,
                 ]);
@@ -309,7 +299,7 @@ class ContractController extends Controller
                 if ($client) {
                     $client->update([
                         'name' => $request->input('contact_name') ?: $client->name,
-                        'email' => $request->input('contact_email') ?: $client->email,
+                        'email' => $client->email,
                         'phone' => $request->input('contact_phone') ?: $client->phone,
                         'mothers_name' => $request->input('mothers_name') ?: $client->mothers_name,
                         'place_of_birth' => $request->input('place_of_birth') ?: $client->place_of_birth,
@@ -329,7 +319,7 @@ class ContractController extends Controller
             }
 
             $resolvedName = $request->input('contact_name');
-            $resolvedEmail = $request->input('contact_email');
+            $resolvedEmail = $contactEmail;
             $resolvedPhone = $request->input('contact_phone');
             $resolvedCountry = $request->input('contact_country');
             $resolvedZip = $request->input('contact_zip_code');
@@ -338,7 +328,9 @@ class ContractController extends Controller
 
             if ($client) {
                 $resolvedName = $client->name;
-                $resolvedEmail = $client->email;
+                if (empty($resolvedEmail)) {
+                    $resolvedEmail = $client->email;
+                }
                 $resolvedPhone = $client->phone;
             }
 
@@ -480,6 +472,7 @@ class ContractController extends Controller
 
                 return response()->json([
                     'message' => 'Szerződés frissítve!',
+                    'warnings' => $warnings,
                     'data' => [
                         'contract' => $contract,
                         'pdf_path' => Storage::url($contract->pdf_path),
@@ -602,6 +595,7 @@ class ContractController extends Controller
 
             return response()->json([
                 'message' => 'Sikeres generálás!',
+                'warnings' => $warnings,
                 'data' => [
                     'contract' => $contract,
                     'worksheet' => $worksheet,

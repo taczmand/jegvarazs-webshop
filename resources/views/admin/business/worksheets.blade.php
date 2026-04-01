@@ -921,8 +921,11 @@
             let lastCheckedClientEmailExists = false;
 
             function clearDuplicateEmailState() {
-                $('#contact_email').removeClass('bg-danger text-light');
-                $('#contact_email_duplicate_feedback').hide().text('');
+                $('#contact_email').removeClass('bg-warning text-dark border border-warning');
+                $('#contact_email_duplicate_feedback')
+                    .removeClass('text-warning text-dark bg-warning bg-opacity-25 border border-warning rounded px-2 py-1 d-inline-block')
+                    .hide()
+                    .text('');
                 lastCheckedClientEmail = null;
                 lastCheckedClientEmailExists = false;
             }
@@ -933,7 +936,7 @@
                     return;
                 }
 
-                $('#contact_email').addClass('bg-danger text-light');
+                $('#contact_email').addClass('bg-warning text-dark border border-warning');
 
                 const details = [
                     existing.name ? `Név: ${existing.name}` : null,
@@ -943,12 +946,12 @@
                 ].filter(Boolean).join(' | ');
 
                 const msg = details
-                    ? `Ezzel az e-mail címmel már létezik ügyfél. (${details})`
-                    : 'Ezzel az e-mail címmel már létezik ügyfél.';
+                    ? `Figyelem: ez az e-mail cím már másik ügyfélhez tartozik. A munkalap ettől még elmenthető ezzel az e-mail címmel. (${details})`
+                    : 'Figyelem: ez az e-mail cím már másik ügyfélhez tartozik. A munkalap ettől még elmenthető ezzel az e-mail címmel.';
 
                 $('#contact_email_duplicate_feedback')
                     .removeClass('text-muted')
-                    .addClass('text-danger')
+                    .addClass('text-dark bg-warning bg-opacity-25 border border-warning rounded px-2 py-1 d-inline-block')
                     .text(msg)
                     .show();
             }
@@ -1207,6 +1210,10 @@
                         processData: false,
                         success(response) {
                             showToast(response.message || 'Sikeres!', 'success');
+                            const warnings = response?.warnings;
+                            if (Array.isArray(warnings) && warnings.length) {
+                                warnings.forEach(w => showToast(w, 'warning'));
+                            }
                             table.ajax.reload(null, false);
                             adminModal.hide();
                         },
@@ -1241,38 +1248,6 @@
 
                 const clientId = ($('#client_id').val() || '').toString().trim();
                 const isCreateClient = ($('#create_client').val() || '').toString() === '1';
-
-                if (clientId && !isCreateClient) {
-                    const payload = {
-                        id: clientId,
-                        name: ($('#contact_name').val() || '').toString().trim() || null,
-                        email: ($('#contact_email').val() || '').toString().trim(),
-                        phone: ($('#contact_phone').val() || '').toString().trim() || null,
-                        _token: csrfToken,
-                    };
-
-                    $.ajax({
-                        url: `${window.appConfig.APP_URL}admin/ugyfelek/${encodeURIComponent(clientId)}`,
-                        method: 'PUT',
-                        data: payload,
-                        headers: {
-                            'X-CSRF-TOKEN': csrfToken,
-                        },
-                    })
-                        .done(() => saveWorksheetAjax())
-                        .fail((xhr) => {
-                            let msg = 'Hiba az ügyfél adatainak mentésekor!';
-                            if (xhr.responseJSON?.errors) {
-                                msg = Object.values(xhr.responseJSON.errors).flat().join(' ');
-                            } else if (xhr.responseJSON?.message) {
-                                msg = xhr.responseJSON.message;
-                            }
-                            showToast(msg, 'danger');
-                            $('#saveWorksheet').html(originalSaveButtonHtml).prop('disabled', false);
-                        });
-
-                    return;
-                }
 
                 saveWorksheetAjax();
 

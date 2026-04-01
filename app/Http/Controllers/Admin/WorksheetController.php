@@ -459,6 +459,8 @@ class WorksheetController extends Controller
         try {
             $worksheetId = $request->input('worksheet_id');
 
+            $warnings = [];
+
             $clientId = $request->input('client_id');
             $shouldCreateClient = (bool) $request->input('create_client');
             $clientAddressId = $request->input('client_address_id');
@@ -477,15 +479,34 @@ class WorksheetController extends Controller
             if ($clientId) {
                 $client = Client::findOrFail($clientId);
 
+                $contactEmail = $request->input('contact_email');
+                $contactEmail = is_string($contactEmail) ? trim($contactEmail) : null;
+                $contactEmail = $contactEmail !== '' ? mb_strtolower($contactEmail) : null;
+
+                $emailToSaveOnClient = $client->email;
+                if (!is_null($contactEmail) && filter_var($contactEmail, FILTER_VALIDATE_EMAIL)) {
+                    $conflictingClient = Client::query()
+                        ->select(['id'])
+                        ->where('email', $contactEmail)
+                        ->where('id', '!=', $client->id)
+                        ->first();
+
+                    if ($conflictingClient) {
+                        $warnings[] = 'Ez az e-mail cím már másik ügyfélhez tartozik, ezért az ügyfél e-mail címét nem frissítettük. A munkalaphoz ettől még elmentjük.';
+                    } else {
+                        $emailToSaveOnClient = $contactEmail;
+                    }
+                }
+
                 $client->update([
                     'name' => $request->input('contact_name') ?: $client->name,
-                    'email' => $request->input('contact_email') ?: $client->email,
+                    'email' => $emailToSaveOnClient,
                     'phone' => $request->input('contact_phone') ?: $client->phone,
                 ]);
 
                 $snapshot = [
                     'name' => $client->name,
-                    'email' => $client->email,
+                    'email' => $contactEmail ?: $client->email,
                     'phone' => $client->phone,
                     'country' => $snapshot['country'],
                     'zip_code' => $snapshot['zip_code'],
@@ -562,6 +583,8 @@ class WorksheetController extends Controller
                 $email = is_string($email) ? trim($email) : null;
                 $hasValidEmail = $email && filter_var($email, FILTER_VALIDATE_EMAIL);
 
+                $contactEmailConflicts = false;
+
                 if ($hasValidEmail) {
                     $email = mb_strtolower($email);
 
@@ -571,26 +594,13 @@ class WorksheetController extends Controller
                         ->first();
 
                     if ($existingClient) {
-                        DB::rollBack();
-
-                        return response()->json([
-                            'message' => 'Ezzel az e-mail címmel már létezik ügyfél.',
-                            'errors' => [
-                                'contact_email' => ['Ezzel az e-mail címmel már létezik ügyfél.'],
-                            ],
-                            'existing_client' => [
-                                'id' => $existingClient->id,
-                                'name' => $existingClient->name,
-                                'email' => $existingClient->email,
-                                'phone' => $existingClient->phone,
-                                'id_number' => $existingClient->id_number,
-                            ],
-                        ], 422);
+                        $contactEmailConflicts = true;
+                        $warnings[] = 'Ez az e-mail cím már másik ügyfélhez tartozik, ezért az új ügyfélhez nem mentettük el, csak a munkalaphoz fogjuk használni.';
                     }
 
                     $client = Client::create([
                         'name' => $request->input('contact_name') ?: null,
-                        'email' => $email,
+                        'email' => $contactEmailConflicts ? null : $email,
                         'phone' => $request->input('contact_phone') ?: null,
                         'comment' => null,
                     ]);
@@ -974,6 +984,7 @@ class WorksheetController extends Controller
 
             return response()->json([
                 'message' => $worksheetId ? 'Sikeres frissítés!' : 'Sikeres mentés!',
+                'warnings' => $warnings,
                 'id' => $worksheet->id,
             ]);
 

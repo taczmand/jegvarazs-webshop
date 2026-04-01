@@ -14,7 +14,8 @@ window.showToast = function (message, type = 'success') {
 
     toastBody.textContent = message;
 
-    const toast = new bootstrap.Toast(toastEl, { delay: 3000 });
+    const delay = type === 'warning' ? 5000 : 3000;
+    const toast = new bootstrap.Toast(toastEl, { delay });
     toast.show();
 };
 

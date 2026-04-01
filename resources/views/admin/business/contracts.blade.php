@@ -1149,8 +1149,11 @@
             }
 
             function clearDuplicateEmailState() {
-                $('#contact_email').removeClass('bg-danger text-light');
-                $('#contact_email_duplicate_feedback').hide().text('');
+                $('#contact_email').removeClass('bg-warning text-dark border border-warning');
+                $('#contact_email_duplicate_feedback')
+                    .removeClass('text-warning text-dark bg-warning bg-opacity-25 border border-warning rounded px-2 py-1 d-inline-block')
+                    .hide()
+                    .text('');
                 lastCheckedClientEmail = null;
                 lastCheckedClientEmailExists = false;
             }
@@ -1161,7 +1164,7 @@
                     return;
                 }
 
-                $('#contact_email').addClass('bg-danger text-light');
+                $('#contact_email').addClass('bg-warning text-dark border border-warning');
 
                 const details = [
                     existing.name ? `Név: ${existing.name}` : null,
@@ -1171,12 +1174,12 @@
                 ].filter(Boolean).join(' | ');
 
                 const msg = details
-                    ? `Ezzel az e-mail címmel már létezik ügyfél. (${details})`
-                    : 'Ezzel az e-mail címmel már létezik ügyfél.';
+                    ? `Figyelem: ez az e-mail cím már másik ügyfélhez tartozik. A szerződés ettől még elküldhető erre a címre. (${details})`
+                    : 'Figyelem: ez az e-mail cím már másik ügyfélhez tartozik. A szerződés ettől még elküldhető erre a címre.';
 
                 $('#contact_email_duplicate_feedback')
                     .removeClass('text-muted')
-                    .addClass('text-danger')
+                    .addClass('text-dark bg-warning bg-opacity-25 border border-warning rounded px-2 py-1 d-inline-block')
                     .text(msg)
                     .show();
             }
