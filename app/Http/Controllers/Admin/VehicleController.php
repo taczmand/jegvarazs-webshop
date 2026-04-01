@@ -15,6 +15,119 @@ class VehicleController extends Controller
         return view('admin.vehicles.vehicles');
     }
 
+    public function kmSummary(Request $request, $id)
+    {
+        $user = auth('admin')->user();
+        if (!$user || !$user->can('view-vehicles')) {
+            return response()->json([
+                'message' => 'Nincs jogosultságod a járművek megtekintésére.',
+            ], 403);
+        }
+
+        $vehicle = Vehicle::findOrFail($id);
+
+        $availableYears = VehicleEvent::query()
+            ->where('vehicle_id', $vehicle->id)
+            ->where('type', 'odometer')
+            ->whereNotNull('event_date')
+            ->selectRaw('DISTINCT YEAR(event_date) as y')
+            ->orderByDesc('y')
+            ->pluck('y')
+            ->filter()
+            ->map(fn ($y) => (int) $y)
+            ->values()
+            ->all();
+
+        $defaultYear = (int) now()->format('Y');
+        $year = (int) $request->query('year', $defaultYear);
+        if ($year < 1970 || $year > ($defaultYear + 1)) {
+            $year = $defaultYear;
+        }
+
+        $events = VehicleEvent::query()
+            ->where('vehicle_id', $vehicle->id)
+            ->where('type', 'odometer')
+            ->whereYear('event_date', $year)
+            ->whereNotNull('value')
+            ->whereNotNull('event_date')
+            ->orderBy('event_date', 'asc')
+            ->orderBy('id', 'asc')
+            ->get(['id', 'event_date', 'value']);
+
+        $baseline = VehicleEvent::query()
+            ->where('vehicle_id', $vehicle->id)
+            ->where('type', 'odometer')
+            ->whereNotNull('value')
+            ->whereNotNull('event_date')
+            ->whereDate('event_date', '<', sprintf('%04d-01-01', $year))
+            ->orderBy('event_date', 'desc')
+            ->orderBy('id', 'desc')
+            ->first(['event_date', 'value']);
+
+        $months = [
+            1 => 'Jan', 2 => 'Feb', 3 => 'Már', 4 => 'Ápr', 5 => 'Máj', 6 => 'Jún',
+            7 => 'Júl', 8 => 'Aug', 9 => 'Szep', 10 => 'Okt', 11 => 'Nov', 12 => 'Dec'
+        ];
+
+        $kmByMonth = array_fill(1, 12, 0);
+        $lastOdo = null;
+        $lastDate = null;
+
+        if ($baseline) {
+            try {
+                $lastDate = \Carbon\Carbon::parse($baseline->event_date)->startOfDay();
+                $lastOdo = is_numeric($baseline->value) ? (int) $baseline->value : null;
+            } catch (\Exception $e) {
+                $lastOdo = null;
+                $lastDate = null;
+            }
+        }
+
+        foreach ($events as $ev) {
+            try {
+                $d = \Carbon\Carbon::parse($ev->event_date)->startOfDay();
+            } catch (\Exception $e) {
+                continue;
+            }
+
+            $odo = is_numeric($ev->value) ? (int) $ev->value : null;
+            if ($odo === null) {
+                continue;
+            }
+
+            if ($lastOdo !== null && $lastDate !== null) {
+                $delta = $odo - $lastOdo;
+                if ($delta >= 0) {
+                    $m = (int) $d->format('n');
+                    if ($m >= 1 && $m <= 12) {
+                        $kmByMonth[$m] += $delta;
+                    }
+                }
+            }
+
+            $lastOdo = $odo;
+            $lastDate = $d;
+        }
+
+        $dataPoints = [];
+        foreach ($kmByMonth as $m => $km) {
+            $dataPoints[] = [
+                'label' => $months[$m] ?? (string) $m,
+                'y' => (int) $km,
+            ];
+        }
+
+        return response()->json([
+            'vehicle' => [
+                'id' => $vehicle->id,
+                'license_plate' => $vehicle->license_plate,
+            ],
+            'year' => $year,
+            'availableYears' => $availableYears,
+            'dataPoints' => $dataPoints,
+        ], 200);
+    }
+
     public function timeline($id)
     {
         $user = auth('admin')->user();

@@ -117,6 +117,19 @@
                                     </form>
                                 </div>
                             </div>
+
+                            <div class="card mt-3">
+                                <div class="card-header d-flex align-items-center justify-content-between">
+                                    <span>Havi km összesítő</span>
+                                    <select class="form-select form-select-sm" id="vehicleKmYearSelect" style="width: 110px;"></select>
+                                </div>
+                                <div class="card-body">
+                                    <div class="small text-muted" id="vehicleKmChartHint"></div>
+                                    <div id="vehicleKmChartScrollWrap" style="width: 100%; overflow-x: auto; overflow-y: hidden;">
+                                        <div id="vehicleKmChartContainer" style="width: 100%;"></div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
                         <div class="col-12 col-lg-7">
@@ -184,10 +197,18 @@
 
 @section('scripts')
     @if(auth('admin')->user()->can('view-vehicles'))
+        <script src="https://cdn.canvasjs.com/canvasjs.min.js"></script>
         <style>
             .vehicle-timeline {
                 position: relative;
                 padding: 6px 0;
+                overflow-x: auto;
+                overflow-y: hidden;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .vehicle-timeline-inner {
+                min-width: 640px;
             }
             .vehicle-timeline::before {
                 content: '';
@@ -258,15 +279,30 @@
                 border-radius: 12px;
                 padding: 8px 10px;
                 background: #fff;
+                min-width: 0;
             }
             .vehicle-timeline-badge {
-                display: inline-block;
+                display: inline-flex;
+                align-items: center;
                 font-size: 0.75rem;
                 padding: 2px 8px;
                 border-radius: 999px;
                 background: rgba(13,110,253,0.10);
                 color: #0d6efd;
                 border: 1px solid rgba(13,110,253,0.20);
+                max-width: 100%;
+                white-space: normal;
+                overflow-wrap: anywhere;
+                word-break: break-word;
+                line-height: 1.2;
+            }
+
+            .vehicle-timeline-badge.badge-nowrap {
+                white-space: nowrap;
+                overflow-wrap: normal;
+                word-break: normal;
+                overflow: hidden;
+                text-overflow: ellipsis;
             }
             .vehicle-timeline-badge.badge-gray {
                 background: rgba(108,117,125,0.10);
@@ -289,14 +325,26 @@
                 gap: 6px;
                 flex-wrap: wrap;
                 margin-top: 6px;
+                min-width: 0;
+            }
+
+            .vehicle-timeline-meta .vehicle-timeline-badge {
+                flex: 0 1 auto;
+                min-width: 0;
+            }
+
+            #vehicleKmChartContainer { height: 260px; }
+            #vehicleKmChartScrollWrap { -webkit-overflow-scrolling: touch; }
+            @media (max-width: 576px) {
+                #vehicleKmChartContainer { height: 220px; }
             }
 
             @media (max-width: 767.98px) {
-                .vehicle-timeline::before { left: 12px; transform: none; }
-                .vehicle-timeline-col { width: 100%; }
-                .vehicle-timeline-col.left,
-                .vehicle-timeline-col.right { padding: 0 0 0 22px; }
-                .vehicle-timeline-center { left: 12px; transform: none; }
+                .vehicle-timeline::before { left: 50%; transform: translateX(-1px); }
+                .vehicle-timeline-col { width: 50%; }
+                .vehicle-timeline-col.left { padding-right: 14px; }
+                .vehicle-timeline-col.right { padding-left: 14px; }
+                .vehicle-timeline-center { left: 50%; transform: translateX(-50%); }
             }
         </style>
         <script type="module">
@@ -338,6 +386,8 @@
             });
 
             let currentVehicleId = null;
+            let vehicleKmChart = null;
+            let lastVehicleKmPayload = null;
 
             function escapeHtml(str) {
                 return String(str ?? '')
@@ -346,6 +396,152 @@
                     .replaceAll('>', '&gt;')
                     .replaceAll('"', '&quot;')
                     .replaceAll("'", '&#039;');
+            }
+
+            function isMobile() {
+                return window.matchMedia && window.matchMedia('(max-width: 576px)').matches;
+            }
+
+            function setVehicleKmHint(text) {
+                const el = document.getElementById('vehicleKmChartHint');
+                if (!el) return;
+                el.textContent = text || '';
+            }
+
+            function ensureVehicleKmScrollableMinWidth(payload) {
+                const chartEl = document.getElementById('vehicleKmChartContainer');
+                const wrapEl = document.getElementById('vehicleKmChartScrollWrap');
+                if (!chartEl || !wrapEl) return;
+
+                const months = 12;
+                const basePxPerColumn = isMobile() ? 28 : 18;
+                const padding = 120;
+                const desired = (months * basePxPerColumn) + padding;
+                const wrapWidth = wrapEl.clientWidth || 0;
+
+                chartEl.style.minWidth = `${Math.max(desired, wrapWidth)}px`;
+            }
+
+            function buildVehicleKmChartOptions(payload) {
+                const mobile = isMobile();
+                const year = payload?.year ?? '';
+
+                return {
+                    animationEnabled: true,
+                    theme: 'light2',
+                    title: {
+                        text: `Havi km összesítő – ${year}`,
+                        fontSize: mobile ? 14 : 18,
+                        margin: mobile ? 8 : 10,
+                    },
+                    axisY: {
+                        title: mobile ? '' : 'Km',
+                        includeZero: true,
+                        labelFontSize: mobile ? 10 : 12,
+                        titleFontSize: mobile ? 11 : 13,
+                    },
+                    axisX: {
+                        interval: 1,
+                        labelFontSize: mobile ? 10 : 12,
+                    },
+                    toolTip: {
+                        shared: false,
+                    },
+                    data: [
+                        {
+                            type: 'column',
+                            color: '#4e79a7',
+                            dataPoints: Array.isArray(payload?.dataPoints) ? payload.dataPoints : [],
+                        }
+                    ]
+                };
+            }
+
+            function fillVehicleKmYearSelect(availableYears, selectedYear) {
+                const yearSelect = document.getElementById('vehicleKmYearSelect');
+                if (!yearSelect) return;
+
+                const years = Array.isArray(availableYears) ? availableYears : [];
+                const currentYear = Number(new Date().getFullYear());
+
+                const finalYears = years.length ? years : [currentYear];
+
+                yearSelect.innerHTML = finalYears
+                    .map((y) => {
+                        const yy = Number(y);
+                        const sel = (yy === Number(selectedYear)) ? 'selected' : '';
+                        return `<option value="${yy}" ${sel}>${yy}</option>`;
+                    })
+                    .join('');
+            }
+
+            async function loadVehicleKmSummary(vehicleId, year) {
+                if (!vehicleId) return null;
+
+                setVehicleKmHint('Betöltés...');
+
+                const url = new URL(`{{ url('/admin/jarmuvek') }}/${vehicleId}/km-summary`, window.location.origin);
+                if (year) url.searchParams.set('year', year);
+
+                const res = await fetch(url.toString(), {
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                    }
+                });
+
+                const payload = await res.json().catch(() => ({}));
+                if (!res.ok) {
+                    setVehicleKmHint(payload?.message || 'Hiba történt a havi km adatok betöltésekor.');
+                    return null;
+                }
+
+                setVehicleKmHint('');
+                return payload;
+            }
+
+            function renderVehicleKmChart(payload) {
+                if (!payload) return;
+                if (typeof CanvasJS === 'undefined') {
+                    setVehicleKmHint('A grafikon könyvtár nem elérhető.');
+                    return;
+                }
+
+                lastVehicleKmPayload = payload;
+                ensureVehicleKmScrollableMinWidth(payload);
+
+                const hasAny = Array.isArray(payload?.dataPoints) && payload.dataPoints.some(p => Number(p?.y || 0) > 0);
+                if (!hasAny) {
+                    setVehicleKmHint('Nincs adat a kiválasztott évre.');
+                }
+
+                if (!vehicleKmChart) {
+                    vehicleKmChart = new CanvasJS.Chart('vehicleKmChartContainer', buildVehicleKmChartOptions(payload));
+                } else {
+                    vehicleKmChart.options = buildVehicleKmChartOptions(payload);
+                }
+
+                vehicleKmChart.render();
+            }
+
+            async function reloadVehicleKmChart(year = null) {
+                if (!currentVehicleId) {
+                    setVehicleKmHint('Előbb mentsd el a járművet.');
+                    return;
+                }
+
+                const yearSelect = document.getElementById('vehicleKmYearSelect');
+                const selectedYear = year || (yearSelect ? yearSelect.value : null);
+                const payload = await loadVehicleKmSummary(currentVehicleId, selectedYear);
+                if (!payload) return;
+
+                fillVehicleKmYearSelect(payload.availableYears, payload.year);
+                renderVehicleKmChart(payload);
+            }
+
+            const vehicleKmYearSelectEl = document.getElementById('vehicleKmYearSelect');
+            if (vehicleKmYearSelectEl) {
+                vehicleKmYearSelectEl.addEventListener('change', () => reloadVehicleKmChart());
             }
 
             function setTimelineLoading(isLoading) {
@@ -386,9 +582,9 @@
 
                         cardTitleBadge = `<span class="vehicle-timeline-badge">${title}</span>`;
 
-                        if (String(km) !== '') metaBadges.push(`<span class="vehicle-timeline-badge badge-gray">Aktuális km: <strong>${escapeHtml(km)}</strong></span>`);
-                        if (String(rem) !== '') metaBadges.push(`<span class="vehicle-timeline-badge badge-gray">Olajcsere hátra: <strong>${escapeHtml(rem)}</strong> km</span>`);
-                        if (String(nextAt) !== '') metaBadges.push(`<span class="vehicle-timeline-badge badge-gray">Köv. olajcsere: <strong>${escapeHtml(nextAt)}</strong> km</span>`);
+                        if (String(km) !== '') metaBadges.push(`<span class="vehicle-timeline-badge badge-gray badge-nowrap">Aktuális km: <strong>${escapeHtml(km)}</strong></span>`);
+                        if (String(rem) !== '') metaBadges.push(`<span class="vehicle-timeline-badge badge-gray badge-nowrap">Olajcsere hátra: <strong>${escapeHtml(rem)}</strong> km</span>`);
+                        if (String(nextAt) !== '') metaBadges.push(`<span class="vehicle-timeline-badge badge-gray badge-nowrap">Köv. olajcsere: <strong>${escapeHtml(nextAt)}</strong> km</span>`);
                     }
 
                     if (kind === 'future') {
@@ -409,7 +605,7 @@
 
                         if (it.type === 'odometer') {
                             if (value !== undefined && value !== null && String(value) !== '') {
-                                metaBadges.push(`<span class="vehicle-timeline-badge badge-gray">Km: <strong>${escapeHtml(value)}</strong></span>`);
+                                metaBadges.push(`<span class="vehicle-timeline-badge badge-gray badge-nowrap">Km: <strong>${escapeHtml(value)}</strong></span>`);
                             }
                             if (note !== undefined && note !== null && String(note) !== '') {
                                 metaBadges.push(`<span class="vehicle-timeline-badge badge-gray">${escapeHtml(note)}</span>`);
@@ -453,7 +649,7 @@
                     `;
                 }).join('');
 
-                el.innerHTML = html;
+                el.innerHTML = `<div class="vehicle-timeline-inner">${html}</div>`;
             }
 
             async function loadTimeline(vehicleId) {
@@ -514,6 +710,7 @@
 
                 adminModal.show();
                 loadTimeline(currentVehicleId);
+                reloadVehicleKmChart();
             });
 
             $('#timelineRefreshBtn').on('click', function () {
@@ -618,6 +815,7 @@
                         showToast(res.message || 'Sikeres!', 'success');
                         table.ajax.reload(null, false);
                         loadTimeline(currentVehicleId);
+                        reloadVehicleKmChart();
                         $('#timeline_odometer_value').val('');
                         $('#timeline_odometer_note').val('');
                     },
@@ -685,7 +883,37 @@
                 if (timelineEl) {
                     timelineEl.innerHTML = '<div class="text-muted">Előbb válassz ki egy járművet.</div>';
                 }
+
+                const yearSelect = document.getElementById('vehicleKmYearSelect');
+                if (yearSelect) {
+                    yearSelect.innerHTML = '';
+                }
+                setVehicleKmHint('Előbb mentsd el a járművet.');
+
+                const chartEl = document.getElementById('vehicleKmChartContainer');
+                if (chartEl) {
+                    chartEl.innerHTML = '';
+                    chartEl.style.minWidth = '';
+                }
+
+                vehicleKmChart = null;
+                lastVehicleKmPayload = null;
             }
+
+            function debounce(fn, wait) {
+                let t = null;
+                return (...args) => {
+                    window.clearTimeout(t);
+                    t = window.setTimeout(() => fn(...args), wait);
+                };
+            }
+
+            window.addEventListener('resize', debounce(() => {
+                if (!vehicleKmChart || !lastVehicleKmPayload) return;
+                ensureVehicleKmScrollableMinWidth(lastVehicleKmPayload);
+                vehicleKmChart.options = buildVehicleKmChartOptions(lastVehicleKmPayload);
+                vehicleKmChart.render();
+            }, 150));
         });
 
     </script>
