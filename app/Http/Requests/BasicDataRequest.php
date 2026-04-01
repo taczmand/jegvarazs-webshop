@@ -23,7 +23,27 @@ class BasicDataRequest extends FormRequest
     {
         return [
             'id' => ['required', 'numeric', 'exists:basic_data,id'],
-            'value' => ['nullable', 'string', 'max:255'],
+            'value' => [
+                'nullable',
+                function ($attribute, $value, $fail) {
+                    $id = $this->input('id');
+                    if (!$id) {
+                        return;
+                    }
+
+                    $key = \App\Models\BasicData::query()->where('id', $id)->value('key');
+                    if ($key === 'vehicle_km_required_day') {
+                        if (!is_numeric($value) || (int) $value < 1 || (int) $value > 28) {
+                            $fail('A kötelező havi km rögzítési nap csak 1 és 28 közötti szám lehet.');
+                        }
+                        return;
+                    }
+
+                    if ($value !== null && (!is_string($value) || mb_strlen($value) > 255)) {
+                        $fail('Az érték mező legfeljebb 255 karakter hosszú szöveg lehet.');
+                    }
+                }
+            ],
         ];
     }
 }

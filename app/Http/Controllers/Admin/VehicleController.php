@@ -149,7 +149,9 @@ class VehicleController extends Controller
             'oil_change_interval',
             'created_at',
             'updated_at',
-        ])->findOrFail($id);
+        ])
+            ->with(['users:id'])
+            ->findOrFail($id);
 
         $events = VehicleEvent::query()
             ->where('vehicle_id', $vehicle->id)
@@ -253,6 +255,7 @@ class VehicleController extends Controller
                 'current_odometer' => $vehicle->current_odometer,
                 'last_oil_change_odometer' => $vehicle->last_oil_change_odometer,
                 'oil_change_interval' => $interval,
+                'assigned_user_ids' => $vehicle->users ? $vehicle->users->pluck('id')->values()->all() : [],
             ],
             'items' => $items,
         ], 200);
@@ -279,9 +282,16 @@ class VehicleController extends Controller
             'oil_change_interval',
             'created_at as created',
             'updated_at as updated'
-        ]);
+        ])->with(['users:id']);
 
         return DataTables::of($items)
+            ->addColumn('assigned_user_ids', function ($row) {
+                try {
+                    return $row->users ? $row->users->pluck('id')->values()->all() : [];
+                } catch (\Throwable $e) {
+                    return [];
+                }
+            })
             ->addColumn('status', function ($row) {
                 $translations = [
                     'active' => 'Aktív',
@@ -417,6 +427,8 @@ class VehicleController extends Controller
             'technical_inspection_expires_at' => 'nullable|date',
             'note' => 'nullable|string|max:20000',
             'oil_change_interval' => 'nullable|integer|min:1|max:1000000',
+            'user_ids' => 'nullable|array',
+            'user_ids.*' => 'integer|exists:users,id',
         ]);
 
         $vehicle = Vehicle::create([
@@ -427,6 +439,10 @@ class VehicleController extends Controller
             'note' => $validated['note'] ?? null,
             'oil_change_interval' => $validated['oil_change_interval'] ?? 12000,
         ]);
+
+        if (isset($validated['user_ids']) && is_array($validated['user_ids'])) {
+            $vehicle->users()->sync($validated['user_ids']);
+        }
 
         return response()->json([
             'message' => 'Sikeres mentés!',
@@ -450,6 +466,8 @@ class VehicleController extends Controller
             'technical_inspection_expires_at' => 'nullable|date',
             'note' => 'nullable|string|max:20000',
             'oil_change_interval' => 'nullable|integer|min:1|max:1000000',
+            'user_ids' => 'nullable|array',
+            'user_ids.*' => 'integer|exists:users,id',
         ]);
 
         $vehicle->update([
@@ -460,6 +478,10 @@ class VehicleController extends Controller
             'note' => $validated['note'] ?? null,
             'oil_change_interval' => $validated['oil_change_interval'] ?? ($vehicle->oil_change_interval ?? 12000),
         ]);
+
+        if (array_key_exists('user_ids', $validated) && is_array($validated['user_ids'])) {
+            $vehicle->users()->sync($validated['user_ids']);
+        }
 
         return response()->json([
             'message' => 'Sikeres mentés!',

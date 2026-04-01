@@ -52,6 +52,7 @@ class BasicDataSeeder extends Seeder
             ['key' => 'maintenance_mode'],
             ['key' => 'maintenance_message'],
             ['key' => 'cart_expiration_days'],
+            ['key' => 'vehicle_km_required_day'],
             ['key' => 'about_description'],
             ['key' => 'company_open'],
             ['key' => 'company_email']

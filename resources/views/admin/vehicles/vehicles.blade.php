@@ -109,6 +109,11 @@
                                                 <input type="number" class="form-control" id="oil_change_interval" name="oil_change_interval" min="1" step="1">
                                             </div>
 
+                                            <div class="col-12 mb-3">
+                                                <label class="form-label">Felhasználók</label>
+                                                <div id="vehicle_users_list" class="border rounded p-2" style="max-height: 180px; overflow-y: auto;"></div>
+                                            </div>
+
                                             <div class="col-12">
                                                 <label for="note" class="form-label">Megjegyzés</label>
                                                 <textarea class="form-control" id="note" name="note" rows="4"></textarea>
@@ -683,8 +688,61 @@
 
             $('#addButton').on('click', function () {
                 resetForm('Új jármű létrehozása');
+                ensureVehicleUsersLoaded();
                 adminModal.show();
             });
+
+            let vehicleUsersLoaded = false;
+
+            function renderVehicleUsers(users, selectedIds) {
+                const el = document.getElementById('vehicle_users_list');
+                if (!el) return;
+
+                const selected = new Set((Array.isArray(selectedIds) ? selectedIds : []).map(v => parseInt(v, 10)).filter(v => !Number.isNaN(v)));
+                const list = Array.isArray(users) ? users : [];
+
+                if (!list.length) {
+                    el.innerHTML = '<div class="text-muted small">Nincs elérhető felhasználó.</div>';
+                    return;
+                }
+
+                el.innerHTML = list.map(u => {
+                    const id = u?.id;
+                    const name = u?.name || '';
+                    const checked = selected.has(parseInt(id, 10)) ? 'checked' : '';
+                    return `
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="user_ids[]" id="vehicle_user_${id}" value="${id}" ${checked}>
+                            <label class="form-check-label" for="vehicle_user_${id}">${escapeHtml(name)}</label>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            async function ensureVehicleUsersLoaded(selectedIds = []) {
+                const el = document.getElementById('vehicle_users_list');
+                if (!el) return;
+
+                if (!vehicleUsersLoaded) {
+                    el.innerHTML = '<div class="text-muted small">Betöltés...</div>';
+                    try {
+                        const res = await fetch(`${window.appConfig.APP_URL}admin/fetch-felhasznalok`, {
+                            headers: {
+                                'Accept': 'application/json',
+                                'X-Requested-With': 'XMLHttpRequest',
+                            }
+                        });
+                        const users = await res.json().catch(() => []);
+                        window.__vehicleUsersCache = Array.isArray(users) ? users : [];
+                        vehicleUsersLoaded = true;
+                    } catch (e) {
+                        window.__vehicleUsersCache = [];
+                        vehicleUsersLoaded = true;
+                    }
+                }
+
+                renderVehicleUsers(window.__vehicleUsersCache || [], selectedIds);
+            }
 
             $('#adminTable').on('click', '.edit', function () {
                 resetForm('Jármű szerkesztése');
@@ -709,6 +767,8 @@
                     statusCheckbox.prop('checked', false);
                     statusLabel.text('Állapot (Inaktív)');
                 }
+
+                ensureVehicleUsersLoaded(row_data.assigned_user_ids || []);
 
                 adminModal.show();
                 loadTimeline(currentVehicleId);
@@ -873,6 +933,11 @@
                 $('#adminModalLabel').text(title);
                 $('#id').val('');
                 currentVehicleId = null;
+
+                const usersEl = document.getElementById('vehicle_users_list');
+                if (usersEl) {
+                    usersEl.innerHTML = '';
+                }
 
                 const statusLabel = $('label[for="status"]');
                 statusLabel.text('Állapot (Aktív)');

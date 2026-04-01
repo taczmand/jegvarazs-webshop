@@ -3,6 +3,7 @@
 use App\Http\Middleware\AdminAuth;
 use App\Http\Middleware\ApiKeyAuth;
 use App\Http\Middleware\CustomerAuth;
+use App\Http\Middleware\EnsureMonthlyVehicleKmSubmitted;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -19,6 +20,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin.auth' => AdminAuth::class,
             'api.key' => ApiKeyAuth::class,
             'customer.auth' => CustomerAuth::class,
+            'ensure.monthly_vehicle_km' => EnsureMonthlyVehicleKmSubmitted::class,
         ]);
         // CSRF kivétel az adott route-okhoz
         $middleware->validateCsrfTokens(except: [

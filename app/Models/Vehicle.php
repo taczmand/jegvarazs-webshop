@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Vehicle extends Model
 {
@@ -18,5 +19,10 @@ class Vehicle extends Model
     public function events()
     {
         return $this->hasMany(VehicleEvent::class);
+    }
+
+    public function users(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'vehicle_user')->withTimestamps();
     }
 }

@@ -29,12 +29,12 @@ use App\Http\Controllers\Admin\RegulationController;
 use App\Http\Controllers\Admin\ShippingMethodController;
 use App\Http\Controllers\Admin\StatController;
 use App\Http\Controllers\Admin\SensorReportController;
-use App\Http\Controllers\Admin\LaravelLogController;
 use App\Http\Controllers\Admin\StockStatusesController;
 use App\Http\Controllers\Admin\TagController;
 use App\Http\Controllers\Admin\TaxCategoryController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\VehicleController;
+use App\Http\Controllers\Admin\VehicleKmController;
 use App\Http\Controllers\Admin\WorksheetController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
@@ -102,7 +102,7 @@ Route::get('/automatizacio/kuldes', [AutomatedEmailController::class, 'sendToday
         Route::post('/bejelentkezes', [AdminLoginController::class, 'login']);
         Route::get('/kijelentkezes', [AdminLoginController::class, 'logout']);
 
-        Route::middleware(['admin.auth'])->group(function () {
+        Route::middleware(['admin.auth', 'ensure.monthly_vehicle_km'])->group(function () {
             Route::get('contract/{id}/pdf', [ContractController::class, 'getPdf'])->name('contract.pdf');
             Route::post('contract/preview', [ContractController::class, 'previewPdf'])->name('contract.preview');
             /* Dashboard */
@@ -234,6 +234,9 @@ Route::get('/automatizacio/kuldes', [AutomatedEmailController::class, 'sendToday
             Route::get('/jarmuvek/{id}/km-summary', [VehicleController::class, 'kmSummary'])->name('vehicles.km.summary');
             Route::post('/jarmuvek/{id}/events', [VehicleController::class, 'storeEvent'])->name('vehicles.events.store');
             Route::delete('/jarmuvek/{vehicleId}/events/{eventId}', [VehicleController::class, 'destroyEvent'])->name('vehicles.events.destroy');
+
+            Route::get('/jarmuvek/km', [VehicleKmController::class, 'index'])->name('vehicles.km.entry');
+            Route::post('/jarmuvek/km', [VehicleKmController::class, 'store'])->name('vehicles.km.store');
 
             /* Ügyvitel - Ügyfél folyamatok */
 
