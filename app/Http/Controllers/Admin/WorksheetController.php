@@ -884,11 +884,13 @@ class WorksheetController extends Controller
                     foreach ($request->file($inputName) as $file) {
                         $extension = strtolower($file->getClientOriginalExtension());
                         $filename = Str::random(40) . '.' . $extension;
-                        $storagePath = 'worksheet_images/' . $filename;
+                        $monthDir = now()->format('Y-m');
+                        $storagePath = 'worksheet_images/' . $monthDir . '/' . $filename;
 
                         if (!Storage::disk('local')->exists($storagePath)) {
                             // Mentés a storage/app/worksheet_images alá
-                            $file->storeAs('worksheet_images', $filename, 'local');
+                            Storage::disk('local')->makeDirectory('worksheet_images/' . $monthDir);
+                            $file->storeAs('worksheet_images/' . $monthDir, $filename, 'local');
 
                             // Teljes fájlút
                             $fullPath = Storage::disk('local')->path($storagePath);
@@ -933,8 +935,8 @@ class WorksheetController extends Controller
                                     $imagick->stripImage();
 
                                     $filenameWithoutExt = pathinfo($filename, PATHINFO_FILENAME);
-                                    $jpegFilename = $filenameWithoutExt . '.jpeg';
-                                    $jpegStoragePath = 'worksheet_images/' . $jpegFilename;
+                                    $jpegFilename = $filenameWithoutExt . '_converted.jpeg';
+                                    $jpegStoragePath = 'worksheet_images/' . $monthDir . '/' . $jpegFilename;
                                     $fullJpegPath = Storage::disk('local')->path($jpegStoragePath);
 
                                     // Mentés új jpeg fájlba
@@ -954,7 +956,9 @@ class WorksheetController extends Controller
                                     $imagick->destroy();
 
                                     // Eredeti törlése
-                                    Storage::disk('local')->delete($storagePath);
+                                    if ($jpegStoragePath !== $storagePath) {
+                                        Storage::disk('local')->delete($storagePath);
+                                    }
 
                                     // DB-ben már a jpeg-et tároljuk
                                     $filename = $jpegFilename;
@@ -966,7 +970,7 @@ class WorksheetController extends Controller
                             }
 
                             $photos[] = [
-                                'image_path' => $filename,
+                                'image_path' => ($monthDir . '/' . $filename),
                                 'image_type' => $imageType,
                             ];
                         }

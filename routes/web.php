@@ -465,15 +465,15 @@ Route::get('/automatizacio/kuldes', [AutomatedEmailController::class, 'sendToday
             })->name('contract.signature');
 
             // Munkalapképek
-            Route::get('/worksheets/{filename}', function ($filename) {
-                $path = storage_path("app/private/worksheet_images/{$filename}");
+            Route::get('/worksheets/{path}', function ($path) {
+                $path = storage_path("app/private/worksheet_images/{$path}");
 
                 if (!file_exists($path)) {
                     abort(404);
                 }
 
                 return response()->file($path);
-            })->name('worksheets.image');
+            })->where('path', '.*')->name('worksheets.image');
 
             // Időpontfoglalás csatolmányok
             Route::get('/appointment-photos/{filename}', function ($filename) {
