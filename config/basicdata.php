@@ -40,6 +40,7 @@ return [
     'facebook_verify_token' => 'your-secret-token',
     'facebook_app_id' => 'xxxxxxxxxxxxxxx',
     'facebook_app_secret' => 'xxxxxxxxxxxxxxx',
+    'facebook_user_token' => 'EAAB........',
     'facebook_page_token' => 'EAAB........',
     'facebook_page_id' => 'xxxxxxxxxxxxxxx',
 ];

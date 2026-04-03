@@ -21,7 +21,7 @@ class RefreshFacebookToken extends Command
             $requiredKeys = [
                 'facebook_app_id',
                 'facebook_app_secret',
-                'facebook_page_token',
+                'facebook_user_token',
                 'facebook_page_id',
             ];
 
@@ -33,8 +33,14 @@ class RefreshFacebookToken extends Command
 
             $app_id        = $facebook_options['facebook_app_id'];
             $app_secret    = $facebook_options['facebook_app_secret'];
-            $current_token = $facebook_options['facebook_page_token'];
+            $current_token = $facebook_options['facebook_user_token'];
             $page_id       = $facebook_options['facebook_page_id'];
+
+            if (!$current_token) {
+                Log::error('FB token refresh skipped: missing facebook_user_token');
+                $this->error('Missing facebook_user_token (long-lived user token).');
+                return 1;
+            }
 
             // 🔁 1. USER TOKEN FRISSÍTÉS
             $response = Http::timeout(10)
@@ -62,6 +68,12 @@ class RefreshFacebookToken extends Command
             if (!$newUserToken) {
                 throw new \Exception('No access_token in response');
             }
+
+            // 💾 2/a USER TOKEN MENTÉS
+            BasicData::updateOrCreate(
+                ['key' => 'facebook_user_token'],
+                ['value' => $newUserToken]
+            );
 
             // 🔁 2. PAGE TOKEN LEKÉRÉS
             $pageResponse = Http::timeout(10)
@@ -95,7 +107,7 @@ class RefreshFacebookToken extends Command
 
             $pageToken = $page['access_token'];
 
-            // 💾 3. MENTÉS
+            // 💾 3. PAGE TOKEN MENTÉS
             BasicData::where('key', 'facebook_page_token')
                 ->update(['value' => $pageToken]);
 
