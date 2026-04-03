@@ -17,6 +17,7 @@ use App\Http\Controllers\Admin\ContractProductsReportController;
 use App\Http\Controllers\Admin\CouponController;
 use App\Http\Controllers\Admin\CustomerController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\LaravelLogController;
 use App\Http\Controllers\Admin\DownloadsController;
 use App\Http\Controllers\Admin\EmployeeController;
 use App\Http\Controllers\Admin\LeadController;
