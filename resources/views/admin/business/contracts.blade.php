@@ -824,7 +824,7 @@
 
                 fields.forEach(field => {
                     let input = '';
-                    let wrapperClass = 'col-12 col-md-6 col-lg-3'; // mobil: 1 oszlop, tablet: 2 oszlop, desktop: 4 oszlop
+                    let wrapperClass = 'col-12 col-md-6 col-lg-4'; // mobil: 1 oszlop, tablet: 2 oszlop, desktop: 3 oszlop
 
                     const isCommentField = /megjegy|megjegyz|comment|note|remark/i.test(field.key || '')
                         || /megjegy|megjegyz|comment|note|remark/i.test(field.label || '');
@@ -907,7 +907,31 @@
 
                 container.append(row);
                 loadDefaultData();
+                updateDepositDueDateState();
             }
+
+            function updateDepositDueDateState() {
+                const container = $('#contractDataFieldsArea');
+                const $method = container.find('[name="contract_data[deposit_payment_method]"]');
+                const $dueDate = container.find('[name="contract_data[deposit_due_date]"]');
+
+                if (!$method.length || !$dueDate.length) {
+                    return;
+                }
+
+                const methodValue = ($method.val() || '').toString().trim();
+                const isCash = methodValue === 'Készpénz';
+
+                $dueDate.prop('disabled', isCash);
+
+                if (isCash) {
+                    $dueDate.val('');
+                }
+            }
+
+            $(document).on('change', '#contractDataFieldsArea [name="contract_data[deposit_payment_method]"]', function () {
+                updateDepositDueDateState();
+            });
 
             function loadDefaultData() {
                 const container = $('#contractDataFieldsArea');
@@ -927,6 +951,8 @@
                 if ($locationInput.length && city) {
                     $locationInput.val(city.trim());
                 }
+
+                updateDepositDueDateState();
             }
 
 

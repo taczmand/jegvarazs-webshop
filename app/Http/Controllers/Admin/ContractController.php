@@ -43,6 +43,18 @@ class ContractController extends Controller
         ]);
     }
 
+    private function normalizeContractData($contractData): array
+    {
+        $data = is_array($contractData) ? $contractData : [];
+
+        $depositMethod = isset($data['deposit_payment_method']) ? trim((string) $data['deposit_payment_method']) : '';
+        if ($depositMethod === 'Készpénz') {
+            $data['deposit_due_date'] = null;
+        }
+
+        return $data;
+    }
+
     public function data(Request $request)
     {
         $user = auth('admin')->user();
@@ -507,7 +519,7 @@ class ContractController extends Controller
                     'place_of_birth' => $request->input('place_of_birth') ?? null,
                     'date_of_birth' => $request->input('date_of_birth') ?? null,
                     'id_number' => $request->input('id_number'),
-                    'data' => $request->input('contract_data', []),
+                    'data' => $this->normalizeContractData($request->input('contract_data', [])),
                     'signature_path' => "{$signatureName}",
                     'created_by' => $creatorId,
                 ]);
@@ -613,8 +625,6 @@ class ContractController extends Controller
         }
     }
 
-
-
     public function fetchWithCategories() {
         $categories = Category::whereHas('products', function($query) {
             $query->where('is_offerable', 1);
@@ -716,7 +726,7 @@ class ContractController extends Controller
 
         $contract = array(
             'version' => $request->input('contract_version'),
-            'name' => $request->input('contact_name'),
+            'name' => $request->input('contact_name') . ' szerződés',
             'country' => $request->input('contact_country'),
             'zip_code' => $request->input('contact_zip_code'),
             'city' => $request->input('contact_city'),
@@ -728,7 +738,7 @@ class ContractController extends Controller
             'place_of_birth' => $request->input('place_of_birth') ?? null,
             'date_of_birth' => $request->input('date_of_birth') ?? null,
             'id_number' => $request->input('id_number'),
-            'data' => $request->input('contract_data', []),
+            'data' => $this->normalizeContractData($request->input('contract_data', [])),
             'created_by' => $creatorId
         );
 
