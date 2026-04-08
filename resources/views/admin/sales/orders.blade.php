@@ -161,6 +161,7 @@
                                             <th>Termék</th>
                                             <th>Bruttó ár</th>
                                             <th>Mennyiség</th>
+                                            <th>Mértékegység</th>
                                             <th>AFA</th>
                                             <th>Összeg</th>
                                         </tr>
@@ -426,10 +427,14 @@
                 itemsBody.empty();
 
                 items.forEach(item => {
+                    const unitLabel = item?.product?.unit
+                        ? (item.product.unit.abbreviation || item.product.unit.name || '')
+                        : '';
                     const row = `<tr>
                         <td>${item.product_name}</td>
                         <td>${item.gross_price} Ft</td>
                         <td>${item.quantity}</td>
+                        <td>${unitLabel}</td>
                         <td>${item.tax_value}%</td>
                         <td>${item.gross_price * item.quantity} Ft</td>
                     </tr>`;

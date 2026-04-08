@@ -137,6 +137,11 @@
                                             </div>
                                         </div>
                                         <div class="mb-3">
+                                            <label class="form-label">Mértékegység</label>
+                                            <select class="form-select" id="unit-select" name="unit_id">
+                                            </select>
+                                        </div>
+                                        <div class="mb-3">
                                             <label class="form-label">Partner bruttó ár (Ft)</label>
                                             <input type="number" step="0.01" class="form-control" name="partner_gross_price" id="partner_gross_price">
                                         </div>
@@ -351,6 +356,7 @@
                     renderAttributes(allMetaData.original.attributes);
                     renderTags(allMetaData.original.tags);
                     renderTaxes(allMetaData.original.taxes);
+                    renderUnits(allMetaData.original.units);
                     renderPhotos([], null);  // Üres fotók kezdetben
                 } catch (error) {
                     showToast(error, 'danger');
@@ -516,6 +522,7 @@
                     renderTags(allMetaData.original.tags, assigned_tags);
                     renderPhotos(assigned_photos, product.id);
                     renderTaxes(allMetaData.original.taxes, product.tax_id);
+                    renderUnits(allMetaData.original.units, product.unit_id);
 
                     initProductHistory(product.id);
 
@@ -730,6 +737,17 @@
                     taxSelect.append(`
                         <option value="${tax.id}" ${selected}>${tax.tax_value} (${tax.tax_name})</option>
                     `);
+                });
+            }
+
+            function renderUnits(units, assignedUnitId = null) {
+                const unitSelect = $('#unit-select');
+                unitSelect.empty();
+                unitSelect.append(`<option value="">Nincs megadva</option>`);
+                (units || []).forEach(unit => {
+                    const selected = assignedUnitId === unit.id ? 'selected' : '';
+                    const label = unit.abbreviation ? `${unit.name} (${unit.abbreviation})` : unit.name;
+                    unitSelect.append(`<option value="${unit.id}" ${selected}>${label}</option>`);
                 });
             }
             function renderPhotos(photos, productId) {

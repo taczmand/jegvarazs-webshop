@@ -27,6 +27,7 @@ class ProductRequest extends FormRequest
             'tax_id' => ['required', 'numeric', 'exists:tax_categories,id'],
             'status' => ['required', 'string', 'in:active,inactive'],
             'category_id' => ['required', 'numeric', 'exists:categories,id'],
+            'unit_id' => ['nullable', 'numeric', 'exists:units,id'],
             'attributes' => ['nullable', 'array'],
             'attributes.*' => [
                 'nullable',

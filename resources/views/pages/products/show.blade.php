@@ -106,6 +106,11 @@
 
                         @auth('customer')
                                 @if($status['slug'] === 'in_stock')
+                                    @if($product->unit)
+                                        <div class="mb-2 text-muted" style="font-size: 0.95rem;">
+                                            Mennyiség: <strong>{{ $product->unit->abbreviation ?? $product->unit->name }}</strong>
+                                        </div>
+                                    @endif
                                     <div class="product__details__quantity">
                                         <div class="quantity">
                                             <div class="pro-qty" data-unit-qty="{{ $product->unit_qty }}">

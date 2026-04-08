@@ -126,7 +126,7 @@ class SimplePayController extends Controller
             return redirect()->route('checkout')->with('error', 'Hibás fizetési visszatérés.');
         }
 
-        $order = Order::find($order_id);
+        $order = Order::with(['items.product.unit'])->find($order_id);
 
         if (!$order) {
             return redirect()->route('checkout')->with('error', 'Nincs megkezdett rendelése.');

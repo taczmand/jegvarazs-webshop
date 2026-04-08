@@ -38,7 +38,10 @@
             <p>Megrendelt termékek:</p>
             <ul class="list-unstyled mb-4">
                 @foreach($order->items as $item)
-                    <li>{{ $item->product_name }} - {{ $item->quantity }} db</li>
+                    @php
+                        $unitLabel = $item->product?->unit?->abbreviation ?? $item->product?->unit?->name;
+                    @endphp
+                    <li>{{ $item->product_name }} - {{ $item->quantity }} {{ $unitLabel ?? 'db' }}</li>
                 @endforeach
             </ul>
             <p><strong>Összeg:</strong> {{ number_format($order_total, 0, ',', ' ') }} {{ $order->currency ?? 'HUF' }}</p>

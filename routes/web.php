@@ -33,6 +33,7 @@ use App\Http\Controllers\Admin\SensorReportController;
 use App\Http\Controllers\Admin\StockStatusesController;
 use App\Http\Controllers\Admin\TagController;
 use App\Http\Controllers\Admin\TaxCategoryController;
+use App\Http\Controllers\Admin\UnitController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\VehicleController;
 use App\Http\Controllers\Admin\VehicleKmController;
@@ -420,6 +421,13 @@ Route::get('/automatizacio/kuldes', [AutomatedEmailController::class, 'sendToday
             Route::put('/beallitasok/ado-osztalyok/{tax}', [TaxCategoryController::class, 'update'])->name('tax-categories.update');
             Route::delete('/beallitasok/ado-osztalyok/{tax}', [TaxCategoryController::class, 'destroy'])->name('tax-categories.destroy');
 
+            // Mértékegységek
+            Route::get('/beallitasok/mertekegysegek', [UnitController::class, 'index'])->name('units.index');
+            Route::get('/beallitasok/mertekegysegek/data', [UnitController::class, 'data'])->name('units.data');
+            Route::post('/beallitasok/mertekegysegek', [UnitController::class, 'store'])->name('units.store');
+            Route::put('/beallitasok/mertekegysegek/{unit}', [UnitController::class, 'update'])->name('units.update');
+            Route::delete('/beallitasok/mertekegysegek/{unit}', [UnitController::class, 'destroy'])->name('units.destroy');
+
             // A még meg nem tekintett rekordok lekérése
             Route::get('/beallitasok/uj-adatok', [BasicDataController::class, 'getNewRecords'])->name('settings.new_records');
             Route::post('/beallitasok/uj-adatok/megtekintes', [BasicDataController::class, 'markAsViewed'])->name('settings.mark_as_viewed');
@@ -560,6 +568,7 @@ Route::get('/automatizacio/kuldes', [AutomatedEmailController::class, 'sendToday
         // Rendelés
         Route::post('/order', [OrderController::class, 'store'])->name('order.store');
         Route::get('/order/success/{order}', function (Order $order) {
+            $order->loadMissing(['items.product.unit']);
             return view('pages.order_success', compact('order'));
         })->name('order.success');
 

@@ -35,11 +35,13 @@
                 $item_name = data_get($item, 'product_name') ?? data_get($item, 'name');
                 $item_quantity = (float) (data_get($item, 'quantity') ?? 0);
                 $item_gross_price = (float) (data_get($item, 'gross_price') ?? 0);
+                $unit_label = data_get($item, 'product.unit.abbreviation')
+                    ?? data_get($item, 'product.unit.name');
             @endphp
             <div class="product">
                 <div class="product-details">
                     <div><strong>{{ $item_name }}</strong></div>
-                    <div>Mennyiség: {{ $item_quantity }}</div>
+                    <div>Mennyiség: {{ $item_quantity }}@if($unit_label) {{ $unit_label }}@endif</div>
                     <div>Bruttó egységár: {{ number_format($item_gross_price, 0, ',', ' ') }} Ft</div>
                 </div>
             </div>

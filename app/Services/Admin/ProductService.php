@@ -9,6 +9,7 @@ use App\Models\Category;
 use App\Models\Product;
 use App\Models\Tag;
 use App\Models\TaxCategory;
+use App\Models\Unit;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -68,6 +69,7 @@ class ProductService
         $attributes = Attribute::all();
         $brands = Brand::active()->get();
         $taxes = TaxCategory::all();
+        $units = Unit::query()->where('active', true)->orderBy('name')->get();
         $categories = Category::with(['children' => function ($query) {
             $query->where('status', 'active');
         }])->where('status', 'active')->get();
@@ -77,7 +79,8 @@ class ProductService
             'attributes' => $attributes,
             'brands' => $brands,
             'categories' => $categories,
-            'taxes' => $taxes
+            'taxes' => $taxes,
+            'units' => $units,
         ]);
     }
 
@@ -98,6 +101,7 @@ class ProductService
                 'description' => $data['description'] ?? null,
                 'stock' => $data['stock'] ?? 0,
                 'unit_qty' => $data['unit_qty'] ?? 1,
+                'unit_id' => $data['unit_id'] ?? null,
                 'gross_price' => $data['gross_price'] ?? 0,
                 'partner_gross_price' => $data['partner_gross_price'] ?? $data['gross_price'] ?? 0,
                 'is_offerable' => $data['is_offerable'] ?? false,
@@ -208,6 +212,7 @@ class ProductService
                 'description' => $data['description'] ?? null,
                 'stock' => $data['stock'] ?? 0,
                 'unit_qty' => $data['unit_qty'] ?? 1,
+                'unit_id' => $data['unit_id'] ?? null,
                 'gross_price' => $data['gross_price'] ?? 0,
                 'partner_gross_price' => $data['partner_gross_price'] ?? $data['gross_price'] ?? 0,
                 'is_offerable' => $data['is_offerable'] ?? false,

@@ -10,6 +10,12 @@ class Product extends Model
     use LogsActivity;
 
     protected $guarded = [];
+
+    public function unit()
+    {
+        return $this->belongsTo(Unit::class, 'unit_id');
+    }
+
     public function attributes()
     {
         return $this->belongsToMany(Attribute::class, 'product_attributes')

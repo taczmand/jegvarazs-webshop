@@ -219,7 +219,7 @@ class ShopCustomerController extends Controller
             return redirect()->route('login')->withErrors(['login' => 'Kérjük, jelentkezz be a rendeléseid megtekintéséhez.']);
         }
 
-        $orders = $customer->orders()->with('items')->orderBy('created_at', 'desc')->get();
+        $orders = $customer->orders()->with('items.product.unit')->orderBy('created_at', 'desc')->get();
 
         return view('pages.orders.index', compact('orders'));
     }
@@ -232,7 +232,7 @@ class ShopCustomerController extends Controller
         }
 
         $orderId = request()->route('id');
-        $order = $customer->orders()->with('items')->find($orderId);
+        $order = $customer->orders()->with('items.product.unit')->find($orderId);
 
         if (!$order) {
             return redirect()->route('customer.orders')->withErrors(['order' => 'A kiválasztott rendelés nem található.']);

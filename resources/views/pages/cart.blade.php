@@ -64,6 +64,11 @@
                                                         <div class="pro-qty" data-item-id="{{ $item->id }}" data-unit-qty="{{ $item->product->unit_qty }}">
                                                             <input type="text" value="{{ $item->quantity }}" min="{{ $item->product->unit_qty }}" class="quanity_input" item-id="{{ $item->id }}">
                                                         </div>
+                                                        @if($item->product && $item->product->unit)
+                                                            <div class="text-muted mt-1" style="font-size: 0.85rem;">
+                                                                {{ $item->product->unit->abbreviation ?? $item->product->unit->name }}
+                                                            </div>
+                                                        @endif
                                                     </div>
                                                 </td>
                                                 <td class="shoping__cart__total">

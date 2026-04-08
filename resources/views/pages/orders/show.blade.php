@@ -58,7 +58,12 @@
                 @foreach($order->items as $item)
                     <tr>
                         <td>{{ $item->product_name }}</td>
-                        <td>{{ $item->quantity }}</td>
+                        <td>
+                            {{ $item->quantity }}
+                            @if($item->product && $item->product->unit)
+                                <span class="text-muted">{{ $item->product->unit->abbreviation ?? $item->product->unit->name }}</span>
+                            @endif
+                        </td>
                         <td>{{ number_format($item->gross_price, 0, ',', ' ') }} Ft</td>
                         <td>{{ number_format($item->gross_price * $item->quantity, 0, ',', ' ') }} Ft</td>
                     </tr>

@@ -129,6 +129,7 @@
                 <a class="collapse-item" href="{{ route('admin.stock-statuses.index') }}">Raktári állapotok</a>
                 <a class="collapse-item" href="{{ route('admin.order-statuses.index') }}">Rendelési állapotok</a>
                 <a class="collapse-item" href="{{ route('admin.tax-categories.index') }}">Adó osztályok</a>
+                <a class="collapse-item" href="{{ route('admin.units.index') }}">Mértékegységek</a>
             </div>
         </div>
     </li>

@@ -44,6 +44,11 @@ class PermissionSeeder extends Seeder
             ['id' => 32, 'name' => 'edit-tax', 'label' => 'Adó osztály szerkesztése', 'group' => 'Webshop'],
             ['id' => 33, 'name' => 'create-tax', 'label' => 'Adó osztály létrehozása', 'group' => 'Webshop'],
             ['id' => 34, 'name' => 'delete-tax', 'label' => 'Adó osztály törlése', 'group' => 'Webshop'],
+
+            ['id' => 122, 'name' => 'view-units', 'label' => 'Mértékegységek megtekintése', 'group' => 'Webshop'],
+            ['id' => 123, 'name' => 'create-unit', 'label' => 'Mértékegység létrehozása', 'group' => 'Webshop'],
+            ['id' => 124, 'name' => 'edit-unit', 'label' => 'Mértékegység szerkesztése', 'group' => 'Webshop'],
+            ['id' => 125, 'name' => 'delete-unit', 'label' => 'Mértékegység törlése', 'group' => 'Webshop'],
             ['id' => 35, 'name' => 'view-downloads', 'label' => 'Letöltések megtekintése', 'group' => 'Tartalomkezelés'],
             ['id' => 36, 'name' => 'edit-download', 'label' => 'Letöltés szerkesztése', 'group' => 'Tartalomkezelés'],
             ['id' => 37, 'name' => 'create-download', 'label' => 'Letöltés létrehozása', 'group' => 'Tartalomkezelés'],

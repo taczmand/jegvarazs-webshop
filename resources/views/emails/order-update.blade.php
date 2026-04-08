@@ -36,10 +36,14 @@
     <div class="section">
         <h2>Termékek</h2>
         @foreach ($order_items as $item)
+            @php
+                $unit_label = data_get($item, 'product.unit.abbreviation')
+                    ?? data_get($item, 'product.unit.name');
+            @endphp
             <div class="product">
                 <div class="product-details">
                     <div><strong>{{ $item['product_name'] }}</strong></div>
-                    <div>Mennyiség: {{ $item['quantity'] }}</div>
+                    <div>Mennyiség: {{ $item['quantity'] }}@if($unit_label) {{ $unit_label }}@endif</div>
                     <div>Bruttó egységár: {{ number_format($item['gross_price'], 0, ',', ' ') }} Ft</div>
                 </div>
             </div>

@@ -15,7 +15,7 @@ class CheckoutController extends Controller
         // ha benne van a kosarban a futarszolgaltatas, akkor toroljuk ki minden esetben
         $cart->items()->where('product_id', 1)->delete();
 
-        $cart_items = $customer->cart()->with('items.product')->first();
+        $cart_items = $customer->cart()->with('items.product.unit')->first();
 
         $snapshot = session()->get('cart_price_snapshot', []);
         $priceChanges = [];
