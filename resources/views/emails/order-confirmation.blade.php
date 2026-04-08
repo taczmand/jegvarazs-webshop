@@ -35,7 +35,8 @@
                 $item_name = data_get($item, 'product_name') ?? data_get($item, 'name');
                 $item_quantity = (float) (data_get($item, 'quantity') ?? 0);
                 $item_gross_price = (float) (data_get($item, 'gross_price') ?? 0);
-                $unit_label = data_get($item, 'product.unit.abbreviation')
+                $unit_label = data_get($item, 'unit_label')
+                    ?? data_get($item, 'product.unit.abbreviation')
                     ?? data_get($item, 'product.unit.name');
             @endphp
             <div class="product">

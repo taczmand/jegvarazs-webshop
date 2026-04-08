@@ -37,7 +37,8 @@
         <h2>Termékek</h2>
         @foreach ($order_items as $item)
             @php
-                $unit_label = data_get($item, 'product.unit.abbreviation')
+                $unit_label = data_get($item, 'unit_label')
+                    ?? data_get($item, 'product.unit.abbreviation')
                     ?? data_get($item, 'product.unit.name');
             @endphp
             <div class="product">

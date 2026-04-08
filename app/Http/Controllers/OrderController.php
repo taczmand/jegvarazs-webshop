@@ -19,6 +19,10 @@ class OrderController extends Controller
         $customer = auth('customer')->user();
         $cart = $customer->cart;
 
+        if ($cart) {
+            $cart->loadMissing(['items.product.unit', 'items.product.taxCategory']);
+        }
+
         if (!$request->input('order_condition')) {
             return redirect()->back()
                 ->withErrors(['El kell fogadni az adatkezelési nyilatkozatot.'])
@@ -62,12 +66,16 @@ class OrderController extends Controller
 
         // Kosár termékek előkészítése
         $cartItems = $cart->items->map(function ($item) {
+            $unit_label = data_get($item, 'product.unit.abbreviation')
+                ?? data_get($item, 'product.unit.name');
+
             return [
                 'product_id'   => $item->product_id,
                 'name'         => $item->product->title,
                 'gross_price'  => $item->product->display_gross_price,
                 'quantity'     => $item->quantity,
                 'tax_value'    => $item->product->taxCategory->tax_value,
+                'unit_label'   => $unit_label,
             ];
         });
 
