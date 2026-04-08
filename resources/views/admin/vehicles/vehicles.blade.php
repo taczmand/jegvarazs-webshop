@@ -205,7 +205,7 @@
         <script src="https://cdn.canvasjs.com/canvasjs.min.js"></script>
         <style>
             .vehicle-timeline {
-                overflow-x: auto;
+                overflow-x: hidden;
                 overflow-y: hidden;
                 -webkit-overflow-scrolling: touch;
             }
@@ -213,8 +213,19 @@
             .vehicle-timeline-inner {
                 position: relative;
                 padding: 6px 0;
-                min-width: 640px;
-                width: max-content;
+                width: 100%;
+                min-width: 0;
+            }
+
+            @media (max-width: 991.98px) {
+                .vehicle-timeline {
+                    overflow-x: auto;
+                }
+
+                .vehicle-timeline-inner {
+                    min-width: 640px;
+                    width: max-content;
+                }
             }
 
             .vehicle-timeline-inner::before {
@@ -242,6 +253,8 @@
             }
             .vehicle-timeline-col {
                 width: 50%;
+                box-sizing: border-box;
+                min-width: 0;
             }
             .vehicle-timeline-col.left { padding-right: 22px; }
             .vehicle-timeline-col.right { padding-left: 22px; }
