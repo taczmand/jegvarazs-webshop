@@ -17,7 +17,16 @@
                         <label for="toDate" class="form-label">Záró dátum</label>
                         <input type="date" class="form-control" id="toDate" value="{{ $to ?? '' }}">
                     </div>
-                    <div class="col-12 col-md-6">
+                    <div class="col-12 col-md-3">
+                        <label for="formNameSelect" class="form-label">Form</label>
+                        <select class="form-select" id="formNameSelect">
+                            <option value="">Összes</option>
+                            @foreach(($formNames ?? []) as $fn)
+                                <option value="{{ $fn }}" @if(($selectedFormName ?? null) === $fn) selected @endif>{{ $fn }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-12 col-md-3">
                         <div class="small text-muted" id="chartHint"></div>
                     </div>
                 </div>
@@ -38,6 +47,7 @@
         const hintEl = document.getElementById('chartHint');
         const fromEl = document.getElementById('fromDate');
         const toEl = document.getElementById('toDate');
+        const formNameEl = document.getElementById('formNameSelect');
 
         let chart = null;
 
@@ -51,6 +61,7 @@
             const leads = Number(counts.leads || 0);
             const survey = Number(counts.survey || 0);
             const contract = Number(counts.contract || 0);
+            const contractProductsQty = Number(counts.contract_products_qty || 0);
 
             const p1 = leads > 0 ? Math.round((survey / leads) * 1000) / 10 : 0;
             const p2 = leads > 0 ? Math.round((contract / leads) * 1000) / 10 : 0;
@@ -74,7 +85,7 @@
                         dataPoints: [
                             { label: `Érdeklődők`, y: leads },
                             { label: `Felmérés (${p1}%)`, y: survey },
-                            { label: `Szerződés (${p2}%)`, y: contract },
+                            { label: `Szerződés (${p2}%) – ${contractProductsQty} db termék`, y: contract },
                         ],
                     }
                 ]
@@ -84,6 +95,7 @@
         async function load() {
             const from = fromEl?.value;
             const to = toEl?.value;
+            const formName = formNameEl?.value;
             if (!from || !to) return;
 
             setHint('Betöltés...');
@@ -91,6 +103,9 @@
             const url = new URL(`{{ route('admin.stats.lead_conversion.data') }}`, window.location.origin);
             url.searchParams.set('from', from);
             url.searchParams.set('to', to);
+            if (formName) {
+                url.searchParams.set('form_name', formName);
+            }
 
             const res = await fetch(url.toString(), { headers: { 'Accept': 'application/json' } });
             const payload = await res.json().catch(() => ({}));
@@ -113,6 +128,7 @@
 
         if (fromEl) fromEl.addEventListener('change', load);
         if (toEl) toEl.addEventListener('change', load);
+        if (formNameEl) formNameEl.addEventListener('change', load);
 
         load();
     </script>

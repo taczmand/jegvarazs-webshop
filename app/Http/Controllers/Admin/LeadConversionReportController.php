@@ -25,9 +25,25 @@ class LeadConversionReportController extends Controller
             [$from, $to] = [$to, $from];
         }
 
+        $selectedFormName = $request->query('form_name');
+        $selectedFormName = is_string($selectedFormName) ? trim($selectedFormName) : null;
+        $selectedFormName = $selectedFormName !== '' ? $selectedFormName : null;
+
+        $formNames = Lead::query()
+            ->whereNotNull('form_name')
+            ->where('form_name', '<>', '')
+            ->select('form_name')
+            ->distinct()
+            ->orderBy('form_name')
+            ->pluck('form_name')
+            ->values()
+            ->all();
+
         return view('admin.statistics.lead_conversion', [
             'from' => $from->toDateString(),
             'to' => $to->toDateString(),
+            'formNames' => $formNames,
+            'selectedFormName' => $selectedFormName,
         ]);
     }
 
@@ -41,6 +57,7 @@ class LeadConversionReportController extends Controller
         $request->validate([
             'from' => ['required', 'date'],
             'to' => ['required', 'date'],
+            'form_name' => ['nullable', 'string'],
         ]);
 
         $from = Carbon::parse($request->query('from'))->startOfDay();
@@ -50,10 +67,19 @@ class LeadConversionReportController extends Controller
             [$from, $to] = [$to, $from];
         }
 
-        $leads = Lead::query()
+        $formName = $request->query('form_name');
+        $formName = is_string($formName) ? trim($formName) : null;
+        $formName = $formName !== '' ? $formName : null;
+
+        $leadsQuery = Lead::query()
             ->whereBetween('created_at', [$from, $to])
-            ->select(['id', 'email', 'phone', 'status', 'created_at'])
-            ->get();
+            ->select(['id', 'email', 'phone', 'status', 'created_at']);
+
+        if ($formName) {
+            $leadsQuery->where('form_name', $formName);
+        }
+
+        $leads = $leadsQuery->get();
 
         $leadCount = $leads->count();
 
@@ -61,10 +87,12 @@ class LeadConversionReportController extends Controller
             return response()->json([
                 'from' => $from->toDateString(),
                 'to' => $to->toDateString(),
+                'form_name' => $formName,
                 'counts' => [
                     'leads' => 0,
                     'survey' => 0,
                     'contract' => 0,
+                    'contract_products_qty' => 0,
                 ],
             ]);
         }
@@ -150,6 +178,7 @@ class LeadConversionReportController extends Controller
         }
 
         $contractLeadIds = [];
+        $matchedContractIds = [];
         foreach ($leads as $lead) {
             $leadCreatedAt = $lead->created_at ? Carbon::parse($lead->created_at) : null;
 
@@ -170,31 +199,45 @@ class LeadConversionReportController extends Controller
             }
 
             $has = false;
+            $leadContractIds = [];
             foreach ($candidates as $contract) {
                 if (!$leadCreatedAt) {
                     $has = true;
+                    $leadContractIds[] = (int) $contract->id;
                     break;
                 }
                 if ($contract->created_at && Carbon::parse($contract->created_at)->greaterThanOrEqualTo($leadCreatedAt)) {
                     $has = true;
-                    break;
+                    $leadContractIds[] = (int) $contract->id;
                 }
             }
 
             if ($has) {
                 $contractLeadIds[] = (int) $lead->id;
+                $matchedContractIds = array_merge($matchedContractIds, $leadContractIds);
             }
         }
 
         $contractCount = count(array_values(array_unique($contractLeadIds)));
 
+        $matchedContractIds = array_values(array_unique(array_filter($matchedContractIds, fn ($id) => (int) $id > 0)));
+
+        $contractProductsQty = 0;
+        if (count($matchedContractIds) > 0) {
+            $contractProductsQty = (int) DB::table('contract_products')
+                ->whereIn('contract_id', $matchedContractIds)
+                ->sum(DB::raw('COALESCE(product_qty, 0)'));
+        }
+
         return response()->json([
             'from' => $from->toDateString(),
             'to' => $to->toDateString(),
+            'form_name' => $formName,
             'counts' => [
                 'leads' => $leadCount,
                 'survey' => $surveyCount,
                 'contract' => $contractCount,
+                'contract_products_qty' => $contractProductsQty,
             ],
         ]);
     }
