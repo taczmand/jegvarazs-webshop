@@ -53,7 +53,7 @@
             const contract = Number(counts.contract || 0);
 
             const p1 = leads > 0 ? Math.round((survey / leads) * 1000) / 10 : 0;
-            const p2 = survey > 0 ? Math.round((contract / survey) * 1000) / 10 : 0;
+            const p2 = leads > 0 ? Math.round((contract / leads) * 1000) / 10 : 0;
 
             return {
                 animationEnabled: true,
