@@ -20,6 +20,7 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\LaravelLogController;
 use App\Http\Controllers\Admin\DownloadsController;
 use App\Http\Controllers\Admin\EmployeeController;
+use App\Http\Controllers\Admin\LeadConversionReportController;
 use App\Http\Controllers\Admin\LeadController;
 use App\Http\Controllers\Admin\OfferController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
@@ -211,6 +212,9 @@ Route::get('/automatizacio/kuldes', [AutomatedEmailController::class, 'sendToday
 
             Route::get('/statisztika/szerzodesek-termekek', [ContractProductsReportController::class, 'index'])->name('stats.contract_products');
             Route::get('/statisztika/szerzodesek-termekek/data', [ContractProductsReportController::class, 'data'])->name('stats.contract_products.data');
+
+            Route::get('/statisztika/lead-konverzio', [LeadConversionReportController::class, 'index'])->name('stats.lead_conversion');
+            Route::get('/statisztika/lead-konverzio/data', [LeadConversionReportController::class, 'data'])->name('stats.lead_conversion.data');
 
             Route::get('/statisztika/szenzorok', [SensorReportController::class, 'index'])->name('stats.sensors');
             Route::get('/statisztika/szenzorok/{deviceId}', [SensorReportController::class, 'show'])->name('stats.sensors.device');
