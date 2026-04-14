@@ -20,7 +20,7 @@ window.showToast = function (message, type = 'success') {
 };
 
 window.sendViewRequest = function (model, id) {
-    fetch(`${window.appConfig.APP_URL}admin/beallitasok/uj-adatok/megtekintes`, {
+    fetch(`/admin/beallitasok/uj-adatok/megtekintes`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
