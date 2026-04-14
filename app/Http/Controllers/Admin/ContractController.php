@@ -476,10 +476,12 @@ class ContractController extends Controller
 
                 if ($contract->email) {
                     $mail = Mail::to($contract->email);
-                    if (!app()->environment('local')) {
-                        $mail->bcc('jegvarazsiroda@gmail.com');
-                    }
                     $mail->send(new NewContract($contract));
+                }
+
+                if (!app()->environment('local')) {
+                    $mail_to_office = Mail::to('jegvarazsiroda@gmail.com');
+                    $mail_to_office->send(new NewContract($contract));
                 }
 
                 return response()->json([
@@ -599,10 +601,12 @@ class ContractController extends Controller
 
             if ($contract->email) {
                 $mail = Mail::to($contract->email);
-                if (!app()->environment('local')) {
-                    $mail->bcc('jegvarazsiroda@gmail.com');
-                }
                 $mail->send(new NewContract($contract));
+            }
+
+            if (!app()->environment('local')) {
+                $mail_to_office = Mail::to('jegvarazsiroda@gmail.com');
+                $mail_to_office->send(new NewContract($contract));
             }
 
             return response()->json([
