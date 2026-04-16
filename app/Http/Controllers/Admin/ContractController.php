@@ -47,6 +47,10 @@ class ContractController extends Controller
     {
         $data = is_array($contractData) ? $contractData : [];
 
+        if (!array_key_exists('deposit_due_date', $data)) {
+            $data['deposit_due_date'] = null;
+        }
+
         $depositMethod = isset($data['deposit_payment_method']) ? trim((string) $data['deposit_payment_method']) : '';
         if ($depositMethod === 'Készpénz') {
             $data['deposit_due_date'] = null;
@@ -384,7 +388,7 @@ class ContractController extends Controller
                     'place_of_birth' => $request->input('place_of_birth') ?? null,
                     'date_of_birth' => $request->input('date_of_birth') ?? null,
                     'id_number' => $request->input('id_number'),
-                    'data' => $request->input('contract_data', [])
+                    'data' => $this->normalizeContractData($request->input('contract_data', []))
                 ]);
 
                 if ($request->filled('signature')) {
