@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Lead extends Model
 {
@@ -24,4 +25,9 @@ class Lead extends Model
         'comment',
         'data'
     ];
+
+    public function contracts(): HasMany
+    {
+        return $this->hasMany(Contract::class, 'lead_id');
+    }
 }

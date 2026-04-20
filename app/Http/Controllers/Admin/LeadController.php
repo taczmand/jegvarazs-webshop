@@ -17,25 +17,66 @@ class LeadController extends Controller
         return view('admin.business.leads');
     }
 
-    public function data()
+    public function search(Request $request)
     {
-        $leads = Lead::select([
-            'id',
-            'full_name',
-            'email',
-            'phone',
-            'city',
-            'form_name',
-            'campaign_name',
-            'status',
-            'created_at',
-            'viewed_by',
-            'viewed_at',
+        $q = $request->query('q');
+        $q = is_string($q) ? trim($q) : '';
+
+        if (mb_strlen($q) < 2) {
+            return response()->json([
+                'leads' => [],
+            ]);
+        }
+
+        $leads = Lead::query()
+            ->select(['id', 'full_name', 'email', 'phone', 'city', 'created_at'])
+            ->where(function ($query) use ($q) {
+                $query->where('full_name', 'like', "%{$q}%")
+                    ->orWhere('email', 'like', "%{$q}%")
+                    ->orWhere('phone', 'like', "%{$q}%");
+            })
+            ->orderByDesc('id')
+            ->limit(20)
+            ->get();
+
+        return response()->json([
+            'leads' => $leads,
         ]);
+    }
+
+    public function data(Request $request)
+    {
+        $hasContract = ($request->query('has_contract') ?? '');
+        $hasContract = is_string($hasContract) ? trim($hasContract) : '';
+
+        $leads = Lead::query()
+            ->select([
+                'id',
+                'full_name',
+                'email',
+                'phone',
+                'city',
+                'form_name',
+                'campaign_name',
+                'status',
+                'created_at',
+                'viewed_by',
+                'viewed_at',
+            ])
+            ->withCount('contracts');
+
+        if ($hasContract === '1') {
+            $leads->has('contracts');
+        } elseif ($hasContract === '0') {
+            $leads->doesntHave('contracts');
+        }
 
         return DataTables::of($leads)
             ->editColumn('created_at', function ($item) {
                 return $item->created_at ? $item->created_at->format('Y-m-d H:i:s') : '';
+            })
+            ->addColumn('has_contract', function ($item) {
+                return ((int) ($item->contracts_count ?? 0)) > 0 ? 'Igen' : 'Nem';
             })
             ->addColumn('viewed_by', function ($item) {
                 if ($item->viewed_by) {

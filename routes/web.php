@@ -294,6 +294,7 @@ Route::get('/automatizacio/kuldes', [AutomatedEmailController::class, 'sendToday
             // Érdeklődők
             Route::get('/leads', [LeadController::class, 'index'])->name('leads.index');
             Route::get('/leads/data', [LeadController::class, 'data'])->name('leads.data');
+            Route::get('/leads/search', [LeadController::class, 'search'])->name('leads.search');
             Route::get('/leads/{id}', [LeadController::class, 'show'])->name('leads.show');
             Route::post('/leads/{id}', [LeadController::class, 'update'])->name('leads.update');
             Route::delete('/leads/{id}', [LeadController::class, 'destroy'])->name('leads.destroy');

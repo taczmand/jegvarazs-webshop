@@ -37,4 +37,9 @@ class Contract extends Model
         return $this->belongsTo(Client::class, 'client_id');
     }
 
+    public function lead(): BelongsTo
+    {
+        return $this->belongsTo(Lead::class, 'lead_id');
+    }
+
 }

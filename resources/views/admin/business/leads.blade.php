@@ -54,6 +54,14 @@
                             <option value="Túl messze van">Túl messze van</option>
                         </select>
                     </div>
+
+                    <div class="filter-group flex-grow-1 flex-md-shrink-0">
+                        <select class="form-select" id="has_contract_filter">
+                            <option value="">Szerződés (összes)</option>
+                            <option value="1">Van szerződés</option>
+                            <option value="0">Nincs szerződés</option>
+                        </select>
+                    </div>
                 </div>
 
                 <table class="table table-bordered display responsive nowrap" id="adminTable" style="width:100%">
@@ -67,6 +75,7 @@
                         <th data-priority="7">Form</th>
                         <th>Kampány</th>
                         <th>Állapot</th>
+                        <th>Szerződés</th>
                         <th data-priority="3">Létrehozva</th>
                         <th>Látta</th>
                         <th data-priority="2">Műveletek</th>
@@ -162,7 +171,12 @@
                 },
                 processing: true,
                 serverSide: true,
-                ajax: '{{ route('admin.leads.data') }}',
+                ajax: {
+                    url: '{{ route('admin.leads.data') }}',
+                    data: function (d) {
+                        d.has_contract = ($('#has_contract_filter').val() || '').toString();
+                    }
+                },
                 order: [[0, 'desc']],
                 columns: [
                     { data: 'id' },
@@ -173,6 +187,7 @@
                     { data: 'form_name' },
                     { data: 'campaign_name' },
                     { data: 'status' },
+                    { data: 'has_contract', orderable: false, searchable: false },
                     { data: 'created_at' },
                     { data: 'viewed_by' },
                     { data: 'action', orderable: false, searchable: false }
@@ -185,6 +200,10 @@
                 var i =$(this).attr('data-column');
                 var v =$(this).val();
                 table.columns(i).search(v).draw();
+            });
+
+            $('#has_contract_filter').on('change', function () {
+                table.ajax.reload();
             });
 
             // Érdeklődő szerkesztése

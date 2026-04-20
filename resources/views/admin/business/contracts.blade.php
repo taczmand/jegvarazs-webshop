@@ -71,6 +71,7 @@
                 @csrf
                 <input type="hidden" name="contract_id" id="contract_id">
                 <input type="hidden" id="client_id" name="client_id">
+                <input type="hidden" id="lead_id" name="lead_id">
                 <input type="hidden" id="client_address_id" name="client_address_id">
                 <input type="hidden" id="create_client" name="create_client" value="0">
                 <input type="hidden" id="use_custom_address" name="use_custom_address" value="0">
@@ -104,6 +105,14 @@
                                             </td>
                                         </tr>
 
+                                        <tr id="lead_assignment_row" style="display:none;">
+                                            <td class="w-25">Érdeklődő hozzárendelése</td>
+                                            <td class="position-relative">
+                                                <input type="text" class="form-control" id="lead_search" placeholder="Név / e-mail / telefon..." autocomplete="off">
+                                                <div id="lead_search_results" class="list-group w-100 admin-client-search-results" style="z-index: 1100; display:none; max-height: 260px; overflow-y: auto;"></div>
+                                                <div class="small mt-1" id="lead_selected_hint" style="display:none;"></div>
+                                            </td>
+                                        </tr>
                                         <tr class="contract-client-fields" style="display:none;">
                                             <td class="w-25">Név / Cégnév*</td>
                                             <td><input type="text" class="form-control" name="contact_name" id="contact_name" required></td>
@@ -400,6 +409,10 @@
 
                 // Kapcsolati adatok
 
+                $('#client_id').val(contract.client_id || '');
+                $('#create_client').val('0');
+                $('#lead_id').val(contract.lead_id || '');
+
                 $('#contact_name').val(contract.name);
                 $('#contact_country').val(contract.country);
                 $('#contact_zip_code').val(contract.zip_code);
@@ -420,7 +433,35 @@
 
                 setClientFieldsVisible(true);
                 setSnapshotMode(false);
-                $('#create_client').val('0');
+
+                // Érdeklődő (csak megtekintés) - client mezők láthatósága után,
+                // mert a setClientFieldsVisible() meghívja az updateLeadAssignmentVisibility()-t.
+
+                if (contract.lead_id) {
+                    try {
+                        const leadResp = await fetch(`${window.appConfig.APP_URL}admin/leads/${contract.lead_id}`, {
+                            headers: {
+                                'Accept': 'application/json'
+                            }
+                        });
+                        if (leadResp.ok) {
+                            const lead = await leadResp.json();
+                            const leadParts = [lead?.full_name, lead?.email, lead?.phone].filter(Boolean).join(' | ');
+                            $('#lead_search').val(leadParts ? `${leadParts} (#${contract.lead_id})` : `#${contract.lead_id}`);
+                        } else {
+                            $('#lead_search').val(`#${contract.lead_id}`);
+                        }
+                    } catch (e) {
+                        $('#lead_search').val(`#${contract.lead_id}`);
+                    }
+
+                    $('#lead_selected_hint').text('Érdeklődő hozzárendelve.').show();
+                    $('#lead_assignment_row').show();
+                } else {
+                    $('#lead_search').val('');
+                    $('#lead_selected_hint').hide().text('');
+                    $('#lead_assignment_row').hide();
+                }
 
                 const display = `${contract.name || ''}${contract.email ? ' (' + contract.email + ')' : ''}`.trim();
                 $('#client_search').val(display);
@@ -609,6 +650,9 @@
                     // Kapcsolati adatok
 
                     $('#contract_id').val(contract.id);
+                    $('#client_id').val(contract.client_id || '');
+                    $('#create_client').val('0');
+                    $('#lead_id').val(contract.lead_id || '');
                     $('#contact_name').val(contract.name);
                     $('#contact_country').val(contract.country);
                     $('#contact_zip_code').val(contract.zip_code);
@@ -621,6 +665,29 @@
                     $('#date_of_birth').val(contract.date_of_birth);
                     $('#id_number').val(contract.id_number);
                     $('#installation_date').val(contract.installation_date);
+
+                    if (contract.lead_id) {
+                        try {
+                            const leadResp = await fetch(`${window.appConfig.APP_URL}admin/leads/${contract.lead_id}`, {
+                                headers: {
+                                    'Accept': 'application/json'
+                                }
+                            });
+                            if (leadResp.ok) {
+                                const lead = await leadResp.json();
+                                const leadParts = [lead?.full_name, lead?.email, lead?.phone].filter(Boolean).join(' | ');
+                                $('#lead_search').val(leadParts ? `${leadParts} (#${contract.lead_id})` : `#${contract.lead_id}`);
+                            } else {
+                                $('#lead_search').val(`#${contract.lead_id}`);
+                            }
+                        } catch (e) {
+                            $('#lead_search').val(`#${contract.lead_id}`);
+                        }
+                        $('#lead_selected_hint').html('Érdeklődő hozzárendelve. <a href="#" class="lead-clear-link">Törlés</a>').show();
+                    } else {
+                        $('#lead_search').val('');
+                        $('#lead_selected_hint').hide().text('');
+                    }
 
                     if (canSelectContractCreator) {
                         $('#created_by').val(contract.created_by || currentUserId);
@@ -1172,6 +1239,19 @@
             function setClientFieldsVisible(visible) {
                 $('.contract-client-fields').toggle(!!visible);
                 $('#contact_name').prop('required', !!visible);
+                updateLeadAssignmentVisibility();
+            }
+
+            function updateLeadAssignmentVisibility() {
+                const hasClient = !!($('#client_id').val() || '').toString().trim();
+                const isCreateClient = ($('#create_client').val() || '').toString() === '1';
+
+                const shouldShow = hasClient && !isCreateClient;
+                $('#lead_assignment_row').toggle(shouldShow);
+
+                if (!shouldShow) {
+                    clearLeadSelection();
+                }
             }
 
             function clearDuplicateEmailState() {
@@ -1249,6 +1329,112 @@
 
             let clientSearchDebounce;
 
+            let leadSearchDebounce;
+
+            function clearLeadSelection() {
+                $('#lead_id').val('');
+                $('#lead_search').val('');
+                $('#lead_search_results').hide().empty();
+                $('#lead_selected_hint').hide().text('');
+            }
+
+            $('#lead_search').on('input', function () {
+                const q = ($(this).val() || '').trim();
+                clearTimeout(leadSearchDebounce);
+
+                $('#lead_search_results').hide().empty();
+                $('#lead_selected_hint').hide().text('');
+
+                if ($('#lead_id').val()) {
+                    $('#lead_id').val('');
+                }
+
+                if (q.length < 2) return;
+
+                leadSearchDebounce = setTimeout(() => {
+                    $.ajax({
+                        url: `${window.appConfig.APP_URL}admin/leads/search?q=${encodeURIComponent(q)}`,
+                        method: 'GET',
+                        success: function (response) {
+                            const leads = response?.leads || [];
+                            const $list = $('#lead_search_results');
+                            $list.empty();
+
+                            if (leads.length) {
+                                leads.forEach(function (l) {
+                                    const id = l?.id || '';
+                                    const name = l?.full_name || '';
+                                    const email = l?.email || '';
+                                    const phone = l?.phone || '';
+
+                                    const line = [name, email, phone].filter(Boolean).join(' | ');
+
+                                    $list.append(`
+                                        <button type="button" class="list-group-item list-group-item-action lead-item"
+                                            data-id="${escapeHtml(id)}"
+                                            data-name="${escapeHtml(name)}"
+                                            data-email="${escapeHtml(email)}"
+                                            data-phone="${escapeHtml(phone)}"
+                                        >
+                                            <div class="fw-bold">${escapeHtml(line || ('#' + id))}</div>
+                                            <div class="small text-muted">Érdeklődő #${escapeHtml(id)}</div>
+                                        </button>
+                                    `);
+                                });
+                            } else {
+                                $list.append(`
+                                    <div class="list-group-item">
+                                        <div class="small text-muted">Nincs találat.</div>
+                                    </div>
+                                `);
+                            }
+
+                            $list.append(`
+                                <button type="button" class="list-group-item list-group-item-action lead-clear">
+                                    Érdeklődő hozzárendelés törlése
+                                </button>
+                            `);
+
+                            $list.show();
+                        },
+                        error: function () {
+                            const $list = $('#lead_search_results');
+                            $list.empty();
+                            $list.append(`
+                                <div class="list-group-item">
+                                    <div class="small text-muted">A keresés sikertelen volt.</div>
+                                </div>
+                            `);
+                            $list.show();
+                        }
+                    });
+                }, 300);
+            });
+
+            $('#lead_search_results').on('click', '.lead-item', function () {
+                const $btn = $(this);
+                const leadId = ($btn.data('id') || '').toString();
+                const name = ($btn.data('name') || '').toString();
+                const email = ($btn.data('email') || '').toString();
+                const phone = ($btn.data('phone') || '').toString();
+
+                $('#lead_id').val(leadId);
+
+                const display = [name, email, phone].filter(Boolean).join(' | ');
+                $('#lead_search').val(display ? `${display} (#${leadId})` : `#${leadId}`);
+                $('#lead_search_results').hide().empty();
+                $('#lead_selected_hint').html('Érdeklődő hozzárendelve. <a href="#" class="lead-clear-link">Törlés</a>').show();
+            });
+
+            $('#lead_search_results').on('click', '.lead-clear', function () {
+                clearLeadSelection();
+            });
+
+            $('#lead_selected_hint').on('click', '.lead-clear-link', function (e) {
+                e.preventDefault();
+                clearLeadSelection();
+            });
+
             $('#client_search').on('input', function () {
                 const q = ($(this).val() || '').trim();
                 clearTimeout(clientSearchDebounce);
@@ -1257,6 +1443,8 @@
 
                 if ($('#client_id').val() || $('#create_client').val() === '1') {
                     clearClientSelection();
+
+                    clearLeadSelection();
                 }
 
                 if (q.length < 2) return;
@@ -1362,6 +1550,8 @@
                 $('#create_client').val('0');
                 $('#use_custom_address').val('0');
 
+                updateLeadAssignmentVisibility();
+
                 $('#contact_name').val(name);
                 $('#contact_email').val(email);
                 $('#contact_phone').val(phone);
@@ -1393,6 +1583,8 @@
                 $('#create_client').val('0');
                 $('#use_custom_address').val('1');
 
+                updateLeadAssignmentVisibility();
+
                 $('#contact_name').val(name);
                 $('#contact_email').val(email);
                 $('#contact_phone').val(phone);
@@ -1419,6 +1611,8 @@
                 $('#client_id').val('');
                 $('#client_address_id').val('');
                 $('#use_custom_address').val('0');
+
+                updateLeadAssignmentVisibility();
 
                 $('#client_search').val('');
                 $('#client_search_results').hide().empty();
@@ -1447,6 +1641,8 @@
 
                 setClientFieldsVisible(false);
                 setSnapshotMode(true);
+
+                updateLeadAssignmentVisibility();
             }
 
             function resetForm(title = null) {

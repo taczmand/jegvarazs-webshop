@@ -165,6 +165,7 @@ class ContractController extends Controller
         // Validáció
         $request->validate([
             'client_id' => 'nullable|integer|exists:clients,id',
+            'lead_id' => 'nullable|integer|exists:leads,id',
             'create_client' => 'nullable|boolean',
             'client_address_id' => 'nullable|integer',
             'use_custom_address' => 'nullable|boolean',
@@ -375,6 +376,7 @@ class ContractController extends Controller
 
                 $contract->update([
                     'client_id' => $request->input('client_id') ?: null,
+                    'lead_id' => $request->input('lead_id') ?: null,
                     'version' => $request->input('contract_version'),
                     'name' => $resolvedName,
                     'country' => $resolvedCountry,
@@ -512,6 +514,7 @@ class ContractController extends Controller
 
                 $contract = Contract::create([
                     'client_id' => $request->input('client_id') ?: null,
+                    'lead_id' => $request->input('lead_id') ?: null,
                     'version' => $request->input('contract_version'),
                     'name' => $resolvedName,
                     'country' => $resolvedCountry,
@@ -679,7 +682,7 @@ class ContractController extends Controller
             'data' => $contract->data,
             'total_gross' => $totalGross,
             'total_gross_text' => AmountToText::convert($totalGross),
-            'signature_path' => $signatureName ? storage_path("app/private/signatures/{$signatureName}") : null
+            'signature_path' => $signatureName ? storage_path("app/private/signatures/{$signatureName}") : null,
         ];
 
         // PDF generálása
