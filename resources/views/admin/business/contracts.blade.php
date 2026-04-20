@@ -467,6 +467,12 @@
                 $('#client_search').val(display);
                 $('#client_search_results').hide().empty();
 
+                suggestLeadsForClient({
+                    name: contract.name || '',
+                    email: contract.email || '',
+                    phone: contract.phone || '',
+                });
+
 
                 // Szerződés adatok
 
@@ -1331,6 +1337,78 @@
 
             let leadSearchDebounce;
 
+            async function suggestLeadsForClient({ name = '', email = '', phone = '' } = {}) {
+                if (!$('#lead_assignment_row').is(':visible')) return;
+                if (($('#lead_id').val() || '').toString().trim()) return;
+
+                const candidates = [
+                    (email || '').toString().trim(),
+                    (phone || '').toString().trim(),
+                    (name || '').toString().trim(),
+                ].filter(Boolean);
+
+                if (!candidates.length) return;
+
+                const q = candidates[0];
+                if (q.length < 2) return;
+
+                try {
+                    const response = await $.ajax({
+                        url: `${window.appConfig.APP_URL}admin/leads/search?q=${encodeURIComponent(q)}`,
+                        method: 'GET',
+                    });
+
+                    const leads = response?.leads || [];
+                    const $list = $('#lead_search_results');
+                    $list.empty();
+
+                    if (leads.length) {
+                        $list.append(`
+                            <div class="list-group-item">
+                                <div class="small text-muted">Ajánlott érdeklődők (egyezés alapján)</div>
+                            </div>
+                        `);
+
+                        leads.forEach(function (l) {
+                            const id = l?.id || '';
+                            const leadName = l?.full_name || '';
+                            const leadEmail = l?.email || '';
+                            const leadPhone = l?.phone || '';
+
+                            const line = [leadName, leadEmail, leadPhone].filter(Boolean).join(' | ');
+
+                            $list.append(`
+                                <button type="button" class="list-group-item list-group-item-action lead-item"
+                                    data-id="${escapeHtml(id)}"
+                                    data-name="${escapeHtml(leadName)}"
+                                    data-email="${escapeHtml(leadEmail)}"
+                                    data-phone="${escapeHtml(leadPhone)}"
+                                >
+                                    <div class="fw-bold">${escapeHtml(line || ('#' + id))}</div>
+                                    <div class="small text-muted">Érdeklődő #${escapeHtml(id)}</div>
+                                </button>
+                            `);
+                        });
+                    } else {
+                        $list.append(`
+                            <div class="list-group-item">
+                                <div class="small text-muted">Nincs ajánlott érdeklődő.</div>
+                            </div>
+                        `);
+                    }
+
+                    $list.append(`
+                        <button type="button" class="list-group-item list-group-item-action lead-clear">
+                            Érdeklődő hozzárendelés törlése
+                        </button>
+                    `);
+
+                    $list.show();
+                } catch (e) {
+                    // nem kritikus funkció
+                }
+            }
+
             function clearLeadSelection() {
                 $('#lead_id').val('');
                 $('#lead_search').val('');
@@ -1567,6 +1645,8 @@
                 const display = `${name || ''}${headerParts ? ' (' + headerParts + ')' : ''}`.trim();
                 $('#client_search').val(display);
                 $('#client_search_results').hide().empty();
+
+                suggestLeadsForClient({ name, email, phone });
             });
 
             $('#client_search_results').on('click', '.client-new-address', function () {
