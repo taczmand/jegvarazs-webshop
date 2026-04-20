@@ -155,12 +155,9 @@ class LeadConversionReportController extends Controller
         $assignedLeadIds = array_values(array_unique($assignedLeadIds));
         $matchedContractIds = array_values(array_unique(array_filter($matchedContractIds, fn ($id) => (int) $id > 0)));
 
-        $leads = $leads->filter(fn ($l) => in_array((int) $l->id, $assignedLeadIds, true))->values();
-        $leadCount = $leads->count();
-
         $surveyFromLogs = DB::table('user_actions')
             ->where('model', 'leads')
-            ->whereIn('model_id', $assignedLeadIds)
+            ->whereIn('model_id', $leadIds)
             ->where('action', 'updated')
             ->where('data->new->status', 'Felmérés')
             ->distinct()
