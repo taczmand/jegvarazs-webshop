@@ -99,9 +99,68 @@ class LeadConversionReportController extends Controller
 
         $leadIds = $leads->pluck('id')->all();
 
+        $contractsQuery = Contract::query()
+            ->select(['id', 'lead_id', 'created_at'])
+            ->whereNotNull('lead_id')
+            ->whereIn('lead_id', $leadIds)
+            ->where('created_at', '>=', $from);
+
+        if ($user->can('view-own-contracts') && !$user->can('view-contracts')) {
+            $contractsQuery->where('created_by', $user->id);
+        }
+
+        $contracts = $contractsQuery->get();
+
+        $contractsByLeadId = [];
+        foreach ($contracts as $c) {
+            $lid = (int) ($c->lead_id ?? 0);
+            if ($lid > 0) {
+                $contractsByLeadId[$lid][] = $c;
+            }
+        }
+
+        $assignedLeadIds = [];
+        $matchedContractIds = [];
+        foreach ($leads as $lead) {
+            $lid = (int) ($lead->id ?? 0);
+            if ($lid <= 0) {
+                continue;
+            }
+
+            if (!isset($contractsByLeadId[$lid])) {
+                continue;
+            }
+
+            $leadCreatedAt = $lead->created_at ? Carbon::parse($lead->created_at) : null;
+            $has = false;
+
+            foreach ($contractsByLeadId[$lid] as $contract) {
+                if (!$leadCreatedAt) {
+                    $has = true;
+                    $matchedContractIds[] = (int) $contract->id;
+                    continue;
+                }
+
+                if ($contract->created_at && Carbon::parse($contract->created_at)->greaterThanOrEqualTo($leadCreatedAt)) {
+                    $has = true;
+                    $matchedContractIds[] = (int) $contract->id;
+                }
+            }
+
+            if ($has) {
+                $assignedLeadIds[] = $lid;
+            }
+        }
+
+        $assignedLeadIds = array_values(array_unique($assignedLeadIds));
+        $matchedContractIds = array_values(array_unique(array_filter($matchedContractIds, fn ($id) => (int) $id > 0)));
+
+        $leads = $leads->filter(fn ($l) => in_array((int) $l->id, $assignedLeadIds, true))->values();
+        $leadCount = $leads->count();
+
         $surveyFromLogs = DB::table('user_actions')
             ->where('model', 'leads')
-            ->whereIn('model_id', $leadIds)
+            ->whereIn('model_id', $assignedLeadIds)
             ->where('action', 'updated')
             ->where('data->new->status', 'Felmérés')
             ->distinct()
@@ -122,105 +181,7 @@ class LeadConversionReportController extends Controller
 
         $surveyCount = count($surveyLeadIds);
 
-        $emails = $leads
-            ->pluck('email')
-            ->filter(fn ($e) => is_string($e) && trim($e) !== '')
-            ->map(fn ($e) => mb_strtolower(trim((string) $e)))
-            ->unique()
-            ->values()
-            ->all();
-
-        $phones = $leads
-            ->pluck('phone')
-            ->filter(fn ($p) => is_string($p) && trim($p) !== '')
-            ->map(fn ($p) => $this->normalizePhone((string) $p))
-            ->filter(fn ($p) => $p !== '')
-            ->unique()
-            ->values()
-            ->all();
-
-        $contractsQuery = Contract::query()
-            ->select(['id', 'email', 'phone', 'created_at'])
-            ->where('created_at', '>=', $from);
-
-        if ($user->can('view-own-contracts') && !$user->can('view-contracts')) {
-            $contractsQuery->where('created_by', $user->id);
-        }
-
-        $contractsQuery->where(function ($q) use ($emails, $phones) {
-            if (count($emails) > 0) {
-                $q->orWhereIn(DB::raw('LOWER(email)'), $emails);
-            }
-
-            if (count($phones) > 0) {
-                $q->orWhereNotNull('phone');
-            }
-        });
-
-        $contracts = $contractsQuery->get();
-
-        $contractsByEmail = [];
-        foreach ($contracts as $c) {
-            if (is_string($c->email) && trim($c->email) !== '') {
-                $key = mb_strtolower(trim($c->email));
-                $contractsByEmail[$key][] = $c;
-            }
-        }
-
-        $contractsByPhone = [];
-        foreach ($contracts as $c) {
-            if (is_string($c->phone) && trim($c->phone) !== '') {
-                $key = $this->normalizePhone((string) $c->phone);
-                if ($key !== '') {
-                    $contractsByPhone[$key][] = $c;
-                }
-            }
-        }
-
-        $contractLeadIds = [];
-        $matchedContractIds = [];
-        foreach ($leads as $lead) {
-            $leadCreatedAt = $lead->created_at ? Carbon::parse($lead->created_at) : null;
-
-            $emailKey = (is_string($lead->email) && trim($lead->email) !== '')
-                ? mb_strtolower(trim((string) $lead->email))
-                : null;
-
-            $phoneKey = (is_string($lead->phone) && trim($lead->phone) !== '')
-                ? $this->normalizePhone((string) $lead->phone)
-                : null;
-
-            $candidates = [];
-            if ($emailKey && isset($contractsByEmail[$emailKey])) {
-                $candidates = array_merge($candidates, $contractsByEmail[$emailKey]);
-            }
-            if ($phoneKey && $phoneKey !== '' && isset($contractsByPhone[$phoneKey])) {
-                $candidates = array_merge($candidates, $contractsByPhone[$phoneKey]);
-            }
-
-            $has = false;
-            $leadContractIds = [];
-            foreach ($candidates as $contract) {
-                if (!$leadCreatedAt) {
-                    $has = true;
-                    $leadContractIds[] = (int) $contract->id;
-                    break;
-                }
-                if ($contract->created_at && Carbon::parse($contract->created_at)->greaterThanOrEqualTo($leadCreatedAt)) {
-                    $has = true;
-                    $leadContractIds[] = (int) $contract->id;
-                }
-            }
-
-            if ($has) {
-                $contractLeadIds[] = (int) $lead->id;
-                $matchedContractIds = array_merge($matchedContractIds, $leadContractIds);
-            }
-        }
-
-        $contractCount = count(array_values(array_unique($contractLeadIds)));
-
-        $matchedContractIds = array_values(array_unique(array_filter($matchedContractIds, fn ($id) => (int) $id > 0)));
+        $contractCount = count($assignedLeadIds);
 
         $contractProductsQty = 0;
         if (count($matchedContractIds) > 0) {

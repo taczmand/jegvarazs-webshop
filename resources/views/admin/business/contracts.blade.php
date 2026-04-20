@@ -1252,7 +1252,7 @@
                 const hasClient = !!($('#client_id').val() || '').toString().trim();
                 const isCreateClient = ($('#create_client').val() || '').toString() === '1';
 
-                const shouldShow = hasClient && !isCreateClient;
+                const shouldShow = hasClient || isCreateClient;
                 $('#lead_assignment_row').toggle(shouldShow);
 
                 if (!shouldShow) {
