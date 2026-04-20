@@ -55,6 +55,24 @@
             </div>
         </div>
 
+        <div class="modal fade" id="calendarEntryModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-scrollable">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="calendarEntryModalTitle"></h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Bezárás"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="calendarEntryModalBody"></div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Bezárás</button>
+                        <button type="button" class="btn btn-primary" id="calendarEntryModalEditBtn">Szerkesztés</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
 
 
 
@@ -320,16 +338,402 @@
                 const data_id = this.dataset.id;
                 const model = this.dataset.model;
 
-                if ("worksheet" === model) {
-                    const url = `${window.appConfig.APP_URL}admin/munkalapok?id=${data_id}`;
-                    window.open(url, '_blank');
-                } else if("appointment" === model) {
-                    const url = `${window.appConfig.APP_URL}admin/idopontfoglalasok?id=${data_id}`;
-                    window.open(url, '_blank');
-                } else {
-                    alert('Ismeretlen elem, nem lehet megnyitni.');
+                const modalEl = document.getElementById('calendarEntryModal');
+                const titleEl = document.getElementById('calendarEntryModalTitle');
+                const bodyEl = document.getElementById('calendarEntryModalBody');
+                const editBtn = document.getElementById('calendarEntryModalEditBtn');
+
+                if (!modalEl || !titleEl || !bodyEl || !editBtn) {
+                    alert('Hiba: a megtekintő ablak nem elérhető.');
+                    return;
                 }
 
+                function escapeHtml(value) {
+                    if (value === null || value === undefined) return '';
+                    return String(value)
+                        .replace(/&/g, '&amp;')
+                        .replace(/</g, '&lt;')
+                        .replace(/>/g, '&gt;')
+                        .replace(/"/g, '&quot;')
+                        .replace(/'/g, '&#039;');
+                }
+
+                function row(label, value) {
+                    return `
+                        <tr>
+                            <th class="text-nowrap" style="width: 1%;">${escapeHtml(label)}</th>
+                            <td>${escapeHtml(value || '-')}</td>
+                        </tr>
+                    `;
+                }
+
+                function section(title, innerHtml) {
+                    return `
+                        <div class="mb-3">
+                            <h6 class="mb-2">${escapeHtml(title)}</h6>
+                            ${innerHtml}
+                        </div>
+                    `;
+                }
+
+                function renderAppointmentPhotosReadOnly(photos = []) {
+                    if (!photos || !photos.length) {
+                        return '<p class="text-muted mb-0">Nincs feltöltött kép.</p>';
+                    }
+
+                    const rows = photos.map(photo => {
+                        const fileUrl = `${window.appConfig.APP_URL}admin/appointment-photos/${photo.path}`;
+                        return `
+                            <tr>
+                                <td>
+                                    <a href="${fileUrl}" target="_blank">
+                                        <img src="${fileUrl}" class="img-thumbnail" style="width: 100px;" alt="">
+                                    </a>
+                                </td>
+                            </tr>
+                        `;
+                    }).join('');
+
+                    return `
+                        <div style="max-height: 300px; overflow-y: auto;">
+                            <table class="table table-bordered table-sm align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Kép</th>
+                                    </tr>
+                                </thead>
+                                <tbody>${rows}</tbody>
+                            </table>
+                        </div>
+                    `;
+                }
+
+                function renderWorksheetPhotosReadOnly(photos = []) {
+                    const types = [
+                        'Helyszíni felmérés',
+                        'Adattábla',
+                        'Telepítési tanúsítvány',
+                        'Szerelés',
+                        'Számla'
+                    ];
+
+                    if (!photos || !photos.length) {
+                        const empty = types.map(t => section(t, '<p class="text-muted mb-0">Nincs feltöltött kép.</p>')).join('');
+                        return empty;
+                    }
+
+                    const byType = {};
+                    photos.forEach(p => {
+                        const t = p.image_type || 'Egyéb';
+                        if (!byType[t]) byType[t] = [];
+                        byType[t].push(p);
+                    });
+
+                    function renderTableFor(list = []) {
+                        if (!list.length) {
+                            return '<p class="text-muted mb-0">Nincs feltöltött kép.</p>';
+                        }
+
+                        const rows = list.map(photo => {
+                            const fileUrl = `${window.appConfig.APP_URL}admin/worksheets/${photo.image_path}`;
+                            const path = (photo.image_path || '').toLowerCase();
+                            const extension = path.includes('.') ? path.split('.').pop() : '';
+                            const description = photo.description || '';
+
+                            let previewHtml = '';
+                            if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(extension)) {
+                                previewHtml = `
+                                    <a href="${fileUrl}" target="_blank" title="${escapeHtml(description)}">
+                                        <img src="${fileUrl}" alt="${escapeHtml(description)}" class="img-thumbnail" style="width: 100px;">
+                                    </a>
+                                `;
+                            } else if (extension === 'pdf') {
+                                previewHtml = `
+                                    <a href="${fileUrl}" target="_blank">${escapeHtml(description || 'PDF fájl')}</a>
+                                `;
+                            } else if (['doc', 'docx'].includes(extension)) {
+                                previewHtml = `
+                                    <a href="${fileUrl}" target="_blank">${escapeHtml(description || 'Word dokumentum')}</a>
+                                `;
+                            } else {
+                                previewHtml = `
+                                    <a href="${fileUrl}" target="_blank">${escapeHtml(description || photo.image_path)}</a>
+                                `;
+                            }
+
+                            return `
+                                <tr>
+                                    <td>${previewHtml}</td>
+                                </tr>
+                            `;
+                        }).join('');
+
+                        return `
+                            <div style="max-height: 300px; overflow-y: auto;">
+                                <table class="table table-bordered table-sm align-middle mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Fájl</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>${rows}</tbody>
+                                </table>
+                            </div>
+                        `;
+                    }
+
+                    const orderedTypes = [...types];
+                    Object.keys(byType).forEach(t => {
+                        if (!orderedTypes.includes(t)) orderedTypes.push(t);
+                    });
+
+                    return orderedTypes
+                        .map(t => section(t, renderTableFor(byType[t] || [])))
+                        .join('');
+                }
+
+                function translateWorksheetExtraDataEntry(key, value) {
+                    const keyTranslations = {
+                        pipe: 'Plusz cső',
+                        console: 'Konzol',
+                        device_qty: 'Készülékek',
+                        exist_contract: 'Szerződéskötés',
+                        cleaning_type: 'Tisztítás',
+                        self_installation: 'Saját telepítés'
+                    };
+
+                    const valueTranslations = {
+                        exist_contract: {
+                            hitel: 'Hitelre lesz',
+                            igen: 'Igen',
+                            nem: 'Nem'
+                        },
+                        cleaning_type: {
+                            basic_clean: 'Alaptisztítás',
+                            full_clean: 'Teljes mosás'
+                        },
+                        self_installation: {
+                            igen: 'Igen',
+                            nem: 'Nem'
+                        }
+                    };
+
+                    const translatedKey = keyTranslations[key] || (String(key || '').replace(/_/g, ' ').replace(/^\w/, c => c.toUpperCase()));
+
+                    let translatedValue = value;
+                    if (translatedValue === null || translatedValue === undefined || translatedValue === '') {
+                        translatedValue = '-';
+                    }
+
+                    const keyValueMap = valueTranslations[key];
+                    if (keyValueMap && translatedValue !== '-' && Object.prototype.hasOwnProperty.call(keyValueMap, translatedValue)) {
+                        translatedValue = keyValueMap[translatedValue];
+                    }
+
+                    return { translatedKey, translatedValue };
+                }
+
+                bodyEl.innerHTML = '<div class="text-center py-4"><div class="spinner-border" role="status"></div></div>';
+
+                let detailsUrl = null;
+                let editUrl = null;
+                if ("worksheet" === model) {
+                    detailsUrl = `${window.appConfig.APP_URL}admin/munkalapok/adatok/${data_id}`;
+                    editUrl = `${window.appConfig.APP_URL}admin/munkalapok?id=${data_id}`;
+                } else if ("appointment" === model) {
+                    detailsUrl = `${window.appConfig.APP_URL}admin/idopontfoglalasok/${data_id}`;
+                    editUrl = `${window.appConfig.APP_URL}admin/idopontfoglalasok?id=${data_id}`;
+                } else {
+                    alert('Ismeretlen elem, nem lehet megnyitni.');
+                    return;
+                }
+
+                editBtn.dataset.model = model;
+                editBtn.dataset.id = data_id;
+                editBtn.dataset.url = editUrl;
+
+                fetch(detailsUrl, {
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                })
+                    .then(async (resp) => {
+                        if (!resp.ok) {
+                            const txt = await resp.text();
+                            throw new Error(txt || resp.statusText);
+                        }
+                        return resp.json();
+                    })
+                    .then((data) => {
+                        if (model === 'worksheet') {
+                            titleEl.textContent = `Munkalap #${data.id}`;
+
+                            const worksheetBasics = `
+                                <div class="table-responsive">
+                                    <table class="table table-sm mb-0">
+                                        ${row('Munkalap megnevezése', data.work_name)}
+                                        ${row('Telepítés dátuma', data.installation_date)}
+                                        ${row('Munkalap típusa', data.work_type)}
+                                        ${row('Munkalap állapota', data.work_status)}
+                                        ${row('Szerződés', data.contract_id ? ('#' + data.contract_id) : '-')}
+                                    </table>
+                                </div>
+                            `;
+
+                            const contactBlock = `
+                                <div class="table-responsive">
+                                    <table class="table table-sm mb-0">
+                                        ${row('Kapcsolattartó neve', data.name)}
+                                        ${row('E-mail', data.email)}
+                                        ${row('Telefon', data.phone)}
+                                        ${row('Ország', data.country)}
+                                        ${row('Irányítószám', data.zip_code)}
+                                        ${row('Város', data.city)}
+                                        ${row('Cím', data.address_line)}
+                                    </table>
+                                </div>
+                            `;
+
+                            const descriptionBlock = `
+                                <div class="table-responsive">
+                                    <table class="table table-sm mb-0">
+                                        ${row('Leírás', data.description)}
+                                        ${row('Szerelői jelentés', data.worker_report)}
+                                    </table>
+                                </div>
+                            `;
+
+                            const paymentBlock = `
+                                <div class="table-responsive">
+                                    <table class="table table-sm mb-0">
+                                        ${row('Fizetés módja', data.payment_method)}
+                                        ${row('Fizetett összeg', (data.payment_amount !== null && data.payment_amount !== undefined) ? data.payment_amount : '-')}
+                                    </table>
+                                </div>
+                            `;
+
+                            const workersBlock = (Array.isArray(data.workers) && data.workers.length)
+                                ? `
+                                    <div class="table-responsive">
+                                        <table class="table table-sm mb-0">
+                                            ${row('Szerelők', data.workers.map(w => w.name).join(', '))}
+                                        </table>
+                                    </div>
+                                `
+                                : '<p class="text-muted mb-0">Nincs megadva.</p>';
+
+                            const extraDataEntries = data.data && typeof data.data === 'object'
+                                ? Object.entries(data.data)
+                                : [];
+                            const extraDataBlock = extraDataEntries.length
+                                ? `
+                                    <div class="table-responsive">
+                                        <table class="table table-sm mb-0">
+                                            ${extraDataEntries.map(([k, v]) => {
+                                                const t = translateWorksheetExtraDataEntry(k, v);
+                                                return row(t.translatedKey, t.translatedValue);
+                                            }).join('')}
+                                        </table>
+                                    </div>
+                                `
+                                : '<p class="text-muted mb-0">Nincs megadva.</p>';
+
+                            const productsBlock = (Array.isArray(data.products) && data.products.length)
+                                ? `
+                                    <div class="table-responsive">
+                                        <table class="table table-sm mb-0">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>Termék</th>
+                                                    <th class="text-nowrap">Mennyiség</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                ${data.products.map(p => `
+                                                    <tr>
+                                                        <td>${escapeHtml(p.title || p.name || ('#' + p.id))}</td>
+                                                        <td class="text-nowrap">${escapeHtml(p.quantity)}</td>
+                                                    </tr>
+                                                `).join('')}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                `
+                                : '<p class="text-muted mb-0">Nincs termék.</p>';
+
+                            const html = [
+                                section('Munkalap adatok', worksheetBasics),
+                                section('Kapcsolattartó', contactBlock),
+                                section('Leírás / jelentés', descriptionBlock),
+                                section('Szerelők', workersBlock),
+                                section('Fizetés', paymentBlock),
+                                section('Extra adatok', extraDataBlock),
+                                section('Termékek', productsBlock),
+                                section('Képek / fájlok', renderWorksheetPhotosReadOnly(data.photos || [])),
+                            ].join('');
+
+                            bodyEl.innerHTML = html;
+                        } else {
+                            titleEl.textContent = `Időpontfoglalás #${data.id}`;
+
+                            const basicBlock = `
+                                <div class="table-responsive">
+                                    <table class="table table-sm mb-0">
+                                        ${row('Ügyfél', data.client_id ? ('#' + data.client_id) : '-')}
+                                        ${row('Név', data.name)}
+                                        ${row('E-mail', data.email)}
+                                        ${row('Telefon', data.phone)}
+                                    </table>
+                                </div>
+                            `;
+
+                            const addressBlock = `
+                                <div class="table-responsive">
+                                    <table class="table table-sm mb-0">
+                                        ${row('Irányítószám', data.zip_code)}
+                                        ${row('Város', data.city)}
+                                        ${row('Cím', data.address_line)}
+                                    </table>
+                                </div>
+                            `;
+
+                            const appointmentBlock = `
+                                <div class="table-responsive">
+                                    <table class="table table-sm mb-0">
+                                        ${row('Időpont', data.appointment_date)}
+                                        ${row('Típus', data.appointment_type)}
+                                        ${row('Státusz', data.status)}
+                                        ${row('Üzenet', data.message)}
+                                    </table>
+                                </div>
+                            `;
+
+                            const html = [
+                                section('Alapadatok', basicBlock),
+                                section('Cím adatok', addressBlock),
+                                section('Időpont adatok', appointmentBlock),
+                                section('Képek', renderAppointmentPhotosReadOnly(data.photos || [])),
+                            ].join('');
+
+                            bodyEl.innerHTML = html;
+                        }
+
+                        const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+                        modal.show();
+                    })
+                    .catch((err) => {
+                        bodyEl.innerHTML = `<div class="alert alert-danger mb-0">Hiba a betöltés során: ${escapeHtml(err.message)}</div>`;
+                        titleEl.textContent = 'Megtekintés';
+                        const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+                        modal.show();
+                    });
+
+            });
+
+            $(document).on('click', '#calendarEntryModalEditBtn', function () {
+                const url = this.dataset.url;
+                if (!url) return;
+                window.open(url, '_blank');
             });
 
             $(document).on('change', '#selectedType', function () {
