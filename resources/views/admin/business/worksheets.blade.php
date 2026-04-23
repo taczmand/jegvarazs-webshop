@@ -1196,7 +1196,11 @@
                 formData.append('_token', csrfToken);
 
                 const originalSaveButtonHtml = $(this).html();
-                $(this).html('Mentés...').prop('disabled', true);
+                const hasFilesToUpload = Array.from(form?.querySelectorAll('input[type="file"]') || []).some(inp => (inp?.files?.length || 0) > 0);
+                const loadingHtml = hasFilesToUpload
+                    ? '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>Feltöltés...'
+                    : 'Mentés...';
+                $(this).html(loadingHtml).prop('disabled', true);
 
                 let url = '{{ route('admin.worksheet.store') }}';
                 let method = 'POST';
