@@ -592,11 +592,19 @@ class VehicleController extends Controller
             'note' => $validated['note'] ?? null,
         ]);
 
-        if ($type === 'odometer') {
-            $odometer = (int) $validated['value'];
-            $vehicle->update([
-                'current_odometer' => $odometer,
-            ]);
+        if (in_array($type, ['odometer', 'monthly_odometer'], true)) {
+            $latestOdometerEvent = VehicleEvent::query()
+                ->where('vehicle_id', $vehicle->id)
+                ->whereIn('type', ['odometer', 'monthly_odometer'])
+                ->orderBy('event_date', 'desc')
+                ->orderBy('id', 'desc')
+                ->first();
+
+            if ($latestOdometerEvent && $latestOdometerEvent->value !== null && $latestOdometerEvent->value !== '') {
+                $vehicle->update([
+                    'current_odometer' => (int) $latestOdometerEvent->value,
+                ]);
+            }
         }
 
         if ($type === 'oil_change') {
@@ -622,7 +630,23 @@ class VehicleController extends Controller
 
         $vehicle = Vehicle::findOrFail($vehicleId);
         $event = VehicleEvent::where('vehicle_id', $vehicle->id)->findOrFail($eventId);
+        $deletedType = (string) $event->type;
         $event->delete();
+
+        if (in_array($deletedType, ['odometer', 'monthly_odometer'], true)) {
+            $latestOdometerEvent = VehicleEvent::query()
+                ->where('vehicle_id', $vehicle->id)
+                ->whereIn('type', ['odometer', 'monthly_odometer'])
+                ->orderBy('event_date', 'desc')
+                ->orderBy('id', 'desc')
+                ->first();
+
+            $vehicle->update([
+                'current_odometer' => $latestOdometerEvent && $latestOdometerEvent->value !== null && $latestOdometerEvent->value !== ''
+                    ? (int) $latestOdometerEvent->value
+                    : null,
+            ]);
+        }
 
         return response()->json([
             'message' => 'Sikeres törlés!',

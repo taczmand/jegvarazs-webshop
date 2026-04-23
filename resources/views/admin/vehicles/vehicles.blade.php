@@ -369,9 +369,10 @@
         </style>
         <script type="module">
 
-        const adminModalDOM = document.getElementById('adminModal');
-        const adminModal = new bootstrap.Modal(adminModalDOM);
-        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            const adminModalEl = document.getElementById('adminModal');
+            const adminModal = adminModalEl ? new bootstrap.Modal(adminModalEl) : null;
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            const canDeleteVehicleEvent = @json(auth('admin')->user() ? auth('admin')->user()->can('delete-vehicle-event') : false);
 
         $(document).ready(function() {
             const table = $('#adminTable').DataTable({
@@ -640,13 +641,22 @@
                         }
                     }
 
+                    const deleteBtn = (kind === 'event' && canDeleteVehicleEvent && it.id)
+                        ? `<button type="button" class="btn btn-sm btn-outline-danger delete-timeline-event" data-event-id="${escapeHtml(it.id)}" title="Törlés">
+                                <i class="fas fa-trash"></i>
+                           </button>`
+                        : '';
+
                     const metaHtml = metaBadges.length > 0
                         ? `<div class="vehicle-timeline-meta">${metaBadges.join('')}</div>`
                         : '';
 
                     const cardHtml = `
                         <div class="vehicle-timeline-card">
-                            <div>${cardTitleBadge}</div>
+                            <div class="d-flex align-items-start justify-content-between gap-2">
+                                <div>${cardTitleBadge}</div>
+                                <div>${deleteBtn}</div>
+                            </div>
                             ${metaHtml}
                         </div>
                     `;
@@ -671,6 +681,43 @@
 
                 el.innerHTML = `<div class="vehicle-timeline-inner">${html}</div>`;
             }
+
+            $('#vehicleTimeline').on('click', '.delete-timeline-event', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                if (!canDeleteVehicleEvent) return;
+                if (!currentVehicleId) {
+                    showToast('Előbb mentsd el a járművet!', 'danger');
+                    return;
+                }
+
+                const eventId = $(this).data('event-id');
+                if (!eventId) return;
+
+                if (!confirm('Biztosan törölni szeretnéd ezt az eseményt?')) return;
+
+                $.ajax({
+                    url: `{{ url('/admin/jarmuvek') }}/${currentVehicleId}/events/${eventId}`,
+                    type: 'DELETE',
+                    data: { _token: csrfToken },
+                    success: (res) => {
+                        showToast(res.message || 'Sikeres törlés!', 'success');
+                        loadTimeline(currentVehicleId);
+                        table.ajax.reload(null, false);
+                        reloadVehicleKmChart();
+                    },
+                    error: (xhr) => {
+                        let msg = 'Hiba!';
+                        if (xhr.responseJSON?.errors) {
+                            msg = Object.values(xhr.responseJSON.errors).flat().join(' ');
+                        } else if (xhr.responseJSON?.message) {
+                            msg = xhr.responseJSON.message;
+                        }
+                        showToast(msg, 'danger');
+                    }
+                });
+            });
 
             async function loadTimeline(vehicleId) {
                 if (!vehicleId) return;
