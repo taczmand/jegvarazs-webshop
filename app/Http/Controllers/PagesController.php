@@ -323,8 +323,7 @@ class PagesController extends Controller
             $resolvedBrand = $brandFilter ?? $brand;
             if ($resolvedBrand) {
                 $queryProducts->whereHas('brands', function ($q) use ($resolvedBrand) {
-                    $q->where('title', 'like', '%' . $resolvedBrand . '%')
-                        ->orWhere('name', 'like', '%' . $resolvedBrand . '%');
+                    $q->where('title', 'like', '%' . $resolvedBrand . '%');
                 });
             }
 
