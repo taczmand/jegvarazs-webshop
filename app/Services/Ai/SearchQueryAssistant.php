@@ -88,6 +88,9 @@ class SearchQueryAssistant
                 'rules' => [
                     'Prefer precision over recall when a brand is present (e.g. "AUX klíma" should require AUX).',
                     'Return must keywords that MUST match, and should keywords that are optional hints.',
+                    'MUST and SHOULD items should be ATOMIC tokens. Avoid multi-word phrases. Split values like "3.2 kW" into separate tokens: "3.2" and "kW".',
+                    'If the query contains decimal numbers, keep them as a separate token (e.g. "3.2"), do not combine with units or other words.',
+                    'If the user intent is air conditioning and you include "klíma"/"klima", also include the webshop term "klímaberendezés"/"klimaberendezés" as an additional token (do not remove the original).',
                     'If you output category, it must be exactly one of known_categories or null.',
                     'If you output brand, it should be a short brand string from the query when applicable.',
                     'attribute_filters should be array of {name, value|null} (value can be null if only attribute is mentioned).',
@@ -159,6 +162,9 @@ class SearchQueryAssistant
         $must = array_values(array_unique($must));
         $should = array_values(array_unique($should));
 
+        $must = $this->normalizeTerms($must);
+        $should = $this->normalizeTerms($should);
+
         if ($must === [] && $should === []) {
             $must = $this->fallbackKeywords($rewritten);
         }
@@ -214,6 +220,39 @@ class SearchQueryAssistant
             'must' => array_slice($must, 0, 6),
             'should' => array_slice($should, 0, 6),
         ];
+    }
+
+    private function normalizeTerms(array $terms): array
+    {
+        $out = [];
+
+        foreach ($terms as $t) {
+            if (!is_string($t)) {
+                continue;
+            }
+            $t = trim($t);
+            if ($t === '') {
+                continue;
+            }
+
+            // Ha mégis több szóból állt, bontsuk szét (AI néha mégis adhat ilyet)
+            $parts = preg_split('/\s+/u', $t) ?: [];
+            $parts = array_values(array_filter(array_map('trim', $parts), fn ($p) => $p !== ''));
+
+            foreach ($parts as $p) {
+                $out[] = $p;
+
+                // tizedes elválasztó variáns: 3.2 <-> 3,2
+                if (preg_match('/\d[\.,]\d/u', $p)) {
+                    $out[] = str_replace('.', ',', $p);
+                    $out[] = str_replace(',', '.', $p);
+                }
+            }
+        }
+
+        $out = array_values(array_unique(array_filter(array_map('trim', $out), fn ($v) => $v !== '')));
+
+        return $out;
     }
 
     private function fallbackKeywords(string $query): array
