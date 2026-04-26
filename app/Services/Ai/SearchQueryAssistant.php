@@ -18,6 +18,10 @@ class SearchQueryAssistant
                 'rewritten_query' => '',
                 'keywords' => [],
                 'category' => null,
+                'brand' => null,
+                'attribute_filters' => [],
+                'must' => [],
+                'should' => [],
             ];
         }
 
@@ -29,6 +33,10 @@ class SearchQueryAssistant
                 'rewritten_query' => $query,
                 'keywords' => $this->fallbackKeywords($query),
                 'category' => null,
+                'brand' => null,
+                'attribute_filters' => [],
+                'must' => $this->fallbackKeywords($query),
+                'should' => [],
             ];
         }
 
@@ -47,6 +55,10 @@ class SearchQueryAssistant
                 'rewritten_query' => $query,
                 'keywords' => [$query],
                 'category' => null,
+                'brand' => $query,
+                'attribute_filters' => [],
+                'must' => [$query],
+                'should' => [],
             ];
         }
 
@@ -57,7 +69,7 @@ class SearchQueryAssistant
 
         $system = [
             'role' => 'system',
-            'content' => 'You rewrite Hungarian webshop search queries into a better query and keyword list for SQL LIKE search. Return JSON only.'
+            'content' => 'You help build a structured search plan for a Hungarian webshop. Return JSON only.'
         ];
 
         $user = [
@@ -65,7 +77,31 @@ class SearchQueryAssistant
             'content' => json_encode([
                 'query' => $query,
                 'known_categories' => array_values(array_map('strval', $categories)),
-                'task' => 'Rewrite the query to be more searchable, fix typos, add synonyms, and optionally guess a category from known_categories. Return: rewritten_query (string), keywords (array of strings, 3-10 items, no duplicates), category (string|null, must be from known_categories), language (string).'
+                'search_schema' => [
+                    'products' => ['title', 'description', 'status', 'cat_id', 'brand_id'],
+                    'brands' => ['title'],
+                    'categories' => ['title'],
+                    'tags' => ['name'],
+                    'attributes' => ['name'],
+                    'product_attributes_pivot' => ['value'],
+                ],
+                'rules' => [
+                    'Prefer precision over recall when a brand is present (e.g. "AUX klíma" should require AUX).',
+                    'Return must keywords that MUST match, and should keywords that are optional hints.',
+                    'If you output category, it must be exactly one of known_categories or null.',
+                    'If you output brand, it should be a short brand string from the query when applicable.',
+                    'attribute_filters should be array of {name, value|null} (value can be null if only attribute is mentioned).',
+                    'Keep must and should arrays small (0-6). Avoid generic expansions that broaden too much.',
+                ],
+                'output_format' => [
+                    'rewritten_query' => 'string',
+                    'language' => 'string',
+                    'brand' => 'string|null',
+                    'category' => 'string|null',
+                    'must' => 'array<string>',
+                    'should' => 'array<string>',
+                    'attribute_filters' => 'array<{name:string,value:string|null}>',
+                ],
             ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
         ];
 
@@ -81,6 +117,10 @@ class SearchQueryAssistant
                 'rewritten_query' => $query,
                 'keywords' => $this->fallbackKeywords($query),
                 'category' => null,
+                'brand' => null,
+                'attribute_filters' => [],
+                'must' => $this->fallbackKeywords($query),
+                'should' => [],
             ];
         }
 
@@ -88,9 +128,9 @@ class SearchQueryAssistant
             ? trim($data['rewritten_query'])
             : $query;
 
-        $keywords = [];
-        if (isset($data['keywords']) && is_array($data['keywords'])) {
-            foreach ($data['keywords'] as $kw) {
+        $must = [];
+        if (isset($data['must']) && is_array($data['must'])) {
+            foreach ($data['must'] as $kw) {
                 if (!is_string($kw)) {
                     continue;
                 }
@@ -98,14 +138,33 @@ class SearchQueryAssistant
                 if ($kw === '') {
                     continue;
                 }
-                $keywords[] = $kw;
+                $must[] = $kw;
             }
         }
 
-        $keywords = array_values(array_unique($keywords));
-        if ($keywords === []) {
-            $keywords = $this->fallbackKeywords($rewritten);
+        $should = [];
+        if (isset($data['should']) && is_array($data['should'])) {
+            foreach ($data['should'] as $kw) {
+                if (!is_string($kw)) {
+                    continue;
+                }
+                $kw = trim($kw);
+                if ($kw === '') {
+                    continue;
+                }
+                $should[] = $kw;
+            }
         }
+
+        $must = array_values(array_unique($must));
+        $should = array_values(array_unique($should));
+
+        if ($must === [] && $should === []) {
+            $must = $this->fallbackKeywords($rewritten);
+        }
+
+        // legacy keywords: small merged list
+        $keywords = array_slice(array_values(array_unique(array_merge($must, $should))), 0, 10);
 
         $category = null;
         if (isset($data['category']) && is_string($data['category'])) {
@@ -115,11 +174,45 @@ class SearchQueryAssistant
             }
         }
 
+        $brand = null;
+        if (isset($data['brand']) && is_string($data['brand'])) {
+            $cand = trim($data['brand']);
+            if ($cand !== '') {
+                $brand = $cand;
+            }
+        }
+
+        $attributeFilters = [];
+        if (isset($data['attribute_filters']) && is_array($data['attribute_filters'])) {
+            foreach ($data['attribute_filters'] as $f) {
+                if (!is_array($f)) {
+                    continue;
+                }
+                $name = isset($f['name']) && is_string($f['name']) ? trim($f['name']) : '';
+                if ($name === '') {
+                    continue;
+                }
+                $value = null;
+                if (array_key_exists('value', $f) && is_string($f['value'])) {
+                    $v = trim($f['value']);
+                    $value = $v === '' ? null : $v;
+                }
+                $attributeFilters[] = [
+                    'name' => $name,
+                    'value' => $value,
+                ];
+            }
+        }
+
         return [
             'original_query' => $query,
             'rewritten_query' => $rewritten !== '' ? $rewritten : $query,
             'keywords' => array_slice($keywords, 0, 10),
             'category' => $category,
+            'brand' => $brand,
+            'attribute_filters' => $attributeFilters,
+            'must' => array_slice($must, 0, 6),
+            'should' => array_slice($should, 0, 6),
         ];
     }
 
