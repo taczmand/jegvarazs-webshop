@@ -737,7 +737,7 @@ class ContractController extends Controller
 
         $contract = array(
             'version' => $request->input('contract_version'),
-            'name' => $request->input('contact_name') . ' szerződés',
+            'name' => $request->input('contact_name'),
             'country' => $request->input('contact_country'),
             'zip_code' => $request->input('contact_zip_code'),
             'city' => $request->input('contact_city'),

@@ -615,14 +615,14 @@
                     $('#show_signature').addClass('d-none');
                     $('#signature_area').removeClass('d-none');
                     $('#contract_version').prop('disabled', false);
-                    $('#contract_version').val('v2');
+                    $('#contract_version').val('v3');
 
                     if (canSelectContractCreator) {
                         $('#created_by').val(currentUserId);
                         $('#created_by').prop('disabled', false);
                     }
 
-                    const loaded_version = await loadVersions("v2");
+                    const loaded_version = await loadVersions("v3");
                     renderContractForm(loaded_version.fields);
                     if (installationDate) {
                         $('#installation_date').val(installationDate);
@@ -895,6 +895,10 @@
 
                 const row = $('<div class="row g-3"></div>');
 
+                let depositFieldsAnchorInserted = false;
+                let depositAmountFieldHtml = null;
+                let depositMethodFieldHtml = null;
+
                 fields.forEach(field => {
                     let input = '';
                     let wrapperClass = 'col-12 col-md-6 col-lg-4'; // mobil: 1 oszlop, tablet: 2 oszlop, desktop: 3 oszlop
@@ -975,12 +979,34 @@
                         fieldHtml = `<div class="${wrapperClass}">${input}</div>`;
                     }
 
+                    if (field.key === 'deposit_amount' || field.key === 'deposit_payment_method') {
+                        if (!depositFieldsAnchorInserted) {
+                            row.append('<div class="deposit-fields-anchor w-100"></div>');
+                            depositFieldsAnchorInserted = true;
+                        }
+
+                        if (field.key === 'deposit_amount') {
+                            depositAmountFieldHtml = fieldHtml;
+                        } else {
+                            depositMethodFieldHtml = fieldHtml;
+                        }
+
+                        return;
+                    }
+
                     row.append(fieldHtml);
                 });
+
+                if (depositFieldsAnchorInserted) {
+                    const $anchor = row.find('.deposit-fields-anchor').first();
+                    const combinedHtml = `${depositAmountFieldHtml || ''}${depositMethodFieldHtml || ''}`;
+                    $anchor.replaceWith(combinedHtml);
+                }
 
                 container.append(row);
                 loadDefaultData();
                 updateDepositDueDateState();
+                updatePurchasePriceDueDateState();
             }
 
             function updateDepositDueDateState() {
@@ -1006,6 +1032,29 @@
                 updateDepositDueDateState();
             });
 
+            function updatePurchasePriceDueDateState() {
+                const container = $('#contractDataFieldsArea');
+                const $method = container.find('[name="contract_data[purchase_price_payment_method]"]');
+                const $dueDate = container.find('[name="contract_data[transfer_payment_due_date]"]');
+
+                if (!$method.length || !$dueDate.length) {
+                    return;
+                }
+
+                const methodValue = ($method.val() || '').toString().trim();
+                const isCash = methodValue === 'Készpénz';
+
+                $dueDate.prop('disabled', isCash);
+
+                if (isCash) {
+                    $dueDate.val('');
+                }
+            }
+
+            $(document).on('change', '#contractDataFieldsArea [name="contract_data[purchase_price_payment_method]"]', function () {
+                updatePurchasePriceDueDateState();
+            });
+
             function loadDefaultData() {
                 const container = $('#contractDataFieldsArea');
 
@@ -1026,6 +1075,7 @@
                 }
 
                 updateDepositDueDateState();
+                updatePurchasePriceDueDateState();
             }
 
 
