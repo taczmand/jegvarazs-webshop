@@ -316,6 +316,23 @@ class PagesController extends Controller
         $buildQueryProducts = function (?int $categoryIdFilter, ?string $brandFilter) use ($keywords, $mandatoryToken, $must, $should, $brand, $attributeFilters) {
             $queryProducts = Product::where('status', 'active');
 
+            $termVariants = function (string $term): array {
+                $term = trim($term);
+                if ($term === '') {
+                    return [];
+                }
+
+                $variants = [$term];
+
+                // tizedes elválasztó: 3.2 <-> 3,2
+                if (preg_match('/\d[\.,]\d/u', $term)) {
+                    $variants[] = str_replace('.', ',', $term);
+                    $variants[] = str_replace(',', '.', $term);
+                }
+
+                return array_values(array_unique(array_filter($variants, fn ($v) => trim((string) $v) !== '')));
+            };
+
             if ($categoryIdFilter) {
                 $queryProducts->where('cat_id', $categoryIdFilter);
             }
@@ -360,19 +377,22 @@ class PagesController extends Controller
                     if ($mt === '') {
                         continue;
                     }
-                    $queryProducts->where(function ($q) use ($mt) {
-                        $q->where('title', 'like', '%' . $mt . '%')
-                            ->orWhere('description', 'like', '%' . $mt . '%')
-                            ->orWhereHas('brands', function ($qb) use ($mt) {
-                                $qb->where('title', 'like', '%' . $mt . '%');
-                            })
-                            ->orWhereHas('tags', function ($q2) use ($mt) {
-                                $q2->where('name', 'like', '%' . $mt . '%');
-                            })
-                            ->orWhereHas('attributes', function ($q3) use ($mt) {
-                                $q3->where('attributes.name', 'like', '%' . $mt . '%')
-                                    ->orWhere('product_attributes.value', 'like', '%' . $mt . '%');
-                            });
+                    $variants = $termVariants($mt);
+                    $queryProducts->where(function ($q) use ($variants) {
+                        foreach ($variants as $v) {
+                            $q->orWhere('title', 'like', '%' . $v . '%')
+                                ->orWhere('description', 'like', '%' . $v . '%')
+                                ->orWhereHas('brands', function ($qb) use ($v) {
+                                    $qb->where('title', 'like', '%' . $v . '%');
+                                })
+                                ->orWhereHas('tags', function ($q2) use ($v) {
+                                    $q2->where('name', 'like', '%' . $v . '%');
+                                })
+                                ->orWhereHas('attributes', function ($q3) use ($v) {
+                                    $q3->where('attributes.name', 'like', '%' . $v . '%')
+                                        ->orWhere('product_attributes.value', 'like', '%' . $v . '%');
+                                });
+                        }
                     });
                 }
             }
@@ -388,18 +408,22 @@ class PagesController extends Controller
                         if (is_string($mandatoryToken) && $mandatoryToken !== '' && strcasecmp($kw, $mandatoryToken) === 0) {
                             continue;
                         }
-                        $q->orWhere('title', 'like', '%' . $kw . '%')
-                            ->orWhere('description', 'like', '%' . $kw . '%')
-                            ->orWhereHas('brands', function ($qb) use ($kw) {
-                                $qb->where('title', 'like', '%' . $kw . '%');
-                            })
-                            ->orWhereHas('tags', function ($q2) use ($kw) {
-                                $q2->where('name', 'like', '%' . $kw . '%');
-                            })
-                            ->orWhereHas('attributes', function ($q3) use ($kw) {
-                                $q3->where('attributes.name', 'like', '%' . $kw . '%')
-                                    ->orWhere('product_attributes.value', 'like', '%' . $kw . '%');
-                            });
+
+                        $variants = $termVariants($kw);
+                        foreach ($variants as $v) {
+                            $q->orWhere('title', 'like', '%' . $v . '%')
+                                ->orWhere('description', 'like', '%' . $v . '%')
+                                ->orWhereHas('brands', function ($qb) use ($v) {
+                                    $qb->where('title', 'like', '%' . $v . '%');
+                                })
+                                ->orWhereHas('tags', function ($q2) use ($v) {
+                                    $q2->where('name', 'like', '%' . $v . '%');
+                                })
+                                ->orWhereHas('attributes', function ($q3) use ($v) {
+                                    $q3->where('attributes.name', 'like', '%' . $v . '%')
+                                        ->orWhere('product_attributes.value', 'like', '%' . $v . '%');
+                                });
+                        }
                     }
                 });
             }
