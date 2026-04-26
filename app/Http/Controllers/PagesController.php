@@ -399,7 +399,7 @@ class PagesController extends Controller
 
             // SHOULD: csak "rásegítés". Ha van MUST, akkor ne szélesítsen - külön blokkban marad.
             if ($should !== []) {
-                $queryProducts->where(function ($q) use ($should, $mandatoryToken) {
+                $queryProducts->where(function ($q) use ($should, $mandatoryToken, $termVariants) {
                     foreach ($should as $kw) {
                         if (!is_string($kw) || trim($kw) === '') {
                             continue;
