@@ -397,8 +397,9 @@ class PagesController extends Controller
                 }
             }
 
-            // SHOULD: csak "rásegítés". Ha van MUST, akkor ne szélesítsen - külön blokkban marad.
-            if ($should !== []) {
+            // SHOULD: rásegítés. SQL LIKE mellett ezt nem tudjuk rangsorolásra használni,
+            // ezért csak akkor alkalmazzuk szűrésként, ha nincs MUST (különben túlzottan leszűkítené).
+            if ($should !== [] && $must === []) {
                 $queryProducts->where(function ($q) use ($should, $mandatoryToken, $termVariants) {
                     foreach ($should as $kw) {
                         if (!is_string($kw) || trim($kw) === '') {
