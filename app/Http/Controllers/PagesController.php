@@ -15,6 +15,7 @@ use App\Models\Lead;
 use App\Models\NewsletterSubscription;
 use App\Models\Product;
 use App\Models\Searched;
+use App\Services\Ai\SearchQueryAssistant;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Http;
@@ -255,21 +256,62 @@ class PagesController extends Controller
             return redirect()->back()->with('error', 'Kérjük, adjon meg keresési kifejezést.');
         }
 
-        $queryProducts = Product::where('status', 'active') // mindenre érvényes
-        ->where(function ($q) use ($query) {
-            $q->where('title', 'like', '%' . $query . '%')
-                ->orWhere('description', 'like', '%' . $query . '%')
-                ->orWhereHas('tags', function ($q) use ($query) {
-                    $q->where('name', 'like', '%' . $query . '%');
-                })
-                ->orWhereHas('attributes', function ($q) use ($query) {
-                    $q->where('value', 'like', '%' . $query . '%');
-                });
-        });
+        $assistant = app(SearchQueryAssistant::class);
+        $categories = Category::query()->pluck('title')->all();
+        $enriched = $assistant->enrich((string) $query, [
+            'categories' => $categories,
+        ]);
+
+        $keywords = $enriched['keywords'] ?? [];
+        if (!is_array($keywords) || $keywords === []) {
+            $keywords = [trim((string) $query)];
+        }
+
+        $categoryTitle = $enriched['category'] ?? null;
+        $categoryId = null;
+        if (is_string($categoryTitle) && $categoryTitle !== '') {
+            $categoryId = Category::query()->where('title', $categoryTitle)->value('id');
+        }
+
+        $buildQueryProducts = function (?int $categoryIdFilter) use ($keywords) {
+            $queryProducts = Product::where('status', 'active');
+
+            if ($categoryIdFilter) {
+                $queryProducts->where('cat_id', $categoryIdFilter);
+            }
+
+            $queryProducts->where(function ($q) use ($keywords) {
+                foreach ($keywords as $kw) {
+                    if (!is_string($kw) || trim($kw) === '') {
+                        continue;
+                    }
+                    $kw = trim($kw);
+                    $q->orWhere('title', 'like', '%' . $kw . '%')
+                        ->orWhere('description', 'like', '%' . $kw . '%')
+                        ->orWhereHas('tags', function ($q2) use ($kw) {
+                            $q2->where('name', 'like', '%' . $kw . '%');
+                        })
+                        ->orWhereHas('attributes', function ($q3) use ($kw) {
+                            $q3->where('value', 'like', '%' . $kw . '%');
+                        });
+                }
+            });
+
+            return $queryProducts;
+        };
+
+        $queryProducts = $buildQueryProducts($categoryId);
 
 
         // Eredeti találatok száma
         $totalHits = $queryProducts->count();
+
+        // Ha az AI által tippelt kategória lenullázta a találatokat, próbáljuk újra kategória szűrés nélkül
+        if ($totalHits === 0 && $categoryId) {
+            $categoryId = null;
+            $queryProducts = $buildQueryProducts(null);
+            $totalHits = $queryProducts->count();
+        }
 
         // Paginate
         $products = $queryProducts->paginate(12)->appends(['query' => $query]);
