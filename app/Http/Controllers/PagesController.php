@@ -313,16 +313,18 @@ class PagesController extends Controller
             $categoryId = Category::query()->where('title', $categoryTitle)->value('id');
         }
 
-        $buildQueryProducts = function (?int $categoryIdFilter) use ($keywords, $mandatoryToken, $must, $should, $brand, $attributeFilters) {
+        $buildQueryProducts = function (?int $categoryIdFilter, ?string $brandFilter) use ($keywords, $mandatoryToken, $must, $should, $brand, $attributeFilters) {
             $queryProducts = Product::where('status', 'active');
 
             if ($categoryIdFilter) {
                 $queryProducts->where('cat_id', $categoryIdFilter);
             }
 
-            if ($brand) {
-                $queryProducts->whereHas('brands', function ($q) use ($brand) {
-                    $q->where('title', 'like', '%' . $brand . '%');
+            $resolvedBrand = $brandFilter ?? $brand;
+            if ($resolvedBrand) {
+                $queryProducts->whereHas('brands', function ($q) use ($resolvedBrand) {
+                    $q->where('title', 'like', '%' . $resolvedBrand . '%')
+                        ->orWhere('name', 'like', '%' . $resolvedBrand . '%');
                 });
             }
 
@@ -430,17 +432,32 @@ class PagesController extends Controller
             return $queryProducts;
         };
 
-        $queryProducts = $buildQueryProducts($categoryId);
+        $queryProducts = $buildQueryProducts($categoryId, $brand);
 
 
         // Eredeti találatok száma
         $totalHits = $queryProducts->count();
 
         // Ha az AI által tippelt kategória lenullázta a találatokat, próbáljuk újra kategória szűrés nélkül
-        if ($totalHits === 0 && $categoryId) {
-            $categoryId = null;
-            $queryProducts = $buildQueryProducts(null);
-            $totalHits = $queryProducts->count();
+        if ($totalHits === 0) {
+            // 1) először próbáljuk brand szűrés nélkül (gyakori, hogy nincs rendesen bekötve a brand)
+            if ($brand) {
+                $queryProducts = $buildQueryProducts($categoryId, null);
+                $totalHits = $queryProducts->count();
+            }
+
+            // 2) ha még mindig 0 és van kategória szűrés, próbáljuk kategória nélkül
+            if ($totalHits === 0 && $categoryId) {
+                $categoryId = null;
+                $queryProducts = $buildQueryProducts(null, $brand);
+                $totalHits = $queryProducts->count();
+            }
+
+            // 3) ha még mindig 0 és volt brand/kategória, próbáljuk mindkettő nélkül
+            if ($totalHits === 0 && ($brand || $categoryId)) {
+                $queryProducts = $buildQueryProducts(null, null);
+                $totalHits = $queryProducts->count();
+            }
         }
 
         // Paginate
