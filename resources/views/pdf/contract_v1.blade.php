@@ -294,7 +294,7 @@
                 $amount = $total_gross - $deposit_amount;
             }
 
-            if ($contract['data']['transfer_payment_due_date']) {
+            if (!empty($contract['data']['transfer_payment_due_date'] ?? null)) {
                 $carbon = \Carbon\Carbon::parse($contract['data']['transfer_payment_due_date']);
                 $due_date = '<b style="border-bottom: 1px dotted black">'.$carbon->year . '</b> év <b style="border-bottom: 1px dotted black">' . $carbon->translatedFormat('F') . '</b> hónap <b style="border-bottom: 1px dotted black">' . $carbon->day . '</b> napjáig';
             }
