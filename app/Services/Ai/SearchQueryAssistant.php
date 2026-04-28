@@ -48,17 +48,17 @@ class SearchQueryAssistant
         $len = mb_strlen($query);
         $looksLikeCodeOrBrand = (bool) preg_match('/^[a-z0-9\-_.]+$/iu', $query);
         $containsDigit = (bool) preg_match('/\d/u', $query);
+        $hasAlphaNumericBoundary = (bool) preg_match('/(\p{L}\d|\d\p{L})/u', $query);
 
-        if ($isSingleToken && $looksLikeCodeOrBrand && ($len <= 4 || $containsDigit)) {
-            $expanded = $this->expandAlphaNumericToken($query);
+        if ($isSingleToken && $looksLikeCodeOrBrand && ($len <= 4 || ($containsDigit && !$hasAlphaNumericBoundary))) {
             return [
                 'original_query' => $query,
                 'rewritten_query' => $query,
-                'keywords' => $expanded,
+                'keywords' => [$query],
                 'category' => null,
                 'brand' => $query,
                 'attribute_filters' => [],
-                'must' => $expanded,
+                'must' => [$query],
                 'should' => [],
             ];
         }
@@ -91,6 +91,7 @@ class SearchQueryAssistant
                     'Return must keywords that MUST match, and should keywords that are optional hints.',
                     'MUST and SHOULD items should be ATOMIC tokens. Avoid multi-word phrases. Split values like "3.2 kW" into separate tokens: "3.2" and "kW".',
                     'If a token contains letters and digits concatenated (e.g. "delta3", "gree35"), also include the split form as separate ATOMIC tokens (e.g. "delta" and "3"). Prefer keeping the original concatenated token too, but ensure the split tokens are considered so both forms can match product data.',
+                    'Do NOT treat concatenated alphanumeric tokens (e.g. "delta3", "gree35") as a brand. Brand should be a real manufacturer/brand name (typically letters only). For such tokens, prefer putting the split parts into must/should instead of brand.',
                     'If the query contains decimal numbers, keep them as a separate token (e.g. "3.2"), do not combine with units or other words.',
                     'If the user intent is air conditioning and you include "klíma"/"klima" as a MUST token, also include the webshop term "klímaberendezés"/"klimaberendezés" as a SHOULD token (do not remove the original). Do not add "klímaberendezés" to MUST unless the user explicitly used that word.',
                     'If the user intent is air conditioning, also consider multi-split / multi air conditioner terms. Add "multiklíma"/"multiklima" (and optionally "multi split") as SHOULD tokens when relevant, so a query like "AUX klíma" can match AUX multiklímák too. Keep these in SHOULD, not MUST.',
@@ -243,20 +244,17 @@ class SearchQueryAssistant
             $parts = array_values(array_filter(array_map('trim', $parts), fn ($p) => $p !== ''));
 
             foreach ($parts as $p) {
-                $expandedParts = $this->expandAlphaNumericToken($p);
-                foreach ($expandedParts as $ep) {
-                    $out[] = $ep;
+                $out[] = $p;
 
-                    $accentless = $this->removeHungarianAccents($ep);
-                    if ($accentless !== $ep) {
-                        $out[] = $accentless;
-                    }
+                $accentless = $this->removeHungarianAccents($p);
+                if ($accentless !== $p) {
+                    $out[] = $accentless;
+                }
 
-                    // tizedes elválasztó variáns: 3.2 <-> 3,2
-                    if (preg_match('/\d[\.,]\d/u', $ep)) {
-                        $out[] = str_replace('.', ',', $ep);
-                        $out[] = str_replace(',', '.', $ep);
-                    }
+                // tizedes elválasztó variáns: 3.2 <-> 3,2
+                if (preg_match('/\d[\.,]\d/u', $p)) {
+                    $out[] = str_replace('.', ',', $p);
+                    $out[] = str_replace(',', '.', $p);
                 }
             }
         }
@@ -291,38 +289,6 @@ class SearchQueryAssistant
         $parts = preg_split('/\s+/u', $query) ?: [];
         $parts = array_values(array_filter(array_map('trim', $parts), fn ($p) => $p !== ''));
 
-        $expanded = [];
-        foreach ($parts as $p) {
-            foreach ($this->expandAlphaNumericToken($p) as $ep) {
-                $expanded[] = $ep;
-            }
-        }
-
-        return array_slice(array_values(array_unique($expanded)), 0, 10);
-    }
-
-    private function expandAlphaNumericToken(string $token): array
-    {
-        $token = trim($token);
-        if ($token === '') {
-            return [];
-        }
-
-        $out = [$token];
-
-        // Split letter<->digit boundaries, e.g. delta3 -> delta 3, 3phase -> 3 phase
-        $spaced = preg_replace('/(\p{L})(\d)/u', '$1 $2', $token);
-        $spaced = preg_replace('/(\d)(\p{L})/u', '$1 $2', $spaced);
-        $spaced = is_string($spaced) ? trim($spaced) : $token;
-
-        if ($spaced !== $token && $spaced !== '') {
-            $parts = preg_split('/\s+/u', $spaced) ?: [];
-            $parts = array_values(array_filter(array_map('trim', $parts), fn ($p) => $p !== ''));
-            if (count($parts) >= 2) {
-                $out = array_merge($out, $parts);
-            }
-        }
-
-        return array_values(array_unique(array_filter($out, fn ($v) => $v !== '')));
+        return array_slice(array_values(array_unique($parts)), 0, 10);
     }
 }
