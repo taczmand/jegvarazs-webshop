@@ -89,6 +89,7 @@ class SearchQueryAssistant
                     'Prefer precision over recall when a brand is present (e.g. "AUX klíma" should require AUX).',
                     'Return must keywords that MUST match, and should keywords that are optional hints.',
                     'MUST and SHOULD items should be ATOMIC tokens. Avoid multi-word phrases. Split values like "3.2 kW" into separate tokens: "3.2" and "kW".',
+                    'If a token contains letters and digits concatenated (e.g. "delta3", "gree35"), also include the split form as separate ATOMIC tokens (e.g. "delta" and "3"). Prefer keeping the original concatenated token too, but ensure the split tokens are considered so both forms can match product data.',
                     'If the query contains decimal numbers, keep them as a separate token (e.g. "3.2"), do not combine with units or other words.',
                     'If the user intent is air conditioning and you include "klíma"/"klima" as a MUST token, also include the webshop term "klímaberendezés"/"klimaberendezés" as a SHOULD token (do not remove the original). Do not add "klímaberendezés" to MUST unless the user explicitly used that word.',
                     'If the user intent is air conditioning, also consider multi-split / multi air conditioner terms. Add "multiklíma"/"multiklima" (and optionally "multi split") as SHOULD tokens when relevant, so a query like "AUX klíma" can match AUX multiklímák too. Keep these in SHOULD, not MUST.',
