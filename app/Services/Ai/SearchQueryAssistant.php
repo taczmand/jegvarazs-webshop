@@ -50,14 +50,15 @@ class SearchQueryAssistant
         $containsDigit = (bool) preg_match('/\d/u', $query);
 
         if ($isSingleToken && $looksLikeCodeOrBrand && ($len <= 4 || $containsDigit)) {
+            $expanded = $this->expandAlphaNumericToken($query);
             return [
                 'original_query' => $query,
                 'rewritten_query' => $query,
-                'keywords' => [$query],
+                'keywords' => $expanded,
                 'category' => null,
                 'brand' => $query,
                 'attribute_filters' => [],
-                'must' => [$query],
+                'must' => $expanded,
                 'should' => [],
             ];
         }
@@ -242,17 +243,20 @@ class SearchQueryAssistant
             $parts = array_values(array_filter(array_map('trim', $parts), fn ($p) => $p !== ''));
 
             foreach ($parts as $p) {
-                $out[] = $p;
+                $expandedParts = $this->expandAlphaNumericToken($p);
+                foreach ($expandedParts as $ep) {
+                    $out[] = $ep;
 
-                $accentless = $this->removeHungarianAccents($p);
-                if ($accentless !== $p) {
-                    $out[] = $accentless;
-                }
+                    $accentless = $this->removeHungarianAccents($ep);
+                    if ($accentless !== $ep) {
+                        $out[] = $accentless;
+                    }
 
-                // tizedes elválasztó variáns: 3.2 <-> 3,2
-                if (preg_match('/\d[\.,]\d/u', $p)) {
-                    $out[] = str_replace('.', ',', $p);
-                    $out[] = str_replace(',', '.', $p);
+                    // tizedes elválasztó variáns: 3.2 <-> 3,2
+                    if (preg_match('/\d[\.,]\d/u', $ep)) {
+                        $out[] = str_replace('.', ',', $ep);
+                        $out[] = str_replace(',', '.', $ep);
+                    }
                 }
             }
         }
@@ -287,6 +291,38 @@ class SearchQueryAssistant
         $parts = preg_split('/\s+/u', $query) ?: [];
         $parts = array_values(array_filter(array_map('trim', $parts), fn ($p) => $p !== ''));
 
-        return array_slice(array_values(array_unique($parts)), 0, 10);
+        $expanded = [];
+        foreach ($parts as $p) {
+            foreach ($this->expandAlphaNumericToken($p) as $ep) {
+                $expanded[] = $ep;
+            }
+        }
+
+        return array_slice(array_values(array_unique($expanded)), 0, 10);
+    }
+
+    private function expandAlphaNumericToken(string $token): array
+    {
+        $token = trim($token);
+        if ($token === '') {
+            return [];
+        }
+
+        $out = [$token];
+
+        // Split letter<->digit boundaries, e.g. delta3 -> delta 3, 3phase -> 3 phase
+        $spaced = preg_replace('/(\p{L})(\d)/u', '$1 $2', $token);
+        $spaced = preg_replace('/(\d)(\p{L})/u', '$1 $2', $spaced);
+        $spaced = is_string($spaced) ? trim($spaced) : $token;
+
+        if ($spaced !== $token && $spaced !== '') {
+            $parts = preg_split('/\s+/u', $spaced) ?: [];
+            $parts = array_values(array_filter(array_map('trim', $parts), fn ($p) => $p !== ''));
+            if (count($parts) >= 2) {
+                $out = array_merge($out, $parts);
+            }
+        }
+
+        return array_values(array_unique(array_filter($out, fn ($v) => $v !== '')));
     }
 }
