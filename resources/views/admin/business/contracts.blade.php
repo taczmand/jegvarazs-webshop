@@ -72,6 +72,8 @@
                 <input type="hidden" name="contract_id" id="contract_id">
                 <input type="hidden" id="client_id" name="client_id">
                 <input type="hidden" id="lead_id" name="lead_id">
+                <input type="hidden" id="create_lead" name="create_lead" value="0">
+                <input type="hidden" id="lead_form_name" name="lead_form_name" value="Szerződés">
                 <input type="hidden" id="client_address_id" name="client_address_id">
                 <input type="hidden" id="create_client" name="create_client" value="0">
                 <input type="hidden" id="use_custom_address" name="use_custom_address" value="0">
@@ -111,6 +113,18 @@
                                                 <input type="text" class="form-control" id="lead_search" placeholder="Név / e-mail / telefon..." autocomplete="off">
                                                 <div id="lead_search_results" class="list-group w-100 admin-client-search-results" style="z-index: 1100; display:none; max-height: 260px; overflow-y: auto;"></div>
                                                 <div class="small mt-1" id="lead_selected_hint" style="display:none;"></div>
+                                            </td>
+                                        </tr>
+
+                                        <tr id="lead_create_row" style="display:none;">
+                                            <td class="w-25">Új érdeklődő</td>
+                                            <td>
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" value="1" id="create_lead_toggle">
+                                                    <label class="form-check-label" for="create_lead_toggle">
+                                                        Érdeklődő létrehozása a kapcsolati adatokból
+                                                    </label>
+                                                </div>
                                             </td>
                                         </tr>
                                         <tr class="contract-client-fields" style="display:none;">
@@ -1301,9 +1315,17 @@
             function updateLeadAssignmentVisibility() {
                 const hasClient = !!($('#client_id').val() || '').toString().trim();
                 const isCreateClient = ($('#create_client').val() || '').toString() === '1';
+                const hasLead = !!($('#lead_id').val() || '').toString().trim();
+                const isCreateLead = ($('#create_lead').val() || '').toString() === '1' || $('#create_lead_toggle').is(':checked');
 
                 const shouldShow = hasClient || isCreateClient;
-                $('#lead_assignment_row').toggle(shouldShow);
+                $('#lead_assignment_row').toggle(shouldShow && !isCreateLead);
+                $('#lead_create_row').toggle(shouldShow && !hasLead);
+
+                if (hasLead) {
+                    $('#create_lead').val('0');
+                    $('#create_lead_toggle').prop('checked', false);
+                }
 
                 if (!shouldShow) {
                     clearLeadSelection();
@@ -1464,7 +1486,27 @@
                 $('#lead_search').val('');
                 $('#lead_search_results').hide().empty();
                 $('#lead_selected_hint').hide().text('');
+
+                $('#create_lead').val('0');
+                $('#create_lead_toggle').prop('checked', false);
             }
+
+            $('#create_lead_toggle').on('change', function () {
+                const checked = $(this).is(':checked');
+                if (checked) {
+                    $('#lead_id').val('');
+                    $('#lead_search').val('');
+                    $('#lead_selected_hint').hide().text('');
+                    $('#lead_search_results').hide().empty();
+
+                    $('#create_lead').val('1');
+                    $('#lead_form_name').val('Szerződés');
+                } else {
+                    $('#create_lead').val('0');
+                }
+
+                updateLeadAssignmentVisibility();
+            });
 
             $('#lead_search').on('input', function () {
                 const q = ($(this).val() || '').trim();
@@ -1472,6 +1514,11 @@
 
                 $('#lead_search_results').hide().empty();
                 $('#lead_selected_hint').hide().text('');
+
+                if ($('#create_lead_toggle').is(':checked')) {
+                    $('#create_lead_toggle').prop('checked', false);
+                    $('#create_lead').val('0');
+                }
 
                 if ($('#lead_id').val()) {
                     $('#lead_id').val('');
@@ -1547,6 +1594,9 @@
                 const phone = ($btn.data('phone') || '').toString();
 
                 $('#lead_id').val(leadId);
+                $('#create_lead').val('0');
+                $('#create_lead_toggle').prop('checked', false);
+                updateLeadAssignmentVisibility();
 
                 const display = [name, email, phone].filter(Boolean).join(' | ');
                 $('#lead_search').val(display ? `${display} (#${leadId})` : `#${leadId}`);

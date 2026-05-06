@@ -10,12 +10,14 @@ use App\Models\Client;
 use App\Models\ClientAddress;
 use App\Models\Contract;
 use App\Models\ContractProduct;
+use App\Models\Lead;
 use App\Models\Product;
 use App\Models\User;
 use App\Models\Worksheet;
 use App\Models\WorksheetProduct;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
@@ -166,6 +168,8 @@ class ContractController extends Controller
         $request->validate([
             'client_id' => 'nullable|integer|exists:clients,id',
             'lead_id' => 'nullable|integer|exists:leads,id',
+            'create_lead' => 'nullable|boolean',
+            'lead_form_name' => 'nullable|string|max:255',
             'create_client' => 'nullable|boolean',
             'client_address_id' => 'nullable|integer',
             'use_custom_address' => 'nullable|boolean',
@@ -358,6 +362,53 @@ class ContractController extends Controller
                 $resolvedAddressLine = $address->address_line;
             }
 
+            $user = auth('admin')->user();
+            $creatorId = auth('admin')->id();
+            if (
+                $user
+                && $user->can('select-contract-creator')
+                && $request->filled('created_by')
+            ) {
+                $creatorId = (int) $request->input('created_by');
+            }
+
+            $creatorName = null;
+            if ($creatorId) {
+                $creatorName = User::query()->whereKey($creatorId)->value('name');
+            }
+            if (!$creatorName && $user) {
+                $creatorName = $user->name;
+            }
+
+            $shouldCreateLead = (bool) $request->input('create_lead');
+            $leadId = $request->input('lead_id');
+
+            if ($shouldCreateLead && !$leadId) {
+                $lead = Lead::create([
+                    'lead_id' => (string) Str::uuid(),
+                    'form_id' => 'contract',
+                    'form_name' => 'Szerződés',
+                    'full_name' => $resolvedName ?: null,
+                    'email' => $resolvedEmail ?: null,
+                    'phone' => $resolvedPhone ?: null,
+                    'city' => $resolvedCity ?: null,
+                    'campaign_name' => null,
+                    'status' => 'Új',
+                    'viewed_by' => $creatorName,
+                    'viewed_at' => $creatorName ? now() : null,
+                    'comment' => null,
+                    'data' => json_encode([
+                        'source' => 'contract',
+                        'contract_version' => $request->input('contract_version'),
+                    ]),
+                ]);
+
+                $request->merge([
+                    'lead_id' => $lead->id,
+                    'create_lead' => false,
+                ]);
+            }
+
             // Aláírás mentése, ha van
             $signatureName = null;
             if ($request->filled('signature')) {
@@ -502,16 +553,6 @@ class ContractController extends Controller
 
 
                 // Ha nincs contract_id → új szerződés és munkalap
-                $user = auth('admin')->user();
-                $creatorId = auth('admin')->id();
-                if (
-                    $user
-                    && $user->can('select-contract-creator')
-                    && $request->filled('created_by')
-                ) {
-                    $creatorId = (int) $request->input('created_by');
-                }
-
                 $contract = Contract::create([
                     'client_id' => $request->input('client_id') ?: null,
                     'lead_id' => $request->input('lead_id') ?: null,
