@@ -304,11 +304,27 @@
 @endsection
 
 @section('scripts')
+    <style>
+        .order-item-thumb {
+            width: 34px;
+            height: 34px;
+            object-fit: cover;
+            border-radius: 6px;
+            border: 1px solid rgba(0,0,0,.15);
+            background: #fff;
+        }
+    </style>
     <script type="module">
 
         const adminModalDOM = document.getElementById('adminModal');
         const adminModal = new bootstrap.Modal(adminModalDOM);
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+        const buildAppUrl = (path) => {
+            const base = (window.appConfig?.APP_URL || '').toString().replace(/\/+$/, '');
+            const cleanPath = (path || '').toString().replace(/^\/+/, '');
+            return `${base}/${cleanPath}`;
+        };
 
         $(document).ready(function() {
             const table = $('#adminTable').DataTable({
@@ -353,7 +369,7 @@
                 $('#order_id_display').text(row_data.id);
                 $('#order_date_display').text(row_data.created_at);
                 let displayName = row_data.customer_name;
-                
+
                 if (row_data.is_partner && row_data.is_partner === 'Igen') {
                     displayName += ' (Partner)';
                 }
@@ -427,11 +443,27 @@
                 itemsBody.empty();
 
                 items.forEach(item => {
+                    const photos = Array.isArray(item?.product?.photos) ? item.product.photos : [];
+                    const mainPhoto = photos.find(p => p && (p.is_main === true || p.is_main === 1 || p.is_main === '1'));
+                    const photo = mainPhoto || photos[0] || null;
+
+                    const imgSrc = photo?.path ? buildAppUrl(`storage/${photo.path}`) : buildAppUrl('static_media/no-image.jpg');
+
                     const unitLabel = item?.product?.unit
                         ? (item.product.unit.abbreviation || item.product.unit.name || '')
                         : '';
                     const row = `<tr>
-                        <td>${item.product_name}</td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <img
+                                    src="${imgSrc}"
+                                    data-full-src="${imgSrc}"
+                                    class="order-item-thumb"
+                                    alt=""
+                                />
+                                <span>${item.product_name}</span>
+                            </div>
+                        </td>
                         <td>${item.gross_price} Ft</td>
                         <td>${item.quantity}</td>
                         <td>${unitLabel}</td>
@@ -441,6 +473,42 @@
                     itemsBody.append(row);
                 });
             }
+
+            const $imgPreview = $('<div id="order_item_image_preview" style="display:none; position: fixed; z-index: 2000; pointer-events:none; padding: 6px; background: #fff; border: 1px solid rgba(0,0,0,.2); border-radius: 6px; box-shadow: 0 8px 20px rgba(0,0,0,.2);"></div>');
+            $('body').append($imgPreview);
+
+            const updatePreviewPosition = (e) => {
+                const offset = 16;
+                const maxW = window.innerWidth;
+                const maxH = window.innerHeight;
+                const w = $imgPreview.outerWidth() || 0;
+                const h = $imgPreview.outerHeight() || 0;
+
+                let left = (e.clientX || 0) + offset;
+                let top = (e.clientY || 0) + offset;
+
+                if (left + w > maxW - 8) left = (e.clientX || 0) - w - offset;
+                if (top + h > maxH - 8) top = (e.clientY || 0) - h - offset;
+
+                $imgPreview.css({ left: `${left}px`, top: `${top}px` });
+            };
+
+            $('#order_items_body')
+                .on('mouseenter', '.order-item-thumb', function (e) {
+                    const src = ($(this).attr('data-full-src') || $(this).attr('src') || '').toString();
+                    if (!src) return;
+
+                    $imgPreview.html(`<img src="${src}" style="display:block; width: 360px; height: 360px; object-fit: contain;" alt="" />`);
+                    $imgPreview.show();
+                    updatePreviewPosition(e);
+                })
+                .on('mousemove', '.order-item-thumb', function (e) {
+                    if (!$imgPreview.is(':visible')) return;
+                    updatePreviewPosition(e);
+                })
+                .on('mouseleave', '.order-item-thumb', function () {
+                    $imgPreview.hide().empty();
+                });
 
             function renderHistory(history) {
                 const historyBody = $('#order_history_body');

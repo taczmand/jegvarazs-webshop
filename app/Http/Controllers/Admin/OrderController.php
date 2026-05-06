@@ -140,7 +140,7 @@ class OrderController extends Controller
 
     public function items($id)
     {
-        return OrderItem::with(['product.unit'])
+        return OrderItem::with(['product.unit', 'product.photos'])
             ->where('order_id', $id)
             ->get();
     }
