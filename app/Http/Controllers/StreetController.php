@@ -29,7 +29,7 @@ class StreetController extends Controller
 
             $query = <<<OVERPASS
 [out:json][timeout:25];
-area["name"="{$cityEscaped}"]["boundary"="administrative"]->.searchArea;
+{{geocodeArea:"{$cityEscaped}"}}->.searchArea;
 (
   way["highway"]["name"~"^{$regexEscaped}",i](area.searchArea);
 );
