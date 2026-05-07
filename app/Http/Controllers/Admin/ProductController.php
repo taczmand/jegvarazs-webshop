@@ -405,9 +405,18 @@ class ProductController extends Controller
     public function setProductInline(Request $request) {
         try {
             $product = Product::findOrFail($request->id);
+
+            $old_gross_price = (float) ($product->gross_price ?? 0);
             $product->update([
                 $request->field => $request->value,
             ]);
+
+            if ((string) $request->field === 'gross_price') {
+                $new_gross_price = (float) ($product->fresh()->gross_price ?? 0);
+                if ($new_gross_price !== $old_gross_price) {
+                    $this->product_service->sync_partner_discount_prices($product->fresh());
+                }
+            }
 
             return response()->json([
                 'message' => 'Sikeres módosítás!',

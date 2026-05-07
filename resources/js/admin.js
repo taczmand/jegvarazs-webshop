@@ -3,6 +3,31 @@ window.bootstrap = bootstrap;
 import './sb-admin-2.js';
 import './base_crud.js';
 
+if (bootstrap?.Modal?.Default) {
+    bootstrap.Modal.Default.backdrop = 'static';
+    bootstrap.Modal.Default.keyboard = false;
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.modal').forEach((el) => {
+        const instance = bootstrap.Modal.getInstance(el);
+        if (instance && instance._config) {
+            instance._config.backdrop = 'static';
+            instance._config.keyboard = false;
+        }
+    });
+});
+
+document.addEventListener('click', (e) => {
+    const dismiss_btn = e.target.closest('[data-bs-dismiss="modal"]');
+    if (!dismiss_btn) return;
+
+    if (!dismiss_btn.classList.contains('btn-close')) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+});
+
 
 window.showToast = function (message, type = 'success') {
     const toastEl = document.getElementById('globalToast');

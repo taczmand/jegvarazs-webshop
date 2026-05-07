@@ -126,18 +126,28 @@ class UserController extends Controller
 
     public function update(Request $request, $id)
     {
-        $request->validate([
+        $is_own_profile = (int) $id === (int) auth('admin')->id();
+
+        $rules = [
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $id,
             'password' => 'nullable|string|min:8|confirmed',
-            'status' => 'required|string|in:active,inactive',
-        ]);
+        ];
+        if (!$is_own_profile) {
+            $rules['status'] = 'required|string|in:active,inactive';
+        } else {
+            $rules['status'] = 'nullable|string|in:active,inactive';
+        }
+
+        $request->validate($rules);
 
         try {
             $user = User::findOrFail($id);
             $user->name = $request->input('name');
             $user->email = $request->input('email');
-            $user->status = $request->input('status');
+            if (!$is_own_profile || $request->filled('status')) {
+                $user->status = $request->input('status');
+            }
 
             if ($request->filled('password')) {
                 $user->password = bcrypt($request->input('password'));

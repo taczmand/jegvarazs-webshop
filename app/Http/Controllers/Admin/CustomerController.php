@@ -100,6 +100,23 @@ class CustomerController extends Controller
             ->filterColumn('status', function ($query, $keyword) {
                 $query->where('status', '=', "{$keyword}");
             })
+            ->filterColumn('is_partner', function ($query, $keyword) {
+                $keyword = (string) $keyword;
+
+                if ($keyword === 'has_price') {
+                    $query->where('is_partner', 1)
+                        ->whereExists(function ($q) {
+                            $q->selectRaw('1')
+                                ->from('products_to_partners')
+                                ->whereColumn('products_to_partners.customer_id', 'customers.id');
+                        });
+                    return;
+                }
+
+                if ($keyword === '1' || $keyword === '0') {
+                    $query->where('is_partner', (int) $keyword);
+                }
+            })
             ->editColumn('created_at', function ($customer) {
                 return $customer->created ? \Carbon\Carbon::parse($customer->created)->format('Y-m-d H:i:s') : '';
             })
@@ -194,9 +211,26 @@ class CustomerController extends Controller
         $product_id = $request->input('product_id');
         $discount_gross_price = $request->input('discount_gross_price');
 
+        $product = Product::query()->findOrFail($product_id);
+
+        $base_price = $product->partner_gross_price;
+        if ($base_price === null) {
+            $base_price = $product->gross_price;
+        }
+        $base_price = (float) ($base_price ?? 0);
+
+        $discount_percentage = null;
+        if ($base_price > 0) {
+            $discount_percentage = round((1 - ((float) $discount_gross_price / $base_price)) * 100, 4);
+            $discount_percentage = max(0, min(100, $discount_percentage));
+        }
+
         $partner_product = PartnerProduct::updateOrCreate(
             ['customer_id' => $customer_id, 'product_id' => $product_id],
-            ['discount_gross_price' => $discount_gross_price]
+            [
+                'discount_gross_price' => $discount_gross_price,
+                'discount_percentage' => $discount_percentage,
+            ]
         );
 
         return response()->json(['success' => true, 'message' => 'Egyedi partnerár beállítása sikeres volt.', 'data' => $partner_product]);
@@ -251,6 +285,7 @@ class CustomerController extends Controller
                 ],
                 [
                     'discount_gross_price' => $discounted_price,
+                    'discount_percentage' => $percent,
                     'updated_at' => now(),
                     'created_at' => now(),
                 ]
@@ -303,6 +338,7 @@ class CustomerController extends Controller
                 ],
                 [
                     'discount_gross_price' => $discounted_price,
+                    'discount_percentage' => $percent,
                     'updated_at' => now(),
                     'created_at' => now(),
                 ]

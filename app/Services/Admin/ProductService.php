@@ -6,6 +6,7 @@ use App\Models\Attribute;
 use App\Models\Brand;
 use App\Models\CartItem;
 use App\Models\Category;
+use App\Models\PartnerProduct;
 use App\Models\Product;
 use App\Models\Tag;
 use App\Models\TaxCategory;
@@ -17,6 +18,33 @@ use Illuminate\Support\Str;
 
 class ProductService
 {
+    public function sync_partner_discount_prices(Product $product): void
+    {
+        $base_price = $product->partner_gross_price;
+        if ($base_price === null) {
+            $base_price = $product->gross_price;
+        }
+        $base_price = (float) ($base_price ?? 0);
+
+        PartnerProduct::query()
+            ->where('product_id', $product->id)
+            ->whereNotNull('discount_percentage')
+            ->chunkById(500, function ($items) use ($base_price) {
+                foreach ($items as $pp) {
+                    $percent = (float) ($pp->discount_percentage ?? 0);
+                    if ($percent >= 100) {
+                        $discounted_price = 0.00;
+                    } else {
+                        $discounted_price = round($base_price * (1 - $percent / 100), 2);
+                    }
+
+                    $pp->discount_gross_price = $discounted_price;
+                    $pp->updated_at = now();
+                    $pp->save();
+                }
+            });
+    }
+
     /**
      * Lekéri egy termék összes szükséges adatát részletesen,
      * beleértve a fotókat, attribútumokat és tag-eket meg bármit, ami még lesz...
@@ -205,6 +233,19 @@ class ProductService
 
         return DB::transaction(function () use ($data, $product) {
 
+            $old_gross_price = (float) ($product->gross_price ?? 0);
+            $old_partner_gross_price = $product->partner_gross_price;
+
+            $new_gross_price = (float) ($data['gross_price'] ?? 0);
+            $new_partner_gross_price = $data['partner_gross_price'] ?? null;
+            if ($new_partner_gross_price === '') {
+                $new_partner_gross_price = null;
+            }
+            if ($new_partner_gross_price === null) {
+                $new_partner_gross_price = $new_gross_price;
+            }
+            $new_partner_gross_price = (float) $new_partner_gross_price;
+
             // Termék alapadatok frissítése
             $product->update([
                 'title' => $data['title'],
@@ -213,8 +254,8 @@ class ProductService
                 'stock' => $data['stock'] ?? 0,
                 'unit_qty' => $data['unit_qty'] ?? 1,
                 'unit_id' => $data['unit_id'] ?? null,
-                'gross_price' => $data['gross_price'] ?? 0,
-                'partner_gross_price' => $data['partner_gross_price'] ?? $data['gross_price'] ?? 0,
+                'gross_price' => $new_gross_price,
+                'partner_gross_price' => $new_partner_gross_price,
                 'is_offerable' => $data['is_offerable'] ?? false,
                 'is_selectable_by_installer' => $data['is_selectable_by_installer'] ?? false,
                 'tax_id' => $data['tax_id'],
@@ -222,6 +263,12 @@ class ProductService
                 'brand_id' => $data['brand_id'] ?? null,
                 'status' => $data['status'],
             ]);
+
+            $partner_price_changed = ($new_gross_price !== $old_gross_price);
+
+            if ($partner_price_changed) {
+                $this->sync_partner_discount_prices($product);
+            }
 
             // Attribútumok frissítése (kulcs szerint)
             $attributes = [];

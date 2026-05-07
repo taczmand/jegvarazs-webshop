@@ -320,10 +320,10 @@
         const adminModal = new bootstrap.Modal(adminModalDOM);
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
-        const buildAppUrl = (path) => {
+        const build_app_url = (path) => {
             const base = (window.appConfig?.APP_URL || '').toString().replace(/\/+$/, '');
-            const cleanPath = (path || '').toString().replace(/^\/+/, '');
-            return `${base}/${cleanPath}`;
+            const clean_path = (path || '').toString().replace(/^\/+/, '');
+            return `${base}/${clean_path}`;
         };
 
         $(document).ready(function() {
@@ -444,10 +444,10 @@
 
                 items.forEach(item => {
                     const photos = Array.isArray(item?.product?.photos) ? item.product.photos : [];
-                    const mainPhoto = photos.find(p => p && (p.is_main === true || p.is_main === 1 || p.is_main === '1'));
-                    const photo = mainPhoto || photos[0] || null;
+                    const main_photo = photos.find(p => p && (p.is_main === true || p.is_main === 1 || p.is_main === '1'));
+                    const photo = main_photo || photos[0] || null;
 
-                    const imgSrc = photo?.path ? buildAppUrl(`storage/${photo.path}`) : buildAppUrl('static_media/no-image.jpg');
+                    const img_src = photo?.path ? build_app_url(`storage/${photo.path}`) : build_app_url('static_media/no-image.jpg');
 
                     const unitLabel = item?.product?.unit
                         ? (item.product.unit.abbreviation || item.product.unit.name || '')
@@ -456,8 +456,8 @@
                         <td>
                             <div class="d-flex align-items-center gap-2">
                                 <img
-                                    src="${imgSrc}"
-                                    data-full-src="${imgSrc}"
+                                    src="${img_src}"
+                                    data-full-src="${img_src}"
                                     class="order-item-thumb"
                                     alt=""
                                 />
@@ -477,18 +477,18 @@
             const $imgPreview = $('<div id="order_item_image_preview" style="display:none; position: fixed; z-index: 2000; pointer-events:none; padding: 6px; background: #fff; border: 1px solid rgba(0,0,0,.2); border-radius: 6px; box-shadow: 0 8px 20px rgba(0,0,0,.2);"></div>');
             $('body').append($imgPreview);
 
-            const updatePreviewPosition = (e) => {
+            const update_preview_position = (e) => {
                 const offset = 16;
-                const maxW = window.innerWidth;
-                const maxH = window.innerHeight;
+                const max_w = window.innerWidth;
+                const max_h = window.innerHeight;
                 const w = $imgPreview.outerWidth() || 0;
                 const h = $imgPreview.outerHeight() || 0;
 
                 let left = (e.clientX || 0) + offset;
                 let top = (e.clientY || 0) + offset;
 
-                if (left + w > maxW - 8) left = (e.clientX || 0) - w - offset;
-                if (top + h > maxH - 8) top = (e.clientY || 0) - h - offset;
+                if (left + w > max_w - 8) left = (e.clientX || 0) - w - offset;
+                if (top + h > max_h - 8) top = (e.clientY || 0) - h - offset;
 
                 $imgPreview.css({ left: `${left}px`, top: `${top}px` });
             };
@@ -500,11 +500,11 @@
 
                     $imgPreview.html(`<img src="${src}" style="display:block; width: 360px; height: 360px; object-fit: contain;" alt="" />`);
                     $imgPreview.show();
-                    updatePreviewPosition(e);
+                    update_preview_position(e);
                 })
                 .on('mousemove', '.order-item-thumb', function (e) {
                     if (!$imgPreview.is(':visible')) return;
-                    updatePreviewPosition(e);
+                    update_preview_position(e);
                 })
                 .on('mouseleave', '.order-item-thumb', function () {
                     $imgPreview.hide().empty();

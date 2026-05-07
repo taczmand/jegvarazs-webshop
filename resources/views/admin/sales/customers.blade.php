@@ -34,6 +34,7 @@
                         <select class="form-select filter-input" data-column="4">
                             <option value="">Partner (összes)</option>
                             <option value="1">Igen</option>
+                            <option value="has_price">Igen és van ár beállítva</option>
                             <option value="0">Nem</option>
                         </select>
                     </div>
@@ -304,6 +305,7 @@
                                             <th>Bruttó ár</th>
                                             <th>Alapértelmezett partner ár (bruttó)</th>
                                             <th>Egyedi partner ár (bruttó)</th>
+                                            <th>Kedvezmény (%)</th>
                                             <th>Műveletek</th>
                                         </tr>
                                         </thead>
@@ -559,12 +561,19 @@
                             data.forEach(item => {
                                 const partner_products = item.partner_products || [];
                                 const discount_gross_price_value = partner_products[0]?.discount_gross_price ?? '';
+                                const discount_percentage_value = partner_products.length
+                                    ? (partner_products[0]?.discount_percentage ?? '')
+                                    : 0;
+                                const discount_percentage_display = discount_percentage_value === '' || discount_percentage_value === null
+                                    ? ''
+                                    : `${discount_percentage_value}%`;
 
                                 const row = `<tr>
                                 <td>${item.title}</td>
                                 <td>${item.gross_price}</td>
                                 <td>${item.partner_gross_price}</td>
-                                <td><input type="number" class="form-control" value="${discount_gross_price_value}"></td>
+                                <td><input type="number" class="form-control discount-gross-price-input" value="${discount_gross_price_value}"></td>
+                                <td class="discount-percentage-cell">${discount_percentage_display}</td>
                                 <td>
                                     <button class="btn btn-success edit-price" data-product_id="${item.id}" title="Egyedi ár mentése"><i class="fas fa-save"></i></button>
                                     <button class="btn btn-danger delete-price" data-product_id="${item.id}" title="Egyedi ár törlése"><i class="fa-solid fa-eraser"></i></button>
@@ -807,7 +816,7 @@
             $('#priceManagerTable').on('click', '.edit-price', async function () {
                 const row = $(this).closest('tr');
                 const product_id = $(this).data('product_id');
-                const discount_gross_price = row.find('input[type="number"]').val();
+                const discount_gross_price = row.find('input.discount-gross-price-input').val();
 
                 if (!discount_gross_price) {
                     showToast('Kérjük, adjon meg egy érvényes ár értéket!', 'danger');
@@ -830,6 +839,12 @@
 
                     if (!response.ok) {
                         throw new Error('Hiba az ár frissítésekor');
+                    }
+
+                    const payload = await response.json().catch(() => null);
+                    const percent = payload?.data?.discount_percentage;
+                    if (percent !== undefined && percent !== null && percent !== '') {
+                        row.find('.discount-percentage-cell').text(`${percent}%`);
                     }
 
                     showToast('Ár sikeresen frissítve!', 'success');
@@ -858,7 +873,8 @@
                         throw new Error('Hiba az ár törlésekor');
                     }
                     const row = $(this).closest('tr');
-                    row.find('input[type="number"]').val("");
+                    row.find('input.discount-gross-price-input').val("");
+                    row.find('.discount-percentage-cell').text('0%');
 
                     showToast('Egyedi ár sikeresen törölve!', 'success');
                 } catch (error) {
