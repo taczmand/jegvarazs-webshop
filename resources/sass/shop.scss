@@ -620,6 +620,14 @@ a {
     display: none;
 }
 
+.header__quickcall {
+    display: none;
+}
+
+.header__quickcall i {
+    color: #0b5ed7;
+}
+
 /*---------------------
   Hero
 -----------------------*/
@@ -3171,10 +3179,25 @@ a {
         width: 35px;
         line-height: 33px;
         text-align: center;
-        border: 1px solid #1c1c1c;
+        border: none;
         cursor: pointer;
         position: absolute;
         right: 15px;
+        top: 22px;
+    }
+    .header__quickcall {
+        display: block;
+        font-size: 22px;
+        color: #0b5ed7;
+        height: 35px;
+        width: 35px;
+        line-height: 33px;
+        text-align: center;
+        border: 1px solid #0b5ed7;
+        border-radius: 6px;
+        cursor: pointer;
+        position: absolute;
+        right: 60px;
         top: 22px;
     }
     .header .container {
@@ -3470,10 +3493,25 @@ a {
         width: 35px;
         line-height: 33px;
         text-align: center;
-        border: 1px solid #1c1c1c;
+        border: none;
         cursor: pointer;
         position: absolute;
         right: 15px;
+        top: 22px;
+    }
+    .header__quickcall {
+        display: block;
+        font-size: 22px;
+        color: #0b5ed7;
+        height: 35px;
+        width: 35px;
+        line-height: 33px;
+        text-align: center;
+        border: 1px solid #0b5ed7;
+        border-radius: 6px;
+        cursor: pointer;
+        position: absolute;
+        right: 60px;
         top: 22px;
     }
     .header .container {

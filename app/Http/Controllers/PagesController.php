@@ -222,6 +222,7 @@ class PagesController extends Controller
                     }
                 },
             ],
+            'location' => ['required', 'string', 'max:255'],
         ], [
             'name.regex' => 'A név nem tartalmazhat számot.',
             'phone.regex' => 'A telefonszám formátuma nem megfelelő.',
@@ -236,7 +237,7 @@ class PagesController extends Controller
                 'full_name' => $request->name,
                 'email' => $request->email,
                 'phone' => $request->phone,
-                'city' => $request->city,
+                'city' => $request->location,
                 'status' => 'Új',
                 'comment' => $request->message,
                 'data' => json_encode(array("field_data" =>  null))

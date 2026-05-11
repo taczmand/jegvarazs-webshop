@@ -119,6 +119,11 @@
                 @endif
             </div>
         </div>
+        @if(!empty($basicdata['support_phone']))
+            <a class="header__quickcall" href="tel:{{ str_replace(' ', '', $basicdata['support_phone']) }}" aria-label="Gyorshívás">
+                <i class="fa fa-phone"></i>
+            </a>
+        @endif
         <div class="humberger__open">
             <i class="fa fa-bars"></i>
         </div>
