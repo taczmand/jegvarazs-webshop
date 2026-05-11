@@ -387,7 +387,7 @@ class ContractController extends Controller
                 $lead = Lead::create([
                     'lead_id' => (string) Str::uuid(),
                     'form_id' => 'contract',
-                    'form_name' => 'Szerződés',
+                    'form_name' => 'Offline',
                     'full_name' => $resolvedName ?: null,
                     'email' => $resolvedEmail ?: null,
                     'phone' => $resolvedPhone ?: null,
