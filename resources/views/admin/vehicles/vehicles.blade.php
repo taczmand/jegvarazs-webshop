@@ -154,7 +154,7 @@
                                                 </div>
                                                 <div class="mb-2">
                                                     <label for="timeline_odometer_value" class="form-label mb-1">Km óra állás*</label>
-                                                    <input type="number" class="form-control" id="timeline_odometer_value" min="0" step="1" placeholder="pl. 123456">
+                                                    <input type="number" class="form-control" id="timeline_odometer_value" min="0" step="1" placeholder="">
                                                 </div>
                                                 <div class="mb-2">
                                                     <label for="timeline_odometer_note" class="form-label mb-1">Megjegyzés</label>
@@ -172,6 +172,10 @@
                                                 <div class="mb-2">
                                                     <label for="timeline_oil_change_date" class="form-label mb-1">Dátum*</label>
                                                     <input type="date" class="form-control" id="timeline_oil_change_date">
+                                                </div>
+                                                <div class="mb-2">
+                                                    <label for="timeline_oil_change_km" class="form-label mb-1">Km óra állás*</label>
+                                                    <input type="number" min="0" step="1" class="form-control" id="timeline_oil_change_km">
                                                 </div>
                                                 <div class="mb-2">
                                                     <label for="timeline_oil_change_note" class="form-label mb-1">Megjegyzés</label>
@@ -635,6 +639,9 @@
 
                         if (it.type === 'oil_change') {
                             metaBadges.push(`<span class="vehicle-timeline-badge badge-gray">Olajcsere</span>`);
+                            if (value !== undefined && value !== null && String(value) !== '') {
+                                metaBadges.push(`<span class="vehicle-timeline-badge badge-gray badge-nowrap">Km: <strong>${escapeHtml(value)}</strong></span>`);
+                            }
                             if (note !== undefined && note !== null && String(note) !== '') {
                                 metaBadges.push(`<span class="vehicle-timeline-badge badge-gray">${escapeHtml(note)}</span>`);
                             }
@@ -963,6 +970,7 @@
                     _token: csrfToken,
                     type: 'oil_change',
                     event_date: $('#timeline_oil_change_date').val(),
+                    value: $('#timeline_oil_change_km').val(),
                     note: $('#timeline_oil_change_note').val(),
                 };
 
@@ -974,6 +982,7 @@
                         showToast(res.message || 'Sikeres!', 'success');
                         table.ajax.reload(null, false);
                         loadTimeline(currentVehicleId);
+                        $('#timeline_oil_change_km').val('');
                         $('#timeline_oil_change_note').val('');
                     },
                     error: (xhr) => {

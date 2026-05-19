@@ -584,6 +584,12 @@ class VehicleController extends Controller
             ]);
         }
 
+        if ($type === 'oil_change') {
+            $request->validate([
+                'value' => 'required|integer|min:0|max:10000000',
+            ]);
+        }
+
         $event = VehicleEvent::create([
             'vehicle_id' => $vehicle->id,
             'type' => $type,
@@ -608,9 +614,10 @@ class VehicleController extends Controller
         }
 
         if ($type === 'oil_change') {
-            if ($vehicle->current_odometer !== null) {
+            if ($event->value !== null && $event->value !== '') {
                 $vehicle->update([
-                    'last_oil_change_odometer' => (int) $vehicle->current_odometer,
+                    'current_odometer' => (int) $event->value,
+                    'last_oil_change_odometer' => (int) $event->value,
                 ]);
             }
         }
