@@ -50,6 +50,7 @@ use App\Http\Controllers\SimplePayController;
 use App\Http\Middleware\Incognito;
 use App\Models\Order;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/incognito', [PagesController::class, 'incognito']);
@@ -115,6 +116,33 @@ Route::get('/products/reindex', function () {
     return response()->json([
         'status' => 'ok',
         'output' => Artisan::output(),
+    ]);
+});
+
+Route::get('/streets/cache/clear', function () {
+    $requestKey = request('secret-key') ?? request('secret_key') ?? request('key') ?? request('token');
+    $expectedKey = env('ARTISAN_SECRET_KEY');
+
+    abort_unless(
+        $expectedKey && hash_equals((string) $expectedKey, (string) $requestKey),
+        403
+    );
+
+    $city = trim((string) request('city', ''));
+    $q = trim((string) request('q', ''));
+    if ($city === '' || $q === '') {
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Missing city or q',
+        ], 422);
+    }
+
+    $cacheKey = 'overpass_streets:' . md5(mb_strtolower($city) . '|' . mb_strtolower($q));
+    Cache::forget($cacheKey);
+
+    return response()->json([
+        'status' => 'ok',
+        'forgotten_key' => $cacheKey,
     ]);
 });
 
