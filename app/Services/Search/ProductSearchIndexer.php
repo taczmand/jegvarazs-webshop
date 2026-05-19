@@ -17,9 +17,12 @@ class ProductSearchIndexer
 
         $parts = [];
 
+        $rawDescription = (string) ($product->description ?? '');
+        $cleanDescription = trim(html_entity_decode(strip_tags($rawDescription), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+
         $parts[] = (string) ($product->title ?? '');
         $parts[] = (string) ($product->slug ?? '');
-        $parts[] = (string) ($product->description ?? '');
+        $parts[] = $cleanDescription;
 
         $parts[] = (string) ($product->category?->title ?? '');
         $parts[] = (string) ($product->brands?->title ?? '');
