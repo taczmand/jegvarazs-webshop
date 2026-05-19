@@ -23,73 +23,46 @@ class StreetController extends Controller
 
         $cacheKey = 'overpass_streets:' . md5(mb_strtolower($city) . '|' . mb_strtolower($q));
 
-        $cached = Cache::get($cacheKey);
-        if (is_array($cached)) {
-            return response()->json($cached);
-        }
+        $results = Cache::remember($cacheKey, now()->addHours(6), function () use ($city, $q) {
+            $cityEscaped = addcslashes($city, "\\\"");
+            $regexEscaped = preg_quote($q, '/');
 
-        $cityEscaped = addcslashes($city, "\\\"");
-        $regexEscaped = preg_quote($q, '/');
-
-        $buildOverpassQuery = function (bool $startsWith) use ($cityEscaped, $regexEscaped): string {
-            $pattern = $startsWith ? "^{$regexEscaped}" : $regexEscaped;
-
-            return <<<OVERPASS
+            $query = <<<OVERPASS
 [out:json][timeout:25];
 {{geocodeArea:"{$cityEscaped}"}}->.searchArea;
 (
-  way["highway"]["name"~"{$pattern}",i](area.searchArea);
+  way["highway"]["name"~"^{$regexEscaped}",i](area.searchArea);
 );
 out tags;
 OVERPASS;
-        };
 
-        $endpoints = [
-            'https://overpass-api.de/api/interpreter',
-            'https://overpass.kumi.systems/api/interpreter',
-        ];
+            $response = Http::timeout(25)
+                ->asForm()
+                ->post('https://overpass-api.de/api/interpreter', [
+                    'data' => $query,
+                ]);
 
-        $names = [];
-        foreach ([true, false] as $startsWith) {
-            $queryBody = $buildOverpassQuery($startsWith);
+            if (!$response->ok()) {
+                return [];
+            }
 
-            foreach ($endpoints as $url) {
-                try {
-                    $response = Http::timeout(25)
-                        ->retry(2, 300)
-                        ->asForm()
-                        ->post($url, ['data' => $queryBody]);
+            $json = $response->json();
+            $elements = is_array($json) ? ($json['elements'] ?? []) : [];
 
-                    if (!$response->ok()) {
-                        continue;
-                    }
-
-                    $json = $response->json();
-                    $elements = is_array($json) ? ($json['elements'] ?? []) : [];
-
-                    foreach ($elements as $el) {
-                        $name = $el['tags']['name'] ?? null;
-                        if (!$name) {
-                            continue;
-                        }
-                        $names[] = $name;
-                    }
-
-                    if ($names !== []) {
-                        break 2;
-                    }
-                } catch (\Throwable $e) {
+            $names = [];
+            foreach ($elements as $el) {
+                $name = $el['tags']['name'] ?? null;
+                if (!$name) {
                     continue;
                 }
+                $names[] = $name;
             }
-        }
 
-        $names = array_values(array_unique($names));
-        sort($names, SORT_NATURAL | SORT_FLAG_CASE);
-        $results = array_slice($names, 0, 20);
+            $names = array_values(array_unique($names));
+            sort($names, SORT_NATURAL | SORT_FLAG_CASE);
 
-        // Üres eredményt ne cache-eljünk hosszan (Overpass rate-limit / átmeneti hiba gyakori)
-        Cache::put($cacheKey, $results, $results === [] ? now()->addMinutes(5) : now()->addHours(6));
+            return array_slice($names, 0, 20);
+        });
 
         return response()->json($results);
     }
