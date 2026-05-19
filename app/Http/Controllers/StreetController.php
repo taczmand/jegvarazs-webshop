@@ -33,20 +33,51 @@ class StreetController extends Controller
 out tags;
 OVERPASS;
 
+        $endpoints = [
+            'https://overpass-api.de/api/interpreter',
+            'https://overpass.kumi.systems/api/interpreter',
+        ];
+
         try {
-            $response = Http::timeout(25)
-                ->asForm()
-                ->post('https://overpass-api.de/api/interpreter', [
-                    'data' => $query,
+            $response = null;
+            $usedEndpoint = null;
+
+            foreach ($endpoints as $endpoint) {
+                $candidate = Http::timeout(25)
+                    ->withHeaders([
+                        'Accept' => 'application/json,text/plain;q=0.9,*/*;q=0.8',
+                        'User-Agent' => 'jegvarazs-webshop/1.0',
+                    ])
+                    ->asForm()
+                    ->post($endpoint, [
+                        'data' => $query,
+                    ]);
+
+                Log::info('Overpass streets search response', [
+                    'city' => $city,
+                    'q' => $q,
+                    'endpoint' => $endpoint,
+                    'status' => $candidate->status(),
+                    'ok' => $candidate->ok(),
+                    'body' => mb_substr((string) $candidate->body(), 0, 2000),
                 ]);
 
-            Log::info('Overpass streets search response', [
-                'city' => $city,
-                'q' => $q,
-                'status' => $response->status(),
-                'ok' => $response->ok(),
-                'body' => mb_substr((string) $response->body(), 0, 2000),
-            ]);
+                if ($candidate->ok()) {
+                    $response = $candidate;
+                    $usedEndpoint = $endpoint;
+                    break;
+                }
+            }
+
+            if (!$response) {
+                Log::warning('Overpass streets search failed on all endpoints', [
+                    'city' => $city,
+                    'q' => $q,
+                    'endpoints' => $endpoints,
+                ]);
+
+                return response()->json([]);
+            }
         } catch (\Throwable $e) {
             Log::error('Overpass streets search exception', [
                 'city' => $city,
@@ -58,10 +89,6 @@ OVERPASS;
             return response()->json([]);
         }
 
-        if (!$response->ok()) {
-            return response()->json([]);
-        }
-
         $json = $response->json();
         $elements = is_array($json) ? ($json['elements'] ?? []) : [];
 
@@ -69,6 +96,7 @@ OVERPASS;
             Log::info('Overpass streets search empty elements', [
                 'city' => $city,
                 'q' => $q,
+                'endpoint' => $usedEndpoint,
             ]);
         }
 
