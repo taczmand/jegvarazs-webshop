@@ -84,6 +84,7 @@
                             <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#attributes" type="button">Egyedi tulajdonságok</button></li>
                             <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tags" type="button">Címkék</button></li>
                             <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#images" type="button">Képek</button></li>
+                            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#quantity_discounts" type="button">Mennyiségi kedvezmények</button></li>
                             <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#history" type="button">Történet</button></li>
                         </ul>
 
@@ -106,10 +107,6 @@
                                             <input type="text" class="form-control" name="title" id="title" name="title" required>
                                         </div>
                                         <div class="mb-3">
-                                            <label class="form-label">Bruttó ár (Ft)*</label>
-                                            <input type="number" step="0.01" class="form-control" name="gross_price" id="gross_price" required>
-                                        </div>
-                                        <div class="mb-3">
                                             <label class="form-label">Kategória*</label>
                                             <select class="form-select" id="categoriesSelect" name="category_id" required>
                                             </select>
@@ -117,6 +114,13 @@
                                         <div class="mb-3">
                                             <label class="form-label">Márka</label>
                                             <select class="form-select" id="brands-select" name="brand_id">
+                                            </select>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Státusz</label>
+                                            <select class="form-select" id="status" name="status" required>
+                                                <option value="inactive">Inaktív</option>
+                                                <option value="active">Aktív</option>
                                             </select>
                                         </div>
                                         <div class="mb-3 form-check">
@@ -142,20 +146,17 @@
                                             </select>
                                         </div>
                                         <div class="mb-3">
-                                            <label class="form-label">Partner bruttó ár (Ft)</label>
-                                            <input type="number" step="0.01" class="form-control" name="partner_gross_price" id="partner_gross_price">
-                                        </div>
-                                        <div class="mb-3">
                                             <label class="form-label">ÁFA (%)*</label>
                                             <select class="form-select" id="tax-select" name="tax_id" required>
                                             </select>
                                         </div>
                                         <div class="mb-3">
-                                            <label class="form-label">Státusz</label>
-                                            <select class="form-select" id="status" name="status" required>
-                                                <option value="inactive">Inaktív</option>
-                                                <option value="active">Aktív</option>
-                                            </select>
+                                            <label class="form-label">Bruttó ár (Ft)*</label>
+                                            <input type="number" step="0.01" class="form-control" name="gross_price" id="gross_price" required>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Partner bruttó ár (Ft)</label>
+                                            <input type="number" step="0.01" class="form-control" name="partner_gross_price" id="partner_gross_price">
                                         </div>
                                         <div class="mb-3 form-check">
                                             <input type="checkbox" name="is_selectable_by_installer" id="is_selectable_by_installer" class="form-check-input" value="1">
@@ -190,6 +191,80 @@
 
 
                                 <div id="productPhotos" class="mt-3"></div>
+                            </div>
+
+                            <div class="tab-pane fade" id="quantity_discounts">
+                                <div class="alert alert-info mb-3">
+                                    Itt termékenként megadható több kedvezmény sáv (pl. 3+ db, 5+ db). A legnagyobb, még teljesülő mennyiségi sáv érvényesül.
+                                </div>
+
+                                <div class="card mb-3">
+                                    <div class="card-header fw-bold">Új kedvezmény</div>
+                                    <div class="card-body">
+                                        <div class="row g-2 align-items-end">
+                                            <div class="col-12 col-md-3">
+                                                <label class="form-label">Min. mennyiség</label>
+                                                <input type="number" min="1" class="form-control" id="qd_min_quantity">
+                                            </div>
+                                            <div class="col-12 col-md-3">
+                                                <label class="form-label">Típus</label>
+                                                <select class="form-select" id="qd_discount_type">
+                                                    <option value="percent">Százalék (%)</option>
+                                                    <option value="fixed">Fix (Ft / db)</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-12 col-md-3">
+                                                <label class="form-label">Érték</label>
+                                                <input type="number" step="0.01" min="0" class="form-control" id="qd_discount_value">
+                                            </div>
+                                            <div class="col-12 col-md-3">
+                                                <label class="form-label">Aktív</label>
+                                                <div class="form-check mt-2">
+                                                    <input class="form-check-input" type="checkbox" id="qd_is_active" checked>
+                                                    <label class="form-check-label" for="qd_is_active">Igen</label>
+                                                </div>
+                                            </div>
+                                            <div class="col-12 col-md-6">
+                                                <label class="form-label">Kezdete (opcionális)</label>
+                                                <input type="datetime-local" class="form-control" id="qd_starts_at">
+                                            </div>
+                                            <div class="col-12 col-md-6">
+                                                <label class="form-label">Vége (opcionális)</label>
+                                                <input type="datetime-local" class="form-control" id="qd_ends_at">
+                                            </div>
+                                            <div class="col-12">
+                                                <button type="button" class="btn btn-success" id="qd_add_btn">Hozzáadás</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="card">
+                                    <div class="card-header fw-bold">Meglévő kedvezmények</div>
+                                    <div class="card-body p-0">
+                                        <div class="table-responsive">
+                                            <table class="table table-bordered mb-0">
+                                                <thead>
+                                                <tr>
+                                                    <th>ID</th>
+                                                    <th>Min. mennyiség</th>
+                                                    <th>Típus</th>
+                                                    <th>Érték</th>
+                                                    <th>Kezdete</th>
+                                                    <th>Vége</th>
+                                                    <th>Aktív</th>
+                                                    <th>Művelet</th>
+                                                </tr>
+                                                </thead>
+                                                <tbody id="qd_table_body">
+                                                <tr>
+                                                    <td colspan="8" class="text-muted">Válassz ki egy mentett terméket.</td>
+                                                </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
 
                             <div class="tab-pane fade" id="history">
@@ -307,6 +382,7 @@
         });
 
         $(document).ready(function() {
+            let currentQuantityDiscounts = [];
             const table = $('#productsTable').DataTable({
                 language: {
                     url: '/lang/datatables/hu.json'
@@ -481,12 +557,14 @@
                 $('#uploadPhotosBtn').show();
 
                 $.get(`{{ url('/admin/termekek') }}/${productId}`, function(data) {
-                    const product = data.original.product;
-                    const assigned_attributes = data.original.assigned_attributes;
+                    const payload = data?.original ?? data;
+                    const product = payload.product;
+                    const assigned_attributes = payload.assigned_attributes;
                     const assignedAttributes = Object.fromEntries(assigned_attributes.map(a => [a.id, a.pivot.value]));
-                    const assigned_tags = data.original.assigned_tags;
-                    const assigned_photos = data.original.product_photos;
-                    const cartOwners = data.original.cart_owners || [];
+                    const assigned_tags = payload.assigned_tags;
+                    const assigned_photos = payload.product_photos;
+                    const cartOwners = payload.cart_owners || [];
+                    currentQuantityDiscounts = payload.quantity_discounts || [];
 
                     if (cartOwners.length) {
                         const html = cartOwners.map(function (owner) {
@@ -524,6 +602,7 @@
                     renderTaxes(allMetaData.original.taxes, product.tax_id);
                     renderUnits(allMetaData.original.units, product.unit_id);
 
+                    renderQuantityDiscounts(currentQuantityDiscounts);
                     initProductHistory(product.id);
 
                     productModal.show();
@@ -531,6 +610,174 @@
                     showToast('Nem sikerült betölteni a termék adatait! ' + error, 'danger');
                 });
             }
+
+            function renderQuantityDiscounts(discounts) {
+                const tbody = $('#qd_table_body');
+                tbody.empty();
+
+                const productId = $('#product_id').val();
+                if (!productId) {
+                    tbody.append('<tr><td colspan="8" class="text-muted">Előbb mentsd el a terméket.</td></tr>');
+                    return;
+                }
+
+                if (!discounts || discounts.length === 0) {
+                    tbody.append('<tr><td colspan="8" class="text-muted">Nincs felvett kedvezmény.</td></tr>');
+                    return;
+                }
+
+                discounts.forEach(d => {
+                    const starts = d.starts_at ? String(d.starts_at).slice(0, 16) : '';
+                    const ends = d.ends_at ? String(d.ends_at).slice(0, 16) : '';
+                    const checked = d.is_active ? 'checked' : '';
+
+                    tbody.append(`
+                        <tr data-discount-id="${d.id}">
+                            <td>${d.id}</td>
+                            <td><input type="number" class="form-control form-control-sm qd-edit" data-field="min_quantity" value="${d.min_quantity}" min="1"></td>
+                            <td>
+                                <select class="form-select form-select-sm qd-edit" data-field="discount_type">
+                                    <option value="percent" ${d.discount_type === 'percent' ? 'selected' : ''}>percent</option>
+                                    <option value="fixed" ${d.discount_type === 'fixed' ? 'selected' : ''}>fixed</option>
+                                </select>
+                            </td>
+                            <td><input type="number" step="0.01" min="0" class="form-control form-control-sm qd-edit" data-field="discount_value" value="${d.discount_value}"></td>
+                            <td><input type="datetime-local" class="form-control form-control-sm qd-edit" data-field="starts_at" value="${starts}"></td>
+                            <td><input type="datetime-local" class="form-control form-control-sm qd-edit" data-field="ends_at" value="${ends}"></td>
+                            <td class="text-center"><input type="checkbox" class="form-check-input qd-edit" data-field="is_active" ${checked}></td>
+                            <td class="text-center" style="white-space: nowrap;">
+                                <button type="button" class="btn btn-sm btn-primary qd-save">Mentés</button>
+                                <button type="button" class="btn btn-sm btn-danger qd-delete">Törlés</button>
+                            </td>
+                        </tr>
+                    `);
+                });
+            }
+
+            async function refreshQuantityDiscounts(productId) {
+                const res = await fetch(`{{ url('/admin/termekek') }}/${productId}/mennyisegi-kedvezmenyek`);
+                const json = await res.json();
+                currentQuantityDiscounts = json.discounts || [];
+                renderQuantityDiscounts(currentQuantityDiscounts);
+            }
+
+            $('#qd_add_btn').on('click', async function () {
+                const productId = $('#product_id').val();
+                if (!productId) {
+                    showToast('Előbb mentsd el a terméket!', 'warning');
+                    return;
+                }
+
+                try {
+                    const payload = {
+                        min_quantity: Number($('#qd_min_quantity').val()),
+                        discount_type: String($('#qd_discount_type').val()),
+                        discount_value: Number($('#qd_discount_value').val()),
+                        starts_at: $('#qd_starts_at').val() || null,
+                        ends_at: $('#qd_ends_at').val() || null,
+                        is_active: $('#qd_is_active').is(':checked') ? 1 : 0,
+                    };
+
+                    const response = await fetch(`{{ url('/admin/termekek') }}/${productId}/mennyisegi-kedvezmenyek`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': csrfToken,
+                        },
+                        body: JSON.stringify(payload),
+                    });
+
+                    const json = await response.json();
+                    if (!response.ok) {
+                        throw new Error(json?.message || 'Hiba a mentéskor');
+                    }
+
+                    $('#qd_min_quantity').val('');
+                    $('#qd_discount_value').val('');
+                    $('#qd_starts_at').val('');
+                    $('#qd_ends_at').val('');
+                    $('#qd_is_active').prop('checked', true);
+
+                    showToast(json.message || 'Mentve', 'success');
+                    await refreshQuantityDiscounts(productId);
+                } catch (e) {
+                    showToast(e.message || 'Hiba történt', 'danger');
+                }
+            });
+
+            $('#qd_table_body').on('click', '.qd-save', async function () {
+                const tr = $(this).closest('tr');
+                const discountId = tr.data('discount-id');
+
+                const payload = {
+                    min_quantity: Number(tr.find('[data-field="min_quantity"]').val()),
+                    discount_type: String(tr.find('[data-field="discount_type"]').val()),
+                    discount_value: Number(tr.find('[data-field="discount_value"]').val()),
+                    starts_at: tr.find('[data-field="starts_at"]').val() || null,
+                    ends_at: tr.find('[data-field="ends_at"]').val() || null,
+                    is_active: tr.find('[data-field="is_active"]').is(':checked') ? 1 : 0,
+                };
+
+                const productId = $('#product_id').val();
+                if (!productId) {
+                    showToast('Nincs termék ID', 'danger');
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`{{ url('/admin/termekek/mennyisegi-kedvezmenyek') }}/${discountId}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': csrfToken,
+                        },
+                        body: JSON.stringify(payload),
+                    });
+
+                    const json = await response.json();
+                    if (!response.ok) {
+                        throw new Error(json?.message || 'Hiba a frissítéskor');
+                    }
+
+                    showToast(json.message || 'Frissítve', 'success');
+                    await refreshQuantityDiscounts(productId);
+                } catch (e) {
+                    showToast(e.message || 'Hiba történt', 'danger');
+                }
+            });
+
+            $('#qd_table_body').on('click', '.qd-delete', async function () {
+                const tr = $(this).closest('tr');
+                const discountId = tr.data('discount-id');
+                const productId = $('#product_id').val();
+                if (!productId) {
+                    showToast('Nincs termék ID', 'danger');
+                    return;
+                }
+
+                if (!confirm('Biztosan törlöd ezt a kedvezményt?')) {
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`{{ url('/admin/termekek/mennyisegi-kedvezmenyek') }}/${discountId}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'X-CSRF-TOKEN': csrfToken,
+                        },
+                    });
+
+                    const json = await response.json();
+                    if (!response.ok) {
+                        throw new Error(json?.message || 'Hiba a törléskor');
+                    }
+
+                    showToast(json.message || 'Törölve', 'success');
+                    await refreshQuantityDiscounts(productId);
+                } catch (e) {
+                    showToast(e.message || 'Hiba történt', 'danger');
+                }
+            });
 
             function initProductHistory(productId) {
                 if (!productId) {
@@ -915,6 +1162,9 @@
                 $('#productForm')[0].reset();
                 $('#product_id').val('');
                 $('#attribute-fields').empty();
+
+                currentQuantityDiscounts = [];
+                renderQuantityDiscounts([]);
 
                 if (productHistoryTable) {
                     productHistoryTable.destroy();

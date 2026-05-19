@@ -7,6 +7,7 @@ use App\Http\Requests\ProductRequest;
 use App\Models\CartItem;
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\ProductQuantityDiscount;
 use App\Models\ProductPhoto;
 use App\Services\Admin\ProductService;
 use Illuminate\Http\Request;
@@ -106,6 +107,94 @@ class ProductController extends Controller
             ->make(true);
     }
 
+    public function quantityDiscounts($id)
+    {
+        $user = auth('admin')->user();
+        if (!$user || !$user->can('edit-product')) {
+            return response()->json(['message' => 'Nincs jogosultságod.'], 403);
+        }
+
+        $product = Product::query()->findOrFail($id);
+
+        $discounts = ProductQuantityDiscount::query()
+            ->where('product_id', $product->id)
+            ->orderBy('min_quantity')
+            ->get();
+
+        return response()->json([
+            'product_id' => $product->id,
+            'discounts' => $discounts,
+        ]);
+    }
+
+    public function storeQuantityDiscount(Request $request, $id)
+    {
+        $user = auth('admin')->user();
+        if (!$user || !$user->can('edit-product')) {
+            return response()->json(['message' => 'Nincs jogosultságod.'], 403);
+        }
+
+        $product = Product::query()->findOrFail($id);
+
+        $data = $request->validate([
+            'min_quantity' => 'required|integer|min:1',
+            'discount_type' => 'required|in:percent,fixed',
+            'discount_value' => 'required|numeric|min:0',
+            'starts_at' => 'nullable|date',
+            'ends_at' => 'nullable|date|after_or_equal:starts_at',
+            'is_active' => 'nullable|boolean',
+        ]);
+
+        $data['product_id'] = $product->id;
+        $data['is_active'] = (bool) ($data['is_active'] ?? false);
+
+        $discount = ProductQuantityDiscount::create($data);
+
+        return response()->json([
+            'message' => 'Kedvezmény mentve.',
+            'discount' => $discount,
+        ]);
+    }
+
+    public function updateQuantityDiscount(Request $request, ProductQuantityDiscount $discount)
+    {
+        $user = auth('admin')->user();
+        if (!$user || !$user->can('edit-product')) {
+            return response()->json(['message' => 'Nincs jogosultságod.'], 403);
+        }
+
+        $data = $request->validate([
+            'min_quantity' => 'required|integer|min:1',
+            'discount_type' => 'required|in:percent,fixed',
+            'discount_value' => 'required|numeric|min:0',
+            'starts_at' => 'nullable|date',
+            'ends_at' => 'nullable|date|after_or_equal:starts_at',
+            'is_active' => 'nullable|boolean',
+        ]);
+
+        $data['is_active'] = (bool) ($data['is_active'] ?? false);
+        $discount->update($data);
+
+        return response()->json([
+            'message' => 'Kedvezmény frissítve.',
+            'discount' => $discount->fresh(),
+        ]);
+    }
+
+    public function destroyQuantityDiscount(ProductQuantityDiscount $discount)
+    {
+        $user = auth('admin')->user();
+        if (!$user || !$user->can('edit-product')) {
+            return response()->json(['message' => 'Nincs jogosultságod.'], 403);
+        }
+
+        $discount->delete();
+
+        return response()->json([
+            'message' => 'Kedvezmény törölve.',
+        ]);
+    }
+
 
     /**
      * AJAX endpoint: adott termék adatainak lekérése JSON-ként.
@@ -113,13 +202,22 @@ class ProductController extends Controller
     public function show($id)
     {
         try {
-            $productData = $this->product_service->getProductWithPivotMeta($id);
+            $product = Product::query()->findOrFail($id);
 
+            $productData = $this->product_service->getProductWithPivotMeta($id);
             if (!$productData) {
                 return response()->json(['message' => 'Termék nem található'], 404);
             }
 
-            return response()->json($productData);
+            $discounts = ProductQuantityDiscount::query()
+                ->where('product_id', $product->id)
+                ->orderBy('min_quantity')
+                ->get();
+
+            $original = $productData->getData(true);
+            $original['quantity_discounts'] = $discounts;
+
+            return response()->json($original);
         } catch (\Exception $e) {
             \Log::error('Termék mentési hiba: ' . $e->getMessage());
 

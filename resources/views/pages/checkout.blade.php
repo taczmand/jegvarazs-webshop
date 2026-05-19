@@ -39,7 +39,7 @@
         $subtotal = 0;
         if(0 < $cart_items->items->count()) {
             foreach($cart_items->items as $item) {
-                $subtotal = $item->product->display_gross_price * $item->quantity;
+                $subtotal = $item->discounted_row_gross_total ?? 0;
                 $total_item_amount += $subtotal;
             }
         }
@@ -424,7 +424,7 @@
                                     <ul>
                                         @foreach($cart_items->items as $item)
                                             @php
-                                                $subtotal = $item->product->display_gross_price * $item->quantity;
+                                                $subtotal = $item->discounted_row_gross_total ?? 0;
                                                 $total_item_amount += $subtotal;
                                             @endphp
                                             <li>
@@ -432,7 +432,7 @@
                                                 @if($item->product && $item->product->unit)
                                                     <small class="text-muted">({{ $item->quantity }} {{ $item->product->unit->abbreviation ?? $item->product->unit->name }})</small>
                                                 @endif
-                                                <span>{{ number_format($item->product->display_gross_price * $item->quantity, 0, ',', ' ') }} Ft</span>
+                                                <span>{{ number_format($item->discounted_row_gross_total ?? 0, 0, ',', ' ') }} Ft</span>
                                             </li>
                                         @endforeach
                                     </ul>

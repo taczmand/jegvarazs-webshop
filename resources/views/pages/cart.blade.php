@@ -6,6 +6,7 @@
 
 
 @section('content')
+    @inject('qdService', 'App\Services\Pricing\QuantityDiscountService')
     @include('partials.breadcrumbs', ['breadcrumbs' => [
         'page_title' => 'Kosár',
         'nav' => [
@@ -45,8 +46,32 @@
 
                                         @foreach($cart->items as $item)
                                             @php
-                                                $subtotal = $item->product->display_gross_price * $item->quantity;
+                                                $subtotal = $item->discounted_row_gross_total ?? 0;
                                                 $total_item_amount += $subtotal;
+
+                                                $baseUnitGross = $item->product ? (float) $item->product->display_gross_price : null;
+                                                $vatValue = $item->product ? (float) ($item->product->taxCategory?->tax_value ?? 0) : 0;
+                                                $baseUnitNet = $baseUnitGross !== null
+                                                    ? round((float) ($baseUnitGross / (1 + $vatValue / 100)), 2)
+                                                    : null;
+
+                                                $now = now();
+                                                $rules = ($item->product?->quantityDiscounts ?? collect())
+                                                    ->filter(fn ($d) => (bool) $d->is_active)
+                                                    ->filter(fn ($d) => !$d->starts_at || $d->starts_at->lte($now))
+                                                    ->filter(fn ($d) => !$d->ends_at || $d->ends_at->gte($now))
+                                                    ->sortBy('min_quantity')
+                                                    ->values();
+
+                                                $nextRule = $rules->first(fn ($r) => (int) $r->min_quantity > (int) $item->quantity);
+                                                $nextQty = $nextRule ? (int) $nextRule->min_quantity : null;
+                                                $needMore = $nextQty ? max(0, $nextQty - (int) $item->quantity) : null;
+                                                $nextUnitGross = ($nextRule && $item->product)
+                                                    ? $qdService->discountedUnitGrossPrice($item->product, $nextQty, (float) $item->product->display_gross_price)
+                                                    : null;
+                                                $nextRowTotal = ($nextUnitGross !== null && $nextQty !== null)
+                                                    ? round($nextUnitGross * $nextQty, 2)
+                                                    : null;
                                             @endphp
                                             <tr id="cart_item_{{ $item->id }}">
                                                 <td class="shoping__cart__item">
@@ -54,10 +79,16 @@
                                                     <h5>{{ $item->product->title }}</h5>
                                                 </td>
                                                 <td class="shoping__cart__price">
-                                                    {{ number_format($item->product->display_net_price, 0, ',', ' ') }} Ft
+                                                    {{ number_format($item->discounted_unit_net_price ?? 0, 0, ',', ' ') }} Ft
+                                                    @if($item->discount_applied && $baseUnitNet !== null)
+                                                        <div class="small text-muted"><del>{{ number_format($baseUnitNet, 0, ',', ' ') }} Ft</del></div>
+                                                    @endif
                                                 </td>
                                                 <td class="shoping__cart__price">
-                                                    {{ number_format($item->product->display_gross_price, 0, ',', ' ') }} Ft
+                                                    {{ number_format($item->discounted_unit_gross_price ?? 0, 0, ',', ' ') }} Ft
+                                                    @if($item->discount_applied && $baseUnitGross !== null)
+                                                        <div class="small text-muted"><del>{{ number_format($baseUnitGross, 0, ',', ' ') }} Ft</del></div>
+                                                    @endif
                                                 </td>
                                                 <td class="shoping__cart__quantity">
                                                     <div class="quantity">
@@ -69,10 +100,17 @@
                                                                 {{ $item->product->unit->abbreviation ?? $item->product->unit->name }}
                                                             </div>
                                                         @endif
+
+                                                        @if($needMore !== null && $needMore > 0 && $nextRowTotal !== null && $nextUnitGross !== null)
+                                                            <div class="text-primary mt-1" style="font-size: 0.85rem; line-height: 1.2;">
+                                                                Ha még <strong>{{ $needMore }}</strong> db-ot veszel, akkor <strong>{{ $nextQty }}</strong> db esetén csak
+                                                                <strong>{{ number_format($nextRowTotal, 0, ',', ' ') }} Ft</strong> ({{ number_format($nextUnitGross, 0, ',', ' ') }} Ft/db)
+                                                            </div>
+                                                        @endif
                                                     </div>
                                                 </td>
                                                 <td class="shoping__cart__total">
-                                                    {{ number_format($item->product->display_gross_price * $item->quantity, 0, ',', ' ') }} Ft
+                                                    {{ number_format($item->discounted_row_gross_total ?? 0, 0, ',', ' ') }} Ft
                                                 </td>
                                                 <td class="shoping__cart__item__close">
                                                     <span class="icon_close" onclick="removeItemFromCart({{ $item->id }})"></span>

@@ -20,7 +20,7 @@ class OrderController extends Controller
         $cart = $customer->cart;
 
         if ($cart) {
-            $cart->loadMissing(['items.product.unit', 'items.product.taxCategory']);
+            $cart->loadMissing(['items.product.unit', 'items.product.taxCategory', 'items.product.quantityDiscounts']);
         }
 
         if (!$request->input('order_condition')) {
@@ -40,7 +40,7 @@ class OrderController extends Controller
         $subtotal = 0;
         if(0 < $cart->items->count()) {
             foreach($cart->items as $item) {
-                $subtotal = $item->product->display_gross_price * $item->quantity;
+                $subtotal = $item->discounted_row_gross_total ?? 0;
                 $total_item_amount += $subtotal;
             }
         }
@@ -72,7 +72,7 @@ class OrderController extends Controller
             return [
                 'product_id'   => $item->product_id,
                 'name'         => $item->product->title,
-                'gross_price'  => $item->product->display_gross_price,
+                'gross_price'  => $item->discounted_unit_gross_price,
                 'quantity'     => $item->quantity,
                 'tax_value'    => $item->product->taxCategory->tax_value,
                 'unit_label'   => $unit_label,

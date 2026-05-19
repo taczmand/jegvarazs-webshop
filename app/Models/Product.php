@@ -11,6 +11,11 @@ class Product extends Model
 
     protected $guarded = [];
 
+    public function quantityDiscounts()
+    {
+        return $this->hasMany(ProductQuantityDiscount::class);
+    }
+
     public function unit()
     {
         return $this->belongsTo(Unit::class, 'unit_id');

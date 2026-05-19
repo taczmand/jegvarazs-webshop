@@ -175,6 +175,11 @@ Route::get('/automatizacio/kuldes', [AutomatedEmailController::class, 'sendToday
             Route::delete('/termekek/{id}', [AdminProductController::class, 'destroy'])->name('products.destroy');
             Route::post('/termekek/{id}/upload-photos', [AdminProductController::class, 'uploadProductPhotos'])->name('products.upload_product_photo');
 
+            Route::get('/termekek/{id}/mennyisegi-kedvezmenyek', [AdminProductController::class, 'quantityDiscounts'])->name('products.quantity_discounts');
+            Route::post('/termekek/{id}/mennyisegi-kedvezmenyek', [AdminProductController::class, 'storeQuantityDiscount'])->name('products.quantity_discounts.store');
+            Route::put('/termekek/mennyisegi-kedvezmenyek/{discount}', [AdminProductController::class, 'updateQuantityDiscount'])->name('products.quantity_discounts.update');
+            Route::delete('/termekek/mennyisegi-kedvezmenyek/{discount}', [AdminProductController::class, 'destroyQuantityDiscount'])->name('products.quantity_discounts.destroy');
+
             // Kategóriák
             Route::get('/kategoriak', [CategoryController::class, 'index'])->name('categories.index');
             Route::get('/kategoriak/data', [CategoryController::class, 'data'])->name('categories.data');

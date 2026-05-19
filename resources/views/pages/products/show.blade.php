@@ -31,6 +31,7 @@
 
     @include('partials.breadcrumbs', ['breadcrumbs' => $breadcrumbs])
     @inject('stockHelper', 'App\Helpers\StockStatusHelper')
+    @inject('qdService', 'App\Services\Pricing\QuantityDiscountService')
 
 
 
@@ -75,6 +76,51 @@
                         <h3>{{ $product->title }}</h3>
                         @auth('customer')
                             {!! $product->display_all_prices !!}
+                        @endauth
+
+                        @php
+                            $now = now();
+                            $activeDiscounts = ($product->quantityDiscounts ?? collect())
+                                ->filter(fn ($d) => (bool) $d->is_active)
+                                ->filter(fn ($d) => !$d->starts_at || $d->starts_at->lte($now))
+                                ->filter(fn ($d) => !$d->ends_at || $d->ends_at->gte($now))
+                                ->sortBy('min_quantity')
+                                ->values();
+                            $baseGross = (float) $product->display_gross_price;
+                        @endphp
+
+                        @auth('customer')
+                            @if($activeDiscounts->count() > 0)
+                                <div class="mt-3">
+                                    <div class="fw-bold mb-2">Mennyiségi kedvezmények</div>
+                                    <div class="table-responsive">
+                                        <table class="table table-sm table-bordered mb-0">
+                                            <thead>
+                                            <tr>
+                                                <th>Mennyiség</th>
+                                                <th>Kedvezmény</th>
+                                                <th>Bruttó ár / db</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody>
+                                            @foreach($activeDiscounts as $rule)
+                                                @php
+                                                    $discounted = $qdService->discountedUnitGrossPrice($product, (int) $rule->min_quantity, $baseGross);
+                                                    $discountLabel = $rule->discount_type === 'percent'
+                                                        ? '-' . number_format((float) $rule->discount_value, 0, ',', ' ') . '%'
+                                                        : '-' . number_format((float) $rule->discount_value, 0, ',', ' ') . ' Ft / db';
+                                                @endphp
+                                                <tr>
+                                                    <td>{{ (int) $rule->min_quantity }}+ db</td>
+                                                    <td>{{ $discountLabel }}</td>
+                                                    <td><strong>{{ number_format($discounted, 0, ',', ' ') }} Ft</strong></td>
+                                                </tr>
+                                            @endforeach
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            @endif
                         @endauth
 
                         @php
@@ -234,6 +280,30 @@
                                 <h6><a href="{{ route('products.resolve', ['slugs' => $fullSlug]) }}">{{ $related_product->title }}</a></h6>
                                 @auth('customer')
                                     {!! $related_product->display_all_prices_on_list !!}
+
+                                    @php
+                                        $now = now();
+                                        $activeDiscounts = ($related_product->quantityDiscounts ?? collect())
+                                            ->filter(fn ($d) => (bool) $d->is_active)
+                                            ->filter(fn ($d) => !$d->starts_at || $d->starts_at->lte($now))
+                                            ->filter(fn ($d) => !$d->ends_at || $d->ends_at->gte($now))
+                                            ->values();
+
+                                        $baseGross = (float) $related_product->display_gross_price;
+                                        $minDiscountedUnitGross = null;
+                                        foreach ($activeDiscounts as $rule) {
+                                            $candidate = $qdService->discountedUnitGrossPrice($related_product, (int) $rule->min_quantity, $baseGross);
+                                            if ($minDiscountedUnitGross === null || $candidate < $minDiscountedUnitGross) {
+                                                $minDiscountedUnitGross = $candidate;
+                                            }
+                                        }
+                                    @endphp
+
+                                    @if($minDiscountedUnitGross !== null && $minDiscountedUnitGross < $baseGross)
+                                        <div class="text-muted" style="font-size: 0.9rem;">
+                                            Mennyiségi kedvezménnyel akár <strong>{{ number_format($minDiscountedUnitGross, 0, ',', ' ') }} Ft</strong>
+                                        </div>
+                                    @endif
                                 @endauth
                             </div>
                         </div>

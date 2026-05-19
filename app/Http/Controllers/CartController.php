@@ -21,7 +21,7 @@ class CartController extends Controller
         $cart = Cart::where('customer_id', $customer->id)
             ->with(['items' => function ($query) {
                 $query->where('product_id', '<>', 1);
-            }, 'items.product.unit'])
+            }, 'items.product.unit', 'items.product.taxCategory', 'items.product.quantityDiscounts'])
             ->first();
 
         $snapshot = [];
@@ -91,7 +91,7 @@ class CartController extends Controller
         $cart = Cart::where('customer_id', $customer->id)
         ->with(['items' => function ($query) {
             $query->where('product_id', '<>', 1);
-        }, 'items.product'])
+        }, 'items.product.taxCategory', 'items.product.quantityDiscounts'])
         ->first();
 
 
@@ -102,7 +102,7 @@ class CartController extends Controller
         $summary = [
             'total_items' => $cart->items->sum('quantity'),
             'total_price' => $cart->items->sum(function ($item) {
-                return $item->product->display_gross_price * $item->quantity;
+                return $item->discounted_row_gross_total ?? 0;
             }),
             'items' => $cart->items,
         ];

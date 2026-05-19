@@ -8,6 +8,7 @@
 @section('content')
     @include('partials.breadcrumbs', ['breadcrumbs' => $breadcrumbs])
     @inject('stockHelper', 'App\Helpers\StockStatusHelper')
+    @inject('qdService', 'App\Services\Pricing\QuantityDiscountService')
 
     <div class="container">
 
@@ -293,6 +294,30 @@
                                                     @auth('customer')
                                                         <!--<h5>{{ number_format($product->display_gross_price, 0, ',', ' ') }} Ft</h5>-->
                                                         {!! $product->display_all_prices_on_list !!}
+
+                                                        @php
+                                                            $now = now();
+                                                            $activeDiscounts = ($product->quantityDiscounts ?? collect())
+                                                                ->filter(fn ($d) => (bool) $d->is_active)
+                                                                ->filter(fn ($d) => !$d->starts_at || $d->starts_at->lte($now))
+                                                                ->filter(fn ($d) => !$d->ends_at || $d->ends_at->gte($now))
+                                                                ->values();
+
+                                                            $baseGross = (float) $product->display_gross_price;
+                                                            $minDiscountedUnitGross = null;
+                                                            foreach ($activeDiscounts as $rule) {
+                                                                $candidate = $qdService->discountedUnitGrossPrice($product, (int) $rule->min_quantity, $baseGross);
+                                                                if ($minDiscountedUnitGross === null || $candidate < $minDiscountedUnitGross) {
+                                                                    $minDiscountedUnitGross = $candidate;
+                                                                }
+                                                            }
+                                                        @endphp
+
+                                                        @if($minDiscountedUnitGross !== null && $minDiscountedUnitGross < $baseGross)
+                                                            <div class="text-muted" style="font-size: 0.9rem;">
+                                                                Mennyiségi kedvezménnyel akár <strong>{{ number_format($minDiscountedUnitGross, 0, ',', ' ') }} Ft</strong>
+                                                            </div>
+                                                        @endif
                                                         @if ($status)
                                                             @if ("backorder" === $status['slug'])
                                                                 <a class="badge bg-{{ $status['color'] }} interesting-badge" href="#" product-id="{{ $product->id }}" product-title="{{ $product->title }}" >

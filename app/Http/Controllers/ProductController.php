@@ -22,7 +22,7 @@ class ProductController extends Controller
         $itemsPerPage = $request->query('itemsPerPage', 24);
 
         // Alap query
-        $query = Product::with(['category', 'photos', 'tags'])
+        $query = Product::with(['category', 'photos', 'tags', 'quantityDiscounts'])
             ->where('status', 'active');
 
         $allProductIds = $query->pluck('id');
@@ -198,7 +198,7 @@ class ProductController extends Controller
         $itemsPerPage = $request->query('itemsPerPage', 24);
 
         // 🔎 Alap lekérdezés
-        $query = Product::with(['category', 'photos', 'tags'])
+        $query = Product::with(['category', 'photos', 'tags', 'quantityDiscounts'])
             ->whereIn('cat_id', $categoryIds)
             ->where('status', 'active');
 
@@ -343,7 +343,7 @@ class ProductController extends Controller
 
     public function show(string $categorySlugs, string $productSlug)
     {
-        $product = Product::with(['category', 'photos', 'attributes', 'tags', 'brands', 'unit'])
+        $product = Product::with(['category', 'photos', 'attributes', 'tags', 'brands', 'unit', 'quantityDiscounts'])
             ->where('slug', $productSlug)
             ->firstOrFail();
 
@@ -357,7 +357,7 @@ class ProductController extends Controller
             ]
         );
 
-        $relatedProducts = Product::with(['unit'])
+        $relatedProducts = Product::with(['unit', 'quantityDiscounts'])
             ->where('cat_id', $product->cat_id)
             ->where('id', '!=', $product->id)
             ->where('status', 'active')
