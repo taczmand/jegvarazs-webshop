@@ -42,4 +42,10 @@ return [
         'base_url' => env('OPENAI_BASE_URL', 'https://api.openai.com'),
     ],
 
+    'product_search' => [
+        // legacy: AI-enriched + LIKE based search
+        // fulltext: FULLTEXT(search_text) boolean prefix search + optional fuzzy fallback
+        'engine' => env('PRODUCT_SEARCH_ENGINE', 'fulltext'),
+    ],
+
 ];

@@ -11,6 +11,7 @@ use App\Models\Product;
 use App\Models\Tag;
 use App\Models\TaxCategory;
 use App\Models\Unit;
+use App\Services\Search\ProductSearchIndexer;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -18,6 +19,11 @@ use Illuminate\Support\Str;
 
 class ProductService
 {
+    public function __construct(
+        private readonly ProductSearchIndexer $searchIndexer,
+    ) {
+    }
+
     public function sync_partner_discount_prices(Product $product): void
     {
         $base_price = $product->partner_gross_price;
@@ -156,6 +162,8 @@ class ProductService
                 $product->tags()->sync($data['tags']);
             }
 
+            $this->searchIndexer->rebuild($product);
+
             // Új képek mentése
             if (!empty($data['new_photos'])) {
                 $photos = [];
@@ -287,6 +295,8 @@ class ProductService
             } else {
                 $product->tags()->detach();
             }
+
+            $this->searchIndexer->rebuild($product);
 
             // Új képek mentése
             if (!empty($data['new_photos'])) {

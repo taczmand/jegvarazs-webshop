@@ -49,6 +49,7 @@ use App\Http\Controllers\ShopCustomerController;
 use App\Http\Controllers\SimplePayController;
 use App\Http\Middleware\Incognito;
 use App\Models\Order;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/incognito', [PagesController::class, 'incognito']);
@@ -85,6 +86,31 @@ Route::get('/clients/sync', function () {
     );
 
     Artisan::call('clients:sync');
+
+    return response()->json([
+        'status' => 'ok',
+        'output' => Artisan::output(),
+    ]);
+});
+
+Route::get('/products/reindex', function () {
+    $requestKey = request('secret-key') ?? request('secret_key') ?? request('key') ?? request('token');
+    $expectedKey = env('PRODUCTS_REINDEX_KEY') ?: env('ARTISAN_SECRET_KEY');
+
+    abort_unless(
+        $expectedKey && hash_equals((string) $expectedKey, (string) $requestKey),
+        403
+    );
+
+    $args = [];
+    if (request()->filled('id')) {
+        $args['--id'] = (string) request('id');
+    }
+    if (request()->filled('chunk')) {
+        $args['--chunk'] = (string) request('chunk');
+    }
+
+    Artisan::call('products:reindex', $args);
 
     return response()->json([
         'status' => 'ok',

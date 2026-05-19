@@ -5,6 +5,9 @@ namespace App\Http\Controllers;
 use App\Mail\ContactMessage;
 use App\Mail\NewAppointment;
 use App\Models\Appointment;
+use App\Models\BasicData;
+use App\Models\Blog;
+use App\Models\BlogCategory;
 use App\Models\BlogPost;
 use App\Models\Brand;
 use App\Models\Category;
@@ -15,9 +18,12 @@ use App\Models\Lead;
 use App\Models\NewsletterSubscription;
 use App\Models\Product;
 use App\Models\Searched;
+use App\Models\Tag;
+use App\Models\WatchedProduct;
 use App\Services\Ai\SearchQueryAssistant;
+use App\Services\Search\ProductSearchService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cookie;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
@@ -257,6 +263,8 @@ class PagesController extends Controller
             return redirect()->back()->with('error', 'Kérjük, adjon meg keresési kifejezést.');
         }
 
+        $engine = (string) config('services.product_search.engine', 'fulltext');
+
         $originalQuery = trim((string) $query);
         $originalTokens = preg_split('/\s+/u', $originalQuery) ?: [];
         $originalTokens = array_values(array_filter(array_map('trim', $originalTokens), fn ($t) => $t !== ''));
@@ -317,23 +325,6 @@ class PagesController extends Controller
         $buildQueryProducts = function (?int $categoryIdFilter, ?string $brandFilter) use ($keywords, $mandatoryToken, $must, $should, $brand, $attributeFilters) {
             $queryProducts = Product::where('status', 'active');
 
-            $termVariants = function (string $term): array {
-                $term = trim($term);
-                if ($term === '') {
-                    return [];
-                }
-
-                $variants = [$term];
-
-                // tizedes elválasztó: 3.2 <-> 3,2
-                if (preg_match('/\d[\.,]\d/u', $term)) {
-                    $variants[] = str_replace('.', ',', $term);
-                    $variants[] = str_replace(',', '.', $term);
-                }
-
-                return array_values(array_unique(array_filter($variants, fn ($v) => trim((string) $v) !== '')));
-            };
-
             if ($categoryIdFilter) {
                 $queryProducts->where('cat_id', $categoryIdFilter);
             }
@@ -371,87 +362,115 @@ class PagesController extends Controller
                 }
             }
 
-            // MUST: minden kifejezésnek illeszkednie kell legalább egy mezőre
-            if ($must !== []) {
-                foreach ($must as $mt) {
-                    $mt = trim((string) $mt);
-                    if ($mt === '') {
-                        continue;
+            $engine = (string) config('services.product_search.engine', 'fulltext');
+
+            if ($engine === 'legacy') {
+                $termVariants = function (string $term): array {
+                    $term = trim($term);
+                    if ($term === '') {
+                        return [];
                     }
-                    $variants = $termVariants($mt);
-                    $queryProducts->where(function ($q) use ($variants) {
-                        foreach ($variants as $v) {
-                            $q->orWhere('title', 'like', '%' . $v . '%')
-                                ->orWhere('description', 'like', '%' . $v . '%')
-                                ->orWhereHas('brands', function ($qb) use ($v) {
-                                    $qb->where('title', 'like', '%' . $v . '%');
+
+                    $variants = [$term];
+
+                    // tizedes elválasztó: 3.2 <-> 3,2
+                    if (preg_match('/\d[\.,]\d/u', $term)) {
+                        $variants[] = str_replace('.', ',', $term);
+                        $variants[] = str_replace(',', '.', $term);
+                    }
+
+                    return array_values(array_unique(array_filter($variants, fn ($v) => trim((string) $v) !== '')));
+                };
+
+                // MUST: minden kifejezésnek illeszkednie kell legalább egy mezőre
+                if ($must !== []) {
+                    foreach ($must as $mt) {
+                        $mt = trim((string) $mt);
+                        if ($mt === '') {
+                            continue;
+                        }
+                        $variants = $termVariants($mt);
+                        $queryProducts->where(function ($q) use ($variants) {
+                            foreach ($variants as $v) {
+                                $q->orWhere('title', 'like', '%' . $v . '%')
+                                    ->orWhere('description', 'like', '%' . $v . '%')
+                                    ->orWhereHas('brands', function ($qb) use ($v) {
+                                        $qb->where('title', 'like', '%' . $v . '%');
+                                    })
+                                    ->orWhereHas('tags', function ($q2) use ($v) {
+                                        $q2->where('name', 'like', '%' . $v . '%');
+                                    })
+                                    ->orWhereHas('attributes', function ($q3) use ($v) {
+                                        $q3->where('attributes.name', 'like', '%' . $v . '%')
+                                            ->orWhere('product_attributes.value', 'like', '%' . $v . '%');
+                                    });
+                            }
+                        });
+                    }
+                }
+
+                // SHOULD: rásegítés. Legacy LIKE mellett ezt csak akkor szűrjük,
+                // ha nincs MUST (különben túlzottan leszűkítené).
+                if ($should !== [] && $must === []) {
+                    $queryProducts->where(function ($q) use ($should, $mandatoryToken, $termVariants) {
+                        foreach ($should as $kw) {
+                            if (!is_string($kw) || trim($kw) === '') {
+                                continue;
+                            }
+                            $kw = trim($kw);
+                            if (is_string($mandatoryToken) && $mandatoryToken !== '' && strcasecmp($kw, $mandatoryToken) === 0) {
+                                continue;
+                            }
+
+                            $variants = $termVariants($kw);
+                            foreach ($variants as $v) {
+                                $q->orWhere('title', 'like', '%' . $v . '%')
+                                    ->orWhere('description', 'like', '%' . $v . '%')
+                                    ->orWhereHas('brands', function ($qb) use ($v) {
+                                        $qb->where('title', 'like', '%' . $v . '%');
+                                    })
+                                    ->orWhereHas('tags', function ($q2) use ($v) {
+                                        $q2->where('name', 'like', '%' . $v . '%');
+                                    })
+                                    ->orWhereHas('attributes', function ($q3) use ($v) {
+                                        $q3->where('attributes.name', 'like', '%' . $v . '%')
+                                            ->orWhere('product_attributes.value', 'like', '%' . $v . '%');
+                                    });
+                            }
+                        }
+                    });
+                }
+
+                // Ha nincs structured terv (MUST/SHOULD üres), maradjon az egyszerű keywords OR keresés
+                if ($must === [] && $should === []) {
+                    $queryProducts->where(function ($q) use ($keywords) {
+                        foreach ($keywords as $kw) {
+                            if (!is_string($kw) || trim($kw) === '') {
+                                continue;
+                            }
+                            $kw = trim($kw);
+                            $q->orWhere('title', 'like', '%' . $kw . '%')
+                                ->orWhere('description', 'like', '%' . $kw . '%')
+                                ->orWhereHas('brands', function ($qb) use ($kw) {
+                                    $qb->where('title', 'like', '%' . $kw . '%');
                                 })
-                                ->orWhereHas('tags', function ($q2) use ($v) {
-                                    $q2->where('name', 'like', '%' . $v . '%');
+                                ->orWhereHas('tags', function ($q2) use ($kw) {
+                                    $q2->where('name', 'like', '%' . $kw . '%');
                                 })
-                                ->orWhereHas('attributes', function ($q3) use ($v) {
-                                    $q3->where('attributes.name', 'like', '%' . $v . '%')
-                                        ->orWhere('product_attributes.value', 'like', '%' . $v . '%');
+                                ->orWhereHas('attributes', function ($q3) use ($kw) {
+                                    $q3->where('attributes.name', 'like', '%' . $kw . '%')
+                                        ->orWhere('product_attributes.value', 'like', '%' . $kw . '%');
                                 });
                         }
                     });
                 }
-            }
+            } else {
+                $search = app(ProductSearchService::class);
+                $search->apply($queryProducts, $must, $should, is_string($mandatoryToken) ? $mandatoryToken : null);
 
-            // SHOULD: rásegítés. SQL LIKE mellett ezt nem tudjuk rangsorolásra használni,
-            // ezért csak akkor alkalmazzuk szűrésként, ha nincs MUST (különben túlzottan leszűkítené).
-            if ($should !== [] && $must === []) {
-                $queryProducts->where(function ($q) use ($should, $mandatoryToken, $termVariants) {
-                    foreach ($should as $kw) {
-                        if (!is_string($kw) || trim($kw) === '') {
-                            continue;
-                        }
-                        $kw = trim($kw);
-                        if (is_string($mandatoryToken) && $mandatoryToken !== '' && strcasecmp($kw, $mandatoryToken) === 0) {
-                            continue;
-                        }
-
-                        $variants = $termVariants($kw);
-                        foreach ($variants as $v) {
-                            $q->orWhere('title', 'like', '%' . $v . '%')
-                                ->orWhere('description', 'like', '%' . $v . '%')
-                                ->orWhereHas('brands', function ($qb) use ($v) {
-                                    $qb->where('title', 'like', '%' . $v . '%');
-                                })
-                                ->orWhereHas('tags', function ($q2) use ($v) {
-                                    $q2->where('name', 'like', '%' . $v . '%');
-                                })
-                                ->orWhereHas('attributes', function ($q3) use ($v) {
-                                    $q3->where('attributes.name', 'like', '%' . $v . '%')
-                                        ->orWhere('product_attributes.value', 'like', '%' . $v . '%');
-                                });
-                        }
-                    }
-                });
-            }
-
-            // Ha nincs structured terv (MUST/SHOULD üres), maradjon a legacy keywords OR keresés
-            if ($must === [] && $should === []) {
-                $queryProducts->where(function ($q) use ($keywords) {
-                    foreach ($keywords as $kw) {
-                        if (!is_string($kw) || trim($kw) === '') {
-                            continue;
-                        }
-                        $kw = trim($kw);
-                        $q->orWhere('title', 'like', '%' . $kw . '%')
-                            ->orWhere('description', 'like', '%' . $kw . '%')
-                            ->orWhereHas('brands', function ($qb) use ($kw) {
-                                $qb->where('title', 'like', '%' . $kw . '%');
-                            })
-                            ->orWhereHas('tags', function ($q2) use ($kw) {
-                                $q2->where('name', 'like', '%' . $kw . '%');
-                            })
-                            ->orWhereHas('attributes', function ($q3) use ($kw) {
-                                $q3->where('attributes.name', 'like', '%' . $kw . '%')
-                                    ->orWhere('product_attributes.value', 'like', '%' . $kw . '%');
-                            });
-                    }
-                });
+                if ($must === [] && $should === []) {
+                    $search->apply($queryProducts, [], [], implode(' ', array_values(array_filter(array_map('strval', $keywords), fn ($v) => trim($v) !== ''))));
+                }
             }
 
             return $queryProducts;
@@ -483,6 +502,31 @@ class PagesController extends Controller
                 $queryProducts = $buildQueryProducts(null, null);
                 $totalHits = $queryProducts->count();
             }
+        }
+
+        if ($totalHits === 0 && $engine !== 'legacy') {
+            $search = app(ProductSearchService::class);
+            $candidates = Product::query()
+                ->where('status', 'active')
+                ->limit(200)
+                ->get();
+
+            $reranked = $search->fuzzyRerank($candidates->all(), $originalQuery, 12);
+            $products = new LengthAwarePaginator(
+                collect($reranked),
+                count($reranked),
+                12,
+                1,
+                ['path' => $request->url(), 'query' => ['query' => $query]]
+            );
+
+            Searched::create([
+                'search_term' => $query,
+                'number_of_hits' => 0,
+                'ip_address' => $request->ip()
+            ]);
+
+            return view('pages.search_results', compact('products', 'query'));
         }
 
         // Paginate
