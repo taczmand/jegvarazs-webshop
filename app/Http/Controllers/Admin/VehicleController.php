@@ -607,19 +607,41 @@ class VehicleController extends Controller
                 ->first();
 
             if ($latestOdometerEvent && $latestOdometerEvent->value !== null && $latestOdometerEvent->value !== '') {
+                $newCurrent = (int) $latestOdometerEvent->value;
+                if ($vehicle->current_odometer !== null) {
+                    $newCurrent = max((int) $vehicle->current_odometer, $newCurrent);
+                }
+
                 $vehicle->update([
-                    'current_odometer' => (int) $latestOdometerEvent->value,
+                    'current_odometer' => $newCurrent,
                 ]);
             }
         }
 
         if ($type === 'oil_change') {
             if ($event->value !== null && $event->value !== '') {
+                $newCurrent = (int) $event->value;
+                if ($vehicle->current_odometer !== null) {
+                    $newCurrent = max((int) $vehicle->current_odometer, $newCurrent);
+                }
+
                 $vehicle->update([
-                    'current_odometer' => (int) $event->value,
-                    'last_oil_change_odometer' => (int) $event->value,
+                    'current_odometer' => $newCurrent,
                 ]);
             }
+        }
+
+        $latestOilChangeEvent = VehicleEvent::query()
+            ->where('vehicle_id', $vehicle->id)
+            ->where('type', 'oil_change')
+            ->orderBy('event_date', 'desc')
+            ->orderBy('id', 'desc')
+            ->first();
+
+        if ($latestOilChangeEvent && $latestOilChangeEvent->value !== null && $latestOilChangeEvent->value !== '') {
+            $vehicle->update([
+                'last_oil_change_odometer' => (int) $latestOilChangeEvent->value,
+            ]);
         }
 
         return response()->json([
@@ -651,6 +673,21 @@ class VehicleController extends Controller
             $vehicle->update([
                 'current_odometer' => $latestOdometerEvent && $latestOdometerEvent->value !== null && $latestOdometerEvent->value !== ''
                     ? (int) $latestOdometerEvent->value
+                    : null,
+            ]);
+        }
+
+        if ($deletedType === 'oil_change') {
+            $latestOilChangeEvent = VehicleEvent::query()
+                ->where('vehicle_id', $vehicle->id)
+                ->where('type', 'oil_change')
+                ->orderBy('event_date', 'desc')
+                ->orderBy('id', 'desc')
+                ->first();
+
+            $vehicle->update([
+                'last_oil_change_odometer' => $latestOilChangeEvent && $latestOilChangeEvent->value !== null && $latestOilChangeEvent->value !== ''
+                    ? (int) $latestOilChangeEvent->value
                     : null,
             ]);
         }
