@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -24,8 +25,14 @@ class StreetController extends Controller
         $cityEscaped = addcslashes($city, "\\\"");
         $regexEscaped = preg_quote($q, '/');
 
+        $cacheKey = 'overpass:streets:' . md5(mb_strtolower($city) . '|' . mb_strtolower($q));
+        $cached = Cache::get($cacheKey);
+        if (is_array($cached)) {
+            return response()->json($cached);
+        }
+
         $query = <<<OVERPASS
-[out:json][timeout:25];
+[out:json][timeout:60];
 {{geocodeArea:"{$cityEscaped}"}}->.searchArea;
 (
   way["highway"]["name"~"^{$regexEscaped}",i](area.searchArea);
@@ -36,6 +43,7 @@ OVERPASS;
         $endpoints = [
             'https://overpass-api.de/api/interpreter',
             'https://overpass.kumi.systems/api/interpreter',
+            'https://overpass.openstreetmap.ru/api/interpreter',
         ];
 
         try {
@@ -43,15 +51,29 @@ OVERPASS;
             $usedEndpoint = null;
 
             foreach ($endpoints as $endpoint) {
-                $candidate = Http::timeout(25)
-                    ->withHeaders([
-                        'Accept' => 'application/json,text/plain;q=0.9,*/*;q=0.8',
-                        'User-Agent' => 'jegvarazs-webshop/1.0',
-                    ])
-                    ->asForm()
-                    ->post($endpoint, [
-                        'data' => $query,
+                try {
+                    $candidate = Http::connectTimeout(10)
+                        ->timeout(60)
+                        ->retry(2, 800, function ($exception) {
+                            return $exception instanceof \Illuminate\Http\Client\ConnectionException;
+                        })
+                        ->withHeaders([
+                            'Accept' => 'application/json,text/plain;q=0.9,*/*;q=0.8',
+                            'User-Agent' => 'jegvarazs-webshop/1.0',
+                        ])
+                        ->asForm()
+                        ->post($endpoint, [
+                            'data' => $query,
+                        ]);
+                } catch (\Throwable $e) {
+                    Log::warning('Overpass streets search endpoint exception', [
+                        'city' => $city,
+                        'q' => $q,
+                        'endpoint' => $endpoint,
+                        'message' => $e->getMessage(),
                     ]);
+                    continue;
+                }
 
                 Log::info('Overpass streets search response', [
                     'city' => $city,
@@ -112,6 +134,9 @@ OVERPASS;
         $names = array_values(array_unique($names));
         sort($names, SORT_NATURAL | SORT_FLAG_CASE);
 
-        return response()->json(array_slice($names, 0, 20));
+        $result = array_slice($names, 0, 20);
+        Cache::put($cacheKey, $result, now()->addDays(7));
+
+        return response()->json($result);
     }
 }
