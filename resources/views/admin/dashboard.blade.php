@@ -533,6 +533,21 @@
                     return { translatedKey, translatedValue };
                 }
 
+                function translatePaymentMethod(value) {
+                    const v = String(value ?? '').trim();
+                    if (!v) return '-';
+
+                    const map = {
+                        bank_transfer: 'Banki átutalás',
+                        transfer: 'Banki átutalás',
+                        cod: 'Utánvét',
+                        simplepay: 'SimplePay (OTP)',
+                        cash: 'Készpénz',
+                    };
+
+                    return map[v] ?? v;
+                }
+
                 bodyEl.innerHTML = '<div class="text-center py-4"><div class="spinner-border" role="status"></div></div>';
 
                 let detailsUrl = null;
@@ -606,7 +621,7 @@
                             const paymentBlock = `
                                 <div class="table-responsive">
                                     <table class="table table-sm mb-0">
-                                        ${row('Fizetés módja', data.payment_method)}
+                                        ${row('Fizetés módja', translatePaymentMethod(data.payment_method))}
                                         ${row('Fizetett összeg', (data.payment_amount !== null && data.payment_amount !== undefined) ? data.payment_amount : '-')}
                                     </table>
                                 </div>
