@@ -102,7 +102,7 @@
                                         <td class="w-25">Ügyfél keresés</td>
                                         <td class="position-relative">
                                             <input type="text" class="form-control" id="client_search" placeholder="Név / e-mail / telefon..." autocomplete="off">
-                                            <div id="client_search_results" class="list-group position-absolute w-100 admin-client-search-results" style="z-index: 1100; display:none; max-height: 260px; overflow-y: auto;"></div>
+                                            <div id="client_search_results" class="list-group w-100 admin-client-search-results" style="z-index: 1100; display:none; max-height: 260px; overflow-y: auto;"></div>
                                         </td>
                                     </tr>
                                     <tr class="offer-client-fields" style="display:none;">
@@ -179,6 +179,13 @@
                                 </div>
                             </div>
                             <div class="tab-pane fade" id="offer">
+                                <div class="form-check mb-3 d-none" id="show_total_wrap">
+                                    <input type="hidden" name="show_total" value="0">
+                                    <input class="form-check-input" type="checkbox" value="1" id="show_total" name="show_total" checked>
+                                    <label class="form-check-label" for="show_total">
+                                        Összesített összeg megjelenítése a tételek alatt
+                                    </label>
+                                </div>
                                 <button type="submit" class="btn btn-primary d-none" id="generateOffer">
                                     <i class="fas fa-file-pdf"></i> Ajánlat generálása
                                 </button>
@@ -352,7 +359,7 @@
 
                     setClientFieldsVisible(false);
 
-                    setOfferActionsVisible(false);
+                    setOfferActionsVisible(true);
                     $('#offer_pdf_link').addClass('d-none').removeAttr('href');
                 } catch (error) {
                     showToast(error, 'danger');
@@ -778,9 +785,11 @@
             });
 
             function setOfferActionsVisible(visible) {
-                $('#saveOffer').toggle(!!visible);
-                $('#generateOffer').toggle(!!visible);
-                $('#previewOfferPdf').toggle(!!visible);
+                const show = !!visible;
+                $('#saveOffer').toggleClass('d-none', !show);
+                $('#generateOffer').toggleClass('d-none', !show);
+                $('#previewOfferPdf').toggleClass('d-none', !show);
+                $('#show_total_wrap').toggleClass('d-none', !show);
             }
 
             function resetForm(title = null) {
@@ -954,6 +963,7 @@
                                     <div class="small text-muted">A keresés sikertelen volt</div>
                                 </button>
                             `);
+
                             $list.show();
                         }
                     });

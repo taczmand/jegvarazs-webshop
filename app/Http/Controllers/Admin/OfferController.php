@@ -31,6 +31,7 @@ class OfferController extends Controller
             'title' => 'required|string|max:255',
             'contact_name' => 'required|string|max:255',
             'contact_email' => 'required|email',
+            'show_total' => 'nullable|boolean',
         ]);
 
         if ($validator->fails()) {
@@ -83,6 +84,7 @@ class OfferController extends Controller
             $data = [
                 'offer' => $offer,
                 'products' => $products,
+                'show_total' => $request->boolean('show_total', true),
             ];
 
             $pdf = Pdf::loadView('pdf.offer_20250613', $data);
@@ -187,6 +189,7 @@ class OfferController extends Controller
             'contact_email' => 'required|email',
             'products' => 'required|array',
             'products.*.gross_price' => 'nullable|numeric|min:0',
+            'show_total' => 'nullable|boolean',
         ]);
 
         DB::beginTransaction();
@@ -344,6 +347,7 @@ class OfferController extends Controller
             $data = [
                 'offer' => $offer,
                 'products' => $products,
+                'show_total' => $request->boolean('show_total', true),
                 // TODO: 'company' => config('app.company_info')
             ];
 
