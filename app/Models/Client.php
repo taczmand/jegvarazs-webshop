@@ -36,4 +36,9 @@ class Client extends Model
     {
         return $this->hasMany(ClientAddress::class);
     }
+
+    public function reminders(): HasMany
+    {
+        return $this->hasMany(ClientReminder::class);
+    }
 }

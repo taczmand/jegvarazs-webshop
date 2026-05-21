@@ -7,6 +7,7 @@ use App\Mail\AdminBulkEmail;
 use App\Models\Appointment;
 use App\Models\Client;
 use App\Models\ClientAddress;
+use App\Models\ClientReminder;
 use App\Models\Contract;
 use App\Models\Offer;
 use App\Models\Worksheet;
@@ -697,5 +698,94 @@ class ClientController extends Controller
                 'errors' => $e->getMessage(),
             ], 500);
         }
+    }
+
+    public function reminders(Request $request, $id)
+    {
+        $user = auth('admin')->user();
+        if (!$user || !$user->can('edit-client')) {
+            return response()->json(['message' => 'Nincs jogosultságod megtekinteni.'], 403);
+        }
+
+        $client = Client::query()->select(['id'])->findOrFail($id);
+
+        $status = trim((string) $request->query('status', 'pending'));
+        $query = ClientReminder::query()
+            ->where('client_reminders.client_id', $client->id)
+            ->leftJoin('users as acceptor', 'acceptor.id', '=', 'client_reminders.accepted_by_user_id')
+            ->leftJoin('users as creator', 'creator.id', '=', 'client_reminders.created_by_user_id')
+            ->orderByDesc('client_reminders.id');
+
+        if ($status === 'pending') {
+            $query->whereNull('accepted_at');
+        } elseif ($status === 'accepted') {
+            $query->whereNotNull('accepted_at');
+        }
+
+        $items = $query
+            ->get([
+                'client_reminders.id',
+                'client_reminders.client_id',
+                'client_reminders.text',
+                'client_reminders.accepted_at',
+                'client_reminders.accepted_by_user_id',
+                'client_reminders.created_by_user_id',
+                'client_reminders.created_at',
+                'acceptor.name as accepted_by_name',
+                'creator.name as created_by_name',
+            ]);
+
+        return response()->json([
+            'reminders' => $items,
+        ]);
+    }
+
+    public function storeReminder(Request $request, $id)
+    {
+        $user = auth('admin')->user();
+        if (!$user || !$user->can('edit-client')) {
+            return response()->json(['message' => 'Nincs jogosultságod menteni.'], 403);
+        }
+
+        $request->validate([
+            'text' => 'required|string|max:5000',
+        ]);
+
+        $client = Client::query()->select(['id'])->findOrFail($id);
+
+        $reminder = ClientReminder::create([
+            'client_id' => $client->id,
+            'text' => (string) $request->input('text'),
+            'created_by_user_id' => $user->id,
+            'accepted_at' => null,
+            'accepted_by_user_id' => null,
+        ]);
+
+        return response()->json([
+            'message' => 'Emlékeztető hozzáadva!',
+            'reminder' => $reminder,
+        ], 200);
+    }
+
+    public function acceptReminder(Request $request, $reminderId)
+    {
+        $user = auth('admin')->user();
+        if (!$user || !$user->can('edit-client')) {
+            return response()->json(['message' => 'Nincs jogosultságod nyugtázni.'], 403);
+        }
+
+        $reminder = ClientReminder::findOrFail($reminderId);
+
+        if (is_null($reminder->accepted_at)) {
+            $reminder->update([
+                'accepted_at' => now(),
+                'accepted_by_user_id' => $user->id,
+            ]);
+        }
+
+        return response()->json([
+            'message' => 'Emlékeztető nyugtázva!',
+            'reminder' => $reminder,
+        ], 200);
     }
 }

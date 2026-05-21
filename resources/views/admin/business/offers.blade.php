@@ -105,6 +105,16 @@
                                             <div id="client_search_results" class="list-group w-100 admin-client-search-results" style="z-index: 1100; display:none; max-height: 260px; overflow-y: auto;"></div>
                                         </td>
                                     </tr>
+
+                                    <tr id="offer_client_reminders_row" style="display:none;">
+                                        <td class="w-25">Emlékeztetők</td>
+                                        <td>
+                                            <div class="alert alert-warning mb-2" id="offer_client_reminders_warning" style="display:none;">
+                                                <div class="fw-bold mb-1">Az ügyfélhez tartozik nyugtázatlan emlékeztető.</div>
+                                                <div class="list-group" id="offer_client_reminders_list"></div>
+                                            </div>
+                                        </td>
+                                    </tr>
                                     <tr class="offer-client-fields" style="display:none;">
                                         <td class="w-25">Ajánlat megnevezése*</td>
                                         <td><input type="text" class="form-control" id="title" name="title" required></td>
@@ -282,6 +292,7 @@
                                 $('#client_search').val(display);
                                 $('#client_search_results').hide().empty();
 
+                                loadOfferClientReminders(offer.client_id || null);
                                 const productManagerTable = $('#productManagerTable tbody');
                                 productManagerTable.empty();
                                 offer_products.forEach(item => {
@@ -523,6 +534,8 @@
                 const display = `${offer.name || ''}${offer.email ? ' (' + offer.email + ')' : ''}`.trim();
                 $('#client_search').val(display);
                 $('#client_search_results').hide().empty();
+
+                loadOfferClientReminders(clientId);
 
                 // Termékek
 
@@ -850,9 +863,63 @@
                 $('#contact_city').val('');
                 $('#contact_address_line').val('');
 
+                resetOfferClientReminders();
+
                 setClientFieldsVisible(false);
                 setOfferActionsVisible(false);
                 setSnapshotMode(false);
+            }
+
+            function resetOfferClientReminders() {
+                $('#offer_client_reminders_row').hide();
+                $('#offer_client_reminders_warning').hide();
+                $('#offer_client_reminders_list').empty();
+            }
+
+            async function loadOfferClientReminders(clientId) {
+                resetOfferClientReminders();
+
+                if (!clientId) {
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`${window.appConfig.APP_URL}admin/ugyfelek/${clientId}/emlekeztetok?status=pending`, {
+                        headers: {
+                            'X-CSRF-TOKEN': csrfToken,
+                            'Accept': 'application/json',
+                        }
+                    });
+
+                    const payload = await response.json().catch(() => ({}));
+                    if (!response.ok) {
+                        showToast(payload?.message || 'Hiba történt.', 'danger');
+                        return;
+                    }
+
+                    const reminders = Array.isArray(payload?.reminders) ? payload.reminders : [];
+                    if (!reminders.length) {
+                        resetOfferClientReminders();
+                        return;
+                    }
+
+                    $('#offer_client_reminders_row').show();
+                    $('#offer_client_reminders_warning').show();
+
+                    const html = reminders.map(r => {
+                        const text = escapeHtml((r.text || '').toString());
+                        return `
+                            <div class="list-group-item d-flex justify-content-between align-items-start gap-2" data-reminder-id="${r.id}">
+                                <div style="white-space: pre-wrap;">${text}</div>
+                                <button type="button" class="btn btn-sm btn-primary accept-reminder" data-id="${r.id}">Nyugtázás</button>
+                            </div>
+                        `;
+                    }).join('');
+
+                    $('#offer_client_reminders_list').html(html);
+                } catch (e) {
+                    showToast('Hiba történt a betöltéskor.', 'danger');
+                }
             }
 
             let clientSearchDebounce;
@@ -1006,6 +1073,8 @@
                 const display = `${name || ''}${headerParts ? ' (' + headerParts + ')' : ''}`.trim();
                 $('#client_search').val(display);
                 $('#client_search_results').hide().empty();
+
+                loadOfferClientReminders(clientId);
             });
 
             $('#client_search_results').on('click', '.client-new-address', function () {
@@ -1040,9 +1109,38 @@
                 $('#client_search').val(display);
                 $('#client_search_results').hide().empty();
 
+                loadOfferClientReminders(clientId);
+
                 setTimeout(() => {
                     $('#contact_zip_code').trigger('focus');
                 }, 0);
+            });
+
+            $('#offer_client_reminders_list').on('click', '.accept-reminder', async function () {
+                const reminderId = $(this).data('id');
+                const clientId = $('#client_id').val();
+                if (!reminderId || !clientId) return;
+
+                try {
+                    const response = await fetch(`${window.appConfig.APP_URL}admin/ugyfelek/emlekeztetok/${reminderId}/nyugtazas`, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': csrfToken,
+                            'Accept': 'application/json',
+                        }
+                    });
+
+                    const payload = await response.json().catch(() => ({}));
+                    if (!response.ok) {
+                        showToast(payload?.message || 'Hiba történt.', 'danger');
+                        return;
+                    }
+
+                    showToast(payload?.message || 'Nyugtázva!', 'success');
+                    await loadOfferClientReminders(clientId);
+                } catch (e) {
+                    showToast('Hiba történt.', 'danger');
+                }
             });
 
             $('#client_search_results').on('click', '.client-create', function () {
@@ -1050,6 +1148,8 @@
                 $('#client_id').val('');
                 $('#client_address_id').val('');
                 $('#use_custom_address').val('0');
+
+                loadOfferClientReminders(null);
 
                 setClientFieldsVisible(true);
                 setSnapshotMode(false);

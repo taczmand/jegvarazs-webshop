@@ -178,6 +178,15 @@
                                             <div id="client_search_results" class="list-group position-absolute w-100 admin-client-search-results" style="z-index: 1100; display:none; max-height: 260px; overflow-y: auto;"></div>
                                         </td>
                                     </tr>
+                                    <tr id="worksheet_client_reminders_row" style="display:none;">
+                                        <td class="w-25">Emlékeztetők</td>
+                                        <td>
+                                            <div class="alert alert-warning mb-2" id="worksheet_client_reminders_warning" style="display:none;">
+                                                <div class="fw-bold mb-1">Az ügyfélhez tartozik nyugtázatlan emlékeztető.</div>
+                                                <div class="list-group" id="worksheet_client_reminders_list"></div>
+                                            </div>
+                                        </td>
+                                    </tr>
                                     <tr>
                                         <td class="w-25">Munka megnevezése</td>
                                         <td><input type="text" class="form-control" id="work_name" name="work_name" {{ $readonly }} required></td>
@@ -708,6 +717,60 @@
 
                 setClientFieldsVisible(false);
                 setSnapshotMode(false);
+
+                resetClientReminders();
+            }
+
+            function resetClientReminders() {
+                $('#worksheet_client_reminders_row').hide();
+                $('#worksheet_client_reminders_warning').hide();
+                $('#worksheet_client_reminders_list').empty();
+            }
+
+            async function loadClientReminders(clientId) {
+                resetClientReminders();
+
+                if (!clientId) {
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`${window.appConfig.APP_URL}admin/ugyfelek/${clientId}/emlekeztetok?status=pending`, {
+                        headers: {
+                            'X-CSRF-TOKEN': csrfToken,
+                            'Accept': 'application/json',
+                        }
+                    });
+
+                    const payload = await response.json().catch(() => ({}));
+                    if (!response.ok) {
+                        showToast(payload?.message || 'Hiba történt.', 'danger');
+                        return;
+                    }
+
+                    const reminders = Array.isArray(payload?.reminders) ? payload.reminders : [];
+                    if (!reminders.length) {
+                        resetClientReminders();
+                        return;
+                    }
+
+                    $('#worksheet_client_reminders_row').show();
+                    $('#worksheet_client_reminders_warning').show();
+
+                    const html = reminders.map(r => {
+                        const text = escapeHtml((r.text || '').toString());
+                        return `
+                            <div class="list-group-item d-flex justify-content-between align-items-start gap-2" data-reminder-id="${r.id}">
+                                <div style="white-space: pre-wrap;">${text}</div>
+                                <button type="button" class="btn btn-sm btn-primary accept-reminder" data-id="${r.id}">Nyugtázás</button>
+                            </div>
+                        `;
+                    }).join('');
+
+                    $('#worksheet_client_reminders_list').html(html);
+                } catch (e) {
+                    showToast('Hiba történt a betöltéskor.', 'danger');
+                }
             }
 
             $('#client_search').on('input', function () {
@@ -858,6 +921,8 @@
                 const display = `${name || ''}${headerParts ? ' (' + headerParts + ')' : ''}`.trim();
                 $('#client_search').val(display);
                 $('#client_search_results').hide().empty();
+
+                loadClientReminders(clientId);
             });
 
             $('#client_search_results').on('click', '.client-new-address', function () {
@@ -890,6 +955,8 @@
                 $('#client_search').val(display);
                 $('#client_search_results').hide().empty();
 
+                loadClientReminders(clientId);
+
                 setTimeout(() => {
                     $('#contact_zip_code').trigger('focus');
                 }, 0);
@@ -907,9 +974,41 @@
                 $('#client_search').val('');
                 $('#client_search_results').hide().empty();
 
+                resetClientReminders();
+
                 setTimeout(() => {
                     $('#contact_name').trigger('focus');
                 }, 0);
+            });
+
+            $('#worksheet_client_reminders_list').on('click', '.accept-reminder', async function () {
+                const reminderId = $(this).data('id');
+                const clientId = ($('#client_id').val() || '').trim();
+                if (!reminderId || !clientId) return;
+
+                $(this).prop('disabled', true).text('...');
+                try {
+                    const response = await fetch(`${window.appConfig.APP_URL}admin/ugyfelek/emlekeztetok/${reminderId}/nyugtazas`, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': csrfToken,
+                            'Accept': 'application/json',
+                        }
+                    });
+
+                    const payload = await response.json().catch(() => ({}));
+                    if (!response.ok) {
+                        showToast(payload?.message || 'Hiba történt.', 'danger');
+                        await loadClientReminders(clientId);
+                        return;
+                    }
+
+                    showToast(payload?.message || 'Nyugtázva!', 'success');
+                    await loadClientReminders(clientId);
+                } catch (e) {
+                    showToast('Hiba történt.', 'danger');
+                    await loadClientReminders(clientId);
+                }
             });
 
             function setClientFieldsVisible(visible) {

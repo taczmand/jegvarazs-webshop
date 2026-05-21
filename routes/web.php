@@ -342,6 +342,10 @@ Route::get('/automatizacio/kuldes', [AutomatedEmailController::class, 'sendToday
             Route::put('/ugyfelek/{id}', [ClientController::class, 'update'])->name('clients.update');
             Route::delete('/ugyfelek/{id}', [ClientController::class, 'destroy'])->name('clients.destroy');
 
+            Route::get('/ugyfelek/{id}/emlekeztetok', [ClientController::class, 'reminders'])->name('clients.reminders.index');
+            Route::post('/ugyfelek/{id}/emlekeztetok', [ClientController::class, 'storeReminder'])->name('clients.reminders.store');
+            Route::post('/ugyfelek/emlekeztetok/{reminderId}/nyugtazas', [ClientController::class, 'acceptReminder'])->name('clients.reminders.accept');
+
             // Tömeges e-mail küldés
             Route::get('/tomeges-email', [BulkEmailController::class, 'index'])->name('bulk-emails.index');
             Route::post('/tomeges-email/recipients', [BulkEmailController::class, 'recipients'])->name('bulk-emails.recipients');

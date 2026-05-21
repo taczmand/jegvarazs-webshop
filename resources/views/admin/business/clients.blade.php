@@ -126,6 +126,30 @@
 
                         <hr class="my-4">
 
+                        <div id="clientRemindersSection" class="d-none">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h5 class="mb-0">Emlékeztetők</h5>
+                            </div>
+
+                            <div class="alert alert-warning d-none" id="clientRemindersEmpty">
+                                Nincs aktív emlékeztető.
+                            </div>
+
+                            <div class="list-group mb-3" id="clientRemindersList"></div>
+
+                            <div class="border rounded p-3">
+                                <div class="mb-2">
+                                    <label for="new_reminder_text" class="form-label">Új emlékeztető</label>
+                                    <textarea class="form-control" id="new_reminder_text" rows="3" placeholder="Szöveg..."></textarea>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-success" id="addReminderButton">
+                                    <i class="fas fa-plus me-1"></i> Hozzáadás
+                                </button>
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
                         <div id="addressesSection" class="d-none">
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <h5 class="mb-0" id="addressesTitle">Címek</h5>
@@ -240,6 +264,83 @@
                     .replaceAll('>', '&gt;')
                     .replaceAll('"', '&quot;')
                     .replaceAll("'", '&#039;');
+            }
+
+            function formatHuDateTime(value) {
+                const raw = (value || '').toString().trim();
+                if (!raw) return '';
+
+                const d = new Date(raw);
+                if (Number.isNaN(d.getTime())) return raw;
+
+                const formatted = new Intl.DateTimeFormat('hu-HU', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                }).format(d);
+
+                return formatted.replace(',', '');
+            }
+
+            async function loadClientReminders(clientId) {
+                if (!clientId) {
+                    $('#clientRemindersSection').addClass('d-none');
+                    return;
+                }
+
+                $('#clientRemindersSection').removeClass('d-none');
+                $('#clientRemindersList').html('<div class="text-muted">Betöltés...</div>');
+                $('#clientRemindersEmpty').addClass('d-none');
+
+                try {
+                    const response = await fetch(`${window.appConfig.APP_URL}admin/ugyfelek/${clientId}/emlekeztetok?status=all`, {
+                        headers: {
+                            'X-CSRF-TOKEN': csrfToken,
+                            'Accept': 'application/json',
+                        }
+                    });
+
+                    const payload = await response.json().catch(() => ({}));
+                    if (!response.ok) {
+                        $('#clientRemindersList').html(`<div class="text-danger">${escapeHtml(payload?.message || 'Hiba történt.')}</div>`);
+                        return;
+                    }
+
+                    const reminders = Array.isArray(payload?.reminders) ? payload.reminders : [];
+                    if (!reminders.length) {
+                        $('#clientRemindersList').empty();
+                        $('#clientRemindersEmpty').removeClass('d-none');
+                        return;
+                    }
+
+                    const html = reminders.map(r => {
+                        const rawText = (r.text || '').toString();
+                        const text = escapeHtml(rawText);
+                        const acceptedAt = (r.accepted_at || '').toString();
+                        const acceptedBy = (r.accepted_by_name || '').toString();
+                        const acceptedAtFormatted = formatHuDateTime(acceptedAt);
+                        const acceptedInfo = acceptedAt
+                            ? `<div class="small text-muted mt-1">Nyugtázva: ${escapeHtml(acceptedAtFormatted || acceptedAt)}${acceptedBy ? ' (' + escapeHtml(acceptedBy) + ')' : ''}</div>`
+                            : '';
+
+                        const actionBtn = acceptedAt
+                            ? ''
+                            : `<button type="button" class="btn btn-sm btn-primary accept-reminder" data-id="${r.id}">Nyugtázás</button>`;
+
+                        return `
+                            <div class="list-group-item d-flex justify-content-between align-items-start gap-2" data-reminder-id="${r.id}">
+                                <div style="white-space: pre-wrap;">${text}${acceptedInfo}</div>
+                                ${actionBtn}
+                            </div>
+                        `;
+                    }).join('');
+
+                    $('#clientRemindersList').html(html);
+                } catch (e) {
+                    $('#clientRemindersList').html('<div class="text-danger">Hiba történt a betöltéskor.</div>');
+                }
             }
 
             const table = $('#adminTable').DataTable({
@@ -401,6 +502,8 @@
                 closeAddressForm();
                 setCreateAddressUi(false);
                 await loadAddresses(row_data.id);
+
+                await loadClientReminders(row_data.id);
 
                 adminModal.show();
             });
@@ -681,6 +784,76 @@
 
             });
 
+            $('#addReminderButton').on('click', async function () {
+                const clientId = ($('#client_id').val() || '').trim();
+                if (!clientId) {
+                    showToast('Előbb mentsd el az ügyfelet, hogy emlékeztetőt tudj hozzáadni.', 'warning');
+                    return;
+                }
+
+                const text = ($('#new_reminder_text').val() || '').toString().trim();
+                if (!text) {
+                    showToast('Az emlékeztető szövege üres.', 'warning');
+                    return;
+                }
+
+                $('#addReminderButton').prop('disabled', true);
+                try {
+                    const response = await fetch(`${window.appConfig.APP_URL}admin/ugyfelek/${clientId}/emlekeztetok`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': csrfToken,
+                            'Accept': 'application/json',
+                        },
+                        body: JSON.stringify({ text }),
+                    });
+
+                    const payload = await response.json().catch(() => ({}));
+                    if (!response.ok) {
+                        const msg = payload?.message || (payload?.errors ? Object.values(payload.errors).flat().join(' ') : 'Hiba!');
+                        showToast(msg, 'danger');
+                        return;
+                    }
+
+                    $('#new_reminder_text').val('');
+                    showToast(payload?.message || 'Sikeres!', 'success');
+                    await loadClientReminders(clientId);
+                } catch (e) {
+                    showToast('Hiba történt a mentés során.', 'danger');
+                } finally {
+                    $('#addReminderButton').prop('disabled', false);
+                }
+            });
+
+            $('#clientRemindersList').on('click', '.accept-reminder', async function () {
+                const reminderId = $(this).data('id');
+                const clientId = ($('#client_id').val() || '').trim();
+                if (!reminderId || !clientId) return;
+
+                $(this).prop('disabled', true).text('...');
+                try {
+                    const response = await fetch(`${window.appConfig.APP_URL}admin/ugyfelek/emlekeztetok/${reminderId}/nyugtazas`, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': csrfToken,
+                            'Accept': 'application/json',
+                        }
+                    });
+
+                    const payload = await response.json().catch(() => ({}));
+                    if (!response.ok) {
+                        showToast(payload?.message || 'Hiba történt.', 'danger');
+                        return;
+                    }
+
+                    showToast(payload?.message || 'Nyugtázva!', 'success');
+                    await loadClientReminders(clientId);
+                } catch (e) {
+                    showToast('Hiba történt.', 'danger');
+                }
+            });
+
             $('#adminTable').on('click', '.delete', async function () {
                 const row_data = $('#adminTable').DataTable().row($(this).parents('tr')).data();
                 const clientId = row_data.id;
@@ -719,6 +892,10 @@
                 $('#place_of_birth').val('');
                 $('#date_of_birth').val('');
                 $('#id_number').val('');
+                $('#clientRemindersList').empty();
+                $('#clientRemindersEmpty').addClass('d-none');
+                $('#clientRemindersSection').addClass('d-none');
+                $('#new_reminder_text').val('');
                 $('#comment').val('');
                 $('#addressesTable tbody').empty();
                 closeAddressForm();

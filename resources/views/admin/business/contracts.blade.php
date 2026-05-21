@@ -107,6 +107,16 @@
                                             </td>
                                         </tr>
 
+                                        <tr id="contract_client_reminders_row" style="display:none;">
+                                            <td class="w-25">Emlékeztetők</td>
+                                            <td>
+                                                <div class="alert alert-warning mb-2" id="contract_client_reminders_warning" style="display:none;">
+                                                    <div class="fw-bold mb-1">Az ügyfélhez tartozik nyugtázatlan emlékeztető.</div>
+                                                    <div class="list-group" id="contract_client_reminders_list"></div>
+                                                </div>
+                                            </td>
+                                        </tr>
+
                                         <tr id="lead_assignment_row" style="display:none;">
                                             <td class="w-25">Érdeklődő hozzárendelése</td>
                                             <td class="position-relative">
@@ -323,6 +333,36 @@
                     {data: 'viewed_by'},
                     {data: 'action', orderable: false, searchable: false}
                 ],
+            });
+
+            $('#contract_client_reminders_list').on('click', '.accept-reminder', async function () {
+                const reminderId = $(this).data('id');
+                const clientId = ($('#client_id').val() || '').trim();
+                if (!reminderId || !clientId) return;
+
+                $(this).prop('disabled', true).text('...');
+                try {
+                    const response = await fetch(`${window.appConfig.APP_URL}admin/ugyfelek/emlekeztetok/${reminderId}/nyugtazas`, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': csrfToken,
+                            'Accept': 'application/json',
+                        }
+                    });
+
+                    const payload = await response.json().catch(() => ({}));
+                    if (!response.ok) {
+                        showToast(payload?.message || 'Hiba történt.', 'danger');
+                        await loadClientReminders(clientId);
+                        return;
+                    }
+
+                    showToast(payload?.message || 'Nyugtázva!', 'success');
+                    await loadClientReminders(clientId);
+                } catch (e) {
+                    showToast('Hiba történt.', 'danger');
+                    await loadClientReminders(clientId);
+                }
             });
 
             const urlParams = new URLSearchParams(window.location.search);
@@ -1312,6 +1352,58 @@
                 updateLeadAssignmentVisibility();
             }
 
+            function resetClientReminders() {
+                $('#contract_client_reminders_row').hide();
+                $('#contract_client_reminders_warning').hide();
+                $('#contract_client_reminders_list').empty();
+            }
+
+            async function loadClientReminders(clientId) {
+                resetClientReminders();
+
+                if (!clientId) {
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`${window.appConfig.APP_URL}admin/ugyfelek/${clientId}/emlekeztetok?status=pending`, {
+                        headers: {
+                            'X-CSRF-TOKEN': csrfToken,
+                            'Accept': 'application/json',
+                        }
+                    });
+
+                    const payload = await response.json().catch(() => ({}));
+                    if (!response.ok) {
+                        showToast(payload?.message || 'Hiba történt.', 'danger');
+                        return;
+                    }
+
+                    const reminders = Array.isArray(payload?.reminders) ? payload.reminders : [];
+                    if (!reminders.length) {
+                        resetClientReminders();
+                        return;
+                    }
+
+                    $('#contract_client_reminders_row').show();
+                    $('#contract_client_reminders_warning').show();
+
+                    const html = reminders.map(r => {
+                        const text = escapeHtml((r.text || '').toString());
+                        return `
+                            <div class="list-group-item d-flex justify-content-between align-items-start gap-2" data-reminder-id="${r.id}">
+                                <div style="white-space: pre-wrap;">${text}</div>
+                                <button type="button" class="btn btn-sm btn-primary accept-reminder" data-id="${r.id}">Nyugtázás</button>
+                            </div>
+                        `;
+                    }).join('');
+
+                    $('#contract_client_reminders_list').html(html);
+                } catch (e) {
+                    showToast('Hiba történt a betöltéskor.', 'danger');
+                }
+            }
+
             function updateLeadAssignmentVisibility() {
                 const hasClient = !!($('#client_id').val() || '').toString().trim();
                 const isCreateClient = ($('#create_client').val() || '').toString() === '1';
@@ -1746,6 +1838,8 @@
                 $('#client_search').val(display);
                 $('#client_search_results').hide().empty();
 
+                loadClientReminders(clientId);
+
                 suggestLeadsForClient({ name, email, phone });
             });
 
@@ -1781,6 +1875,8 @@
                 $('#client_search').val(display);
                 $('#client_search_results').hide().empty();
 
+                loadClientReminders(clientId);
+
                 setTimeout(() => {
                     $('#contact_zip_code').trigger('focus');
                 }, 0);
@@ -1796,6 +1892,8 @@
 
                 $('#client_search').val('');
                 $('#client_search_results').hide().empty();
+
+                resetClientReminders();
 
                 setClientFieldsVisible(true);
                 setSnapshotMode(false);
@@ -1822,6 +1920,8 @@
                 setClientFieldsVisible(false);
                 setSnapshotMode(true);
 
+                resetClientReminders();
+
                 updateLeadAssignmentVisibility();
             }
 
@@ -1840,6 +1940,8 @@
 
                 $('#client_search').val('');
                 $('#client_search_results').hide().empty();
+
+                resetClientReminders();
             }
 
             // Szerződés törlése
