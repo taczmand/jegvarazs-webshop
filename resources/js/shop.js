@@ -605,6 +605,10 @@ import * as bootstrap from "bootstrap";
     document.addEventListener('DOMContentLoaded', function () {
         const form = document.getElementById('contact_form');
 
+        if (!form) {
+            return;
+        }
+
         form.addEventListener('submit', function (e) {
             e.preventDefault();
 
@@ -621,8 +625,6 @@ import * as bootstrap from "bootstrap";
                 showToast('Kérjük, adja meg az e-mail címét!', 'error');
                 return;
             }
-
-            const formData = new FormData(form);
 
             fetch(window.appConfig.APP_URL + 'contact/add', {
                 method: 'POST',

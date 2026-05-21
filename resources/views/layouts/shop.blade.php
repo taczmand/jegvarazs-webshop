@@ -41,7 +41,7 @@
                    src="https://www.facebook.com/tr?id=4502787593071439&ev=PageView&noscript=1"
         /></noscript>
     <!-- End Meta Pixel Code -->
-    
+
     <!-- Google Tag Manager -->
     <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
                 new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
@@ -67,7 +67,7 @@
 
 <main class="container mx-auto">
     @yield('content')
-    @if (!request()->routeIs('checkout') && !request()->routeIs('appointment') && !request()->routeIs('offer') )
+    @if (!request()->routeIs('checkout') && !request()->routeIs('appointment') && !request()->routeIs('offer') && !request()->routeIs('partner.offers.*') && !request()->is('partner/ajanlat*'))
         @include('partials.contact-form')
     @endif
 </main>

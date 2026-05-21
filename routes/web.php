@@ -27,6 +27,7 @@ use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\OrderStatusesController;
 use App\Http\Controllers\Admin\PaymentMethodController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
+use App\Http\Controllers\Admin\PartnerOfferController as AdminPartnerOfferController;
 use App\Http\Controllers\Admin\RegulationController;
 use App\Http\Controllers\Admin\ShippingMethodController;
 use App\Http\Controllers\Admin\StatController;
@@ -44,6 +45,7 @@ use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\FacebookWebhookController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PagesController;
+use App\Http\Controllers\PartnerOfferController as ShopPartnerOfferController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ShopCustomerController;
 use App\Http\Controllers\SimplePayController;
@@ -285,6 +287,13 @@ Route::get('/automatizacio/kuldes', [AutomatedEmailController::class, 'sendToday
             Route::post('/ajanlatok/preview-pdf', [OfferController::class, 'previewPdf'])->name('offers.preview-pdf');
             Route::delete('/ajanlatok/{id}', [OfferController::class, 'destroy'])->name('offers.destroy');
             Route::get('/ajanlatok/ajanlat-termekek', [OfferController::class, 'fetchWithCategories'])->name('offers.list-with-categories');
+
+            // Partner ajánlatok (webshop partnerek)
+            Route::get('/partner-ajanlatok', [AdminPartnerOfferController::class, 'index'])->name('partner-offers.index');
+            Route::get('/partner-ajanlatok/data', [AdminPartnerOfferController::class, 'data'])->name('partner-offers.data');
+            Route::get('/partner-ajanlatok/{id}', [AdminPartnerOfferController::class, 'show'])->name('partner-offers.show');
+            Route::get('/partner-ajanlatok/{id}/pdf', [AdminPartnerOfferController::class, 'pdf'])->name('partner-offers.pdf');
+            Route::get('/partner-ajanlatok/{id}/pdf-inline', [AdminPartnerOfferController::class, 'pdfInline'])->name('partner-offers.pdf-inline');
 
             // Szerződések
             Route::get('/szerzodesek', [ContractController::class, 'index'])->name('contracts.index');
@@ -600,6 +609,14 @@ Route::get('/automatizacio/kuldes', [AutomatedEmailController::class, 'sendToday
 
         // E-mail küldés
         Route::post('/email/send', [ShopCustomerController::class, 'sendEmail'])->name('email.send');
+
+        // Partner ajánlatkészítő
+        Route::get('/partner/ajanlatok', [ShopPartnerOfferController::class, 'index'])->name('partner.offers.index');
+        Route::get('/partner/ajanlatok/uj', [ShopPartnerOfferController::class, 'create'])->name('partner.offers.create');
+        Route::post('/partner/ajanlatok', [ShopPartnerOfferController::class, 'store'])->name('partner.offers.store');
+        Route::post('/partner/ajanlatok/preview-pdf', [ShopPartnerOfferController::class, 'previewPdf'])->name('partner.offers.preview-pdf');
+        Route::post('/partner/ajanlatok/{id}/ujrakuldes', [ShopPartnerOfferController::class, 'resend'])->name('partner.offers.resend');
+        Route::get('/partner/ajanlat/termekek', [ShopPartnerOfferController::class, 'products'])->name('partner.offers.products');
 
 
         // Pénztár
