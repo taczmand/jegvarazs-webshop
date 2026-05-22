@@ -61,9 +61,9 @@
                                 </a>
 
                                 @if(auth('customer')->user() && auth('customer')->user()->is_partner)
-                                    <a class="ml-2" href="{{ route('partner.offers.index') }}" style="color:#0b2d6b; font-weight:700;">
+                                    <!--<a class="ml-2" href="{{ route('partner.offers.index') }}" style="color:#0b2d6b; font-weight:700;">
                                         <i class="fa fa-solid fa-file-invoice-dollar me-2"></i> Ajánlatkészítő
-                                    </a>
+                                    </a>-->
                                 @endif
 
                                 <a class="ml-2" href="{{ route('customer.profile') }}" title="Profil szerkesztése">
