@@ -552,7 +552,7 @@ Route::get('/automatizacio/kuldes', [AutomatedEmailController::class, 'sendToday
     Route::post('/elfelejtett-jelszo', [ShopCustomerController::class, 'passwordReset'])->name('password.reset');
     Route::get('/regisztracio', [ShopCustomerController::class, 'showRegistrationForm'])->name('registration');
     Route::post('/regisztracio', [ShopCustomerController::class, 'register']);
-    Route::view('/regisztracio/sikeres', 'pages.partner_reg_success')->name('customer.register.success');
+    Route::get('/regisztracio/sikeres', [ShopCustomerController::class, 'registerSuccess'])->name('customer.register.success');
 
     Route::get('/elfelejtett-jelszo', [ShopCustomerController::class, 'showPasswordRequestForm'])->name('password.request');
 

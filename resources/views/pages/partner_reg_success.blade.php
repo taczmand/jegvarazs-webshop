@@ -15,7 +15,11 @@
     ])
     <div class="w-100 p-4 bg-light rounded shadow-sm light-box">
         <h3>Regisztráció sikeres!</h3>
-        <p>Hamarosan ellenőrizzük és aktiváljuk fiókját.</p>
+        @if(($register_success_type ?? null) === 'partner')
+            <p>Hamarosan ellenőrizzük és aktiváljuk fiókját.</p>
+        @else
+            <p>Sikeres regisztráció. Jó böngészést kívánunk!</p>
+        @endif
         <a class="site-btn w-100" href="{{ route('index') }}">Ugrás a főoldalra</a>
     </div>
 @endsection

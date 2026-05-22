@@ -90,11 +90,20 @@ class ShopCustomerController extends Controller
 
         if (!$isPartner) {
             Auth::guard('customer')->login($customer);
-            return redirect()->route('index');
+            return redirect()->route('customer.register.success')->with('register_success_type', 'customer');
         }
 
         // Szerelő regisztráció: ne jelentkezzen be automatikusan
-        return redirect()->route('customer.register.success');
+        return redirect()->route('customer.register.success')->with('register_success_type', 'partner');
+    }
+
+    public function registerSuccess(Request $request)
+    {
+        $type = (string) $request->session()->get('register_success_type', 'customer');
+
+        return view('pages.partner_reg_success', [
+            'register_success_type' => $type,
+        ]);
     }
 
     public function sendEmail(Request $request)
