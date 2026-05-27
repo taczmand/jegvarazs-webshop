@@ -387,6 +387,7 @@
                 language: {
                     url: '/lang/datatables/hu.json'
                 },
+                responsive: true,
                 processing: true,
                 serverSide: true,
                 ajax: '{{ route('admin.products.data') }}',
@@ -396,14 +397,18 @@
                         $(row).addClass('table-warning');
                     }
                 },
+                columnDefs: [
+                    { targets: 1, responsivePriority: 1 },
+                    { targets: 6, responsivePriority: 2 }
+                ],
                 columns: [
                     { data: 'id' },
-                    { data: 'title', className: 'no-ellipsis' },
+                    { data: 'title', className: 'no-ellipsis all' },
                     { data: 'stock', className: 'editable', name: 'stock' },
                     { data: 'gross_price', className: 'editable', name: 'gross_price' },
                     { data: 'partner_gross_price', className: 'editable', name: 'partner_gross_price' },
                     { data: 'tax_value' },
-                    { data: 'category' },
+                    { data: 'category', className: 'all' },
                     { data: 'status' },
                     { data: 'created_at' },
                     { data: 'action', orderable: false, searchable: false }
