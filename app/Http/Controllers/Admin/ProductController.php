@@ -46,6 +46,11 @@ class ProductController extends Controller
                 'in_cart_count' => CartItem::query()
                     ->selectRaw('COUNT(*)')
                     ->whereColumn('cart_items.product_id', 'products.id'),
+                'main_photo_path' => ProductPhoto::query()
+                    ->select('path')
+                    ->whereColumn('product_photos.product_id', 'products.id')
+                    ->orderByDesc('is_main')
+                    ->limit(1),
             ]);
 
         return DataTables::of($products)
@@ -62,6 +67,13 @@ class ProductController extends Controller
             })
             ->filterColumn('status', function ($query, $keyword) {
                 $query->where('status', '=', "{$keyword}");
+            })
+            ->addColumn('photo_url', function ($product) {
+                $path = $product->main_photo_path;
+                if ($path) {
+                    return asset('storage/' . ltrim($path, '/'));
+                }
+                return asset('static_media/no-image.jpg');
             })
             ->addColumn('category', function ($product) {
                 return $product->category ? $product->category->title : '';

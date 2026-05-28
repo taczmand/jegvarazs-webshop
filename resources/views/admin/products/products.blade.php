@@ -20,15 +20,15 @@
                     </div>
 
                     <div class="filter-group flex-grow-1 flex-md-shrink-0">
-                        <input type="text" placeholder="ID" class="filter-input form-control" data-column="0">
+                        <input type="text" placeholder="ID" class="filter-input form-control" data-column="1">
                     </div>
 
                     <div class="filter-group flex-grow-1 flex-md-shrink-0">
-                        <input type="text" placeholder="Terméknév" class="filter-input form-control" data-column="1">
+                        <input type="text" placeholder="Terméknév" class="filter-input form-control" data-column="2">
                     </div>
 
                     <div class="filter-group flex-grow-1 flex-md-shrink-0">
-                        <select class="form-select filter-input" data-column="6">
+                        <select class="form-select filter-input" data-column="7">
                             <option value="">Kategória (összes)</option>
                             @foreach($categories as $category)
                                 <option value="{{ $category->id }}">{{ $category->title }}</option>
@@ -37,7 +37,7 @@
                     </div>
 
                     <div class="filter-group flex-grow-1 flex-md-shrink-0">
-                        <select class="form-select filter-input" data-column="7">
+                        <select class="form-select filter-input" data-column="8">
                             <option value="">Állapot (összes)</option>
                             <option value="active">Aktív</option>
                             <option value="inactive">Inaktív</option>
@@ -48,8 +48,9 @@
                 <table class="table table-bordered display responsive nowrap" id="productsTable" style="width:100%">
                     <thead>
                     <tr>
+                        <th data-priority="1">Kép</th>
                         <th>ID</th>
-                        <th data-priority="1">Terméknév</th>
+                        <th data-priority="2">Terméknév</th>
                         <th data-priority="6">Készlet</th>
                         <th data-priority="3">Bruttó ár</th>
                         <th data-priority="4">Partner bruttó ár</th>
@@ -57,7 +58,7 @@
                         <th data-priority="5">Kategória</th>
                         <th>Státusz</th>
                         <th>Létrehozva</th>
-                        <th data-priority="2">Műveletek</th>
+                        <th data-priority="3">Műveletek</th>
                     </tr>
                     </thead>
                 </table>
@@ -296,6 +297,47 @@
 @endsection
 
 @section('scripts')
+    <style>
+        #productsTable td,
+        #productsTable_wrapper,
+        #productsTable_wrapper .dt-layout-table,
+        #productsTable_wrapper .dt-scroll-body {
+            overflow: visible;
+        }
+        .dt-product-photo {
+            position: relative;
+            width: 44px;
+            height: 44px;
+            overflow: visible;
+        }
+        .dt-product-thumb {
+            width: 40px;
+            height: 40px;
+            object-fit: cover;
+            border-radius: 4px;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            background: #fff;
+        }
+        .dt-product-preview {
+            display: none;
+            position: absolute;
+            left: 52px;
+            top: -10px;
+            width: 180px;
+            height: 180px;
+            object-fit: contain;
+            padding: 6px;
+            border-radius: 6px;
+            border: 1px solid rgba(0, 0, 0, 0.12);
+            background: #fff;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+            z-index: 20;
+            pointer-events: none;
+        }
+        .dt-product-photo:hover .dt-product-preview {
+            display: block;
+        }
+    </style>
     <script src="https://cdn.tiny.cloud/1/k486ypuedp01hfc64g7mn3t9rc5lp8h53a5korymr6qvuvb9/tinymce/7/tinymce.min.js" referrerpolicy="origin"></script>
     <script type="module">
         const productModalDOM = document.getElementById('productModal');
@@ -391,17 +433,33 @@
                 processing: true,
                 serverSide: true,
                 ajax: '{{ route('admin.products.data') }}',
-                order: [[0, 'desc']],
+                order: [[1, 'desc']],
                 createdRow: function (row, data) {
                     if (data && data.in_cart) {
                         $(row).addClass('table-warning');
                     }
                 },
                 columnDefs: [
-                    { targets: 1, responsivePriority: 1 },
-                    { targets: 6, responsivePriority: 2 }
+                    { targets: 0, responsivePriority: 1 },
+                    { targets: 2, responsivePriority: 2 },
+                    { targets: 7, responsivePriority: 3 }
                 ],
                 columns: [
+                    {
+                        data: 'photo_url',
+                        orderable: false,
+                        searchable: false,
+                        className: 'all',
+                        render: function (data) {
+                            const url = data || '{{ asset('static_media/no-image.jpg') }}';
+                            return `
+                                <div class="dt-product-photo">
+                                    <img class="dt-product-thumb" src="${url}" alt="">
+                                    <img class="dt-product-preview" src="${url}" alt="">
+                                </div>
+                            `;
+                        }
+                    },
                     { data: 'id' },
                     { data: 'title', className: 'no-ellipsis all' },
                     { data: 'stock', className: 'editable', name: 'stock' },
