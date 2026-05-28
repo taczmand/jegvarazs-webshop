@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Mail;
 class BulkEmailController extends Controller
 {
     private const RECIPIENTS_PREVIEW_LIMIT = 2000;
+    private const DEFAULT_BCC_BATCH_SIZE = 25;
 
     public function index()
     {
@@ -93,12 +94,16 @@ class BulkEmailController extends Controller
         }
 
         $sent = 0;
-        $chunks = $emails->chunk(50);
+        $chunks = $emails->chunk(self::DEFAULT_BCC_BATCH_SIZE);
 
         try {
             foreach ($chunks as $chunk) {
-                Mail::to($fromAddress)->bcc($chunk->all())->send(new AdminBulkEmail($validated['subject'], $validated['html']));
-                $sent += $chunk->count();
+                $sent += $this->sendBccChunkWithRetry(
+                    fromAddress: $fromAddress,
+                    bccEmails: $chunk->values()->all(),
+                    subject: $validated['subject'],
+                    html: $validated['html']
+                );
             }
 
             return response()->json([
@@ -115,6 +120,38 @@ class BulkEmailController extends Controller
             return response()->json([
                 'message' => 'Hiba történt az e-mail küldése során.',
             ], 500);
+        }
+    }
+
+    private function sendBccChunkWithRetry(string $fromAddress, array $bccEmails, string $subject, string $html): int
+    {
+        $bccEmails = collect($bccEmails)
+            ->map(fn ($e) => mb_strtolower(trim((string) $e)))
+            ->filter(fn ($e) => $e !== '' && filter_var($e, FILTER_VALIDATE_EMAIL))
+            ->unique()
+            ->values()
+            ->all();
+
+        if (count($bccEmails) === 0) {
+            return 0;
+        }
+
+        try {
+            Mail::to($fromAddress)->bcc($bccEmails)->send(new AdminBulkEmail($subject, $html));
+            return count($bccEmails);
+        } catch (\Throwable $e) {
+            $msg = mb_strtolower($e->getMessage());
+            $tooManyRecipients = str_contains($msg, 'too many recipients') || str_contains($msg, '452');
+            if (!$tooManyRecipients || count($bccEmails) <= 1) {
+                throw $e;
+            }
+
+            $half = (int) ceil(count($bccEmails) / 2);
+            $first = array_slice($bccEmails, 0, $half);
+            $second = array_slice($bccEmails, $half);
+
+            return $this->sendBccChunkWithRetry($fromAddress, $first, $subject, $html)
+                + $this->sendBccChunkWithRetry($fromAddress, $second, $subject, $html);
         }
     }
 
