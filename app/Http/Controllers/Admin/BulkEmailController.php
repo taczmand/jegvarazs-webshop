@@ -93,7 +93,7 @@ class BulkEmailController extends Controller
         }
 
         $sent = 0;
-        $chunks = $emails->chunk(200);
+        $chunks = $emails->chunk(50);
 
         try {
             foreach ($chunks as $chunk) {
