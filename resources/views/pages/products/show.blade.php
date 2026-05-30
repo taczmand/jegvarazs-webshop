@@ -98,7 +98,6 @@
                                             <thead>
                                             <tr>
                                                 <th>Mennyiség</th>
-                                                <th>Kedvezmény</th>
                                                 <th>Bruttó ár / db</th>
                                             </tr>
                                             </thead>
@@ -112,7 +111,6 @@
                                                 @endphp
                                                 <tr>
                                                     <td>{{ (int) $rule->min_quantity }}+ db</td>
-                                                    <td>{{ $discountLabel }}</td>
                                                     <td><strong>{{ number_format($discounted, 0, ',', ' ') }} Ft</strong></td>
                                                 </tr>
                                             @endforeach
