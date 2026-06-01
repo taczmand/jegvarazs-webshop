@@ -11,6 +11,8 @@ class StreetController extends Controller
 {
     public function search(Request $request)
     {
+        return response()->json([]);
+
         $city = trim((string) $request->query('city', ''));
         $q = trim((string) $request->query('q', ''));
 
