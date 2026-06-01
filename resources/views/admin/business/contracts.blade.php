@@ -438,8 +438,12 @@
             const signature_canvas = document.getElementById('signature-pad');
             const fullscreenDiv = document.getElementById('fullscreen_signature');
 
+            let signaturePad = null;
+
 
             function resizeCanvas() {
+                const hasSignature = signaturePad && !signaturePad.isEmpty();
+                const signatureData = hasSignature ? signaturePad.toDataURL() : null;
                 const ratio = Math.max(window.devicePixelRatio || 1, 1);
                 const rect = signature_canvas.getBoundingClientRect();
 
@@ -448,15 +452,25 @@
                 signature_canvas.width = rect.width * ratio;
                 signature_canvas.height = rect.height * ratio;
                 signature_canvas.getContext("2d").scale(ratio, ratio);
+
+                if (signaturePad) {
+                    signaturePad.clear();
+                    if (signatureData) {
+                        signaturePad.fromDataURL(signatureData);
+                    }
+                }
             }
 
             window.addEventListener("resize", resizeCanvas);
+            window.addEventListener("orientationchange", resizeCanvas);
             resizeCanvas();
 
-            const signaturePad = new SignaturePad(signature_canvas, {
+            signaturePad = new SignaturePad(signature_canvas, {
                 backgroundColor: 'rgb(255, 255, 255)',
                 penColor: 'rgb(0, 0, 0)'
             });
+
+            resizeCanvas();
 
 
             document.getElementById('clear_signature').addEventListener('click', function() {
