@@ -148,10 +148,10 @@
 
 
         // Azonnali meghívás betöltéskor
-        // checkForNewRecords();
+        checkForNewRecords();
 
         // Ismétlés 10 másodpercenként
-        // setInterval(checkForNewRecords, 30000);
+        setInterval(checkForNewRecords, 30000);
 
 
     </script>
