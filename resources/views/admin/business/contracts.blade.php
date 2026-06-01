@@ -312,6 +312,37 @@
             const currentUserId = {{ (int) auth('admin')->id() }};
             const canSelectContractCreator = {{ (auth('admin')->user() && auth('admin')->user()->can('select-contract-creator')) ? 'true' : 'false' }};
 
+            let contractActionButton = null;
+
+            function setContractActionLoading(isLoading) {
+                const buttons = [
+                    document.getElementById('preview_contract'),
+                    document.getElementById('generateContract'),
+                    document.getElementById('generateContractWithOutSignature')
+                ].filter(Boolean);
+
+                buttons.forEach(btn => {
+                    if (!btn.dataset.originalHtml) {
+                        btn.dataset.originalHtml = btn.innerHTML;
+                    }
+
+                    if (isLoading) {
+                        btn.classList.add('disabled');
+                        btn.setAttribute('aria-disabled', 'true');
+                        btn.style.pointerEvents = 'none';
+
+                        if (contractActionButton && btn === contractActionButton) {
+                            btn.innerHTML = `${btn.dataset.originalHtml}<span class="spinner-border spinner-border-sm ms-2" role="status" aria-hidden="true"></span>`;
+                        }
+                    } else {
+                        btn.classList.remove('disabled');
+                        btn.removeAttribute('aria-disabled');
+                        btn.style.pointerEvents = '';
+                        btn.innerHTML = btn.dataset.originalHtml;
+                    }
+                });
+            }
+
             const table = $('#adminTable').DataTable({
                 language: {
                     url: '/lang/datatables/hu.json'
@@ -793,6 +824,8 @@
                     return;
                 }
 
+                contractActionButton = this;
+
                 document.getElementById('signature-input').value = signaturePad.toDataURL();
                 const form = document.getElementById('adminModalForm');
                 const formData = new FormData(form);
@@ -805,6 +838,8 @@
             // Szerződés generálása aláírás nélkül
             $('#generateContractWithOutSignature').on('click', function (e) {
                 e.preventDefault();
+
+                contractActionButton = this;
 
                 document.getElementById('signature-input').value = '';
                 const form = document.getElementById('adminModalForm');
@@ -824,6 +859,7 @@
                         processData: false,
                         beforeSend: () => {
                             showLoader();
+                            setContractActionLoading(true);
                         },
                         success(response) {
                             showToast(response.message || 'Sikeres!', 'success');
@@ -861,6 +897,8 @@
                         },
                         complete: () => {
                             hideLoader();
+                            setContractActionLoading(false);
+                            contractActionButton = null;
                         }
                     });
                 };
@@ -1978,6 +2016,9 @@
             document.getElementById('preview_contract').addEventListener('click', function (e) {
                 e.preventDefault();
 
+                contractActionButton = this;
+                setContractActionLoading(true);
+
                 document.getElementById('signature-input').value = signaturePad.toDataURL();
 
                 const form = document.getElementById('adminModalForm');
@@ -1985,6 +2026,11 @@
                 form.method = "POST";
                 form.target = "_blank";
                 form.submit();
+
+                setTimeout(() => {
+                    setContractActionLoading(false);
+                    contractActionButton = null;
+                }, 800);
             });
 
 
