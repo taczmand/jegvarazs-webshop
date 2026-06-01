@@ -20,7 +20,7 @@
                     </div>
 
                     <div class="filter-group flex-grow-1 flex-md-shrink-0">
-                        <input type="text" placeholder="ID" class="filter-input form-control" data-column="1">
+                        <input type="text" placeholder="ID" class="filter-input form-control" data-column="0">
                     </div>
 
                     <div class="filter-group flex-grow-1 flex-md-shrink-0">
@@ -48,8 +48,8 @@
                 <table class="table table-bordered display responsive nowrap" id="productsTable" style="width:100%">
                     <thead>
                     <tr>
-                        <th data-priority="1">Kép</th>
                         <th>ID</th>
+                        <th data-priority="1">Kép</th>
                         <th data-priority="2">Terméknév</th>
                         <th data-priority="6">Készlet</th>
                         <th data-priority="3">Bruttó ár</th>
@@ -433,18 +433,28 @@
                 processing: true,
                 serverSide: true,
                 ajax: '{{ route('admin.products.data') }}',
-                order: [[1, 'desc']],
+                order: [[0, 'desc']],
                 createdRow: function (row, data) {
                     if (data && data.in_cart) {
                         $(row).addClass('table-warning');
                     }
                 },
                 columnDefs: [
-                    { targets: 0, responsivePriority: 1 },
+                    { targets: 1, responsivePriority: 1 },
                     { targets: 2, responsivePriority: 2 },
                     { targets: 7, responsivePriority: 3 }
                 ],
+                drawCallback: function () {
+                    document.querySelectorAll('#productsTable [data-bs-toggle="tooltip"]').forEach((el) => {
+                        const existing = bootstrap.Tooltip.getInstance(el);
+                        if (existing) {
+                            existing.dispose();
+                        }
+                        new bootstrap.Tooltip(el);
+                    });
+                },
                 columns: [
+                    { data: 'id' },
                     {
                         data: 'photo_url',
                         orderable: false,
@@ -460,8 +470,20 @@
                             `;
                         }
                     },
-                    { data: 'id' },
-                    { data: 'title', className: 'no-ellipsis all' },
+                    {
+                        data: 'title',
+                        className: 'no-ellipsis all',
+                        render: function (data, type) {
+                            const text = (data ?? '').toString();
+                            if (type !== 'display') {
+                                return text;
+                            }
+                            const truncated = text.length > 30 ? (text.slice(0, 30) + '...') : text;
+                            const safeFull = escapeHtml(text);
+                            const safeTruncated = escapeHtml(truncated);
+                            return `<span data-bs-toggle="tooltip" data-bs-title="${safeFull}">${safeTruncated}</span>`;
+                        }
+                    },
                     { data: 'stock', className: 'editable', name: 'stock' },
                     { data: 'gross_price', className: 'editable', name: 'gross_price' },
                     { data: 'partner_gross_price', className: 'editable', name: 'partner_gross_price' },
