@@ -384,16 +384,19 @@ class ContractController extends Controller
             $leadId = $request->input('lead_id');
 
             if ($shouldCreateLead && !$leadId) {
+                $leadFormName = $request->input('lead_form_name');
+                $leadFormName = is_string($leadFormName) ? trim($leadFormName) : '';
+
                 $lead = Lead::create([
                     'lead_id' => (string) Str::uuid(),
                     'form_id' => 'contract',
-                    'form_name' => 'Offline',
+                    'form_name' => $leadFormName !== '' ? $leadFormName : 'Offline',
                     'full_name' => $resolvedName ?: null,
                     'email' => $resolvedEmail ?: null,
                     'phone' => $resolvedPhone ?: null,
                     'city' => $resolvedCity ?: null,
                     'campaign_name' => null,
-                    'status' => 'Új',
+                    'status' => 'Szerződés',
                     'viewed_by' => $creatorName,
                     'viewed_at' => $creatorName ? now() : null,
                     'comment' => null,
@@ -407,6 +410,20 @@ class ContractController extends Controller
                     'lead_id' => $lead->id,
                     'create_lead' => false,
                 ]);
+            }
+
+            if ($request->filled('lead_id')) {
+                $leadFormName = $request->input('lead_form_name');
+                $leadFormName = is_string($leadFormName) ? trim($leadFormName) : '';
+
+                $leadUpdate = ['status' => 'Szerződés'];
+                if ($leadFormName !== '') {
+                    $leadUpdate['form_name'] = $leadFormName;
+                }
+
+                Lead::query()
+                    ->whereKey((int) $request->input('lead_id'))
+                    ->update($leadUpdate);
             }
 
             // Aláírás mentése, ha van

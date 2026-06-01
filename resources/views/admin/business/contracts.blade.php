@@ -73,7 +73,7 @@
                 <input type="hidden" id="client_id" name="client_id">
                 <input type="hidden" id="lead_id" name="lead_id">
                 <input type="hidden" id="create_lead" name="create_lead" value="0">
-                <input type="hidden" id="lead_form_name" name="lead_form_name" value="Szerződés">
+                <input type="hidden" id="lead_form_name" name="lead_form_name" value="Offline">
                 <input type="hidden" id="client_address_id" name="client_address_id">
                 <input type="hidden" id="create_client" name="create_client" value="0">
                 <input type="hidden" id="use_custom_address" name="use_custom_address" value="0">
@@ -1644,7 +1644,7 @@
                     $('#lead_search_results').hide().empty();
 
                     $('#create_lead').val('1');
-                    $('#lead_form_name').val('Szerződés');
+                    $('#lead_form_name').val('Offline');
                 } else {
                     $('#create_lead').val('0');
                 }

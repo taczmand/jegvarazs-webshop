@@ -46,6 +46,7 @@
                         <select class="form-select filter-input" data-column="7">
                             <option value="">Állapot (összes)</option>
                             <option value="Új">Új</option>
+                            <option value="Szerződés">Szerződés</option>
                             <option value="Nem vette fel">Nem vette fel</option>
                             <option value="Csak érdeklődött">Csak érdeklődött</option>
                             <option value="Felmérés">Felmérés</option>
@@ -130,6 +131,7 @@
                             <label for="leader_campaign" class="form-label"><strong>Státusz</strong></label>
                             <select id="lead_status" name="lead_status" class="form-select">
                                 <option value="Új">Új</option>
+                                <option value="Szerződés">Szerződés</option>
                                 <option value="Nem vette fel">Nem vette fel</option>
                                 <option value="Csak érdeklődött">Csak érdeklődött</option>
                                 <option value="Felmérés">Felmérés</option>
