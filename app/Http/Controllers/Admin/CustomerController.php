@@ -34,7 +34,7 @@ class CustomerController extends Controller
             ->orderBy('last_name')
             ->orderBy('first_name')
             ->limit(10)
-            ->get(['id', 'first_name', 'last_name', 'email', 'phone']);
+            ->get(['id', 'first_name', 'last_name', 'email', 'phone', 'is_partner']);
 
         $payload = $customers->map(function ($customer) {
             $name = trim(($customer->last_name ?? '') . ' ' . ($customer->first_name ?? ''));
@@ -44,6 +44,7 @@ class CustomerController extends Controller
                 'name' => $name,
                 'email' => $customer->email,
                 'phone' => $customer->phone,
+                'is_partner' => (bool) ($customer->is_partner ?? false),
             ];
         })->values();
 
@@ -164,6 +165,21 @@ class CustomerController extends Controller
                 'shippingAddresses'
             ])->findOrFail($id),
             'countries' => config('countries'),
+        ]);
+    }
+
+    public function addresses($id)
+    {
+        $customer = Customer::query()
+            ->with([
+                'billingAddresses' => fn ($q) => $q->latest('id'),
+                'shippingAddresses' => fn ($q) => $q->latest('id'),
+            ])
+            ->findOrFail($id);
+
+        return response()->json([
+            'billing_addresses' => $customer->billingAddresses->values(),
+            'shipping_addresses' => $customer->shippingAddresses->values(),
         ]);
     }
 

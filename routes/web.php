@@ -152,7 +152,7 @@ Route::get('/automatizacio/kuldes', [AutomatedEmailController::class, 'sendToday
             Route::get('/ertekesites/rendeles/{id}', [AdminOrderController::class, 'show'])->name('orders.order');
             Route::get('/ertekesites/rendeles/{id}/items', [AdminOrderController::class, 'items'])->name('orders.items');
             Route::get('/ertekesites/rendeles/{id}/history', [AdminOrderController::class, 'history'])->name('orders.history');
-            //Route::post('/ertekesites/rendelesek', [AdminOrderController::class, 'store'])->name('orders.store');
+            Route::post('/ertekesites/rendelesek', [AdminOrderController::class, 'store'])->name('orders.store');
             Route::put('/ertekesites/rendelesek/{order}', [AdminOrderController::class, 'update'])->name('orders.update');
             Route::delete('/ertekesites/rendelesek/{order}', [AdminOrderController::class, 'destroy'])->name('orders.destroy');
 
@@ -168,6 +168,7 @@ Route::get('/automatizacio/kuldes', [AutomatedEmailController::class, 'sendToday
             Route::get('/ertekesites/vevok/kereses', [CustomerController::class, 'search'])->name('customers.search');
             Route::get('/ertekesites/vevok/data', [CustomerController::class, 'data'])->name('customers.data');
             Route::get('/ertekesites/vevo/{id}', [CustomerController::class, 'show'])->name('customers.customer');
+            Route::get('/ertekesites/vevo/{id}/cimek', [CustomerController::class, 'addresses'])->name('customers.addresses');
             Route::post('/ertekesites/vevo', [CustomerController::class, 'update'])->name('customers.update');
             Route::delete('/ertekesites/vevok/{id}', [CustomerController::class, 'destroy'])->name('customers.destroy');
             Route::delete('/ertekesites/vevo/kosar/torol/{id}', [CustomerController::class, 'deleteCartItem'])->name('customers.cart.delete_item');
@@ -190,6 +191,7 @@ Route::get('/automatizacio/kuldes', [AutomatedEmailController::class, 'sendToday
             // Összes termék
             Route::get('/termekek', [AdminProductController::class, 'index'])->name('products.index');
             Route::get('/termekek/kategoriakkal', [AdminProductController::class, 'fetchWithCategories'])->name('products.list-with-categories');
+            Route::get('/termekek/search', [AdminProductController::class, 'search'])->name('products.search');
             Route::get('/termekek/data', [AdminProductController::class, 'data'])->name('products.data');
             Route::get('/termekek/meta', [AdminProductController::class, 'meta'])->name('products.meta');
             Route::get('/termekek/{id}', [AdminProductController::class, 'show'])->name('products.get');

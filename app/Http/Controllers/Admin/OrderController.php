@@ -4,9 +4,15 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Mail\UpdateOrder;
+use App\Models\Customer;
 use App\Models\Order;
 use App\Models\OrderHistory;
 use App\Models\OrderItem;
+use App\Models\PartnerProduct;
+use App\Models\Product;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 
 class OrderController extends Controller
@@ -14,6 +20,200 @@ class OrderController extends Controller
     public function index()
     {
         return view('admin.sales.orders');
+    }
+
+    public function store(Request $request)
+    {
+        $user = auth('admin')->user();
+        if (!$user || !$user->can('create-order')) {
+            return response()->json(['message' => 'Nincs jogosultságod rendelést létrehozni.'], 403);
+        }
+
+        $data = $request->validate([
+            'customer_id' => 'nullable|integer|exists:customers,id',
+            'payment_method' => 'required|string|max:50',
+            'comment' => 'nullable|string|max:2000',
+            'order_date' => 'nullable|date',
+
+            'contact_first_name' => 'nullable|string|max:255',
+            'contact_last_name' => 'nullable|string|max:255',
+            'contact_email' => 'nullable|string|max:255',
+            'contact_phone' => 'nullable|string|max:255',
+
+            'billing_name' => 'nullable|string|max:255',
+            'billing_country' => 'nullable|string|max:10',
+            'billing_postal_code' => 'nullable|string|max:30',
+            'billing_city' => 'nullable|string|max:255',
+            'billing_address_line' => 'nullable|string|max:255',
+            'billing_tax_number' => 'nullable|string|max:64',
+
+            'shipping_name' => 'nullable|string|max:255',
+            'shipping_country' => 'nullable|string|max:10',
+            'shipping_postal_code' => 'nullable|string|max:30',
+            'shipping_city' => 'nullable|string|max:255',
+            'shipping_address_line' => 'nullable|string|max:255',
+
+            'items' => 'required|array|min:1',
+            'items.*.product_id' => 'required|integer|exists:products,id',
+            'items.*.quantity' => 'required|integer|min:1|max:9999',
+        ]);
+
+        /** @var Customer|null $customer */
+        $customer = null;
+        $billing = null;
+        $shipping = null;
+
+        if (!empty($data['customer_id'])) {
+            $customer = Customer::query()
+                ->with([
+                    'billingAddresses' => fn ($q) => $q->latest('id'),
+                    'shippingAddresses' => fn ($q) => $q->latest('id'),
+                ])
+                ->findOrFail((int) $data['customer_id']);
+
+            $billing = $customer->billingAddresses->first();
+            $shipping = $customer->shippingAddresses->first();
+        }
+
+        $items = collect($data['items'])
+            ->map(fn ($i) => [
+                'product_id' => (int) ($i['product_id'] ?? 0),
+                'quantity' => (int) ($i['quantity'] ?? 0),
+            ])
+            ->filter(fn ($i) => $i['product_id'] > 0 && $i['quantity'] > 0)
+            ->values();
+
+        if ($items->isEmpty()) {
+            return response()->json(['message' => 'Nincs érvényes termék a rendelésben.'], 422);
+        }
+
+        $products = Product::query()
+            ->whereIn('id', $items->pluck('product_id')->all())
+            ->with('taxCategory')
+            ->get()
+            ->keyBy('id');
+
+        $partnerDiscountPrices = collect();
+        if ($customer && $customer->is_partner) {
+            $partnerDiscountPrices = PartnerProduct::query()
+                ->where('customer_id', $customer->id)
+                ->whereIn('product_id', $products->keys()->all())
+                ->pluck('discount_gross_price', 'product_id');
+        }
+
+        return DB::transaction(function () use ($data, $customer, $billing, $shipping, $items, $products, $partnerDiscountPrices) {
+            if (!$customer) {
+                $requiredFields = [
+                    'contact_first_name',
+                    'contact_last_name',
+                    'contact_email',
+                    'contact_phone',
+                    'billing_name',
+                    'billing_country',
+                    'billing_postal_code',
+                    'billing_city',
+                    'billing_address_line',
+                    'shipping_name',
+                    'shipping_country',
+                    'shipping_postal_code',
+                    'shipping_city',
+                    'shipping_address_line',
+                ];
+
+                $missing = [];
+                foreach ($requiredFields as $field) {
+                    if (!isset($data[$field]) || trim((string) $data[$field]) === '') {
+                        $missing[] = $field;
+                    }
+                }
+
+                if (!empty($missing)) {
+                    return response()->json([
+                        'message' => 'Vásárló nélkül a kapcsolattartó / számlázási / szállítási adatok megadása kötelező.',
+                        'missing' => $missing,
+                    ], 422);
+                }
+            }
+
+            $orderDate = !empty($data['order_date'])
+                ? Carbon::parse($data['order_date'])
+                : null;
+
+            $order = Order::create([
+                'customer_id' => $customer?->id,
+
+                'contact_first_name' => $data['contact_first_name'] ?? ($customer->first_name ?? null),
+                'contact_last_name' => $data['contact_last_name'] ?? ($customer->last_name ?? null),
+                'contact_email' => $data['contact_email'] ?? ($customer->email ?? null),
+                'contact_phone' => $data['contact_phone'] ?? ($customer->phone ?? null),
+
+                'billing_name' => $data['billing_name'] ?? ($billing?->name ?? trim(($customer->last_name ?? '') . ' ' . ($customer->first_name ?? ''))),
+                'billing_country' => $data['billing_country'] ?? ($billing?->country ?? 'HU'),
+                'billing_postal_code' => $data['billing_postal_code'] ?? ($billing?->zip_code ?? null),
+                'billing_city' => $data['billing_city'] ?? ($billing?->city ?? null),
+                'billing_address_line' => $data['billing_address_line'] ?? ($billing?->address_line ?? null),
+                'billing_tax_number' => $data['billing_tax_number'] ?? ($billing?->tax_number ?? null),
+
+                'shipping_name' => $data['shipping_name'] ?? ($shipping?->name ?? trim(($customer->last_name ?? '') . ' ' . ($customer->first_name ?? ''))),
+                'shipping_country' => $data['shipping_country'] ?? ($shipping?->country ?? 'HU'),
+                'shipping_postal_code' => $data['shipping_postal_code'] ?? ($shipping?->zip_code ?? null),
+                'shipping_city' => $data['shipping_city'] ?? ($shipping?->city ?? null),
+                'shipping_address_line' => $data['shipping_address_line'] ?? ($shipping?->address_line ?? null),
+
+                'payment_method' => $data['payment_method'],
+                'comment' => $data['comment'] ?? null,
+                'status' => 'pending',
+                'created_at' => $orderDate,
+            ]);
+
+            $storedItems = [];
+            foreach ($items as $row) {
+                $product = $products->get($row['product_id']);
+                if (!$product) {
+                    continue;
+                }
+
+                $grossPrice = (float) ($product->gross_price ?? 0);
+                if ($customer && $customer->is_partner) {
+                    $discount = $partnerDiscountPrices->get($product->id);
+                    if ($discount !== null) {
+                        $grossPrice = (float) $discount;
+                    } elseif ($product->partner_gross_price !== null) {
+                        $grossPrice = (float) $product->partner_gross_price;
+                    }
+                }
+
+                $taxValue = $product->taxCategory?->tax_value;
+                if ($taxValue === null && isset($product->tax_value)) {
+                    $taxValue = $product->tax_value;
+                }
+
+                $item = OrderItem::create([
+                    'order_id' => $order->id,
+                    'product_id' => $product->id,
+                    'product_name' => $product->title,
+                    'quantity' => (int) $row['quantity'],
+                    'gross_price' => $grossPrice,
+                    'tax_value' => $taxValue,
+                ]);
+                $storedItems[] = $item->toArray();
+            }
+
+            OrderHistory::create([
+                'order_id' => $order->id,
+                'user_id' => auth('admin')->id(),
+                'action' => 'order_created_admin',
+                'data' => json_encode([
+                    'order' => $order->toArray(),
+                    'items' => $storedItems,
+                ]),
+            ]);
+
+            return response()->json([
+                'message' => 'Rendelés sikeresen létrehozva.',
+                'order' => $order->load(['items', 'customer']),
+            ], 201);
+        });
     }
     public function data()
     {

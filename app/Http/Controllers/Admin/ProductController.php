@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\ProductRequest;
 use App\Models\CartItem;
 use App\Models\Category;
+use App\Models\Customer;
+use App\Models\PartnerProduct;
 use App\Models\Product;
 use App\Models\ProductQuantityDiscount;
 use App\Models\ProductPhoto;
@@ -26,6 +28,60 @@ class ProductController extends Controller
     {
         $categories = Category::orderBy('title')->get();
         return view('admin.products.products', compact('categories'));
+    }
+
+    public function search(Request $request)
+    {
+        $q = trim((string) $request->query('q', ''));
+        $customerId = $request->query('customer_id');
+        if ($q === '') {
+            return response()->json(['products' => []]);
+        }
+
+        $customer = null;
+        if ($customerId !== null && $customerId !== '' && is_numeric($customerId)) {
+            $customer = Customer::query()->find((int) $customerId);
+        }
+
+        $products = Product::query()
+            ->with('taxCategory')
+            ->where(function ($query) use ($q) {
+                $query->where('title', 'like', "%{$q}%")
+                    ->orWhere('id', '=', is_numeric($q) ? (int) $q : 0);
+            })
+            ->orderBy('title')
+            ->limit(20)
+            ->get(['id', 'title', 'gross_price', 'partner_gross_price', 'tax_id']);
+
+        $partnerDiscounts = collect();
+        if ($customer && $customer->is_partner && $products->isNotEmpty()) {
+            $partnerDiscounts = PartnerProduct::query()
+                ->where('customer_id', $customer->id)
+                ->whereIn('product_id', $products->pluck('id')->all())
+                ->pluck('discount_gross_price', 'product_id');
+        }
+
+        $payload = $products->map(function ($p) use ($customer, $partnerDiscounts) {
+            $effective = (float) ($p->gross_price ?? 0);
+            if ($customer && $customer->is_partner) {
+                $disc = $partnerDiscounts->get($p->id);
+                if ($disc !== null) {
+                    $effective = (float) $disc;
+                } elseif ($p->partner_gross_price !== null) {
+                    $effective = (float) $p->partner_gross_price;
+                }
+            }
+
+            return [
+                'id' => $p->id,
+                'title' => $p->title,
+                'gross_price' => $p->gross_price,
+                'effective_gross_price' => $effective,
+                'tax_value' => $p->taxCategory?->tax_value,
+            ];
+        })->values();
+
+        return response()->json(['products' => $payload]);
     }
 
     public function data()
