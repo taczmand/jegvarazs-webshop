@@ -184,6 +184,15 @@
                                         <input type="text" class="form-control" id="product_search" placeholder="Termék keresés (név vagy ID)..." autocomplete="off">
                                         <div id="product_search_results" class="list-group mt-2" style="max-height: 200px; overflow: auto;"></div>
                                     </div>
+                                    <div style="min-width: 220px;">
+                                        <label class="form-label d-block">&nbsp;</label>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" value="1" id="show_partner_prices" name="show_partner_prices">
+                                            <label class="form-check-label" for="show_partner_prices">
+                                                Partneri árak mutatása
+                                            </label>
+                                        </div>
+                                    </div>
                                     <div style="width: 140px;">
                                         <label class="form-label">Mennyiség</label>
                                         <input type="number" min="1" step="1" value="1" class="form-control" id="new_item_quantity">
@@ -507,6 +516,7 @@
                 $('#customer_id').val('');
                 $('#customer_search').val('');
                 $('#customer_search_results').empty();
+                $('#show_partner_prices').prop('checked', false).prop('disabled', false);
                 $('#contact_last_name').val('');
                 $('#contact_first_name').val('');
                 $('#contact_email').val('');
@@ -568,6 +578,7 @@
                 $('#product_search').prop('disabled', !createMode);
                 $('#new_item_quantity').prop('disabled', !createMode);
                 $('#addOrderItem').prop('disabled', !createMode);
+                $('#show_partner_prices').prop('disabled', !createMode);
 
                 if (!createMode) {
                     createItems = [];
@@ -575,6 +586,7 @@
                     $('#product_search').val('');
                     $('#product_search_results').empty();
                     $('#new_item_quantity').val('1');
+                    $('#show_partner_prices').prop('checked', false).prop('disabled', true);
                 }
 
                 $('#saveOrder').text(createMode ? 'Létrehozás' : 'Mentés');
@@ -704,10 +716,13 @@
 
                 let total = 0;
 
+                const cid = ($('#customer_id').val() || '').toString().trim();
+                const showPartner = !cid && !!document.getElementById('show_partner_prices')?.checked;
+
                 createItems.forEach((row, idx) => {
                     const p = productsIndex.get(String(row.product_id));
                     const title = (p?.title || '').toString();
-                    const gross = Number((p?.effective_gross_price ?? p?.gross_price) || 0);
+                    const gross = Number((showPartner ? (p?.partner_gross_price ?? p?.effective_gross_price ?? p?.gross_price) : (p?.effective_gross_price ?? p?.gross_price)) || 0);
                     const tax = (p?.taxCategory?.tax_value ?? p?.tax_value ?? '');
                     const qty = Number(row.quantity || 0);
                     const line = gross * qty;
@@ -763,6 +778,13 @@
                 const q = (document.getElementById('customer_search').value || '').trim();
                 const wrap = document.getElementById('customer_search_results');
                 wrap.innerHTML = '';
+                if (q.length === 0) {
+                    $('#customer_id').val('');
+                    $('#customer_name_display').text('');
+                    $('#show_partner_prices').prop('disabled', false);
+                    renderCreateItems();
+                    return;
+                }
                 if (q.length < 2) return;
 
                 const url = new URL(`{{ route('admin.customers.search') }}`);
@@ -785,12 +807,14 @@
                         $('#customer_id').val(c.id);
                         $('#customer_search').val(name);
                         $('#customer_name_display').text(name);
+                        $('#show_partner_prices').prop('checked', false).prop('disabled', true);
                         $('#contact_last_name').val((c?.name || '').toString().split(' ')[0] || (c?.last_name || ''));
                         $('#contact_first_name').val((c?.name || '').toString().split(' ').slice(1).join(' ') || (c?.first_name || ''));
                         $('#contact_email').val((c?.email || '').toString());
                         $('#contact_phone').val((c?.phone || '').toString());
                         wrap.innerHTML = '';
                         loadCustomerAddresses(c.id);
+                        renderCreateItems();
                     });
                     wrap.appendChild(btn);
                 });
@@ -811,6 +835,8 @@
                 const cid = ($('#customer_id').val() || '').toString().trim();
                 if (cid) {
                     url.searchParams.set('customer_id', cid);
+                } else if (document.getElementById('show_partner_prices')?.checked) {
+                    url.searchParams.set('show_partner_prices', '1');
                 }
                 const res = await fetch(url.toString(), { headers: { 'Accept': 'application/json' } });
                 if (!res.ok) return;
@@ -834,6 +860,15 @@
             }, 250);
 
             document.getElementById('product_search').addEventListener('input', onProductSearch);
+
+            document.getElementById('show_partner_prices').addEventListener('change', () => {
+                const cid = ($('#customer_id').val() || '').toString().trim();
+                if (cid) {
+                    $('#show_partner_prices').prop('checked', false).prop('disabled', true);
+                    return;
+                }
+                renderCreateItems();
+            });
 
             $('#addOrder').on('click', async function () {
                 resetCreateState();
@@ -993,8 +1028,14 @@
                     const cid = ($('#customer_id').val() || '').toString().trim();
                     if (cid) {
                         formData.set('customer_id', cid);
+                        formData.delete('show_partner_prices');
                     } else {
                         formData.delete('customer_id');
+                        if (document.getElementById('show_partner_prices')?.checked) {
+                            formData.set('show_partner_prices', '1');
+                        } else {
+                            formData.delete('show_partner_prices');
+                        }
                     }
 
                     formData.set('billing_address_line', ($('#billing_address').val() || '').toString());

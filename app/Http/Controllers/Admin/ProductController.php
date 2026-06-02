@@ -34,6 +34,7 @@ class ProductController extends Controller
     {
         $q = trim((string) $request->query('q', ''));
         $customerId = $request->query('customer_id');
+        $showPartnerPrices = $request->boolean('show_partner_prices');
         if ($q === '') {
             return response()->json(['products' => []]);
         }
@@ -61,7 +62,7 @@ class ProductController extends Controller
                 ->pluck('discount_gross_price', 'product_id');
         }
 
-        $payload = $products->map(function ($p) use ($customer, $partnerDiscounts) {
+        $payload = $products->map(function ($p) use ($customer, $partnerDiscounts, $showPartnerPrices) {
             $effective = (float) ($p->gross_price ?? 0);
             if ($customer && $customer->is_partner) {
                 $disc = $partnerDiscounts->get($p->id);
@@ -70,12 +71,15 @@ class ProductController extends Controller
                 } elseif ($p->partner_gross_price !== null) {
                     $effective = (float) $p->partner_gross_price;
                 }
+            } elseif (!$customer && $showPartnerPrices && $p->partner_gross_price !== null) {
+                $effective = (float) $p->partner_gross_price;
             }
 
             return [
                 'id' => $p->id,
                 'title' => $p->title,
                 'gross_price' => $p->gross_price,
+                'partner_gross_price' => $p->partner_gross_price,
                 'effective_gross_price' => $effective,
                 'tax_value' => $p->taxCategory?->tax_value,
             ];

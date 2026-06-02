@@ -31,6 +31,7 @@ class OrderController extends Controller
 
         $data = $request->validate([
             'customer_id' => 'nullable|integer|exists:customers,id',
+            'show_partner_prices' => 'nullable|boolean',
             'payment_method' => 'required|string|max:50',
             'comment' => 'nullable|string|max:2000',
             'order_date' => 'nullable|date',
@@ -93,6 +94,9 @@ class OrderController extends Controller
             ->get()
             ->keyBy('id');
 
+        $usePartnerPricing = ($customer && $customer->is_partner)
+            || (!$customer && $request->boolean('show_partner_prices'));
+
         $partnerDiscountPrices = collect();
         if ($customer && $customer->is_partner) {
             $partnerDiscountPrices = PartnerProduct::query()
@@ -101,7 +105,7 @@ class OrderController extends Controller
                 ->pluck('discount_gross_price', 'product_id');
         }
 
-        return DB::transaction(function () use ($data, $customer, $billing, $shipping, $items, $products, $partnerDiscountPrices) {
+        return DB::transaction(function () use ($data, $customer, $billing, $shipping, $items, $products, $partnerDiscountPrices, $usePartnerPricing) {
             if (!$customer) {
                 $requiredFields = [
                     'contact_first_name',
@@ -174,10 +178,14 @@ class OrderController extends Controller
                 }
 
                 $grossPrice = (float) ($product->gross_price ?? 0);
-                if ($customer && $customer->is_partner) {
-                    $discount = $partnerDiscountPrices->get($product->id);
-                    if ($discount !== null) {
-                        $grossPrice = (float) $discount;
+                if ($usePartnerPricing) {
+                    if ($customer && $customer->is_partner) {
+                        $discount = $partnerDiscountPrices->get($product->id);
+                        if ($discount !== null) {
+                            $grossPrice = (float) $discount;
+                        } elseif ($product->partner_gross_price !== null) {
+                            $grossPrice = (float) $product->partner_gross_price;
+                        }
                     } elseif ($product->partner_gross_price !== null) {
                         $grossPrice = (float) $product->partner_gross_price;
                     }
