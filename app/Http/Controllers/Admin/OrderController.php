@@ -353,57 +353,171 @@ class OrderController extends Controller
             ->get();
     }
 
-    public function update($id)
+    public function update($id, Request $request)
     {
-        $order = Order::findOrFail($id);
-        $order->status = request('status');
-        $order->comment = request('order_comment', $order->comment);
-        $order->contact_first_name = request('contact_first_name', $order->contact_first_name);
-        $order->contact_last_name = request('contact_last_name', $order->contact_last_name);
-        $order->contact_email = request('contact_email', $order->contact_email);
-        $order->contact_phone = request('contact_phone', $order->contact_phone);
-        $order->billing_name = request('billing_name', $order->billing_name);
-        $order->billing_country = request('billing_country', $order->billing_country);
-        $order->billing_postal_code = request('billing_postal_code', $order->billing_postal_code);
-        $order->billing_city = request('billing_city', $order->billing_city);
-        $order->billing_address_line = request('billing_address_line', $order->billing_address_line);
-        $order->billing_tax_number = request('billing_tax_number', $order->billing_tax_number);
-        $order->shipping_name = request('shipping_name', $order->shipping_name);
-        $order->shipping_country = request('shipping_country', $order->shipping_country);
-        $order->shipping_postal_code = request('shipping_postal_code', $order->shipping_postal_code);
-        $order->shipping_city = request('shipping_city', $order->shipping_city);
-        $order->shipping_address_line = request('shipping_address_line', $order->shipping_address_line);
+        $user = auth('admin')->user();
+        if (!$user || !$user->can('edit-order')) {
+            return response()->json(['message' => 'Nincs jogosultságod rendelést szerkeszteni.'], 403);
+        }
 
+        $data = $request->validate([
+            'status' => 'nullable|string|max:50',
+            'order_comment' => 'nullable|string|max:2000',
+            'contact_first_name' => 'nullable|string|max:255',
+            'contact_last_name' => 'nullable|string|max:255',
+            'contact_email' => 'nullable|string|max:255',
+            'contact_phone' => 'nullable|string|max:255',
+            'billing_name' => 'nullable|string|max:255',
+            'billing_country' => 'nullable|string|max:10',
+            'billing_postal_code' => 'nullable|string|max:30',
+            'billing_city' => 'nullable|string|max:255',
+            'billing_address_line' => 'nullable|string|max:255',
+            'billing_tax_number' => 'nullable|string|max:64',
+            'shipping_name' => 'nullable|string|max:255',
+            'shipping_country' => 'nullable|string|max:10',
+            'shipping_postal_code' => 'nullable|string|max:30',
+            'shipping_city' => 'nullable|string|max:255',
+            'shipping_address_line' => 'nullable|string|max:255',
 
-        if ($order->isDirty()) {
+            'items' => 'nullable|array',
+            'items.*.id' => 'nullable|integer|exists:order_items,id',
+            'items.*.product_id' => 'nullable|integer|exists:products,id',
+            'items.*.quantity' => 'required_with:items|integer|min:0|max:9999',
+            'items.*.delete' => 'nullable|boolean',
+        ]);
 
-            $order->save();
+        $order = Order::with('items')->findOrFail($id);
 
-            OrderHistory::create([
-                'order_id' => $order->id,
-                'user_id' => auth('admin')->id(),
-                'action' => 'order_updated',
-                'data' => json_encode([
-                    'order' => $order->toArray()
-                ]),
-            ]);
+        return DB::transaction(function () use ($order, $data) {
+            $order->status = $data['status'] ?? $order->status;
+            $order->comment = $data['order_comment'] ?? $order->comment;
+            $order->contact_first_name = $data['contact_first_name'] ?? $order->contact_first_name;
+            $order->contact_last_name = $data['contact_last_name'] ?? $order->contact_last_name;
+            $order->contact_email = $data['contact_email'] ?? $order->contact_email;
+            $order->contact_phone = $data['contact_phone'] ?? $order->contact_phone;
+            $order->billing_name = $data['billing_name'] ?? $order->billing_name;
+            $order->billing_country = $data['billing_country'] ?? $order->billing_country;
+            $order->billing_postal_code = $data['billing_postal_code'] ?? $order->billing_postal_code;
+            $order->billing_city = $data['billing_city'] ?? $order->billing_city;
+            $order->billing_address_line = $data['billing_address_line'] ?? $order->billing_address_line;
+            $order->billing_tax_number = $data['billing_tax_number'] ?? $order->billing_tax_number;
+            $order->shipping_name = $data['shipping_name'] ?? $order->shipping_name;
+            $order->shipping_country = $data['shipping_country'] ?? $order->shipping_country;
+            $order->shipping_postal_code = $data['shipping_postal_code'] ?? $order->shipping_postal_code;
+            $order->shipping_city = $data['shipping_city'] ?? $order->shipping_city;
+            $order->shipping_address_line = $data['shipping_address_line'] ?? $order->shipping_address_line;
 
-            Mail::to($order->contact_email)->send(new UpdateOrder(
-                $order,
-                $this->items($order->id)->toArray()
-            ));
+            $orderDirty = $order->isDirty();
 
-            return response()->json([
-                'message' => 'Rendelés sikeresen frissítve.',
-                'order' => $order,
-            ], 200);
-        } else {
+            $itemsChanged = false;
+            $storedItems = null;
+
+            if (array_key_exists('items', $data)) {
+                $payloadItems = collect($data['items'] ?? [])->map(function ($row) {
+                    return [
+                        'id' => isset($row['id']) ? (int) $row['id'] : null,
+                        'product_id' => isset($row['product_id']) ? (int) $row['product_id'] : null,
+                        'quantity' => isset($row['quantity']) ? (int) $row['quantity'] : null,
+                        'delete' => (bool) ($row['delete'] ?? false),
+                    ];
+                })->values();
+
+                $existingItems = $order->items->keyBy('id');
+
+                $newProductIds = $payloadItems
+                    ->filter(fn ($i) => empty($i['id']) && !empty($i['product_id']) && empty($i['delete']) && (int) $i['quantity'] > 0)
+                    ->pluck('product_id')
+                    ->unique()
+                    ->values();
+
+                $products = $newProductIds->isNotEmpty()
+                    ? Product::query()->whereIn('id', $newProductIds->all())->with('taxCategory')->get()->keyBy('id')
+                    : collect();
+
+                foreach ($payloadItems as $row) {
+                    $rowId = $row['id'] ?? null;
+
+                    if ($rowId) {
+                        /** @var OrderItem|null $item */
+                        $item = $existingItems->get($rowId);
+                        if (!$item || (int) $item->order_id !== (int) $order->id) {
+                            continue;
+                        }
+
+                        if (!empty($row['delete']) || ((int) ($row['quantity'] ?? 0)) <= 0) {
+                            $itemsChanged = true;
+                            $item->delete();
+                            continue;
+                        }
+
+                        $newQty = (int) $row['quantity'];
+                        if ((int) $item->quantity !== $newQty) {
+                            $itemsChanged = true;
+                            $item->quantity = $newQty;
+                            $item->save();
+                        }
+                        continue;
+                    }
+
+                    if (!empty($row['delete']) || empty($row['product_id']) || ((int) ($row['quantity'] ?? 0)) <= 0) {
+                        continue;
+                    }
+
+                    $product = $products->get((int) $row['product_id']);
+                    if (!$product) {
+                        continue;
+                    }
+
+                    $itemsChanged = true;
+
+                    $taxValue = $product->taxCategory?->tax_value;
+                    if ($taxValue === null && isset($product->tax_value)) {
+                        $taxValue = $product->tax_value;
+                    }
+
+                    OrderItem::create([
+                        'order_id' => $order->id,
+                        'product_id' => $product->id,
+                        'product_name' => $product->title,
+                        'quantity' => (int) $row['quantity'],
+                        'gross_price' => (float) ($product->gross_price ?? 0),
+                        'tax_value' => $taxValue,
+                    ]);
+                }
+
+                $storedItems = $this->items($order->id)->toArray();
+            }
+
+            if ($orderDirty) {
+                $order->save();
+            }
+
+            if ($orderDirty || $itemsChanged) {
+                OrderHistory::create([
+                    'order_id' => $order->id,
+                    'user_id' => auth('admin')->id(),
+                    'action' => 'order_updated',
+                    'data' => json_encode([
+                        'order' => $order->toArray(),
+                        'items' => $storedItems,
+                    ]),
+                ]);
+
+                Mail::to($order->contact_email)->send(new UpdateOrder(
+                    $order,
+                    $storedItems ?? $this->items($order->id)->toArray()
+                ));
+
+                return response()->json([
+                    'message' => 'Rendelés sikeresen frissítve.',
+                    'order' => $order->fresh(['items', 'customer']),
+                ], 200);
+            }
+
             return response()->json([
                 'message' => 'Nincs változás a rendelésben.',
             ], 200);
-        }
-
-
+        });
     }
 
     public function destroy($id)

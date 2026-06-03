@@ -572,12 +572,12 @@
                 $('#shipping_address_picker_row').toggleClass('d-none', !createMode);
                 $('#billing_address_picker_row').toggleClass('d-none', !createMode);
 
-                $('#order_items_editor').toggleClass('d-none', !createMode);
-                $('#order_items_actions_head').toggleClass('d-none', !createMode);
+                $('#order_items_editor').toggleClass('d-none', false);
+                $('#order_items_actions_head').toggleClass('d-none', false);
 
-                $('#product_search').prop('disabled', !createMode);
-                $('#new_item_quantity').prop('disabled', !createMode);
-                $('#addOrderItem').prop('disabled', !createMode);
+                $('#product_search').prop('disabled', false);
+                $('#new_item_quantity').prop('disabled', false);
+                $('#addOrderItem').prop('disabled', false);
                 $('#show_partner_prices').prop('disabled', !createMode);
 
                 if (!createMode) {
@@ -758,12 +758,31 @@
                 const productId = (selectedProductId || '').toString();
                 const qty = Number($('#new_item_quantity').val() || 0);
                 if (!productId || qty <= 0) return;
-                createItems.push({ product_id: productId, quantity: qty });
+
+                if (createMode) {
+                    createItems.push({ product_id: productId, quantity: qty });
+                } else {
+                    const p = productsIndex.get(String(productId));
+                    if (!p) return;
+                    editItems.push({
+                        id: null,
+                        product_id: Number(productId),
+                        product_name: p.title || '',
+                        quantity: qty,
+                        gross_price: Number((p?.gross_price ?? 0) || 0),
+                        tax_value: (p?.taxCategory?.tax_value ?? p?.tax_value ?? ''),
+                        product: p,
+                        _delete: false,
+                    });
+                    renderOrderItems(editItems);
+                }
                 $('#new_item_quantity').val('1');
                 $('#product_search').val('');
                 $('#product_search_results').empty();
                 selectedProductId = null;
-                renderCreateItems();
+                if (createMode) {
+                    renderCreateItems();
+                }
             });
 
             const debounce = (fn, wait) => {
@@ -877,11 +896,24 @@
                 adminModal.show();
             });
 
+            let editItems = [];
+
             function renderOrderItems(items) {
                 const itemsBody = $('#order_items_body');
                 itemsBody.empty();
 
-                items.forEach(item => {
+                editItems = Array.isArray(items) ? items.map(i => ({
+                    id: i.id,
+                    product_id: i.product_id,
+                    product_name: i.product_name,
+                    quantity: i.quantity,
+                    gross_price: i.gross_price,
+                    tax_value: i.tax_value,
+                    product: i.product,
+                    _delete: false,
+                })) : [];
+
+                editItems.forEach(item => {
                     const photos = Array.isArray(item?.product?.photos) ? item.product.photos : [];
                     const main_photo = photos.find(p => p && (p.is_main === true || p.is_main === 1 || p.is_main === '1'));
                     const photo = main_photo || photos[0] || null;
@@ -891,7 +923,7 @@
                     const unitLabel = item?.product?.unit
                         ? (item.product.unit.abbreviation || item.product.unit.name || '')
                         : '';
-                    const row = `<tr>
+                    const row = `<tr data-item-id="${item.id}">
                         <td>
                             <div class="d-flex align-items-center gap-2">
                                 <img
@@ -904,14 +936,42 @@
                             </div>
                         </td>
                         <td>${item.gross_price} Ft</td>
-                        <td>${item.quantity}</td>
+                        <td>
+                            <input
+                                type="number"
+                                min="0"
+                                step="1"
+                                class="form-control form-control-sm edit-item-qty"
+                                value="${item.quantity}"
+                                style="width: 110px;"
+                            />
+                        </td>
                         <td>${unitLabel}</td>
                         <td>${item.tax_value}%</td>
                         <td>${item.gross_price * item.quantity} Ft</td>
+                        <td>
+                            <button type="button" class="btn btn-sm btn-outline-danger delete-edit-item">Törlés</button>
+                        </td>
                     </tr>`;
                     itemsBody.append(row);
                 });
             }
+
+            $('#order_items_body').on('input', '.edit-item-qty', function () {
+                const id = String($(this).closest('tr').attr('data-item-id') || '');
+                const qty = Number($(this).val() || 0);
+                const row = editItems.find(i => String(i.id) === id);
+                if (!row) return;
+                row.quantity = Number.isFinite(qty) ? qty : row.quantity;
+            });
+
+            $('#order_items_body').on('click', '.delete-edit-item', function () {
+                const id = String($(this).closest('tr').attr('data-item-id') || '');
+                const row = editItems.find(i => String(i.id) === id);
+                if (!row) return;
+                row._delete = true;
+                $(this).closest('tr').addClass('table-danger').hide();
+            });
 
             const $imgPreview = $('<div id="order_item_image_preview" style="display:none; position: fixed; z-index: 2000; pointer-events:none; padding: 6px; background: #fff; border: 1px solid rgba(0,0,0,.2); border-radius: 6px; box-shadow: 0 8px 20px rgba(0,0,0,.2);"></div>');
             $('body').append($imgPreview);
@@ -1047,6 +1107,19 @@
                 } else {
                     url = `${window.appConfig.APP_URL}admin/ertekesites/rendelesek/${orderId}`;
                     formData.append('_method', 'PUT');
+
+                    editItems.forEach((row, idx) => {
+                        if (row.id) {
+                            formData.append(`items[${idx}][id]`, row.id);
+                        }
+                        if (row.product_id) {
+                            formData.append(`items[${idx}][product_id]`, row.product_id);
+                        }
+                        formData.append(`items[${idx}][quantity]`, row.quantity ?? 0);
+                        if (row._delete) {
+                            formData.append(`items[${idx}][delete]`, '1');
+                        }
+                    });
                 }
 
                 $.ajax({
