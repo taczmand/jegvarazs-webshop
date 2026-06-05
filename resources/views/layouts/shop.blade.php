@@ -67,7 +67,7 @@
 
 <main class="container mx-auto">
     @yield('content')
-    @if (!request()->routeIs('checkout') && !request()->routeIs('appointment') && !request()->routeIs('offer') && !request()->routeIs('partner.offers.*') && !request()->is('partner/ajanlat*'))
+    @if (!request()->routeIs('checkout') && !request()->routeIs('appointment') && !request()->routeIs('offer') && !request()->routeIs('partner.offers.*') && !request()->is('partner/ajanlat*') && !request()->routeIs('products.index') && !request()->routeIs('products.resolve'))
         @include('partials.contact-form')
     @endif
 </main>

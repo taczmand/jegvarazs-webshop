@@ -145,6 +145,19 @@ body#page-top {
     }
 }
 
+@media (min-width: 768px) and (max-width: 992px) {
+    body#page-top {
+        .modal {
+            .modal-dialog {
+                max-width: 95vw;
+                width: 95vw;
+                margin-left: auto;
+                margin-right: auto;
+            }
+        }
+    }
+}
+
 /* Admin UI: Make modal table-forms easier to use on mobile */
 .admin-modal-form-table {
     td > .form-control,
