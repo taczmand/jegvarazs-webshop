@@ -578,7 +578,11 @@
                 $('#product_search').prop('disabled', false);
                 $('#new_item_quantity').prop('disabled', false);
                 $('#addOrderItem').prop('disabled', false);
-                $('#show_partner_prices').prop('disabled', !createMode);
+                $('#show_partner_prices').prop('disabled', false);
+
+                if (createMode) {
+                    $('#show_partner_prices').prop('checked', true);
+                }
 
                 if (!createMode) {
                     createItems = [];
@@ -586,7 +590,7 @@
                     $('#product_search').val('');
                     $('#product_search_results').empty();
                     $('#new_item_quantity').val('1');
-                    $('#show_partner_prices').prop('checked', false).prop('disabled', true);
+                    $('#show_partner_prices').prop('checked', true);
                 }
 
                 $('#saveOrder').text(createMode ? 'Létrehozás' : 'Mentés');
