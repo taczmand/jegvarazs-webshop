@@ -7,7 +7,7 @@
         </div>
 
         <div class="rounded-xl bg-white shadow-lg p-4">
-            @if(auth('admin')->user()->can('view-leads') && (auth('admin')->user()->can('view-contracts') || auth('admin')->user()->can('view-own-contracts')))
+            @if($canView ?? (auth('admin')->user() && auth('admin')->user()->can('view-lead-conversion-report')))
                 <div class="row g-3 align-items-end mb-3">
                     <div class="col-12 col-md-3">
                         <label for="fromDate" class="form-label">Kezdő dátum</label>

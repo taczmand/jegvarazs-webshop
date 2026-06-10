@@ -14,9 +14,7 @@ class LeadConversionReportController extends Controller
     public function index(Request $request)
     {
         $user = auth('admin')->user();
-        if (!$user || !$user->can('view-leads') || (!$user->can('view-contracts') && !$user->can('view-own-contracts'))) {
-            abort(403);
-        }
+        $canView = $user && $user->can('view-lead-conversion-report');
 
         $to = $request->query('to') ? Carbon::parse($request->query('to')) : now();
         $from = $request->query('from') ? Carbon::parse($request->query('from')) : (clone $to)->subDays(29);
@@ -29,28 +27,32 @@ class LeadConversionReportController extends Controller
         $selectedFormName = is_string($selectedFormName) ? trim($selectedFormName) : null;
         $selectedFormName = $selectedFormName !== '' ? $selectedFormName : null;
 
-        $formNames = Lead::query()
-            ->whereNotNull('form_name')
-            ->where('form_name', '<>', '')
-            ->select('form_name')
-            ->distinct()
-            ->orderBy('form_name')
-            ->pluck('form_name')
-            ->values()
-            ->all();
+        $formNames = [];
+        if ($canView) {
+            $formNames = Lead::query()
+                ->whereNotNull('form_name')
+                ->where('form_name', '<>', '')
+                ->select('form_name')
+                ->distinct()
+                ->orderBy('form_name')
+                ->pluck('form_name')
+                ->values()
+                ->all();
+        }
 
         return view('admin.statistics.lead_conversion', [
             'from' => $from->toDateString(),
             'to' => $to->toDateString(),
             'formNames' => $formNames,
             'selectedFormName' => $selectedFormName,
+            'canView' => $canView,
         ]);
     }
 
     public function data(Request $request)
     {
         $user = auth('admin')->user();
-        if (!$user || !$user->can('view-leads') || (!$user->can('view-contracts') && !$user->can('view-own-contracts'))) {
+        if (!$user || !$user->can('view-lead-conversion-report')) {
             return response()->json(['message' => 'Nincs jogosultságod a jelentés megtekintéséhez.'], 403);
         }
 
