@@ -577,15 +577,20 @@ class ProductController extends Controller
             $product = Product::findOrFail($request->id);
 
             $old_gross_price = (float) ($product->gross_price ?? 0);
+            $old_partner_gross_price = $product->partner_gross_price;
+            $old_base_partner_price = (float) (($old_partner_gross_price !== null ? $old_partner_gross_price : $old_gross_price) ?? 0);
             $product->update([
                 $request->field => $request->value,
             ]);
 
-            if ((string) $request->field === 'gross_price') {
-                $new_gross_price = (float) ($product->fresh()->gross_price ?? 0);
-                if ($new_gross_price !== $old_gross_price) {
-                    $this->product_service->sync_partner_discount_prices($product->fresh());
-                }
+            $fresh = $product->fresh();
+            $new_gross_price = (float) ($fresh->gross_price ?? 0);
+            $new_partner_gross_price = $fresh->partner_gross_price;
+            $new_base_partner_price = (float) (($new_partner_gross_price !== null ? $new_partner_gross_price : $new_gross_price) ?? 0);
+
+            $field = (string) $request->field;
+            if (in_array($field, ['gross_price', 'partner_gross_price'], true) && $new_base_partner_price !== $old_base_partner_price) {
+                $this->product_service->sync_partner_discount_prices($fresh);
             }
 
             return response()->json([

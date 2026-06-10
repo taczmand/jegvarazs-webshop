@@ -282,7 +282,7 @@
                         <div class="tab-pane fade" id="pricemanager">
                             <i id="only_partner_msg">Csak partnerek számára adható egyedi ár!</i>
                             <div id="partner_prices_section">
-                                <label for="discount_percentage" class="form-label">Kedvezményes százalékos ár beállítása az összes termékre az alap bruttó árból számolva:</label>
+                                <label for="discount_percentage" class="form-label">Kedvezményes százalékos ár beállítása az összes termékre az alapértelmezett partneri bruttó árból számolva:</label>
                                 <input type="number" class="form-control" id="discount_percentage" name="discount_percentage" min="0" max="100" step="0.01" value="0">
                                 <button class="btn btn-success mt-2" id="applyDiscount">Százalékos ár beállítása az összes termékre</button>
                                 <div class="mt-3">
@@ -293,7 +293,7 @@
                                             <option value="{{ $category->id }}">{{ $category->title }}</option>
                                         @endforeach
                                     </select>
-                                    <button class="btn btn-success mt-2" id="applyDiscountByCategory">Százalékos ár beállítása a kiválasztott kategóriára</button>
+                                    <button class="btn btn-success mt-2" id="applyDiscountByCategory">Százalékos ár beállítása a kiválasztott kategóriára (alapértelmezett partneri árhoz képest)</button>
                                 </div>
                                 <button class="btn btn-danger mt-2" id="resetPartnerPrices">Egyedi árak törlése az összes terméknél</button>
                                 <input type="text" class="form-control mt-2" id="searchProduct" placeholder="Termék keresése...">

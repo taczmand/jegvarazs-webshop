@@ -243,6 +243,7 @@ class ProductService
 
             $old_gross_price = (float) ($product->gross_price ?? 0);
             $old_partner_gross_price = $product->partner_gross_price;
+            $old_base_partner_price = (float) (($old_partner_gross_price !== null ? $old_partner_gross_price : $old_gross_price) ?? 0);
 
             $new_gross_price = (float) ($data['gross_price'] ?? 0);
             $new_partner_gross_price = $data['partner_gross_price'] ?? null;
@@ -253,6 +254,7 @@ class ProductService
                 $new_partner_gross_price = $new_gross_price;
             }
             $new_partner_gross_price = (float) $new_partner_gross_price;
+            $new_base_partner_price = (float) (($new_partner_gross_price !== null ? $new_partner_gross_price : $new_gross_price) ?? 0);
 
             // Termék alapadatok frissítése
             $product->update([
@@ -272,7 +274,7 @@ class ProductService
                 'status' => $data['status'],
             ]);
 
-            $partner_price_changed = ($new_gross_price !== $old_gross_price);
+            $partner_price_changed = ($new_base_partner_price !== $old_base_partner_price);
 
             if ($partner_price_changed) {
                 $this->sync_partner_discount_prices($product);

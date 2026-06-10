@@ -230,6 +230,8 @@ class OrderController extends Controller
             'orders.status',
             'orders.created_at',
             'orders.customer_id',
+            'orders.contact_last_name',
+            'orders.contact_first_name',
             'customers.last_name',
             'customers.first_name',
             'orders.viewed_by',
@@ -286,9 +288,19 @@ class OrderController extends Controller
                 return $order->items->count();
             })
             ->addColumn('customer_name', function ($order) {
-                return $order->last_name && $order->first_name
-                    ? $order->last_name . ' ' . $order->first_name
-                    : ($order->customer ? $order->customer->last_name . ' ' . $order->customer->first_name : 'N/A');
+                if ($order->last_name && $order->first_name) {
+                    return $order->last_name . ' ' . $order->first_name;
+                }
+
+                if ($order->contact_last_name && $order->contact_first_name) {
+                    return $order->contact_last_name . ' ' . $order->contact_first_name;
+                }
+
+                if ($order->customer) {
+                    return $order->customer->last_name . ' ' . $order->customer->first_name;
+                }
+
+                return 'N/A';
             })
             ->addColumn('is_partner', function ($order) {
                 return $order->customer && $order->customer->is_partner ? 'Igen' : 'Nem';
