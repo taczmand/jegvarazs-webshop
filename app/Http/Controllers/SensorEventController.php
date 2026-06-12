@@ -14,11 +14,13 @@ class SensorEventController extends Controller
             'event' => ['nullable', 'string', 'max:50'],
             'sensor' => ['nullable', 'string', 'max:50'],
             'value' => ['nullable'],
+            'event_time' => ['nullable', 'date'],
             'occurred_at' => ['nullable', 'date'],
             'ip_address' => ['nullable', 'string', 'max:45']
         ]);
 
-        $data['occurred_at'] = $data['occurred_at'] ?? now();
+        $data['occurred_at'] = $data['event_time'] ?? $data['occurred_at'] ?? now();
+        unset($data['event_time']);
 
         $event = SensorEvent::create($data);
 
