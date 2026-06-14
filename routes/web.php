@@ -40,6 +40,7 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\VehicleController;
 use App\Http\Controllers\Admin\VehicleKmController;
 use App\Http\Controllers\Admin\WorksheetController;
+use App\Http\Controllers\Admin\CashReceiptController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\FacebookWebhookController;
@@ -323,6 +324,13 @@ Route::get('/automatizacio/kuldes', [AutomatedEmailController::class, 'sendToday
             Route::get('/munkalapok/adatok/{id}', [WorksheetController::class, 'showDataToWorksheet'])->name('worksheets.show_data_to_worksheet');
             Route::delete('/munkalapok/delete-photo', [WorksheetController::class, 'deleteWorksheetPhoto'])->name('worksheets.delete-photo');
             Route::delete('/munkalap-torlese/{id}', [WorksheetController::class, 'destroy'])->name('worksheets.destroy');
+
+            // Készpénz tételek
+            Route::get('/ugyvitel/keszpenz', [CashReceiptController::class, 'index'])->name('cash-receipts.index');
+            Route::get('/ugyvitel/keszpenz/data', [CashReceiptController::class, 'data'])->name('cash-receipts.data');
+            Route::post('/ugyvitel/keszpenz', [CashReceiptController::class, 'store'])->name('cash-receipts.store');
+            Route::post('/ugyvitel/keszpenz/{receipt}/nyugtazas', [CashReceiptController::class, 'acknowledge'])->name('cash-receipts.acknowledge');
+            Route::post('/ugyvitel/keszpenz/nyugtazas-tomeges', [CashReceiptController::class, 'bulkAcknowledge'])->name('cash-receipts.bulk-acknowledge');
 
             // Időpontfoglalások
             Route::get('/idopontfoglalasok', [AppointmentController::class, 'index'])->name('appointments.index');

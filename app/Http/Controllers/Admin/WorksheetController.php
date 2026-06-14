@@ -12,6 +12,7 @@ use App\Models\ClientAddress;
 use App\Models\Worksheet;
 use App\Models\User;
 use App\Models\Contract;
+use App\Models\CashReceipt;
 use App\Models\WorksheetImage;
 use App\Models\WorksheetProduct;
 use App\Models\WorksheetWorker;
@@ -30,6 +31,53 @@ class WorksheetController extends Controller
     public function __construct()
     {
         $this->user = Auth::guard('admin')->user();
+    }
+
+    private function syncWorksheetCashReceipt(Worksheet $worksheet, ?string $receivedDateOverride = null): void
+    {
+        $isCash = $worksheet->payment_method === 'cash' && is_numeric($worksheet->payment_amount) && (int) $worksheet->payment_amount > 0;
+
+        if (!$isCash) {
+            CashReceipt::query()
+                ->where('related_type', Worksheet::class)
+                ->where('related_value', (string) $worksheet->id)
+                ->where('status', 'pending')
+                ->delete();
+            return;
+        }
+
+        $receivedByUserId = null;
+        $workerIds = $worksheet->workers()->pluck('users.id')->all();
+        if (count($workerIds) === 1) {
+            $receivedByUserId = (int) $workerIds[0];
+        }
+
+        $existingReceipt = CashReceipt::query()
+            ->where('related_type', Worksheet::class)
+            ->where('related_value', (string) $worksheet->id)
+            ->where('status', 'pending')
+            ->first();
+
+        $receivedDate = null;
+        if ($worksheet->work_status === 'Kész') {
+            $receivedDate = $receivedDateOverride ?: now()->toDateString();
+        } else {
+            $receivedDate = $existingReceipt?->received_date;
+        }
+
+        CashReceipt::updateOrCreate(
+            [
+                'related_type' => Worksheet::class,
+                'related_value' => (string) $worksheet->id,
+            ],
+            [
+                'received_by_user_id' => $receivedByUserId,
+                'amount' => (int) $worksheet->payment_amount,
+                'received_from_name' => $worksheet->name,
+                'received_date' => $receivedDate,
+                'status' => 'pending',
+            ]
+        );
     }
 
     public function clientIdFix(Request $request)
@@ -775,6 +823,8 @@ class WorksheetController extends Controller
             if ($worksheetId) {
                 $worksheet = Worksheet::findOrFail($worksheetId);
 
+                $previousWorkStatus = $worksheet->work_status;
+
                 // Ha "Lezárva" státuszba mentik (csak akkor, ha már "Kész" állapotban van)
                 if ($request->input('work_status') === 'Lezárva' && $worksheet->work_status == "Folyamatban") {
                     return response()->json([
@@ -853,6 +903,13 @@ class WorksheetController extends Controller
                 ->toArray();
 
             $worksheet->workers()->sync($selectedWorkerIds);
+
+            $worksheet->load('workers:id');
+            $receivedDateOverride = null;
+            if (isset($previousWorkStatus) && $previousWorkStatus !== 'Kész' && $worksheet->work_status === 'Kész') {
+                $receivedDateOverride = now()->toDateString();
+            }
+            $this->syncWorksheetCashReceipt($worksheet, $receivedDateOverride);
 
 
             // Termékek mentése

@@ -10,6 +10,7 @@ use App\Models\Client;
 use App\Models\ClientAddress;
 use App\Models\Contract;
 use App\Models\ContractProduct;
+use App\Models\CashReceipt;
 use App\Models\Lead;
 use App\Models\Product;
 use App\Models\User;
@@ -25,6 +26,38 @@ use Yajra\DataTables\Facades\DataTables;
 
 class ContractController extends Controller
 {
+    private function syncCashDepositReceipt(Contract $contract): void
+    {
+        $data = is_array($contract->data) ? $contract->data : [];
+
+        $depositMethod = isset($data['deposit_payment_method']) ? trim((string) $data['deposit_payment_method']) : '';
+        $depositAmount = $data['deposit_amount'] ?? null;
+
+        $isCashDeposit = $depositMethod === 'Készpénz' && is_numeric($depositAmount) && (int) $depositAmount > 0;
+
+        if (!$isCashDeposit) {
+            CashReceipt::query()
+                ->where('related_type', Contract::class)
+                ->where('related_value', (string) $contract->id)
+                ->where('status', 'pending')
+                ->delete();
+            return;
+        }
+
+        CashReceipt::updateOrCreate(
+            [
+                'related_type' => Contract::class,
+                'related_value' => (string) $contract->id,
+            ],
+            [
+                'amount' => (int) $depositAmount,
+                'received_from_name' => $contract->name,
+                'received_date' => now()->toDateString(),
+                'status' => 'pending',
+            ]
+        );
+    }
+
     public function index()
     {
         $version_files = Storage::disk('local')->files('contract_versions');
@@ -548,6 +581,8 @@ class ContractController extends Controller
 
                 DB::commit();
 
+                $this->syncCashDepositReceipt($contract);
+
                 if ($contract->email) {
                     $mail = Mail::to($contract->email);
                     $mail->send(new NewContract($contract));
@@ -663,6 +698,8 @@ class ContractController extends Controller
             }
 
             DB::commit();
+
+            $this->syncCashDepositReceipt($contract);
 
             if ($contract->email) {
                 $mail = Mail::to($contract->email);
