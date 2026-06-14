@@ -196,6 +196,11 @@
                 ],
             });
 
+            const defaultStatus = 'Új';
+            const statusFilter = $('.filter-input[data-column="7"]');
+            statusFilter.val(defaultStatus);
+            table.columns(7).search(defaultStatus).draw();
+
             // Szűrők beállítása
 
             $('.filter-input').on('change keyup', function () {
