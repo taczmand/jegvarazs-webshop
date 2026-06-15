@@ -230,7 +230,7 @@
                 columns: [
                     {
                         data: 'id',
-                        name: 'select',
+                        name: 'row_select',
                         orderable: false,
                         searchable: false,
                         render: function (data, type, row) {
