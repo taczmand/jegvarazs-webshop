@@ -201,11 +201,15 @@
             }
 
             const table = $('#adminTable').DataTable({
+                language: {
+                    url: '/lang/datatables/hu.json'
+                },
                 processing: true,
                 serverSide: true,
                 responsive: true,
                 order: [[1, 'desc']],
                 ajax: {
+                    type: 'GET',
                     url: '{{ route('admin.cash-receipts.data') }}',
                     data: function (d) {
                         d.filter_related_type = $('#filter_related_type').val();
