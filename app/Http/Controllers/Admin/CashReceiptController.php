@@ -26,10 +26,6 @@ class CashReceiptController extends Controller
 
     public function store(Request $request)
     {
-        $user = auth('admin')->user();
-        if (!$user || !$user->can('view-cash-receipts')) {
-            abort(403);
-        }
 
         $validated = $request->validate([
             'received_from_user_id' => ['required', 'integer', 'exists:users,id'],
@@ -62,10 +58,6 @@ class CashReceiptController extends Controller
 
     public function data(Request $request)
     {
-        $user = auth('admin')->user();
-        if (!$user || !$user->can('view-cash-receipts')) {
-            abort(403);
-        }
 
         $filters = [
             'related_type' => $request->input('filter_related_type'),
@@ -250,11 +242,6 @@ class CashReceiptController extends Controller
 
     public function acknowledge(Request $request, CashReceipt $receipt)
     {
-        $user = auth('admin')->user();
-        if (!$user || !$user->can('ack-cash-receipt')) {
-            abort(403);
-        }
-
         if ($receipt->status !== 'pending') {
             return response()->json([
                 'message' => 'Ez a tétel már nem nyugtázható.',
@@ -294,11 +281,6 @@ class CashReceiptController extends Controller
 
     public function bulkAcknowledge(Request $request)
     {
-        $user = auth('admin')->user();
-        if (!$user || !$user->can('ack-cash-receipt')) {
-            abort(403);
-        }
-
         $validated = $request->validate([
             'ids' => ['required', 'array', 'min:1'],
             'ids.*' => ['integer'],
