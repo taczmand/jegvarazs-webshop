@@ -26,7 +26,12 @@ class CashReceiptController extends Controller
 
     public function store(Request $request)
     {
-
+        $user = auth('admin')->user();
+        if (!$user) {
+            return response()->json([
+                'message' => 'Unauthenticated.',
+            ], 401);
+        }
         $validated = $request->validate([
             'received_from_user_id' => ['required', 'integer', 'exists:users,id'],
             'amount' => ['required', 'numeric'],
@@ -455,6 +460,13 @@ class CashReceiptController extends Controller
 
     public function acknowledge(Request $request, CashReceipt $receipt)
     {
+        $user = auth('admin')->user();
+        if (!$user) {
+            return response()->json([
+                'message' => 'Unauthenticated.',
+            ], 401);
+        }
+
         if ($receipt->status !== 'pending') {
             return response()->json([
                 'message' => 'Ez a tétel már nem nyugtázható.',
@@ -494,6 +506,13 @@ class CashReceiptController extends Controller
 
     public function bulkAcknowledge(Request $request)
     {
+        $user = auth('admin')->user();
+        if (!$user) {
+            return response()->json([
+                'message' => 'Unauthenticated.',
+            ], 401);
+        }
+
         $validated = $request->validate([
             'ids' => ['required', 'array', 'min:1'],
             'ids.*' => ['integer'],
