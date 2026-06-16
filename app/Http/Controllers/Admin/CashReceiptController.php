@@ -20,7 +20,7 @@ class CashReceiptController extends Controller
         return view('admin.business.cash_receipts', [
             'canViewCashReceipts' => (bool) ($user && $user->can('view-cash-receipts')),
             'canAcknowledgeCashReceipt' => (bool) ($user && $user->can('ack-cash-receipt')),
-            'users' => User::query()->orderBy('name')->get(['id', 'name']),
+            'users' => User::query()->where('status', 'active')->orderBy('name')->get(['id', 'name']),
         ]);
     }
 

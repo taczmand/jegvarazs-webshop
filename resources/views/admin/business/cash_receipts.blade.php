@@ -359,6 +359,11 @@
                 const form = document.getElementById('createCashReceiptForm');
                 if (form) {
                     form.reset();
+
+                    const dateInput = form.querySelector('input[name="received_date"]');
+                    if (dateInput) {
+                        dateInput.value = new Date().toISOString().slice(0, 10);
+                    }
                 }
                 createCashReceiptModal.show();
             });
