@@ -185,13 +185,13 @@ class CashReceiptController extends Controller
                 if ($r->related_type === Contract::class) {
                     $label = 'Szerződés';
                     $url = route('admin.contracts.index') . '?id=' . urlencode((string) $r->related_value) . '&modal=1';
-                    return '<a href="' . e($url) . '">' . e($label) . '</a>';
+                    return '<a href="' . e($url) . '" target="_blank" rel="noopener noreferrer">' . e($label) . '</a>';
                 }
 
                 if ($r->related_type === Worksheet::class) {
                     $label = 'Munkalap';
                     $url = route('admin.worksheets.index') . '?id=' . urlencode((string) $r->related_value);
-                    return '<a href="' . e($url) . '">' . e($label) . '</a>';
+                    return '<a href="' . e($url) . '" target="_blank" rel="noopener noreferrer">' . e($label) . '</a>';
                 }
 
                 return $r->related_type;
@@ -409,10 +409,10 @@ class CashReceiptController extends Controller
                 $relatedType = 'Egyéb';
             } elseif ($relatedType === Contract::class) {
                 $url = route('admin.contracts.index') . '?id=' . urlencode((string) $r->related_value) . '&modal=1';
-                $relatedType = '<a href="' . e($url) . '">Szerződés</a>';
+                $relatedType = '<a href="' . e($url) . '" target="_blank" rel="noopener noreferrer">Szerződés</a>';
             } elseif ($relatedType === Worksheet::class) {
                 $url = route('admin.worksheets.index') . '?id=' . urlencode((string) $r->related_value);
-                $relatedType = '<a href="' . e($url) . '">Munkalap</a>';
+                $relatedType = '<a href="' . e($url) . '" target="_blank" rel="noopener noreferrer">Munkalap</a>';
             }
 
             $amount = '';

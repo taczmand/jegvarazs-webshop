@@ -94,8 +94,8 @@
                     <tfoot>
                     <tr>
                         <th colspan="5" class="text-end">Kijelöltek összege összesen:</th>
-                        <th id="amountSumFooter" class="fw-bold"></th>
-                        <th id="settledSumFooter" class="fw-bold"></th>
+                        <th id="amountSumFooter" class="fw-bold text-end"></th>
+                        <th id="settledSumFooter" class="fw-bold text-end"></th>
                         <th colspan="5" class="text-end">
                             <button class="btn btn-sm btn-success" id="bulkAcknowledge" type="button" disabled>Kijelöltek nyugtázása</button>
                         </th>
@@ -260,7 +260,8 @@
                     }
                 },
                 columnDefs: [
-                    {targets: 0, orderable: false}
+                    {targets: 0, orderable: false},
+                    {targets: [4, 5], className: 'text-end'}
                 ],
                 columns: [
                     {
