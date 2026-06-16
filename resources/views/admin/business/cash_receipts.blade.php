@@ -210,31 +210,36 @@
                 order: [[1, 'desc']],
                 ajax: {
                     type: 'POST',
-                    url: '{{ route('admin.cash-receipts.data-alt.post') }}',
+                    url: '{{ route('admin.cash-receipts.data-simple.post') }}',
                     headers: {
                         'X-CSRF-TOKEN': '{{ csrf_token() }}',
                         'Accept': 'application/json'
                     },
-                    dataType: 'json',
-                    dataFilter: function (data) {
-                        const raw = (data === undefined || data === null) ? '' : data.toString();
-                        const preview = raw.slice(0, 500);
-                        console.log('Cash receipts DataTables raw response (preview)', preview);
-                        return raw.replace(/^\uFEFF/, '');
-                    },
                     data: function (d) {
-                        d._token = '{{ csrf_token() }}';
-                        d.dt_ping = '1';
-                        d.filter_related_type = $('#filter_related_type').val();
-                        d.filter_received_from_name = $('#filter_received_from_name').val();
-                        d.filter_received_by_name = $('#filter_received_by_name').val();
-                        d.filter_note = $('#filter_note').val();
-                        d.filter_created_at_from = $('#filter_created_at_from').val();
-                        d.filter_created_at_to = $('#filter_created_at_to').val();
-                        d.filter_status = $('#filter_status').val();
-                        d.filter_acknowledged_by_name = $('#filter_acknowledged_by_name').val();
-                        d.filter_acknowledged_at_from = $('#filter_acknowledged_at_from').val();
-                        d.filter_acknowledged_at_to = $('#filter_acknowledged_at_to').val();
+                        const order = (d && d.order && d.order[0]) ? d.order[0] : null;
+                        const orderIdx = order ? order.column : null;
+                        const orderDir = order ? order.dir : 'desc';
+                        const orderCol = (orderIdx !== null && d.columns && d.columns[orderIdx]) ? d.columns[orderIdx].data : 'id';
+
+                        return {
+                            _token: '{{ csrf_token() }}',
+                            draw: d.draw,
+                            start: d.start,
+                            length: d.length,
+                            order_col: orderCol,
+                            order_dir: orderDir,
+                            search: (d.search && d.search.value) ? d.search.value : '',
+                            filter_related_type: $('#filter_related_type').val(),
+                            filter_received_from_name: $('#filter_received_from_name').val(),
+                            filter_received_by_name: $('#filter_received_by_name').val(),
+                            filter_note: $('#filter_note').val(),
+                            filter_created_at_from: $('#filter_created_at_from').val(),
+                            filter_created_at_to: $('#filter_created_at_to').val(),
+                            filter_status: $('#filter_status').val(),
+                            filter_acknowledged_by_name: $('#filter_acknowledged_by_name').val(),
+                            filter_acknowledged_at_from: $('#filter_acknowledged_at_from').val(),
+                            filter_acknowledged_at_to: $('#filter_acknowledged_at_to').val(),
+                        };
                     },
                     error: function (xhr) {
                         const preview = (xhr && xhr.responseText)

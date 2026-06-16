@@ -58,13 +58,6 @@ class CashReceiptController extends Controller
 
     public function data(Request $request)
     {
-        if ($request->input('dt_ping') === '1' || $request->input('dt_ping') === 1) {
-            return response()->json([
-                'ok' => true,
-                'dt_ping' => true,
-            ]);
-        }
-
         $filters = [
             'related_type' => $request->input('filter_related_type'),
             'received_from_name' => $request->input('filter_received_from_name'),
@@ -244,6 +237,227 @@ class CashReceiptController extends Controller
             ->addColumn('acknowledged_by_name', fn($r) => $r->acknowledged_by_user_name ?? ($r->acknowledgedBy?->name ?? '-'))
             ->rawColumns(['related_type'])
             ->make(true);
+    }
+
+    public function dataSimple(Request $request)
+    {
+        $draw = (int) ($request->input('draw') ?? 0);
+        $start = (int) ($request->input('start') ?? 0);
+        $length = (int) ($request->input('length') ?? 10);
+        if ($length <= 0) {
+            $length = 10;
+        }
+        if ($length > 200) {
+            $length = 200;
+        }
+
+        $filters = [
+            'related_type' => $request->input('filter_related_type'),
+            'received_from_name' => $request->input('filter_received_from_name'),
+            'received_by_name' => $request->input('filter_received_by_name'),
+            'note' => $request->input('filter_note'),
+            'created_at_from' => $request->input('filter_created_at_from'),
+            'created_at_to' => $request->input('filter_created_at_to'),
+            'status' => $request->input('filter_status'),
+            'acknowledged_by_name' => $request->input('filter_acknowledged_by_name'),
+            'acknowledged_at_from' => $request->input('filter_acknowledged_at_from'),
+            'acknowledged_at_to' => $request->input('filter_acknowledged_at_to'),
+        ];
+
+        $orderCol = $request->input('order_col');
+        $orderDir = strtolower((string) ($request->input('order_dir') ?? 'desc'));
+        $orderDir = in_array($orderDir, ['asc', 'desc'], true) ? $orderDir : 'desc';
+
+        $search = $request->input('search');
+        $search = is_string($search) ? trim($search) : '';
+
+        $query = CashReceipt::query()
+            ->leftJoin('users as received_by_user', 'received_by_user.id', '=', 'cash_receipts.received_by_user_id')
+            ->leftJoin('users as acknowledged_by_user', 'acknowledged_by_user.id', '=', 'cash_receipts.acknowledged_by')
+            ->select([
+                'cash_receipts.id',
+                'cash_receipts.related_type',
+                'cash_receipts.related_value',
+                'cash_receipts.received_by_user_id',
+                'cash_receipts.amount',
+                'cash_receipts.settled_amount',
+                'cash_receipts.received_from_name',
+                'cash_receipts.received_date',
+                'cash_receipts.status',
+                'cash_receipts.acknowledged_by',
+                'cash_receipts.acknowledged_at',
+                'cash_receipts.note',
+                'received_by_user.name as received_by_user_name',
+                'acknowledged_by_user.name as acknowledged_by_user_name',
+            ])
+            ->groupBy('cash_receipts.id')
+            ->with([
+                'receivedBy:id,name',
+                'acknowledgedBy:id,name',
+                'related',
+            ]);
+
+        $query->when(is_string($filters['received_from_name']) && trim($filters['received_from_name']) !== '', function (Builder $q) use ($filters) {
+            $q->where('cash_receipts.received_from_name', 'like', '%' . trim($filters['received_from_name']) . '%');
+        });
+
+        $query->when(is_string($filters['received_by_name']) && trim($filters['received_by_name']) !== '', function (Builder $q) use ($filters) {
+            $q->where('received_by_user.name', 'like', '%' . trim($filters['received_by_name']) . '%');
+        });
+
+        $query->when(is_string($filters['acknowledged_by_name']) && trim($filters['acknowledged_by_name']) !== '', function (Builder $q) use ($filters) {
+            $q->where('acknowledged_by_user.name', 'like', '%' . trim($filters['acknowledged_by_name']) . '%');
+        });
+
+        $query->when(is_string($filters['note']) && trim($filters['note']) !== '', function (Builder $q) use ($filters) {
+            $q->where('cash_receipts.note', 'like', '%' . trim($filters['note']) . '%');
+        });
+
+        $query->when(is_string($filters['status']) && trim($filters['status']) !== '', function (Builder $q) use ($filters) {
+            $q->where('cash_receipts.status', trim($filters['status']));
+        });
+
+        $query->when(is_string($filters['related_type']) && trim($filters['related_type']) !== '', function (Builder $q) use ($filters) {
+            $val = trim($filters['related_type']);
+            if ($val === 'contract') {
+                $q->where('cash_receipts.related_type', Contract::class);
+            }
+            if ($val === 'worksheet') {
+                $q->where('cash_receipts.related_type', Worksheet::class);
+            }
+            if ($val === 'other') {
+                $q->whereNull('cash_receipts.related_type');
+            }
+        });
+
+        $query->when(
+            is_string($filters['created_at_from']) && trim($filters['created_at_from']) !== '' && is_string($filters['created_at_to']) && trim($filters['created_at_to']) !== '',
+            function (Builder $q) use ($filters) {
+                $from = trim($filters['created_at_from']) . ' 00:00:00';
+                $to = trim($filters['created_at_to']) . ' 23:59:59';
+                $q->whereBetween('cash_receipts.created_at', [$from, $to]);
+            }
+        );
+
+        $query->when(
+            is_string($filters['created_at_from']) && trim($filters['created_at_from']) !== '' && (!is_string($filters['created_at_to']) || trim($filters['created_at_to']) === ''),
+            function (Builder $q) use ($filters) {
+                $q->where('cash_receipts.created_at', '>=', trim($filters['created_at_from']) . ' 00:00:00');
+            }
+        );
+
+        $query->when(
+            is_string($filters['created_at_to']) && trim($filters['created_at_to']) !== '' && (!is_string($filters['created_at_from']) || trim($filters['created_at_from']) === ''),
+            function (Builder $q) use ($filters) {
+                $q->where('cash_receipts.created_at', '<=', trim($filters['created_at_to']) . ' 23:59:59');
+            }
+        );
+
+        $query->when(
+            is_string($filters['acknowledged_at_from']) && trim($filters['acknowledged_at_from']) !== '' && is_string($filters['acknowledged_at_to']) && trim($filters['acknowledged_at_to']) !== '',
+            function (Builder $q) use ($filters) {
+                $from = trim($filters['acknowledged_at_from']) . ' 00:00:00';
+                $to = trim($filters['acknowledged_at_to']) . ' 23:59:59';
+                $q->whereBetween('cash_receipts.acknowledged_at', [$from, $to]);
+            }
+        );
+
+        $query->when(
+            is_string($filters['acknowledged_at_from']) && trim($filters['acknowledged_at_from']) !== '' && (!is_string($filters['acknowledged_at_to']) || trim($filters['acknowledged_at_to']) === ''),
+            function (Builder $q) use ($filters) {
+                $q->where('cash_receipts.acknowledged_at', '>=', trim($filters['acknowledged_at_from']) . ' 00:00:00');
+            }
+        );
+
+        $query->when(
+            is_string($filters['acknowledged_at_to']) && trim($filters['acknowledged_at_to']) !== '' && (!is_string($filters['acknowledged_at_from']) || trim($filters['acknowledged_at_from']) === ''),
+            function (Builder $q) use ($filters) {
+                $q->where('cash_receipts.acknowledged_at', '<=', trim($filters['acknowledged_at_to']) . ' 23:59:59');
+            }
+        );
+
+        if ($search !== '') {
+            $query->where(function (Builder $q) use ($search) {
+                $q->where('cash_receipts.id', 'like', "%{$search}%")
+                    ->orWhere('cash_receipts.received_from_name', 'like', "%{$search}%")
+                    ->orWhere('cash_receipts.note', 'like', "%{$search}%")
+                    ->orWhere('received_by_user.name', 'like', "%{$search}%")
+                    ->orWhere('acknowledged_by_user.name', 'like', "%{$search}%");
+            });
+        }
+
+        $orderMap = [
+            'id' => 'cash_receipts.id',
+            'related_type' => 'cash_receipts.related_type',
+            'received_from_name' => 'cash_receipts.received_from_name',
+            'received_by_name' => 'received_by_user.name',
+            'amount' => 'cash_receipts.amount',
+            'received_date' => 'cash_receipts.received_date',
+            'status' => 'cash_receipts.status',
+            'acknowledged_at' => 'cash_receipts.acknowledged_at',
+        ];
+
+        if (is_string($orderCol) && isset($orderMap[$orderCol])) {
+            $query->orderBy($orderMap[$orderCol], $orderDir);
+        } else {
+            $query->orderBy('cash_receipts.id', 'desc');
+        }
+
+        $recordsTotal = CashReceipt::query()->count();
+        $recordsFiltered = (clone $query)->count(DB::raw('distinct cash_receipts.id'));
+
+        $rows = $query->skip($start)->take($length)->get();
+
+        $mapStatus = [
+            'pending' => 'Függőben',
+            'acknowledged' => 'Nyugtázva',
+        ];
+
+        $data = $rows->map(function ($r) use ($mapStatus) {
+            $relatedType = $r->related_type;
+            if (!$relatedType) {
+                $relatedType = 'Egyéb';
+            } elseif ($relatedType === Contract::class) {
+                $url = route('admin.contracts.show_products_to_contracts', ['id' => $r->related_value]);
+                $relatedType = '<a href="' . e($url) . '" target="_blank" rel="noopener noreferrer">Szerződés</a>';
+            } elseif ($relatedType === Worksheet::class) {
+                $url = route('admin.worksheets.show_data_to_worksheet', ['id' => $r->related_value]);
+                $relatedType = '<a href="' . e($url) . '" target="_blank" rel="noopener noreferrer">Munkalap</a>';
+            }
+
+            $amount = '';
+            if ($r->amount !== null && $r->amount !== '') {
+                $amount = number_format((float) $r->amount, 0, ',', ' ') . ' Ft';
+            }
+
+            $settled = '';
+            if ($r->settled_amount !== null && $r->settled_amount !== '') {
+                $settled = number_format((float) $r->settled_amount, 0, ',', ' ') . ' Ft';
+            }
+
+            return [
+                'id' => $r->id,
+                'related_type' => $relatedType,
+                'received_from_name' => (string) ($r->received_from_name ?? ''),
+                'received_by_name' => (string) ($r->received_by_user_name ?? ($r->receivedBy?->name ?? '-')),
+                'amount' => $amount,
+                'settled_amount' => $settled,
+                'note' => (string) ($r->note ?? ''),
+                'received_date' => $r->received_date ? \Carbon\Carbon::parse($r->received_date)->format('Y-m-d') : '',
+                'status' => $mapStatus[$r->status] ?? (string) ($r->status ?? ''),
+                'acknowledged_by_name' => (string) ($r->acknowledged_by_user_name ?? ($r->acknowledgedBy?->name ?? '-')),
+                'acknowledged_at' => $r->acknowledged_at ? \Carbon\Carbon::parse($r->acknowledged_at)->format('Y-m-d H:i:s') : '',
+            ];
+        })->all();
+
+        return response()->json([
+            'draw' => $draw,
+            'recordsTotal' => $recordsTotal,
+            'recordsFiltered' => $recordsFiltered,
+            'data' => $data,
+        ])->withHeaders([
+            'Content-Type' => 'application/json; charset=UTF-8',
+        ]);
     }
 
     public function acknowledge(Request $request, CashReceipt $receipt)
