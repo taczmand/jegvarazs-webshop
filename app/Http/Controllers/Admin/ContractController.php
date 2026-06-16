@@ -44,12 +44,18 @@ class ContractController extends Controller
             return;
         }
 
+        $receivedByUserId = null;
+        if (!empty($contract->created_by) && is_numeric($contract->created_by)) {
+            $receivedByUserId = (int) $contract->created_by;
+        }
+
         CashReceipt::updateOrCreate(
             [
                 'related_type' => Contract::class,
                 'related_value' => (string) $contract->id,
             ],
             [
+                'received_by_user_id' => $receivedByUserId,
                 'amount' => (int) $depositAmount,
                 'received_from_name' => $contract->name,
                 'received_date' => now()->toDateString(),

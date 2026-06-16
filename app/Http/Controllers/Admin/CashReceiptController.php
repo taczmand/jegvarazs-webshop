@@ -184,22 +184,14 @@ class CashReceiptController extends Controller
                 $label = null;
                 if ($r->related_type === Contract::class) {
                     $label = 'Szerződés';
-                    $url = route('admin.contracts.show_products_to_contracts', ['id' => $r->related_value]);
-                    return '<a href="' . e($url) . '" target="_blank" rel="noopener noreferrer">' . e($label) . '</a>';
+                    $url = route('admin.contracts.index') . '?id=' . urlencode((string) $r->related_value) . '&modal=1';
+                    return '<a href="' . e($url) . '">' . e($label) . '</a>';
                 }
 
                 if ($r->related_type === Worksheet::class) {
                     $label = 'Munkalap';
-                    $url = route('admin.worksheets.show_data_to_worksheet', ['id' => $r->related_value]);
-                    return '<a href="' . e($url) . '" target="_blank" rel="noopener noreferrer">' . e($label) . '</a>';
-                }
-
-                if ($r->related_type === Contract::class) {
-                    return 'Szerződés';
-                }
-
-                if ($r->related_type === Worksheet::class) {
-                    return 'Munkalap';
+                    $url = route('admin.worksheets.index') . '?id=' . urlencode((string) $r->related_value);
+                    return '<a href="' . e($url) . '">' . e($label) . '</a>';
                 }
 
                 return $r->related_type;
@@ -416,11 +408,11 @@ class CashReceiptController extends Controller
             if (!$relatedType) {
                 $relatedType = 'Egyéb';
             } elseif ($relatedType === Contract::class) {
-                $url = route('admin.contracts.show_products_to_contracts', ['id' => $r->related_value]);
-                $relatedType = '<a href="' . e($url) . '" target="_blank" rel="noopener noreferrer">Szerződés</a>';
+                $url = route('admin.contracts.index') . '?id=' . urlencode((string) $r->related_value) . '&modal=1';
+                $relatedType = '<a href="' . e($url) . '">Szerződés</a>';
             } elseif ($relatedType === Worksheet::class) {
-                $url = route('admin.worksheets.show_data_to_worksheet', ['id' => $r->related_value]);
-                $relatedType = '<a href="' . e($url) . '" target="_blank" rel="noopener noreferrer">Munkalap</a>';
+                $url = route('admin.worksheets.index') . '?id=' . urlencode((string) $r->related_value);
+                $relatedType = '<a href="' . e($url) . '">Munkalap</a>';
             }
 
             $amount = '';
