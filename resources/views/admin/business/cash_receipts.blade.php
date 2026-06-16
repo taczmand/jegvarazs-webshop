@@ -211,6 +211,10 @@
                 ajax: {
                     type: 'POST',
                     url: '{{ route('admin.cash-receipts.data-alt.post') }}',
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json'
+                    },
                     data: function (d) {
                         d._token = '{{ csrf_token() }}';
                         d.filter_related_type = $('#filter_related_type').val();
@@ -223,6 +227,16 @@
                         d.filter_acknowledged_by_name = $('#filter_acknowledged_by_name').val();
                         d.filter_acknowledged_at_from = $('#filter_acknowledged_at_from').val();
                         d.filter_acknowledged_at_to = $('#filter_acknowledged_at_to').val();
+                    },
+                    error: function (xhr) {
+                        const preview = (xhr && xhr.responseText)
+                            ? xhr.responseText.toString().slice(0, 500)
+                            : '';
+                        console.error('Cash receipts DataTables AJAX error', {
+                            status: xhr ? xhr.status : null,
+                            statusText: xhr ? xhr.statusText : null,
+                            responsePreview: preview,
+                        });
                     }
                 },
                 columnDefs: [
