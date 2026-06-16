@@ -209,9 +209,10 @@
                 responsive: true,
                 order: [[1, 'desc']],
                 ajax: {
-                    type: 'GET',
-                    url: '{{ route('admin.cash-receipts.data-alt') }}',
+                    type: 'POST',
+                    url: '{{ route('admin.cash-receipts.data-alt.post') }}',
                     data: function (d) {
+                        d._token = '{{ csrf_token() }}';
                         d.filter_related_type = $('#filter_related_type').val();
                         d.filter_received_from_name = $('#filter_received_from_name').val();
                         d.filter_received_by_name = $('#filter_received_by_name').val();
