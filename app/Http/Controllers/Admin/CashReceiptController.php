@@ -90,7 +90,6 @@ class CashReceiptController extends Controller
                 'received_by_user.name as received_by_user_name',
                 'acknowledged_by_user.name as acknowledged_by_user_name',
             ])
-            ->groupBy('cash_receipts.id')
             ->with([
                 'receivedBy:id,name',
                 'acknowledgedBy:id,name',
@@ -290,7 +289,6 @@ class CashReceiptController extends Controller
                 'received_by_user.name as received_by_user_name',
                 'acknowledged_by_user.name as acknowledged_by_user_name',
             ])
-            ->groupBy('cash_receipts.id')
             ->with([
                 'receivedBy:id,name',
                 'acknowledgedBy:id,name',
@@ -404,7 +402,7 @@ class CashReceiptController extends Controller
         }
 
         $recordsTotal = CashReceipt::query()->count();
-        $recordsFiltered = (clone $query)->count(DB::raw('distinct cash_receipts.id'));
+        $recordsFiltered = (clone $query)->distinct('cash_receipts.id')->count('cash_receipts.id');
 
         $rows = $query->skip($start)->take($length)->get();
 
