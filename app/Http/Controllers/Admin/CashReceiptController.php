@@ -58,6 +58,12 @@ class CashReceiptController extends Controller
 
     public function data(Request $request)
     {
+        if ($request->input('dt_ping') === '1' || $request->input('dt_ping') === 1) {
+            return response()->json([
+                'ok' => true,
+                'dt_ping' => true,
+            ]);
+        }
 
         $filters = [
             'related_type' => $request->input('filter_related_type'),

@@ -224,6 +224,7 @@
                     },
                     data: function (d) {
                         d._token = '{{ csrf_token() }}';
+                        d.dt_ping = '1';
                         d.filter_related_type = $('#filter_related_type').val();
                         d.filter_received_from_name = $('#filter_received_from_name').val();
                         d.filter_received_by_name = $('#filter_received_by_name').val();
