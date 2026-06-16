@@ -159,6 +159,8 @@
             return;
             @endif
 
+            $('#filter_status').val('pending');
+
             const selectedIds = new Set();
             const editedValues = {};
 
