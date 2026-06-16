@@ -215,6 +215,13 @@
                         'X-CSRF-TOKEN': '{{ csrf_token() }}',
                         'Accept': 'application/json'
                     },
+                    dataType: 'json',
+                    dataFilter: function (data) {
+                        const raw = (data === undefined || data === null) ? '' : data.toString();
+                        const preview = raw.slice(0, 500);
+                        console.log('Cash receipts DataTables raw response (preview)', preview);
+                        return raw.replace(/^\uFEFF/, '');
+                    },
                     data: function (d) {
                         d._token = '{{ csrf_token() }}';
                         d.filter_related_type = $('#filter_related_type').val();
@@ -232,9 +239,14 @@
                         const preview = (xhr && xhr.responseText)
                             ? xhr.responseText.toString().slice(0, 500)
                             : '';
+                        const headers = (xhr && typeof xhr.getAllResponseHeaders === 'function')
+                            ? xhr.getAllResponseHeaders()
+                            : '';
                         console.error('Cash receipts DataTables AJAX error', {
                             status: xhr ? xhr.status : null,
                             statusText: xhr ? xhr.statusText : null,
+                            responseLength: (xhr && xhr.responseText) ? xhr.responseText.toString().length : 0,
+                            responseHeaders: headers,
                             responsePreview: preview,
                         });
                     }
