@@ -210,7 +210,7 @@
                 order: [[1, 'desc']],
                 ajax: {
                     type: 'GET',
-                    url: '{{ route('admin.cash-receipts.data') }}',
+                    url: '{{ route('admin.cash-receipts.data-alt') }}',
                     data: function (d) {
                         d.filter_related_type = $('#filter_related_type').val();
                         d.filter_received_from_name = $('#filter_received_from_name').val();

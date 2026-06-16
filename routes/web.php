@@ -328,6 +328,7 @@ Route::get('/automatizacio/kuldes', [AutomatedEmailController::class, 'sendToday
             // Készpénz tételek
             Route::get('/ugyvitel/keszpenz', [CashReceiptController::class, 'index'])->name('cash-receipts.index');
             Route::get('/ugyvitel/keszpenz/data', [CashReceiptController::class, 'data'])->name('cash-receipts.data');
+            Route::get('/ugyvitel/keszpenz-data', [CashReceiptController::class, 'data'])->name('cash-receipts.data-alt');
             Route::post('/ugyvitel/keszpenz', [CashReceiptController::class, 'store'])->name('cash-receipts.store');
             Route::post('/ugyvitel/keszpenz/{receipt}/nyugtazas', [CashReceiptController::class, 'acknowledge'])->name('cash-receipts.acknowledge');
             Route::post('/ugyvitel/keszpenz/nyugtazas-tomeges', [CashReceiptController::class, 'bulkAcknowledge'])->name('cash-receipts.bulk-acknowledge');
