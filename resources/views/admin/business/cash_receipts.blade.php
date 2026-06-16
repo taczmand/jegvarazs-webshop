@@ -261,7 +261,7 @@
                 },
                 columnDefs: [
                     {targets: 0, orderable: false},
-                    {targets: [4, 5], className: 'text-end'}
+                    {targets: [5, 6], className: 'text-end'}
                 ],
                 columns: [
                     {
