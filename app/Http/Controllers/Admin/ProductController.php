@@ -52,6 +52,13 @@ class ProductController extends Controller
             })
             ->orderBy('title')
             ->limit(20)
+            ->addSelect([
+                'main_photo_path' => ProductPhoto::query()
+                    ->select('path')
+                    ->whereColumn('product_photos.product_id', 'products.id')
+                    ->orderByDesc('is_main')
+                    ->limit(1),
+            ])
             ->get(['id', 'title', 'gross_price', 'partner_gross_price', 'tax_id']);
 
         $partnerDiscounts = collect();
@@ -81,6 +88,7 @@ class ProductController extends Controller
                 'gross_price' => $p->gross_price,
                 'partner_gross_price' => $p->partner_gross_price,
                 'effective_gross_price' => $effective,
+                'main_photo_path' => $p->main_photo_path,
                 'tax_value' => $p->taxCategory?->tax_value,
             ];
         })->values();

@@ -739,9 +739,15 @@
                     const line = gross * qty;
                     total += line;
 
+                    const photoPath = (p?.main_photo_path || '').toString().replace(/^\/+/, '');
+                    const img_src = photoPath ? build_app_url(`storage/${photoPath}`) : '';
+                    const productCell = img_src
+                        ? `<div class="d-flex align-items-center gap-2"><img src="${img_src}" data-full-src="${img_src}" class="order-item-thumb" alt="" /><span>${title}</span></div>`
+                        : `${title}`;
+
                     const tr = `
                         <tr data-idx="${idx}">
-                            <td>${title}</td>
+                            <td>${productCell}</td>
                             <td>${gross} Ft</td>
                             <td>${qty}</td>
                             <td></td>
@@ -771,21 +777,32 @@
                 if (!productId || qty <= 0) return;
 
                 if (createMode) {
-                    createItems.push({ product_id: productId, quantity: qty });
+                    const existing = createItems.find(i => String(i?.product_id) === String(productId));
+                    if (existing) {
+                        existing.quantity = Number(existing.quantity || 0) + qty;
+                    } else {
+                        createItems.push({ product_id: productId, quantity: qty });
+                    }
                 } else {
                     const p = productsIndex.get(String(productId));
                     if (!p) return;
-                    editItems.push({
-                        id: null,
-                        product_id: Number(productId),
-                        product_name: p.title || '',
-                        quantity: qty,
-                        gross_price: Number((p?.effective_gross_price ?? p?.gross_price ?? 0) || 0),
-                        tax_value: (p?.taxCategory?.tax_value ?? p?.tax_value ?? ''),
-                        product: p,
-                        _delete: false,
-                    });
-                    renderOrderItems(editItems);
+                    const existing = editItems.find(i => !i?._delete && Number(i?.product_id) === Number(productId));
+                    if (existing) {
+                        existing.quantity = Number(existing.quantity || 0) + qty;
+                        renderOrderItems(editItems);
+                    } else {
+                        editItems.push({
+                            id: null,
+                            product_id: Number(productId),
+                            product_name: p.title || '',
+                            quantity: qty,
+                            gross_price: Number((p?.effective_gross_price ?? p?.gross_price ?? 0) || 0),
+                            tax_value: (p?.taxCategory?.tax_value ?? p?.tax_value ?? ''),
+                            product: p,
+                            _delete: false,
+                        });
+                        renderOrderItems(editItems);
+                    }
                 }
                 $('#new_item_quantity').val('1');
                 $('#product_search').val('');
