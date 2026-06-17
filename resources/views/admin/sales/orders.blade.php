@@ -494,6 +494,13 @@
             }
 
             function renderBasicData(order_data) {
+                const cid = (order_data?.customer_id || '').toString().trim();
+                $('#customer_id').val(cid);
+                if (cid) {
+                    $('#show_partner_prices').prop('checked', false).prop('disabled', true);
+                } else {
+                    $('#show_partner_prices').prop('disabled', false);
+                }
                 $('#contact_last_name').val(order_data.contact_last_name || '');
                 $('#contact_first_name').val(order_data.contact_first_name || '');
                 $('#contact_email').val(order_data.contact_email || '');
@@ -773,7 +780,7 @@
                         product_id: Number(productId),
                         product_name: p.title || '',
                         quantity: qty,
-                        gross_price: Number((p?.gross_price ?? 0) || 0),
+                        gross_price: Number((p?.effective_gross_price ?? p?.gross_price ?? 0) || 0),
                         tax_value: (p?.taxCategory?.tax_value ?? p?.tax_value ?? ''),
                         product: p,
                         _delete: false,

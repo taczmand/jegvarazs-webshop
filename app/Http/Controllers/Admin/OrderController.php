@@ -373,6 +373,7 @@ class OrderController extends Controller
         }
 
         $data = $request->validate([
+            'show_partner_prices' => 'nullable|boolean',
             'status' => 'nullable|string|max:50',
             'order_comment' => 'nullable|string|max:2000',
             'contact_first_name' => 'nullable|string|max:255',
@@ -398,9 +399,9 @@ class OrderController extends Controller
             'items.*.delete' => 'nullable|boolean',
         ]);
 
-        $order = Order::with('items')->findOrFail($id);
+        $order = Order::with(['items', 'customer'])->findOrFail($id);
 
-        return DB::transaction(function () use ($order, $data) {
+        return DB::transaction(function () use ($order, $data, $request) {
             $order->status = $data['status'] ?? $order->status;
             $order->comment = $data['order_comment'] ?? $order->comment;
             $order->contact_first_name = $data['contact_first_name'] ?? $order->contact_first_name;
@@ -446,6 +447,18 @@ class OrderController extends Controller
                     ? Product::query()->whereIn('id', $newProductIds->all())->with('taxCategory')->get()->keyBy('id')
                     : collect();
 
+                $customer = $order->customer;
+                $usePartnerPricing = ($customer && $customer->is_partner)
+                    || (!$customer && $request->boolean('show_partner_prices'));
+
+                $partnerDiscountPrices = collect();
+                if ($customer && $customer->is_partner && $products->isNotEmpty()) {
+                    $partnerDiscountPrices = PartnerProduct::query()
+                        ->where('customer_id', $customer->id)
+                        ->whereIn('product_id', $products->keys()->all())
+                        ->pluck('discount_gross_price', 'product_id');
+                }
+
                 foreach ($payloadItems as $row) {
                     $rowId = $row['id'] ?? null;
 
@@ -482,6 +495,20 @@ class OrderController extends Controller
 
                     $itemsChanged = true;
 
+                    $grossPrice = (float) ($product->gross_price ?? 0);
+                    if ($usePartnerPricing) {
+                        if ($customer && $customer->is_partner) {
+                            $discount = $partnerDiscountPrices->get($product->id);
+                            if ($discount !== null) {
+                                $grossPrice = (float) $discount;
+                            } elseif ($product->partner_gross_price !== null) {
+                                $grossPrice = (float) $product->partner_gross_price;
+                            }
+                        } elseif ($product->partner_gross_price !== null) {
+                            $grossPrice = (float) $product->partner_gross_price;
+                        }
+                    }
+
                     $taxValue = $product->taxCategory?->tax_value;
                     if ($taxValue === null && isset($product->tax_value)) {
                         $taxValue = $product->tax_value;
@@ -492,7 +519,7 @@ class OrderController extends Controller
                         'product_id' => $product->id,
                         'product_name' => $product->title,
                         'quantity' => (int) $row['quantity'],
-                        'gross_price' => (float) ($product->gross_price ?? 0),
+                        'gross_price' => $grossPrice,
                         'tax_value' => $taxValue,
                     ]);
                 }
