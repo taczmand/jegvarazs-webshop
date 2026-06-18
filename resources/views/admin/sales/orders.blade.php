@@ -895,7 +895,13 @@
                     btn.type = 'button';
                     btn.className = 'list-group-item list-group-item-action';
                     const price = Number((p?.effective_gross_price ?? p?.gross_price) || 0);
-                    btn.textContent = `#${p.id} - ${p.title || ''}${price ? ' - ' + price + ' Ft' : ''}`;
+
+                    const photoPath = (p?.main_photo_path || '').toString().replace(/^\/+/, '');
+                    const img_src = photoPath ? build_app_url(`storage/${photoPath}`) : '';
+                    const label = `#${p.id} - ${p.title || ''}${price ? ' - ' + price + ' Ft' : ''}`;
+                    btn.innerHTML = img_src
+                        ? `<div class="d-flex align-items-center gap-2"><img src="${img_src}" class="order-item-thumb" alt="" /><span>${label}</span></div>`
+                        : label;
                     btn.addEventListener('click', () => {
                         selectedProductId = String(p.id);
                         productsIndex.set(String(p.id), p);
@@ -946,7 +952,10 @@
                     const main_photo = photos.find(p => p && (p.is_main === true || p.is_main === 1 || p.is_main === '1'));
                     const photo = main_photo || photos[0] || null;
 
-                    const img_src = photo?.path ? build_app_url(`storage/${photo.path}`) : build_app_url('static_media/no-image.jpg');
+                    const photoPathFallback = (item?.product?.main_photo_path || '').toString().replace(/^\/+/, '');
+                    const img_src = photo?.path
+                        ? build_app_url(`storage/${photo.path}`)
+                        : (photoPathFallback ? build_app_url(`storage/${photoPathFallback}`) : build_app_url('static_media/no-image.jpg'));
 
                     const unitLabel = item?.product?.unit
                         ? (item.product.unit.abbreviation || item.product.unit.name || '')

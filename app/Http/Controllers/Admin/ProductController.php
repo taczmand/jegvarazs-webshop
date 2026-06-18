@@ -59,7 +59,7 @@ class ProductController extends Controller
                     ->orderByDesc('is_main')
                     ->limit(1),
             ])
-            ->get(['id', 'title', 'gross_price', 'partner_gross_price', 'tax_id']);
+            ->get(['id', 'title', 'gross_price', 'partner_gross_price', 'tax_id', 'main_photo_path']);
 
         $partnerDiscounts = collect();
         if ($customer && $customer->is_partner && $products->isNotEmpty()) {
