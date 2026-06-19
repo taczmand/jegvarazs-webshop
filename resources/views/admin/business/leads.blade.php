@@ -225,10 +225,9 @@
                 ],
             });
 
-            const defaultStatus = 'Új';
             const statusFilter = $('.filter-input[data-column="7"]');
-            statusFilter.val(defaultStatus);
-            table.columns(7).search(defaultStatus).draw();
+            statusFilter.val('');
+            table.columns(7).search('').draw();
 
             // Szűrők beállítása
 
