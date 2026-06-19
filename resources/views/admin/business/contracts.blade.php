@@ -1581,7 +1581,7 @@
                     if (leads.length) {
                         $list.append(`
                             <div class="list-group-item">
-                                <div class="small text-muted">Ajánlott érdeklődők (egyezés alapján)</div>
+                                <div class="small text-muted">Ajánlott érdeklődések (egyezés alapján)</div>
                             </div>
                         `);
 

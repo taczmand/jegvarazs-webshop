@@ -222,7 +222,10 @@ class WorksheetController extends Controller
 
     public function index()
     {
-        $contracts = Contract::orderBy('name')->get();
+        $contracts = Contract::query()
+            ->with(['createdBy:id,name'])
+            ->orderBy('name')
+            ->get();
         $users = User::orderBy('name')->get();
         return view('admin.business.worksheets', [
             'contracts' => $contracts,

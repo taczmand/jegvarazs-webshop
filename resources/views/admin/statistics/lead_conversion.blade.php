@@ -83,7 +83,7 @@
                     {
                         type: 'column',
                         dataPoints: [
-                            { label: `Érdeklődők`, y: leads },
+                            { label: `Érdeklődések`, y: leads },
                             { label: `Felmérés (${p1}%)`, y: survey },
                             { label: `Szerződés (${p2}%) – ${contractProductsQty} db termék`, y: contract },
                         ],

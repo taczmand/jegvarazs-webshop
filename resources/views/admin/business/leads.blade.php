@@ -6,7 +6,7 @@
     <div class="container p-0">
 
         <div class="d-flex justify-content-between align-items-center mb-3 pb-2">
-            <h2 class="color-dark-blue mb-0">Ügyviteli folyamatok / Érdeklődők</h2>
+            <h2 class="color-dark-blue mb-0">Ügyviteli folyamatok / Érdeklődések</h2>
         </div>
 
         <div class="rounded-xl bg-white shadow-lg p-4">
@@ -63,6 +63,15 @@
                             <option value="0">Nincs szerződés</option>
                         </select>
                     </div>
+
+                    <div class="filter-group flex-grow-1 flex-md-shrink-0">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="1" id="show_offline_filter">
+                            <label class="form-check-label" for="show_offline_filter">
+                                Offline érdeklődések mutatása
+                            </label>
+                        </div>
+                    </div>
                 </div>
 
                 <table class="table table-bordered display responsive nowrap" id="adminTable" style="width:100%">
@@ -83,9 +92,16 @@
                     </tr>
                     </thead>
                 </table>
+
+                <div class="alert alert-info d-flex align-items-center gap-2 mt-3 mb-0" role="alert">
+                    <span class="badge" style="background:#fff3cd; color:#664d03; border: 1px solid #ffecb5;">Jelölés</span>
+                    <div>
+                        A <strong>sárgával kiemelt</strong> sorok olyan <strong>Érdeklődések</strong>, amelyeket már valaki <strong>látta</strong>, de még <strong>"Új"</strong> státuszban vannak.
+                    </div>
+                </div>
             @else
                 <div class="alert alert-warning">
-                    <i class="fa-solid fa-exclamation-triangle me-2"></i> Nincs jogosultságod az érdeklődők megtekintéséhez.
+                    <i class="fa-solid fa-exclamation-triangle me-2"></i> Nincs jogosultságod az érdeklődések megtekintéséhez.
                 </div>
             @endif
         </div>
@@ -160,6 +176,11 @@
 @endsection
 
 @section('scripts')
+    <style>
+        #adminTable tr.lead-viewed-but-new td {
+            background-color: #fff3cd !important;
+        }
+    </style>
     <script type="module">
 
         const adminModalDOM = document.getElementById('adminModal');
@@ -177,18 +198,26 @@
                     url: '{{ route('admin.leads.data') }}',
                     data: function (d) {
                         d.has_contract = ($('#has_contract_filter').val() || '').toString();
+                        d.show_offline = document.getElementById('show_offline_filter')?.checked ? '1' : '0';
                     }
                 },
                 order: [[0, 'desc']],
+                createdRow: function (row, data) {
+                    const status = (data?.status || '').toString().trim();
+                    const viewedAt = (data?.viewed_at || '').toString().trim();
+                    if (status === 'Új' && viewedAt !== '') {
+                        row.classList.add('lead-viewed-but-new');
+                    }
+                },
                 columns: [
                     { data: 'id' },
-                    { data: 'full_name' },
+                    { data: 'full_name', responsivePriority: 1 },
                     { data: 'email' },
                     { data: 'phone' },
                     { data: 'city' },
                     { data: 'form_name' },
                     { data: 'campaign_name' },
-                    { data: 'status' },
+                    { data: 'status', responsivePriority: 1 },
                     { data: 'has_contract', orderable: false, searchable: false },
                     { data: 'created_at' },
                     { data: 'viewed_by' },
@@ -210,6 +239,10 @@
             });
 
             $('#has_contract_filter').on('change', function () {
+                table.ajax.reload();
+            });
+
+            $('#show_offline_filter').on('change', function () {
                 table.ajax.reload();
             });
 

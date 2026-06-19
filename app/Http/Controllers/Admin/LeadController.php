@@ -49,6 +49,8 @@ class LeadController extends Controller
         $hasContract = ($request->query('has_contract') ?? '');
         $hasContract = is_string($hasContract) ? trim($hasContract) : '';
 
+        $showOffline = $request->boolean('show_offline');
+
         $leads = Lead::query()
             ->select([
                 'id',
@@ -69,6 +71,13 @@ class LeadController extends Controller
             $leads->has('contracts');
         } elseif ($hasContract === '0') {
             $leads->doesntHave('contracts');
+        }
+
+        if (!$showOffline) {
+            $leads->where(function ($q) {
+                $q->whereNull('form_name')
+                    ->orWhere('form_name', '!=', 'Offline');
+            });
         }
 
         return DataTables::of($leads)

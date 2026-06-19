@@ -71,7 +71,7 @@
                             <option value="coupons">Kuponok</option>
                             <option value="downloads">Letöltések</option>
                             <option value="employees">Munkatársak</option>
-                            <option value="leads">Érdeklődők</option>
+                            <option value="leads">Érdeklődések</option>
                             <option value="newsletter_subscriptions">Hírlevél feliratkozások</option>
                             <option value="carts">Kosarak</option>
                             <option value="cart_items">Kosár tételek</option>

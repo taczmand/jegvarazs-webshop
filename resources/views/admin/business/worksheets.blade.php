@@ -255,12 +255,16 @@
                                             <select class="form-control" name="contract_id" id="contract_id" {{ $readonly }}>
                                                 <option value=""></option>
                                                 @foreach($contracts as $contract)
-                                                    <option value="{{ $contract->id }}">
+                                                    <option value="{{ $contract->id }}" data-creator-name="{{ $contract->createdBy?->name ?? '' }}">
                                                         {{ $contract->name }} (anyja neve: {{ $contract->mothers_name }})
                                                     </option>
                                                 @endforeach
                                             </select>
                                         </td>
+                                    </tr>
+                                    <tr id="contract_creator_row" style="display:none;">
+                                        <td>Szerződést létrehozta</td>
+                                        <td><span id="contract_creator_name"></span></td>
                                     </tr>
                                     <tr>
                                         <td>Megjegyzés</td>
@@ -506,6 +510,30 @@
             const adminModalDOM = document.getElementById('adminModal');
             const adminModal = new bootstrap.Modal(adminModalDOM);
             const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+            function updateContractCreatorLabel() {
+                const select = document.getElementById('contract_id');
+                const row = document.getElementById('contract_creator_row');
+                const label = document.getElementById('contract_creator_name');
+                if (!select || !row || !label) return;
+
+                const opt = select.options?.[select.selectedIndex] || null;
+                const contractId = (select.value || '').toString().trim();
+                const creatorName = (opt?.getAttribute('data-creator-name') || '').toString().trim();
+
+                if (!contractId) {
+                    label.textContent = '';
+                    row.style.display = 'none';
+                    return;
+                }
+
+                label.textContent = creatorName || '-';
+                row.style.display = '';
+            }
+
+            $('#contract_id').on('change', function () {
+                updateContractCreatorLabel();
+            });
 
             const table = $('#adminTable').DataTable({
                 language: {
@@ -1171,6 +1199,7 @@
                 setSnapshotMode(false);
                 $('#create_client').val('0');
                 $('#contract_id').val(worksheet.contract_id);
+                updateContractCreatorLabel();
                 $('#work_status').val(worksheet.work_status);
                 $('#payment_method').val(worksheet.payment_method);
                 $('#payment_amount').val(worksheet.payment_amount);
