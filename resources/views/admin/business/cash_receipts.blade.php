@@ -89,6 +89,7 @@
                         <th>Státusz</th>
                         <th>Nyugtázta</th>
                         <th>Nyugtázva</th>
+                        <th>Műveletek</th>
                     </tr>
                     </thead>
                     <tfoot>
@@ -96,7 +97,7 @@
                         <th colspan="5" class="text-end">Kijelöltek összege összesen:</th>
                         <th id="amountSumFooter" class="fw-bold text-end"></th>
                         <th id="settledSumFooter" class="fw-bold text-end"></th>
-                        <th colspan="5" class="text-end">
+                        <th colspan="6" class="text-end">
                             <button class="btn btn-sm btn-success" id="bulkAcknowledge" type="button" disabled>Kijelöltek nyugtázása</button>
                         </th>
                     </tr>
@@ -150,6 +151,33 @@
         </div>
     </div>
 
+    <div class="modal fade" id="editCashReceiptModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <form class="modal-content" id="editCashReceiptForm">
+                <input type="hidden" name="receipt_id" />
+                <div class="modal-header">
+                    <h5 class="modal-title">Készpénz tétel szerkesztése</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Bezárás"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Elszámolt összeg (Ft)</label>
+                        <input type="number" class="form-control" name="settled_amount" step="1" />
+                        <div class="form-text">Üresen hagyva az "Összeg" értékét használja.</div>
+                    </div>
+                    <div class="mb-0">
+                        <label class="form-label">Megjegyzés</label>
+                        <input type="text" class="form-control" name="note" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Mégse</button>
+                    <button type="submit" class="btn btn-primary" id="editCashReceiptSubmit">Mentés</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
 @endsection
 
 @section('scripts')
@@ -162,7 +190,6 @@
             $('#filter_status').val('pending');
 
             const selectedIds = new Set();
-            const editedValues = {};
 
             function updateBulkButtonState() {
                 const hasSelected = selectedIds.size > 0;
@@ -261,7 +288,8 @@
                 },
                 columnDefs: [
                     {targets: 0, orderable: false},
-                    {targets: [5, 6], className: 'text-end'}
+                    {targets: [5, 6], className: 'text-end'},
+                    {targets: 12, orderable: false, searchable: false}
                 ],
                 columns: [
                     {
@@ -312,6 +340,21 @@
                     {data: 'status', name: 'status'},
                     {data: 'acknowledged_by_name', name: 'acknowledged_by_name', orderable: false, searchable: false},
                     {data: 'acknowledged_at', name: 'acknowledged_at'},
+                    {
+                        data: 'actions',
+                        name: 'actions',
+                        render: function (data, type, row) {
+                            const canEditCashReceipts = @json((bool) ($canEditCashReceipts ?? false));
+                            if (!canEditCashReceipts) {
+                                return '';
+                            }
+                            const isPending = row && row.status === 'Függőben';
+                            if (!isPending) {
+                                return '';
+                            }
+                            return '<button type="button" class="btn btn-sm btn-outline-primary edit-cash-receipt" data-id="' + row.id + '">Szerkesztés</button>';
+                        }
+                    },
                 ]
                 ,
                 footerCallback: function (row, data, start, end, display) {
@@ -326,9 +369,6 @@
 
             $('#applyFilters').on('click', function () {
                 selectedIds.clear();
-                for (const k in editedValues) {
-                    delete editedValues[k];
-                }
                 updateSelectedTotals();
                 table.ajax.reload();
             });
@@ -345,9 +385,6 @@
                 $('#filter_acknowledged_at_from').val('');
                 $('#filter_acknowledged_at_to').val('');
                 selectedIds.clear();
-                for (const k in editedValues) {
-                    delete editedValues[k];
-                }
                 updateSelectedTotals();
                 table.ajax.reload();
             });
@@ -414,28 +451,13 @@
                 });
             });
 
-            function isPendingRow(rowData) {
-                return rowData && rowData.status === 'Függőben';
-            }
-
-            function parseNumber(value) {
-                if (value === null || value === undefined) return null;
-                const s = String(value).replace(/[^0-9\-]/g, '').trim();
-                if (s === '') return null;
-                const n = parseInt(s, 10);
-                return isNaN(n) ? null : n;
-            }
-
-            const canEditCashReceipts = @json((bool) ($canEditCashReceipts ?? false));
-
             $(document).on('dblclick', '#adminTable tbody td', function () {
-                const cell = table.cell(this);
-                const rowData = table.row(this).data();
-                if (!rowData || !isPendingRow(rowData)) {
+                if (!canEditCashReceipts) {
                     return;
                 }
 
-                if (!canEditCashReceipts) {
+                const rowData = table.row(this).data();
+                if (!rowData || !isPendingRow(rowData)) {
                     return;
                 }
 
@@ -472,54 +494,44 @@
                     e.preventDefault();
                 }
 
+                if (!canEditCashReceipts) {
+                    table.ajax.reload(null, false);
+                    return;
+                }
+
                 const $input = $(this);
                 const td = $input.closest('td');
                 const field = $input.data('field');
                 const newVal = $input.val();
 
-                const row = table.row(td.closest('tr'));
+                const tr = td.closest('tr');
+                const row = table.row(tr);
                 const rowData = row.data();
                 if (!rowData || !isPendingRow(rowData)) {
-                    table.draw(false);
+                    table.ajax.reload(null, false);
                     return;
                 }
+
+                const payload = {
+                    _token: '{{ csrf_token() }}',
+                    _method: 'PATCH',
+                };
 
                 if (field === 'settled_amount') {
                     const n = parseNumber(newVal);
-                    rowData.settled_amount_raw = (n === null) ? '' : n;
-                    editedValues[String(rowData.id)] = editedValues[String(rowData.id)] || {};
-                    editedValues[String(rowData.id)].settled_amount = (n === null) ? '' : n;
+                    payload.settled_amount = (n === null) ? '' : n;
                 }
                 if (field === 'note') {
-                    rowData.note_raw = (newVal ?? '').toString();
-                    editedValues[String(rowData.id)] = editedValues[String(rowData.id)] || {};
-                    editedValues[String(rowData.id)].note = (newVal ?? '').toString();
+                    payload.note = (newVal ?? '').toString();
                 }
 
-                row.data(rowData).invalidate();
-
-                if (!canEditCashReceipts) {
-                    table.draw(false);
-                    return;
-                }
-
-                const patchPayload = {
-                    _token: '{{ csrf_token() }}',
-                };
-                if (field === 'settled_amount') {
-                    patchPayload.settled_amount = editedValues[String(rowData.id)]?.settled_amount ?? '';
-                }
-                if (field === 'note') {
-                    patchPayload.note = editedValues[String(rowData.id)]?.note ?? '';
-                }
+                const urlTpl = @json(route('admin.cash-receipts.update', ['receipt' => '__ID__']));
+                const url = urlTpl.replace('__ID__', encodeURIComponent(String(rowData.id)));
 
                 $.ajax({
-                    url: `{{ route('admin.cash-receipts.index') }}/${rowData.id}`,
+                    url: url,
                     method: 'POST',
-                    data: {
-                        ...patchPayload,
-                        _method: 'PATCH'
-                    },
+                    data: payload,
                     headers: {
                         'Accept': 'application/json'
                     },
@@ -534,16 +546,134 @@
                         if (xhr.responseJSON && xhr.responseJSON.message) {
                             msg = xhr.responseJSON.message;
                         }
+                        if (xhr.responseJSON && xhr.responseJSON.errors) {
+                            msg = Object.values(xhr.responseJSON.errors).flat().join(' ');
+                        }
                         if (typeof window.showToast === 'function') {
                             window.showToast(msg, 'danger');
                         }
                         table.ajax.reload(null, false);
                     }
                 });
+            });
 
-                if (selectedIds.has(String(rowData.id))) {
-                    updateSelectedTotals();
+            function isPendingRow(rowData) {
+                return rowData && rowData.status === 'Függőben';
+            }
+
+            function parseNumber(value) {
+                if (value === null || value === undefined) return null;
+                const s = String(value).replace(/[^0-9\-]/g, '').trim();
+                if (s === '') return null;
+                const n = parseInt(s, 10);
+                return isNaN(n) ? null : n;
+            }
+
+            const canEditCashReceipts = @json((bool) ($canEditCashReceipts ?? false));
+
+            const editCashReceiptModalEl = document.getElementById('editCashReceiptModal');
+            const editCashReceiptModal = new bootstrap.Modal(editCashReceiptModalEl);
+
+            $(document).on('click', '.edit-cash-receipt', function () {
+                if (!canEditCashReceipts) {
+                    return;
                 }
+
+                const id = String($(this).data('id'));
+                const tr = $(this).closest('tr');
+                const rowData = table.row(tr).data();
+                if (!rowData || !isPendingRow(rowData)) {
+                    return;
+                }
+
+                const form = document.getElementById('editCashReceiptForm');
+                if (!form) {
+                    return;
+                }
+
+                form.reset();
+                const receiptIdInput = form.querySelector('input[name="receipt_id"]');
+                if (receiptIdInput) {
+                    receiptIdInput.value = id;
+                }
+
+                const settledInput = form.querySelector('input[name="settled_amount"]');
+                if (settledInput) {
+                    const current = (rowData.settled_amount_raw !== undefined) ? rowData.settled_amount_raw : rowData.settled_amount;
+                    const currentNumber = parseNumber(current);
+                    settledInput.value = (currentNumber ?? '');
+                }
+
+                const noteInput = form.querySelector('input[name="note"]');
+                if (noteInput) {
+                    const current = (rowData.note_raw !== undefined) ? rowData.note_raw : (rowData.note ?? '');
+                    noteInput.value = (current ?? '');
+                }
+
+                editCashReceiptModal.show();
+            });
+
+            $('#editCashReceiptForm').on('submit', function (e) {
+                e.preventDefault();
+
+                if (!canEditCashReceipts) {
+                    return;
+                }
+
+                const form = document.getElementById('editCashReceiptForm');
+                const id = form?.querySelector('input[name="receipt_id"]')?.value;
+                if (!id) {
+                    return;
+                }
+
+                const $btn = $('#editCashReceiptSubmit');
+                const originalHtml = $btn.html();
+
+                const payload = $(this).serializeArray().reduce((acc, item) => {
+                    acc[item.name] = item.value;
+                    return acc;
+                }, {});
+                payload._token = '{{ csrf_token() }}';
+                payload._method = 'PATCH';
+
+                const urlTpl = @json(route('admin.cash-receipts.update', ['receipt' => '__ID__']));
+                const url = urlTpl.replace('__ID__', encodeURIComponent(String(id)));
+
+                $.ajax({
+                    url: url,
+                    method: 'POST',
+                    data: payload,
+                    headers: {
+                        'Accept': 'application/json'
+                    },
+                    beforeSend: function () {
+                        $btn.prop('disabled', true);
+                        $btn.html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Mentés...');
+                    },
+                    success: function (resp) {
+                        editCashReceiptModal.hide();
+                        table.ajax.reload(null, false);
+                        if (resp && resp.message && typeof window.showToast === 'function') {
+                            window.showToast(resp.message, 'success');
+                        }
+                    },
+                    error: function (xhr) {
+                        let msg = 'Hiba történt.';
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            msg = xhr.responseJSON.message;
+                        }
+                        if (xhr.responseJSON && xhr.responseJSON.errors) {
+                            msg = Object.values(xhr.responseJSON.errors).flat().join(' ');
+                        }
+                        if (typeof window.showToast === 'function') {
+                            window.showToast(msg, 'danger');
+                        }
+                    },
+                    complete: function () {
+                        $btn.prop('disabled', false);
+                        $btn.html(originalHtml);
+                    }
+                });
             });
 
             $(document).on('change', '.row-select', function () {
@@ -552,19 +682,6 @@
                     selectedIds.add(id);
                 } else {
                     selectedIds.delete(id);
-
-                    if (editedValues[id]) {
-                        delete editedValues[id];
-                    }
-
-                    const tr = $(this).closest('tr');
-                    const row = table.row(tr);
-                    const rowData = row.data();
-                    if (rowData && String(rowData.id) === id) {
-                        rowData.settled_amount_raw = '';
-                        rowData.note_raw = '';
-                        row.data(rowData).invalidate();
-                    }
                 }
                 updateSelectedTotals();
             });
@@ -581,19 +698,6 @@
                         selectedIds.add(id);
                     } else {
                         selectedIds.delete(id);
-
-                        if (editedValues[id]) {
-                            delete editedValues[id];
-                        }
-
-                        const tr = $(this).closest('tr');
-                        const row = table.row(tr);
-                        const rowData = row.data();
-                        if (rowData && String(rowData.id) === id) {
-                            rowData.settled_amount_raw = '';
-                            rowData.note_raw = '';
-                            row.data(rowData).invalidate();
-                        }
                     }
                 });
                 updateSelectedTotals();
@@ -620,10 +724,6 @@
                 const payloadValues = {};
                 for (const id of ids) {
                     payloadValues[id] = payloadValues[id] || {};
-                    if (editedValues[id]) {
-                        if (editedValues[id].settled_amount !== undefined) payloadValues[id].settled_amount = editedValues[id].settled_amount;
-                        if (editedValues[id].note !== undefined) payloadValues[id].note = editedValues[id].note;
-                    }
                 }
 
                 $.ajax({
@@ -640,9 +740,6 @@
                     },
                     success: function (resp) {
                         selectedIds.clear();
-                        for (const k in editedValues) {
-                            delete editedValues[k];
-                        }
                         updateSelectedTotals();
                         table.ajax.reload(null, false);
                         if (resp && resp.message) {
