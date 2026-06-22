@@ -409,7 +409,8 @@
             $('#sendInteresting').click(function(event) {
 
                 event.preventDefault();
-                fetch(window.appConfig.APP_URL + 'email/send', {
+                const url = new URL('/email/send', window.location.origin);
+                fetch(url.toString(), {
                     method: 'POST',
                     body: JSON.stringify({
                         email_type: 'product-interesting',

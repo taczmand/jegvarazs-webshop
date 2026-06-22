@@ -43,7 +43,8 @@ import * as bootstrap from "bootstrap";
     --------------------*/
     window.fetchCartSummary = async function() {
         try {
-            const response = await fetch(window.appConfig.APP_URL + 'kosar/osszesito', {
+            const url = new URL('/kosar/osszesito', window.location.origin);
+            const response = await fetch(url.toString(), {
                 method: 'GET',
                 headers: {
                     'Accept': 'application/json', // 👈 EZ KELL, hogy Laravel ne irányítson át
@@ -572,7 +573,8 @@ import * as bootstrap from "bootstrap";
         }
 
         try {
-            const response = await fetch(window.appConfig.APP_URL + 'newsletter/add', {
+            const url = new URL('/newsletter/add', window.location.origin);
+            const response = await fetch(url.toString(), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -626,7 +628,8 @@ import * as bootstrap from "bootstrap";
                 return;
             }
 
-            fetch(window.appConfig.APP_URL + 'contact/add', {
+            const url = new URL('/contact/add', window.location.origin);
+            fetch(url.toString(), {
                 method: 'POST',
                 body: JSON.stringify({
                     contact_name: contact_name.value.trim(),
