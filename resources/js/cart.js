@@ -3,7 +3,9 @@ async function addToCart(productId, quantity = 1) {
     try {
         const response = await fetch(window.appConfig.APP_URL + 'kosar/hozzaadas', {
             method: 'POST',
+            credentials: 'same-origin',
             headers: {
+                'Accept': 'application/json',
                 'Content-Type': 'application/json',
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
             },
@@ -12,6 +14,23 @@ async function addToCart(productId, quantity = 1) {
                 quantity: quantity
             })
         });
+
+        const contentType = response.headers.get('content-type') || '';
+
+        if (!response.ok) {
+            if (response.status === 401 || response.status === 419) {
+                showToast('A munkamenet lejárt. Kérlek jelentkezz be újra.', 'error');
+                return;
+            }
+
+            showToast('Nem sikerült a kosárba rakni a terméket. (HTTP ' + response.status + ')', 'error');
+            return;
+        }
+
+        if (!contentType.includes('application/json')) {
+            showToast('Nem sikerült a kosárba rakni a terméket. (Nem JSON válasz érkezett.)', 'error');
+            return;
+        }
 
         const res = await response.json();
         if (res.result === 'success') {
@@ -32,6 +51,7 @@ async function addToCart(productId, quantity = 1) {
         }
     } catch (error) {
         console.error('Hiba:', error);
+        showToast('Nem sikerült a kosárba rakni a terméket. (Hálózati/JS hiba)', 'error');
     }
 }
 async function goToProductPage(productId) {

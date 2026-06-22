@@ -163,7 +163,7 @@
                                         </div>
                                     </div>
 
-                                    <a onclick="addToCart({{ $product->id }}, this.previousElementSibling.querySelector('input').value)" href="#" class="primary-btn">Kosárba</a>
+                                    <a onclick="event.preventDefault(); addToCart({{ $product->id }}, this.previousElementSibling.querySelector('input').value); return false;" href="#" class="primary-btn">Kosárba</a>
                                 @endif
                             <!--<a href="#" class="heart-icon"><span class="icon_heart_alt"></span></a>-->
                         @else
