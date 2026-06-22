@@ -73,6 +73,25 @@
             </div>
         </div>
 
+        <div class="modal fade" id="calendarImageModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-xl modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="calendarImageModalTitle">Kép megtekintése</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Bezárás"></button>
+                    </div>
+                    <div class="modal-body" style="text-align: center;">
+                        <img id="calendarImageModalImg" src="" alt="" style="max-width: 100%; max-height: 75vh;" />
+                        <div class="text-muted mt-2" id="calendarImageModalCounter" style="font-size: 0.9rem;"></div>
+                    </div>
+                    <div class="modal-footer justify-content-between">
+                        <button type="button" class="btn btn-outline-secondary" id="calendarImageModalPrevBtn">Előző</button>
+                        <button type="button" class="btn btn-outline-secondary" id="calendarImageModalNextBtn">Következő</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
 
 
 
@@ -386,7 +405,7 @@
                         return `
                             <tr>
                                 <td>
-                                    <a href="${fileUrl}" target="_blank">
+                                    <a href="${fileUrl}" class="js-calendar-gallery">
                                         <img src="${fileUrl}" class="img-thumbnail" style="width: 100px;" alt="">
                                     </a>
                                 </td>
@@ -443,7 +462,7 @@
                             let previewHtml = '';
                             if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(extension)) {
                                 previewHtml = `
-                                    <a href="${fileUrl}" target="_blank" title="${escapeHtml(description)}">
+                                    <a href="${fileUrl}" class="js-calendar-gallery" title="${escapeHtml(description)}">
                                         <img src="${fileUrl}" alt="${escapeHtml(description)}" class="img-thumbnail" style="width: 100px;">
                                     </a>
                                 `;
@@ -749,6 +768,76 @@
                 const url = this.dataset.url;
                 if (!url) return;
                 window.open(url, '_blank');
+            });
+
+            const imageModalEl = document.getElementById('calendarImageModal');
+            const imageEl = document.getElementById('calendarImageModalImg');
+            const counterEl = document.getElementById('calendarImageModalCounter');
+            const prevBtn = document.getElementById('calendarImageModalPrevBtn');
+            const nextBtn = document.getElementById('calendarImageModalNextBtn');
+
+            let galleryUrls = [];
+            let galleryIndex = 0;
+
+            function syncGalleryUi() {
+                if (!imageEl || !counterEl) return;
+                if (!galleryUrls.length) {
+                    imageEl.src = '';
+                    counterEl.textContent = '';
+                    return;
+                }
+
+                const safeIndex = Math.max(0, Math.min(galleryIndex, galleryUrls.length - 1));
+                galleryIndex = safeIndex;
+                imageEl.src = galleryUrls[galleryIndex];
+                counterEl.textContent = `${galleryIndex + 1} / ${galleryUrls.length}`;
+            }
+
+            function openGalleryAt(index) {
+                if (!imageModalEl) return;
+                galleryIndex = index;
+                syncGalleryUi();
+                const modal = bootstrap.Modal.getOrCreateInstance(imageModalEl);
+                modal.show();
+            }
+
+            function nextImage() {
+                if (!galleryUrls.length) return;
+                galleryIndex = (galleryIndex + 1) % galleryUrls.length;
+                syncGalleryUi();
+            }
+
+            function prevImage() {
+                if (!galleryUrls.length) return;
+                galleryIndex = (galleryIndex - 1 + galleryUrls.length) % galleryUrls.length;
+                syncGalleryUi();
+            }
+
+            if (prevBtn) prevBtn.addEventListener('click', prevImage);
+            if (nextBtn) nextBtn.addEventListener('click', nextImage);
+
+            document.addEventListener('keydown', function (e) {
+                if (!imageModalEl || !imageModalEl.classList.contains('show')) return;
+                if (e.key === 'ArrowRight') {
+                    e.preventDefault();
+                    nextImage();
+                }
+                if (e.key === 'ArrowLeft') {
+                    e.preventDefault();
+                    prevImage();
+                }
+            });
+
+            $(document).on('click', '#calendarEntryModalBody a.js-calendar-gallery', function (e) {
+                e.preventDefault();
+
+                const anchors = Array.from(document.querySelectorAll('#calendarEntryModalBody a.js-calendar-gallery'));
+                galleryUrls = anchors
+                    .map(a => a.href)
+                    .filter(Boolean);
+
+                const index = anchors.indexOf(this);
+                openGalleryAt(index >= 0 ? index : 0);
             });
 
             $(document).on('change', '#selectedType', function () {
