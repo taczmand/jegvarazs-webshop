@@ -426,10 +426,16 @@
                 return isNaN(n) ? null : n;
             }
 
+            const canEditCashReceipts = @json((bool) ($canEditCashReceipts ?? false));
+
             $(document).on('dblclick', '#adminTable tbody td', function () {
                 const cell = table.cell(this);
                 const rowData = table.row(this).data();
                 if (!rowData || !isPendingRow(rowData)) {
+                    return;
+                }
+
+                if (!canEditCashReceipts) {
                     return;
                 }
 
@@ -491,6 +497,49 @@
                 }
 
                 row.data(rowData).invalidate();
+
+                if (!canEditCashReceipts) {
+                    table.draw(false);
+                    return;
+                }
+
+                const patchPayload = {
+                    _token: '{{ csrf_token() }}',
+                };
+                if (field === 'settled_amount') {
+                    patchPayload.settled_amount = editedValues[String(rowData.id)]?.settled_amount ?? '';
+                }
+                if (field === 'note') {
+                    patchPayload.note = editedValues[String(rowData.id)]?.note ?? '';
+                }
+
+                $.ajax({
+                    url: `{{ route('admin.cash-receipts.index') }}/${rowData.id}`,
+                    method: 'POST',
+                    data: {
+                        ...patchPayload,
+                        _method: 'PATCH'
+                    },
+                    headers: {
+                        'Accept': 'application/json'
+                    },
+                    success: function (resp) {
+                        if (resp && resp.message && typeof window.showToast === 'function') {
+                            window.showToast(resp.message, 'success');
+                        }
+                        table.ajax.reload(null, false);
+                    },
+                    error: function (xhr) {
+                        let msg = 'Hiba történt.';
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            msg = xhr.responseJSON.message;
+                        }
+                        if (typeof window.showToast === 'function') {
+                            window.showToast(msg, 'danger');
+                        }
+                        table.ajax.reload(null, false);
+                    }
+                });
 
                 if (selectedIds.has(String(rowData.id))) {
                     updateSelectedTotals();

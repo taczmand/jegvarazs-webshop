@@ -20,6 +20,7 @@ class CashReceiptController extends Controller
         return view('admin.business.cash_receipts', [
             'canViewCashReceipts' => (bool) ($user && $user->can('view-cash-receipts')),
             'canAcknowledgeCashReceipt' => (bool) ($user && $user->can('ack-cash-receipt')),
+            'canEditCashReceipts' => (bool) ($user && $user->can('edit-cash-receipts')),
             'users' => User::query()->where('status', 'active')->orderBy('name')->get(['id', 'name']),
         ]);
     }
@@ -567,6 +568,55 @@ class CashReceiptController extends Controller
         return response()->json([
             'message' => "Sikeresen nyugtázva: {$updatedCount} tétel.",
             'updated_count' => $updatedCount,
+        ], 200);
+    }
+
+    public function update(Request $request, CashReceipt $receipt)
+    {
+        $user = auth('admin')->user();
+        if (!$user) {
+            return response()->json([
+                'message' => 'Unauthenticated.',
+            ], 401);
+        }
+
+        if (!$user->can('edit-cash-receipts')) {
+            return response()->json([
+                'message' => 'Nincs jogosultságod a készpénz tételek szerkesztéséhez.',
+            ], 403);
+        }
+
+        if ($receipt->status !== 'pending') {
+            return response()->json([
+                'message' => 'Nyugtázott tétel nem szerkeszthető.',
+            ], 422);
+        }
+
+        $validated = $request->validate([
+            'settled_amount' => ['nullable', 'numeric'],
+            'note' => ['nullable', 'string'],
+        ]);
+
+        $settledAmount = null;
+        if (array_key_exists('settled_amount', $validated) && $validated['settled_amount'] !== null && $validated['settled_amount'] !== '') {
+            $settledAmount = (int) $validated['settled_amount'];
+        }
+
+        $note = null;
+        if (array_key_exists('note', $validated) && $validated['note'] !== null) {
+            $note = trim((string) $validated['note']);
+            if ($note === '') {
+                $note = null;
+            }
+        }
+
+        $receipt->update([
+            'settled_amount' => $settledAmount,
+            'note' => $note,
+        ]);
+
+        return response()->json([
+            'message' => 'Sikeresen mentve!',
         ], 200);
     }
 }

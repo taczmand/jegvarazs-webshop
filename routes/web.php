@@ -329,6 +329,7 @@ Route::get('/automatizacio/kuldes', [AutomatedEmailController::class, 'sendToday
             Route::get('/ugyvitel/keszpenz', [CashReceiptController::class, 'index'])->name('cash-receipts.index');
             Route::post('/ugyvitel/keszpenz/simple-data', [CashReceiptController::class, 'dataSimple'])->name('cash-receipts.data-simple.post');
             Route::post('/ugyvitel/keszpenz', [CashReceiptController::class, 'store'])->name('cash-receipts.store');
+            Route::patch('/ugyvitel/keszpenz/{receipt}', [CashReceiptController::class, 'update'])->name('cash-receipts.update');
             Route::post('/ugyvitel/keszpenz/{receipt}/nyugtazas', [CashReceiptController::class, 'acknowledge'])->name('cash-receipts.acknowledge');
             Route::post('/ugyvitel/keszpenz/nyugtazas-tomeges', [CashReceiptController::class, 'bulkAcknowledge'])->name('cash-receipts.bulk-acknowledge');
 
