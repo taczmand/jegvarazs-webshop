@@ -128,6 +128,10 @@ class ProductService
     {
         return DB::transaction(function () use ($data) {
 
+            $countInContractProductsReport = array_key_exists('count_in_contract_products_report', $data)
+                ? (int) $data['count_in_contract_products_report']
+                : 1;
+
             // Termék alapadatok mentése
             $product = Product::create([
                 'title' => $data['title'],
@@ -140,6 +144,7 @@ class ProductService
                 'partner_gross_price' => $data['partner_gross_price'] ?? $data['gross_price'] ?? 0,
                 'is_offerable' => $data['is_offerable'] ?? false,
                 'is_selectable_by_installer' => $data['is_selectable_by_installer'] ?? false,
+                'count_in_contract_products_report' => $countInContractProductsReport,
                 'tax_id' => $data['tax_id'],
                 'cat_id' => $data['category_id'] ?? null,
                 'brand_id' => $data['brand_id'] ?? null,
@@ -241,6 +246,10 @@ class ProductService
 
         return DB::transaction(function () use ($data, $product) {
 
+            $countInContractProductsReport = array_key_exists('count_in_contract_products_report', $data)
+                ? (int) $data['count_in_contract_products_report']
+                : 1;
+
             $old_gross_price = (float) ($product->gross_price ?? 0);
             $old_partner_gross_price = $product->partner_gross_price;
             $old_base_partner_price = (float) (($old_partner_gross_price !== null ? $old_partner_gross_price : $old_gross_price) ?? 0);
@@ -268,6 +277,7 @@ class ProductService
                 'partner_gross_price' => $new_partner_gross_price,
                 'is_offerable' => $data['is_offerable'] ?? false,
                 'is_selectable_by_installer' => $data['is_selectable_by_installer'] ?? false,
+                'count_in_contract_products_report' => $countInContractProductsReport,
                 'tax_id' => $data['tax_id'],
                 'cat_id' => $data['category_id'] ?? null,
                 'brand_id' => $data['brand_id'] ?? null,

@@ -53,13 +53,14 @@ class ContractProductsReportController extends Controller
 
         $query = DB::table('contracts')
             ->join('contract_products', 'contracts.id', '=', 'contract_products.contract_id')
+            ->join('products', 'contract_products.product_id', '=', 'products.id')
             ->leftJoin('users', 'contracts.created_by', '=', 'users.id')
             ->whereYear('contracts.created_at', $year)
             ->select([
                 DB::raw('MONTH(contracts.created_at) as month'),
                 DB::raw('COALESCE(users.id, 0) as user_id'),
                 DB::raw('COALESCE(users.name, "Ismeretlen") as user_name'),
-                DB::raw('SUM(COALESCE(contract_products.product_qty, 0)) as qty'),
+                DB::raw('SUM(CASE WHEN COALESCE(products.count_in_contract_products_report, 1) = 1 THEN COALESCE(contract_products.product_qty, 0) ELSE 0 END) as qty'),
             ])
             ->groupBy(DB::raw('MONTH(contracts.created_at)'), DB::raw('COALESCE(users.id, 0)'), DB::raw('COALESCE(users.name, "Ismeretlen")'))
             ->orderBy('month');

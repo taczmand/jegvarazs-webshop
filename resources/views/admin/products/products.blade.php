@@ -128,6 +128,12 @@
                                             <input type="checkbox" name="is_offerable" id="is_offerable" class="form-check-input" value="1">
                                             <label for="is_offerable" class="form-check-label">Szerződés és ajánlat generálásnál megjelenik?</label>
                                         </div>
+
+                                        <div class="mb-3 form-check">
+                                            <input type="hidden" name="count_in_contract_products_report" value="0">
+                                            <input type="checkbox" name="count_in_contract_products_report" id="count_in_contract_products_report" class="form-check-input" value="1" checked>
+                                            <label for="count_in_contract_products_report" class="form-check-label">Szerződések termék darabszám riportba beleszámoljon a mennyiséggel?</label>
+                                        </div>
                                     </div>
 
                                     <div class="col-md-6">
@@ -675,6 +681,7 @@
                     $('#status').val(product.status);
                     $('#is_offerable').prop('checked', product.is_offerable);
                     $('#is_selectable_by_installer').prop('checked', product.is_selectable_by_installer);
+                    $('#count_in_contract_products_report').prop('checked', product.count_in_contract_products_report === undefined ? true : !!product.count_in_contract_products_report);
                     tinymce.get('description').setContent(product.description || '');
 
                     const treeCategories = buildCategoryTree(allMetaData.original.categories);
