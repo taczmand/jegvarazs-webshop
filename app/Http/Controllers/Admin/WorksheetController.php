@@ -38,11 +38,10 @@ class WorksheetController extends Controller
         $isCash = $worksheet->payment_method === 'cash' && is_numeric($worksheet->payment_amount) && (int) $worksheet->payment_amount > 0;
 
         if (!$isCash) {
-            CashReceipt::query()
-                ->where('related_type', Worksheet::class)
-                ->where('related_value', (string) $worksheet->id)
-                ->where('status', 'pending')
-                ->delete();
+            return;
+        }
+
+        if ($worksheet->work_status !== 'Kész') {
             return;
         }
 
@@ -58,12 +57,7 @@ class WorksheetController extends Controller
             ->where('status', 'pending')
             ->first();
 
-        $receivedDate = null;
-        if ($worksheet->work_status === 'Kész') {
-            $receivedDate = $receivedDateOverride ?: now()->toDateString();
-        } else {
-            $receivedDate = $existingReceipt?->received_date;
-        }
+        $receivedDate = $receivedDateOverride ?: ($existingReceipt?->received_date ?: now()->toDateString());
 
         CashReceipt::updateOrCreate(
             [
