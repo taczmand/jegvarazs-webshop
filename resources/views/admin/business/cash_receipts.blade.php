@@ -363,14 +363,18 @@
                         name: 'actions',
                         render: function (data, type, row) {
                             const canEditCashReceipts = @json((bool) ($canEditCashReceipts ?? false));
-                            if (!canEditCashReceipts) {
-                                return '';
-                            }
                             const isPending = row && row.status === 'Függőben';
-                            if (!isPending) {
-                                return '';
-                            }
-                            return '<button type="button" class="btn btn-sm btn-outline-primary edit-cash-receipt" data-id="' + row.id + '">Szerkesztés</button>';
+                            const enabled = !!(canEditCashReceipts && isPending);
+                            const title = !canEditCashReceipts
+                                ? 'Nincs jogosultságod a szerkesztéshez.'
+                                : (!isPending ? 'Nyugtázott tétel nem szerkeszthető.' : 'Szerkesztés');
+
+                            const disabledAttr = enabled ? '' : 'disabled';
+                            const classes = enabled
+                                ? 'btn btn-sm btn-outline-primary edit-cash-receipt'
+                                : 'btn btn-sm btn-outline-secondary edit-cash-receipt-disabled';
+
+                            return '<button type="button" class="' + classes + '" data-id="' + row.id + '" ' + disabledAttr + ' title="' + title.replace(/\"/g, '&quot;') + '"><i class="bi bi-pencil"></i></button>';
                         }
                     },
                 ]
