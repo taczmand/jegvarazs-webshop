@@ -89,7 +89,7 @@
                         <th>Státusz</th>
                         <th>Nyugtázta</th>
                         <th>Nyugtázva</th>
-                        <th>Műveletek</th>
+                        <th></th>
                     </tr>
                     </thead>
                     <tfoot>
@@ -307,7 +307,9 @@
                 columnDefs: [
                     {targets: 0, orderable: false},
                     {targets: [5, 6], className: 'text-end'},
-                    {targets: 12, orderable: false, searchable: false}
+                    {targets: 12, orderable: false, searchable: false, className: 'text-center', width: '1%', responsivePriority: 1},
+                    {targets: 10, responsivePriority: 100},
+                    {targets: 11, responsivePriority: 101}
                 ],
                 columns: [
                     {
@@ -374,7 +376,7 @@
                                 ? 'btn btn-sm btn-outline-primary edit-cash-receipt'
                                 : 'btn btn-sm btn-outline-secondary edit-cash-receipt-disabled';
 
-                            return '<button type="button" class="' + classes + '" data-id="' + row.id + '" ' + disabledAttr + ' title="' + title.replace(/\"/g, '&quot;') + '"><i class="bi bi-pencil"></i></button>';
+                            return '<button type="button" class="' + classes + '" data-id="' + row.id + '" ' + disabledAttr + ' title="' + title.replace(/\"/g, '&quot;') + '"><i class="fas fa-edit"></i></button>';
                         }
                     },
                 ]
