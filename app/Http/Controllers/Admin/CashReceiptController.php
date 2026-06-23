@@ -446,6 +446,7 @@ class CashReceiptController extends Controller
                 'status' => $mapStatus[$r->status] ?? (string) ($r->status ?? ''),
                 'acknowledged_by_name' => (string) ($r->acknowledged_by_user_name ?? ($r->acknowledgedBy?->name ?? '-')),
                 'acknowledged_at' => $r->acknowledged_at ? \Carbon\Carbon::parse($r->acknowledged_at)->format('Y-m-d H:i:s') : '',
+                'actions' => '',
             ];
         })->all();
 
@@ -479,26 +480,32 @@ class CashReceiptController extends Controller
             'note' => ['nullable', 'string'],
         ]);
 
-        $settledAmount = null;
-        if (array_key_exists('settled_amount', $validated) && $validated['settled_amount'] !== null && $validated['settled_amount'] !== '') {
-            $settledAmount = (int) $validated['settled_amount'];
-        }
-
-        $note = null;
-        if (array_key_exists('note', $validated) && $validated['note'] !== null) {
-            $note = trim((string) $validated['note']);
-            if ($note === '') {
-                $note = null;
-            }
-        }
-
-        $receipt->update([
+        $update = [
             'status' => 'acknowledged',
             'acknowledged_by' => $user->id,
             'acknowledged_at' => now(),
-            'settled_amount' => $settledAmount,
-            'note' => $note,
-        ]);
+        ];
+
+        if (array_key_exists('settled_amount', $validated)) {
+            $settledAmount = null;
+            if ($validated['settled_amount'] !== null && $validated['settled_amount'] !== '') {
+                $settledAmount = (int) $validated['settled_amount'];
+            }
+            $update['settled_amount'] = $settledAmount;
+        }
+
+        if (array_key_exists('note', $validated)) {
+            $note = null;
+            if ($validated['note'] !== null) {
+                $note = trim((string) $validated['note']);
+                if ($note === '') {
+                    $note = null;
+                }
+            }
+            $update['note'] = $note;
+        }
+
+        $receipt->update($update);
 
         return response()->json([
             'message' => 'Sikeresen nyugtázva!',
@@ -538,28 +545,32 @@ class CashReceiptController extends Controller
 
                 $rowValues = isset($values[$receipt->id]) && is_array($values[$receipt->id]) ? $values[$receipt->id] : [];
 
-                $settledAmount = null;
-                if (array_key_exists('settled_amount', $rowValues) && $rowValues['settled_amount'] !== null && $rowValues['settled_amount'] !== '') {
-                    if (is_numeric($rowValues['settled_amount'])) {
-                        $settledAmount = (int) $rowValues['settled_amount'];
-                    }
-                }
-
-                $note = null;
-                if (array_key_exists('note', $rowValues) && $rowValues['note'] !== null) {
-                    $note = trim((string) $rowValues['note']);
-                    if ($note === '') {
-                        $note = null;
-                    }
-                }
-
-                $receipt->update([
+                $update = [
                     'status' => 'acknowledged',
                     'acknowledged_by' => $user->id,
                     'acknowledged_at' => now(),
-                    'settled_amount' => $settledAmount,
-                    'note' => $note,
-                ]);
+                ];
+
+                if (array_key_exists('settled_amount', $rowValues)) {
+                    $settledAmount = null;
+                    if ($rowValues['settled_amount'] !== null && $rowValues['settled_amount'] !== '' && is_numeric($rowValues['settled_amount'])) {
+                        $settledAmount = (int) $rowValues['settled_amount'];
+                    }
+                    $update['settled_amount'] = $settledAmount;
+                }
+
+                if (array_key_exists('note', $rowValues)) {
+                    $note = null;
+                    if ($rowValues['note'] !== null) {
+                        $note = trim((string) $rowValues['note']);
+                        if ($note === '') {
+                            $note = null;
+                        }
+                    }
+                    $update['note'] = $note;
+                }
+
+                $receipt->update($update);
 
                 $updatedCount++;
             }
@@ -593,27 +604,52 @@ class CashReceiptController extends Controller
         }
 
         $validated = $request->validate([
+            'received_from_user_id' => ['nullable', 'integer', 'exists:users,id'],
+            'amount' => ['nullable', 'numeric'],
+            'received_date' => ['nullable', 'date'],
             'settled_amount' => ['nullable', 'numeric'],
             'note' => ['nullable', 'string'],
         ]);
 
-        $settledAmount = null;
-        if (array_key_exists('settled_amount', $validated) && $validated['settled_amount'] !== null && $validated['settled_amount'] !== '') {
-            $settledAmount = (int) $validated['settled_amount'];
-        }
+        $update = [];
 
-        $note = null;
-        if (array_key_exists('note', $validated) && $validated['note'] !== null) {
-            $note = trim((string) $validated['note']);
-            if ($note === '') {
-                $note = null;
+        if (array_key_exists('received_from_user_id', $validated) && $validated['received_from_user_id']) {
+            $receivedFromName = User::query()->whereKey((int) $validated['received_from_user_id'])->value('name');
+            if ($receivedFromName) {
+                $update['received_from_name'] = $receivedFromName;
             }
         }
 
-        $receipt->update([
-            'settled_amount' => $settledAmount,
-            'note' => $note,
-        ]);
+        if (array_key_exists('amount', $validated)) {
+            $update['amount'] = ($validated['amount'] === null || $validated['amount'] === '') ? null : (int) $validated['amount'];
+        }
+
+        if (array_key_exists('received_date', $validated)) {
+            $update['received_date'] = ($validated['received_date'] === null || $validated['received_date'] === '') ? null : $validated['received_date'];
+        }
+
+        if (array_key_exists('settled_amount', $validated)) {
+            $settledAmount = null;
+            if ($validated['settled_amount'] !== null && $validated['settled_amount'] !== '') {
+                $settledAmount = (int) $validated['settled_amount'];
+            }
+            $update['settled_amount'] = $settledAmount;
+        }
+
+        if (array_key_exists('note', $validated)) {
+            $note = null;
+            if ($validated['note'] !== null) {
+                $note = trim((string) $validated['note']);
+                if ($note === '') {
+                    $note = null;
+                }
+            }
+            $update['note'] = $note;
+        }
+
+        if (count($update) > 0) {
+            $receipt->update($update);
+        }
 
         return response()->json([
             'message' => 'Sikeresen mentve!',

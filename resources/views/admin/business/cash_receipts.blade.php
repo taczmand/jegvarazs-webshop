@@ -161,6 +161,24 @@
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
+                        <label class="form-label">Név</label>
+                        <select class="form-select" name="received_from_user_id" required>
+                            <option value="">Válassz...</option>
+                            @foreach(($users ?? []) as $u)
+                                <option value="{{ $u->id }}">{{ $u->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Összeg (Ft)</label>
+                        <input type="number" class="form-control" name="amount" step="1" required />
+                        <div class="form-text">Lehet negatív is (mínuszos tétel).</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Dátum</label>
+                        <input type="date" class="form-control" name="received_date" />
+                    </div>
+                    <div class="mb-3">
                         <label class="form-label">Elszámolt összeg (Ft)</label>
                         <input type="number" class="form-control" name="settled_amount" step="1" />
                         <div class="form-text">Üresen hagyva az "Összeg" értékét használja.</div>
@@ -604,10 +622,35 @@
                     settledInput.value = (currentNumber ?? '');
                 }
 
+                const amountInput = form.querySelector('input[name="amount"]');
+                if (amountInput) {
+                    const current = (rowData.amount_raw !== undefined) ? rowData.amount_raw : rowData.amount;
+                    const currentNumber = parseNumber(current);
+                    amountInput.value = (currentNumber ?? '');
+                }
+
+                const dateInput = form.querySelector('input[name="received_date"]');
+                if (dateInput) {
+                    dateInput.value = (rowData.received_date ?? '');
+                }
+
                 const noteInput = form.querySelector('input[name="note"]');
                 if (noteInput) {
                     const current = (rowData.note_raw !== undefined) ? rowData.note_raw : (rowData.note ?? '');
                     noteInput.value = (current ?? '');
+                }
+
+                const receivedFromSelect = form.querySelector('select[name="received_from_user_id"]');
+                if (receivedFromSelect) {
+                    receivedFromSelect.value = '';
+                    const currentName = (rowData.received_from_name ?? '').toString().trim();
+                    if (currentName !== '') {
+                        const opts = Array.from(receivedFromSelect.options || []);
+                        const match = opts.find(o => (o.text || '').toString().trim() === currentName);
+                        if (match) {
+                            receivedFromSelect.value = match.value;
+                        }
+                    }
                 }
 
                 editCashReceiptModal.show();
