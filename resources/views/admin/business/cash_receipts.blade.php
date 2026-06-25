@@ -199,6 +199,21 @@
 @endsection
 
 @section('scripts')
+    <style>
+        #adminTable tfoot {
+            display: table-footer-group !important;
+        }
+
+        div.dt-scroll-body tfoot tr,
+        div.dt-scroll-body tfoot tr th,
+        div.dt-scroll-body tfoot tr td {
+            height: auto !important;
+            padding-top: .25rem !important;
+            padding-bottom: .25rem !important;
+            border-top-width: var(--bs-border-width) !important;
+            border-bottom-width: var(--bs-border-width) !important;
+        }
+    </style>
     <script>
         $(document).ready(function () {
             @if(isset($canViewCashReceipts) && !$canViewCashReceipts)
@@ -308,8 +323,9 @@
                     {targets: 0, orderable: false},
                     {targets: [5, 6], className: 'text-end'},
                     {targets: 12, orderable: false, searchable: false, className: 'text-center', width: '1%', responsivePriority: 1},
-                    {targets: 10, responsivePriority: 100},
-                    {targets: 11, responsivePriority: 101}
+                    {targets: 7, responsivePriority: 50},
+                    {targets: 10, responsivePriority: 110},
+                    {targets: 11, responsivePriority: 111}
                 ],
                 columns: [
                     {
