@@ -2,7 +2,7 @@
 
 @section('content')
 
-    <div class="container p-0">
+    <div class="container-fluid px-0">
 
         <div class="d-flex justify-content-between align-items-center mb-3 pb-2">
             <h2 class="color-dark-blue mb-0">Ügyviteli folyamatok / Készpénz tételek</h2>
@@ -204,15 +204,6 @@
             display: table-footer-group !important;
         }
 
-        #adminTable .dt-ellipsis {
-            display: inline-block;
-            max-width: 260px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            vertical-align: bottom;
-        }
-
         div.dt-scroll-body tfoot tr,
         div.dt-scroll-body tfoot tr th,
         div.dt-scroll-body tfoot tr td {
@@ -271,21 +262,13 @@
                 updateBulkButtonState();
             }
 
-            function truncateText(val, maxLen) {
-                const s = (val ?? '').toString();
-                if (s.length <= maxLen) {
-                    return s;
-                }
-                return s.slice(0, Math.max(0, maxLen - 3)) + '...';
-            }
-
             const table = $('#adminTable').DataTable({
                 language: {
                     url: '/lang/datatables/hu.json'
                 },
                 processing: true,
                 serverSide: true,
-                responsive: false,
+                responsive: true,
                 order: [[1, 'desc']],
                 ajax: {
                     type: 'POST',
@@ -339,7 +322,9 @@
                 columnDefs: [
                     {targets: 0, orderable: false},
                     {targets: [5, 6], className: 'text-end'},
-                    {targets: 12, orderable: false, searchable: false, className: 'text-center', width: '1%'}
+                    {targets: 12, orderable: false, searchable: false, className: 'text-center', width: '1%', responsivePriority: 1},
+                    {targets: 10, responsivePriority: 100},
+                    {targets: 11, responsivePriority: 101}
                 ],
                 columns: [
                     {
@@ -355,30 +340,8 @@
                     },
                     {data: 'id', name: 'id'},
                     {data: 'related_type', name: 'related_type'},
-                    {
-                        data: 'received_from_name',
-                        name: 'received_from_name',
-                        render: function (data, type, row) {
-                            const full = (data ?? '').toString();
-                            const short = truncateText(full, 30);
-                            const safeFull = $('<div>').text(full).html();
-                            const safeShort = $('<div>').text(short).html();
-                            return '<span class="dt-ellipsis" title="' + safeFull.replace(/\"/g, '&quot;') + '">' + safeShort + '</span>';
-                        }
-                    },
-                    {
-                        data: 'received_by_name',
-                        name: 'received_by_name',
-                        orderable: false,
-                        searchable: false,
-                        render: function (data, type, row) {
-                            const full = (data ?? '').toString();
-                            const short = truncateText(full, 22);
-                            const safeFull = $('<div>').text(full).html();
-                            const safeShort = $('<div>').text(short).html();
-                            return '<span class="dt-ellipsis" title="' + safeFull.replace(/\"/g, '&quot;') + '">' + safeShort + '</span>';
-                        }
-                    },
+                    {data: 'received_from_name', name: 'received_from_name'},
+                    {data: 'received_by_name', name: 'received_by_name', orderable: false, searchable: false},
                     {data: 'amount', name: 'amount'},
                     {
                         data: 'settled_amount',
@@ -404,11 +367,8 @@
                         orderable: false,
                         render: function (data, type, row) {
                             const val = (row && row.note_raw !== undefined) ? row.note_raw : (data ?? '');
-                            const full = (val ?? '').toString();
-                            const short = truncateText(full, 40);
-                            const safeFull = $('<div>').text(full).html();
-                            const safeShort = $('<div>').text(short).html();
-                            return '<span class="editable-cell dt-ellipsis" data-field="note" title="' + safeFull.replace(/\"/g, '&quot;') + '">' + safeShort + '</span>';
+                            const safe = $('<div>').text(val ?? '').html();
+                            return '<span class="editable-cell" data-field="note">' + safe + '</span>';
                         }
                     },
                     {data: 'received_date', name: 'received_date'},
