@@ -24,6 +24,7 @@ class ProductRequest extends FormRequest
 
         return [
             'title' => ['required', 'string', 'max:255'],
+            'in_stock' => ['nullable', 'boolean'],
             'tax_id' => ['required', 'numeric', 'exists:tax_categories,id'],
             'status' => ['required', 'string', 'in:active,inactive'],
             'category_id' => ['required', 'numeric', 'exists:categories,id'],

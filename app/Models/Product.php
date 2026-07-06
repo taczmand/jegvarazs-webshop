@@ -11,6 +11,10 @@ class Product extends Model
 
     protected $guarded = [];
 
+    protected $casts = [
+        'in_stock' => 'boolean',
+    ];
+
     public function quantityDiscounts()
     {
         return $this->hasMany(ProductQuantityDiscount::class);

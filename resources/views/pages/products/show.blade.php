@@ -123,7 +123,10 @@
 
                         @php
                             $description = strip_tags($product->description);
-                            $status = $stockHelper::resolve($product->stock);
+                            $isInStockFlag = (int) ($product->in_stock ?? 0) === 1;
+                            $status = $isInStockFlag
+                                ? $stockHelper::resolve($product->stock)
+                                : ['name' => 'Nincs raktáron', 'slug' => 'out_of_stock', 'color' => 'danger'];
 
                             // Ha a szöveg 500 karakternél hosszabb
                             if (strlen($description) > 500) {

@@ -103,6 +103,7 @@ class ProductController extends Controller
                 'id',
                 'title',
                 'stock',
+                'in_stock',
                 'gross_price',
                 'partner_gross_price',
                 'status',

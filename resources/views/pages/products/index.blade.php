@@ -247,7 +247,10 @@
                             @endif
                             @forelse($products as $product)
                                 @php
-                                    $status = $stockHelper::resolve($product->stock);
+                                    $isInStockFlag = (int) ($product->in_stock ?? 0) === 1;
+                                    $status = $isInStockFlag
+                                        ? $stockHelper::resolve($product->stock)
+                                        : ['name' => 'Nincs raktáron', 'slug' => 'out_of_stock', 'color' => 'danger'];
                                     $mainPhoto = $product->photos->firstWhere('is_main', true);
 
                                     $fullSlug = $product->category->getFullSlug() . '/' . $product->slug;
