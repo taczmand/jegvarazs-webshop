@@ -33,7 +33,7 @@ class WorksheetController extends Controller
         $this->user = Auth::guard('admin')->user();
     }
 
-    private function syncWorksheetCashReceipt(Worksheet $worksheet, ?string $receivedDateOverride = null): void
+    private function syncWorksheetCashReceipt(Worksheet $worksheet, ?string $receivedDateOverride = null, ?int $receivedByUserIdOverride = null): void
     {
         $isCash = $worksheet->payment_method === 'cash' && is_numeric($worksheet->payment_amount) && (int) $worksheet->payment_amount > 0;
 
@@ -45,10 +45,12 @@ class WorksheetController extends Controller
             return;
         }
 
-        $receivedByUserId = null;
-        $workerIds = $worksheet->workers()->pluck('users.id')->all();
-        if (count($workerIds) === 1) {
-            $receivedByUserId = (int) $workerIds[0];
+        $receivedByUserId = $receivedByUserIdOverride;
+        if (!$receivedByUserId) {
+            $workerIds = $worksheet->workers()->pluck('users.id')->all();
+            if (count($workerIds) === 1) {
+                $receivedByUserId = (int) $workerIds[0];
+            }
         }
 
         $existingReceipt = CashReceipt::query()
@@ -903,10 +905,12 @@ class WorksheetController extends Controller
 
             $worksheet->load('workers:id');
             $receivedDateOverride = null;
+            $receivedByUserIdOverride = null;
             if (isset($previousWorkStatus) && $previousWorkStatus !== 'Kész' && $worksheet->work_status === 'Kész') {
                 $receivedDateOverride = now()->toDateString();
+                $receivedByUserIdOverride = (int) auth('admin')->id();
             }
-            $this->syncWorksheetCashReceipt($worksheet, $receivedDateOverride);
+            $this->syncWorksheetCashReceipt($worksheet, $receivedDateOverride, $receivedByUserIdOverride);
 
 
             // Termékek mentése

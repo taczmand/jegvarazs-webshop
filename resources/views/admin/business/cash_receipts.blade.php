@@ -204,6 +204,10 @@
             display: table-footer-group !important;
         }
 
+        #adminTable tbody tr.cash-receipt-acknowledged > td {
+            background-color: #d4edda !important;
+        }
+
         div.dt-scroll-body tfoot tr,
         div.dt-scroll-body tfoot tr th,
         div.dt-scroll-body tfoot tr td {
@@ -398,6 +402,12 @@
                 ,
                 footerCallback: function (row, data, start, end, display) {
                     updateSelectedTotals();
+                }
+                ,
+                createdRow: function (row, data) {
+                    if (data && data.status === 'Nyugtázva') {
+                        $(row).addClass('cash-receipt-acknowledged');
+                    }
                 }
             });
 
