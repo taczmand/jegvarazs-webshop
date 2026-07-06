@@ -510,6 +510,7 @@
                 const offer_data = await loadOfferProducts(row_data.id);
                 const offer = offer_data.offer || {};
                 const offer_products = offer.products || [];
+                const client_id = offer.client_id || null;
 
                 // Kapcsolati adatok
 
@@ -535,7 +536,7 @@
                 $('#client_search').val(display);
                 $('#client_search_results').hide().empty();
 
-                loadOfferClientReminders(clientId);
+                loadOfferClientReminders(client_id);
 
                 // Termékek
 

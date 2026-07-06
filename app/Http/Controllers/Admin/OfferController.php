@@ -11,6 +11,7 @@ use App\Models\Offer;
 use App\Models\OfferProduct;
 use App\Models\Product;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
@@ -320,6 +321,8 @@ class OfferController extends Controller
                 'phone' => $request->input('contact_phone'),
                 'email' => $request->input('contact_email'),
                 'description' => $request->input('contact_description'),
+                'viewed_at' => Carbon::now(),
+                'viewed_by' => auth('admin')->id(),
                 'created_by' => auth('admin')->id(),
             ]);
 
