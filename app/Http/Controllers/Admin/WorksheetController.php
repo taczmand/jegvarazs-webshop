@@ -1072,7 +1072,7 @@ class WorksheetController extends Controller
 
     public function showDataToWorksheet($id)
     {
-        $worksheet = Worksheet::with(['products', 'photos', 'workers'])->findOrFail($id);
+        $worksheet = Worksheet::with(['products', 'photos', 'workers', 'createdBy:id,name'])->findOrFail($id);
 
         // Átalakítjuk a kapcsolódó product adatokat, hogy pivot helyett a quantity direktben legyen benne
         $worksheet->products = $worksheet->products->map(function ($product) {
@@ -1081,7 +1081,10 @@ class WorksheetController extends Controller
             return $product;
         });
 
-        return response()->json($worksheet);
+        $payload = $worksheet->toArray();
+        $payload['creator_name'] = $worksheet->createdBy?->name;
+
+        return response()->json($payload);
     }
 
     public function deleteWorksheetPhoto(Request $request) {

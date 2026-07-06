@@ -610,6 +610,7 @@
                                         ${row('Munkalap típusa', data.work_type)}
                                         ${row('Munkalap állapota', data.work_status)}
                                         ${row('Szerződés', data.contract_id ? ('#' + data.contract_id) : '-')}
+                                        ${row('Készítette', data.creator_name)}
                                     </table>
                                 </div>
                             `;
