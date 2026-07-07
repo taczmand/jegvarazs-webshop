@@ -77,6 +77,15 @@ body#page-top {
             background: #fff;
         }
     }
+    .sidebar {
+        .nav-link .badge,
+        .collapse-item .badge {
+            font-size: 0.65rem;
+            line-height: 1;
+            padding: 0.2em 0.35em;
+            white-space: nowrap;
+        }
+    }
 }
 .color-mid-blue {
     color: $logo-blue-color-mid;

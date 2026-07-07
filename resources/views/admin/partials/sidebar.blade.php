@@ -193,6 +193,34 @@
                 </div>
             </div>
         </li>
+
+        <li class="nav-item">
+            <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseBusinessDocuments" aria-expanded="false">
+                <i class="fa-solid fa-file-invoice"></i>
+                <span>Bizonylatok</span>
+            </a>
+            <div id="collapseBusinessDocuments" class="collapse" data-bs-parent="#accordionSidebar">
+                <div class="bg-white py-2 collapse-inner rounded">
+                    <a class="collapse-item" href="#">Kimenő számlák</a>
+                    <a class="collapse-item" href="#">Bejövő számlák</a>
+                    <a class="collapse-item" href="#">Szállítólevelek</a>
+                    <a class="collapse-item" href="#">Bevételezések</a>
+                </div>
+            </div>
+        </li>
+
+        <li class="nav-item">
+            <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseWarehouse" aria-expanded="false">
+                <i class="fa-solid fa-warehouse"></i>
+                <span>Raktározás</span>
+            </a>
+            <div id="collapseWarehouse" class="collapse" data-bs-parent="#accordionSidebar">
+                <div class="bg-white py-2 collapse-inner rounded">
+                    <a class="collapse-item" href="#">Raktárkészletek</a>
+                    <a class="collapse-item" href="#">Leltár</a>
+                </div>
+            </div>
+        </li>
     @endif
 
     @if($canViewVehicles)
