@@ -74,6 +74,10 @@
 
 <div id="myCoolToastContainer" style="position: fixed; bottom: 20px; right: 20px; z-index: 9999;"></div>
 
+<a href="{{ route('static-media.top-plusz-pdf') }}" target="_blank" style="position: fixed; right: 0; bottom: 0; z-index: 9998; display: block;">
+    <img src="{{ asset('static_media/top_plusz.jpg') }}" alt="Top Plusz" style="width: 220px; height: auto; display: block;">
+</a>
+
 @include('partials.footer')
 
 <!-- Vendor Scripts -->
