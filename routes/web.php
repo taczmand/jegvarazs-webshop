@@ -55,17 +55,6 @@ use App\Models\Order;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/static-media/top-plusz', function () {
-    $path = public_path('static_media/2026-61-7_10-40-5_a2_fekvo_nyomda.pdf');
-
-    abort_unless(file_exists($path), 404);
-
-    return response()->file($path, [
-        'Content-Type' => 'application/pdf',
-        'Content-Disposition' => 'inline; filename="2026-61-7_10-40-5_a2_fekvo_nyomda.pdf"',
-    ]);
-})->name('static-media.top-plusz-pdf');
-
 Route::get('/incognito', [PagesController::class, 'incognito']);
 
 Route::get('/idopontfoglalas', [PagesController::class, 'appointment'])->name('appointment');
