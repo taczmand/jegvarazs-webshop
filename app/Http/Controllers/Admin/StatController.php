@@ -193,6 +193,7 @@ class StatController extends Controller
                         'stock_statuses' => 'Raktári állapotok',
                         'order_statuses' => 'Rendelési állapotok',
                         'tax_categories' => 'Adó osztályok',
+                        'cash_receipts' => 'Készpénzes tételek',
                     ];
 
                     $needle = mb_strtolower((string) $model);
