@@ -40,6 +40,7 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\VehicleController;
 use App\Http\Controllers\Admin\VehicleKmController;
 use App\Http\Controllers\Admin\WorksheetController;
+use App\Http\Controllers\Admin\WorksheetProductsByWorkerReportController;
 use App\Http\Controllers\Admin\CashReceiptController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
@@ -248,6 +249,9 @@ Route::get('/automatizacio/kuldes', [AutomatedEmailController::class, 'sendToday
 
             Route::get('/statisztika/szerzodesek-termekek', [ContractProductsReportController::class, 'index'])->name('stats.contract_products');
             Route::get('/statisztika/szerzodesek-termekek/data', [ContractProductsReportController::class, 'data'])->name('stats.contract_products.data');
+
+            Route::get('/statisztika/termek-db-dolgozonkent', [WorksheetProductsByWorkerReportController::class, 'index'])->name('stats.worksheet_products_by_worker');
+            Route::get('/statisztika/termek-db-dolgozonkent/data', [WorksheetProductsByWorkerReportController::class, 'data'])->name('stats.worksheet_products_by_worker.data');
 
             Route::get('/statisztika/lead-konverzio', [LeadConversionReportController::class, 'index'])->name('stats.lead_conversion');
             Route::get('/statisztika/lead-konverzio/data', [LeadConversionReportController::class, 'data'])->name('stats.lead_conversion.data');

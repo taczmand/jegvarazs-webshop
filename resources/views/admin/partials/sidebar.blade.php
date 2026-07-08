@@ -40,7 +40,8 @@
         $canViewInstallations = (bool) ($adminUser && $adminUser->can('view-installations'));
         $canViewLeadConversion = (bool) ($adminUser && $adminUser->can('view-lead-conversion-report'));
         $canViewContractProductsReport = (bool) ($adminUser && ($adminUser->can('view-contracts') || $adminUser->can('view-own-contracts')));
-        $canViewCRMAnalytics = $canViewInstallations || $canViewLeadConversion || $canViewContractProductsReport;
+        $canViewWorksheetProductsByWorkerReport = (bool) ($adminUser && $adminUser->can('view-worksheet-products-by-worker-report'));
+        $canViewCRMAnalytics = $canViewInstallations || $canViewLeadConversion || $canViewContractProductsReport || $canViewWorksheetProductsByWorkerReport;
 
         $canViewAdminLogs = (bool) ($adminUser && $adminUser->can('view-admin-logs'));
         $canViewSystemAnalytics = $canViewAdminLogs;
@@ -314,6 +315,9 @@
                     @endif
                     @if($canViewContractProductsReport)
                         <a class="collapse-item" href="{{ route('admin.stats.contract_products') }}">Szerződések termék db</a>
+                    @endif
+                    @if($canViewWorksheetProductsByWorkerReport)
+                        <a class="collapse-item" href="{{ route('admin.stats.worksheet_products_by_worker') }}">Dolgozók termék db</a>
                     @endif
                 </div>
             </div>

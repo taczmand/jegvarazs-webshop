@@ -108,6 +108,7 @@ class PermissionSeeder extends Seeder
             ['id' => 92, 'name' => 'view-laravel-logs', 'label' => 'Laravel logok', 'group' => 'Jelentések'],
 
             ['id' => 126, 'name' => 'view-lead-conversion-report', 'label' => 'Érdeklődő konverzió jelentés megtekintése', 'group' => 'Jelentések'],
+            ['id' => 131, 'name' => 'view-worksheet-products-by-worker-report', 'label' => 'Dolgozók termék db', 'group' => 'Jelentések'],
 
             ['id' => 93, 'name' => 'view-clients', 'label' => 'Ügyfelek megtekintése', 'group' => 'Ügyviteli folyamatok'],
             ['id' => 94, 'name' => 'create-client', 'label' => 'Ügyfél létrehozása', 'group' => 'Ügyviteli folyamatok'],
