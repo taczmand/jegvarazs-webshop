@@ -75,6 +75,10 @@ class PagesController extends Controller
         return view('pages.about');
     }
 
+    public function topplusz() {
+        return view('pages.topplusz');
+    }
+
     public function contact() {
         $employees = Employee::all();
         $company_sites = CompanySite::all();

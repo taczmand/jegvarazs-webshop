@@ -581,6 +581,7 @@ Route::get('/automatizacio/kuldes', [AutomatedEmailController::class, 'sendToday
     Route::get('/', [PagesController::class, 'index'])->name('index');
     Route::get('/rolunk', [PagesController::class, 'about'])->name('about');
     Route::get('/kapcsolat', [PagesController::class, 'contact'])->name('contact');
+    Route::get('/top-plusz', [PagesController::class, 'topplusz'])->name('topplusz');
 
     Route::post('/idopontfoglalas', [PagesController::class, 'addAppointment'])->name('appointment.post');
     Route::post('/ajanlatkeres', [PagesController::class, 'addOffer'])->name('offer.post');

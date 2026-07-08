@@ -82,8 +82,9 @@
                             {!! $basicdata['company_footer_text'] !!}
                         @endif
                     </div>
-                    <div style="float: right; width: 250px">
-                        <a href="{{ env('SIMPLEPAY_LOGO_URL') }}" target="_blank"><img src="{{ asset('static_media/'.env('SIMPLEPAY_LOGO')) }}"></a>
+                    <div class="footer__copyright__payment">
+                        <a href="{{ route('topplusz') }}"><img src="{{ asset('static_media/top_plusz.jpg') }}" alt="TOP Plusz"></a>
+                        <a href="{{ env('SIMPLEPAY_LOGO_URL') }}" target="_blank"><img src="{{ asset('static_media/'.env('SIMPLEPAY_LOGO')) }}" alt="SimplePay"></a>
                     </div>
                 </div>
 

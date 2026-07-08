@@ -2922,6 +2922,20 @@ a {
 
 .footer__copyright__payment {
     float: right;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.footer__copyright__payment a {
+    display: inline-flex;
+    align-items: center;
+}
+
+.footer__copyright__payment img {
+    display: block;
+    height: 36px;
+    width: auto;
 }
 
 /*---------------------
