@@ -86,6 +86,7 @@
                             <option value="stock_statuses">Raktári állapotok</option>
                             <option value="order_statuses">Rendelési állapotok</option>
                             <option value="tax_categories">Adó osztályok</option>
+                            <option value="cash_receipts">Készpénzes tételek</option>
                         </select>
                     </div>
 
