@@ -141,6 +141,7 @@ class StatController extends Controller
                         'stock_statuses',
                         'order_statuses',
                         'tax_categories',
+                        'cash_receipts'
                     ];
 
                     if (in_array($model, $directModels, true)) {
