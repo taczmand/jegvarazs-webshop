@@ -863,6 +863,20 @@
                 submitContractForm(formData);
             });
 
+            // Újragenerálás új aláírás nélkül (módosításkor)
+            $('#regenarate').on('click', function (e) {
+                e.preventDefault();
+
+                contractActionButton = this;
+
+                document.getElementById('signature-input').value = '';
+                const form = document.getElementById('adminModalForm');
+                const formData = new FormData(form);
+                formData.append('_token', csrfToken);
+
+                submitContractForm(formData);
+            });
+
             function submitContractForm(formData) {
                 const doSubmit = () => {
                     $.ajax({
