@@ -17,6 +17,24 @@
                             @endforeach
                         </select>
                     </div>
+                    <div class="col-12 col-md-2">
+                        <label for="monthSelect" class="form-label">Hónap</label>
+                        <select class="form-select" id="monthSelect">
+                            <option value="" @if(empty($currentMonth)) selected @endif>Összes</option>
+                            <option value="1" @if(($currentMonth ?? null) === 1) selected @endif>Január</option>
+                            <option value="2" @if(($currentMonth ?? null) === 2) selected @endif>Február</option>
+                            <option value="3" @if(($currentMonth ?? null) === 3) selected @endif>Március</option>
+                            <option value="4" @if(($currentMonth ?? null) === 4) selected @endif>Április</option>
+                            <option value="5" @if(($currentMonth ?? null) === 5) selected @endif>Május</option>
+                            <option value="6" @if(($currentMonth ?? null) === 6) selected @endif>Június</option>
+                            <option value="7" @if(($currentMonth ?? null) === 7) selected @endif>Július</option>
+                            <option value="8" @if(($currentMonth ?? null) === 8) selected @endif>Augusztus</option>
+                            <option value="9" @if(($currentMonth ?? null) === 9) selected @endif>Szeptember</option>
+                            <option value="10" @if(($currentMonth ?? null) === 10) selected @endif>Október</option>
+                            <option value="11" @if(($currentMonth ?? null) === 11) selected @endif>November</option>
+                            <option value="12" @if(($currentMonth ?? null) === 12) selected @endif>December</option>
+                        </select>
+                    </div>
                     <div class="col-12 col-md-3">
                         <label for="workTypeSelect" class="form-label">Munkalap típusa</label>
                         <select class="form-select" id="workTypeSelect">
@@ -26,6 +44,7 @@
                             <option value="Felmérés" @if(($currentWorkType ?? null) === 'Felmérés') selected @endif>Felmérés</option>
                         </select>
                     </div>
+
                     <div class="col-12 col-md-9">
                         <div class="small text-muted" id="chartHint"></div>
                     </div>
@@ -56,6 +75,7 @@
         const hintEl = document.getElementById('chartHint');
         const yearSelect = document.getElementById('yearSelect');
         const workTypeSelect = document.getElementById('workTypeSelect');
+        const monthSelect = document.getElementById('monthSelect');
         const chartEl = document.getElementById('chartContainer');
         const chartScrollWrapEl = document.getElementById('chartScrollWrap');
 
@@ -115,13 +135,16 @@
             };
         }
 
-        async function loadData(year, workType) {
+        async function loadData(year, workType, month) {
             setHint('Betöltés...');
 
             const url = new URL(`{{ route('admin.stats.worksheet_products_by_worker.data') }}`, window.location.origin);
             url.searchParams.set('year', year);
             if (workType) {
                 url.searchParams.set('work_type', workType);
+            }
+            if (month) {
+                url.searchParams.set('month', month);
             }
 
             const res = await fetch(url.toString(), { headers: { 'Accept': 'application/json' } });
@@ -136,8 +159,8 @@
             return payload;
         }
 
-        async function renderFor(year, workType) {
-            const payload = await loadData(year, workType);
+        async function renderFor(year, workType, month) {
+            const payload = await loadData(year, workType, month);
             if (!payload) return;
 
             ensureScrollableMinWidth(payload);
@@ -150,7 +173,8 @@
             if (!yearSelect) return;
             const year = yearSelect.value;
             const workType = workTypeSelect ? workTypeSelect.value : '';
-            renderFor(year, workType);
+            const month = monthSelect ? monthSelect.value : '';
+            renderFor(year, workType, month);
         }
 
         if (yearSelect) {
@@ -158,6 +182,9 @@
         }
         if (workTypeSelect) {
             workTypeSelect.addEventListener('change', rerender);
+        }
+        if (monthSelect) {
+            monthSelect.addEventListener('change', rerender);
         }
 
         rerender();

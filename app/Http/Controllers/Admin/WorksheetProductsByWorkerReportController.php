@@ -17,19 +17,28 @@ class WorksheetProductsByWorkerReportController extends Controller
         }
 
         $currentYear = (int) ($request->query('year') ?: now()->year);
+        $requestedMonth = $request->query('month');
+        $month = is_numeric($requestedMonth) ? (int) $requestedMonth : 0;
+        if ($month < 1 || $month > 12) {
+            $month = 0;
+        }
         $requestedType = $request->query('work_type');
         $workType = is_string($requestedType) ? trim($requestedType) : '';
-        $allowedTypes = ['Karbantartás', 'Szerelés', 'Felmérés'];
-        if ($workType !== '' && !in_array($workType, $allowedTypes, true)) {
-            $workType = '';
-        }
 
         $yearsQuery = Worksheet::query()
             ->selectRaw('YEAR(installation_date) as year')
             ->distinct()
-            ->when($workType !== '', fn ($q) => $q->where('work_type', $workType), fn ($q) => $q->whereIn('work_type', $allowedTypes))
-            ->whereIn('work_status', ['Kész', 'Lezárva'])
-            ->orderByDesc('year');
+            ->whereIn('work_status', ['Kész', 'Lezárva']);
+
+        if ($month > 0) {
+            $yearsQuery->whereMonth('installation_date', $month);
+        }
+
+        if ($workType !== '') {
+            $yearsQuery->where('work_type', $workType);
+        }
+
+        $yearsQuery->orderByDesc('year');
 
         if ($user->can('view-own-worksheets') && !$user->can('view-worksheets')) {
             $yearsQuery->whereHas('workers', fn ($q) => $q->where('users.id', $user->id));
@@ -45,6 +54,7 @@ class WorksheetProductsByWorkerReportController extends Controller
             'years' => $years,
             'currentYear' => $currentYear,
             'currentWorkType' => $workType,
+            'currentMonth' => $month,
         ]);
     }
 
@@ -60,6 +70,12 @@ class WorksheetProductsByWorkerReportController extends Controller
             return response()->json(['message' => 'Érvénytelen év.'], 422);
         }
 
+        $requestedMonth = $request->query('month');
+        $month = is_numeric($requestedMonth) ? (int) $requestedMonth : 0;
+        if ($month < 1 || $month > 12) {
+            $month = 0;
+        }
+
         $requestedType = $request->query('work_type');
         $workType = is_string($requestedType) ? trim($requestedType) : '';
         $allowedTypes = ['Karbantartás', 'Szerelés', 'Felmérés'];
@@ -73,6 +89,7 @@ class WorksheetProductsByWorkerReportController extends Controller
             ->join('worksheet_workers', 'worksheets.id', '=', 'worksheet_workers.worksheet_id')
             ->leftJoin('users as worker', 'worksheet_workers.worker_id', '=', 'worker.id')
             ->whereYear('worksheets.installation_date', $year)
+            ->when($month > 0, fn ($q) => $q->whereMonth('worksheets.installation_date', $month))
             ->when($workType !== '', fn ($q) => $q->where('worksheets.work_type', $workType), fn ($q) => $q->whereIn('worksheets.work_type', $allowedTypes))
             ->whereIn('worksheets.work_status', ['Kész', 'Lezárva'])
             ->select([
@@ -100,6 +117,7 @@ class WorksheetProductsByWorkerReportController extends Controller
         return response()->json([
             'year' => $year,
             'work_type' => $workType,
+            'month' => $month,
             'dataPoints' => $dataPoints,
         ]);
     }
