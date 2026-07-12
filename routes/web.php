@@ -308,6 +308,7 @@ Route::get('/automatizacio/kuldes', [AutomatedEmailController::class, 'sendToday
             Route::get('/szerzodesek/verzio/{id}', [ContractController::class, 'getVersionJson'])->name('contracts.version.json');
             //Route::get('/contracts/create', [ContractController::class, 'create'])->name('contracts.create');
             Route::post('/szerzodesek', [ContractController::class, 'store'])->name('contracts.store');
+            Route::post('/szerzodesek/{id}/deposit-transfer-flag/reset', [ContractController::class, 'resetDepositTransferFlag'])->name('contracts.deposit_transfer_flag.reset');
             Route::get('/szerzodesek/v1', function () {
                 return view('pdf.contract_v1');
             })->name('contracts.create_v1');

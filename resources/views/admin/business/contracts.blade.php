@@ -2,7 +2,7 @@
 
 @section('content')
 
-    <div class="container p-0">
+    <div class="container-fluid px-0">
 
         <div class="d-flex justify-content-between align-items-center mb-3 pb-2">
             <h2 class="color-dark-blue mb-0">Ügyviteli folyamatok / Szerződések</h2>
@@ -36,6 +36,14 @@
                     <div class="filter-group flex-grow-1 flex-md-shrink-0">
                         <input type="text" placeholder="Cím" class="filter-input form-control" data-column="5">
                     </div>
+
+                    <div class="filter-group flex-grow-1 flex-md-shrink-0">
+                        <select class="form-control" id="deposit_transfer_flag_filter">
+                            <option value="">Foglaló típusa: összes</option>
+                            <option value="1">Foglaló típusa: átutalás és még nem érkezett meg</option>
+                            <option value="0">Foglaló típusa: átutalás és már megérkezett</option>
+                        </select>
+                    </div>
                 </div>
 
                 <table class="table table-bordered display responsive nowrap" id="adminTable" style="width:100%">
@@ -55,6 +63,11 @@
                     </tr>
                     </thead>
                 </table>
+
+                <div class="mt-2 d-flex align-items-center gap-2">
+                    <span class="d-inline-block px-2 py-1 table-info border rounded"></span>
+                    <span>Foglaló fizetési típusa: átutalás. Kattints a</span> <i class="fa-solid fa-circle-dollar-to-slot"></i> <span>ikonra, ha a pénz beérkezett.</span>
+                </div>
 
             @else
                 <div class="alert alert-warning">
@@ -349,7 +362,12 @@
                 },
                 processing: true,
                 serverSide: true,
-                ajax: '{{ route('admin.contracts.data') }}',
+                ajax: {
+                    url: '{{ route('admin.contracts.data') }}',
+                    data: function (d) {
+                        d.deposit_transfer_flag = ($('#deposit_transfer_flag_filter').val() || '').trim();
+                    }
+                },
                 order: [[0, 'desc']],
                 columns: [
                     {data: 'id'},
@@ -433,6 +451,10 @@
                 var i =$(this).attr('data-column');  // getting column index
                 var v =$(this).val();  // getting search input value
                 table.columns(i).search(v).draw();
+            });
+
+            $('#deposit_transfer_flag_filter').on('change', function () {
+                table.draw();
             });
 
             const signature_canvas = document.getElementById('signature-pad');
@@ -2038,6 +2060,35 @@
                     });
                 } catch (error) {
                     showToast(error.message || 'Hiba történt a szerződés törlésekor', 'danger');
+                }
+            });
+
+            $('#adminTable').on('click', '.reset-deposit-transfer-flag', async function () {
+                const row_data = $('#adminTable').DataTable().row($(this).parents('tr')).data();
+                const contract_id = row_data.id;
+                if (!contract_id) return;
+
+                try {
+                    $.ajax({
+                        url: `{{ url('/admin/szerzodesek') }}/${contract_id}/deposit-transfer-flag/reset`,
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': csrfToken
+                        },
+                        success: function (response) {
+                            showToast(response.message || 'Sikeres!', 'success');
+                            table.ajax.reload(null, false);
+                        },
+                        error: function (xhr) {
+                            let msg = 'Hiba!';
+                            if (xhr.responseJSON && xhr.responseJSON.message) {
+                                msg = xhr.responseJSON.message;
+                            }
+                            showToast(msg, 'danger');
+                        }
+                    });
+                } catch (error) {
+                    showToast(error.message || 'Hiba!', 'danger');
                 }
             });
 

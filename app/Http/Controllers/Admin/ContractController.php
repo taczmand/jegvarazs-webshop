@@ -119,8 +119,13 @@ class ContractController extends Controller
             'users.name as creator_name',
             'contracts.viewed_by',
             'contracts.viewed_at',
+            'contracts.deposit_transfer_flag',
         ])
             ->leftJoin('users', 'contracts.created_by', '=', 'users.id');
+
+        if ($request->filled('deposit_transfer_flag') && in_array((string) $request->input('deposit_transfer_flag'), ['0', '1'], true)) {
+            $contracts->where('contracts.deposit_transfer_flag', (int) $request->input('deposit_transfer_flag'));
+        }
 
         if ($user->can('view-own-contracts')) {
             $contracts->where('contracts.created_by', $user->id);
@@ -168,6 +173,13 @@ class ContractController extends Controller
                     </button>';
                 }
 
+                if ($user && $user->can('edit-contract') && (int) ($contract->deposit_transfer_flag ?? 0) === 1) {
+                    $buttons .= '
+                    <button class="btn btn-sm btn-info reset-deposit-transfer-flag" data-id="' . $contract->id . '" title="Foglaló összege átutalásra került">
+                        <i class="fa-solid fa-circle-dollar-to-slot"></i>
+                    </button>';
+                }
+
                 if ($user && $user->can('delete-contract')) {
                     $buttons .= '
                     <button class="btn btn-sm btn-danger delete" data-id="' . $contract->id . '" title="Törlés">
@@ -179,10 +191,30 @@ class ContractController extends Controller
                 return $buttons;
             })
             ->setRowClass(function ($contract) {
-                return $contract->viewed_by ? '' : 'fw-bold';
+                $classes = [];
+                if (!$contract->viewed_by) {
+                    $classes[] = 'fw-bold';
+                }
+                if ((int) ($contract->deposit_transfer_flag ?? 0) === 1) {
+                    $classes[] = 'table-info';
+                }
+                return implode(' ', $classes);
             })
             ->rawColumns(['action', 'viewed_by'])
             ->make(true);
+    }
+
+    public function resetDepositTransferFlag(Request $request, $id)
+    {
+        $user = auth('admin')->user();
+        if (!$user || !$user->can('edit-contract')) {
+            return response()->json(['message' => 'Nincs jogosultságod a szerződés módosításához.'], 403);
+        }
+
+        $contract = Contract::findOrFail($id);
+        $contract->update(['deposit_transfer_flag' => 0]);
+
+        return response()->json(['message' => 'Jelölés törölve.'], 200);
     }
 
 
@@ -477,11 +509,21 @@ class ContractController extends Controller
                 }
             }
 
+            $normalizedContractData = $this->normalizeContractData($request->input('contract_data', []));
+            $depositMethod = isset($normalizedContractData['deposit_payment_method'])
+                ? trim((string) $normalizedContractData['deposit_payment_method'])
+                : '';
+            $isTransferDeposit = $depositMethod === 'Átutalás';
+
             // Ha van contract_id → frissítünk
             if ($request->filled('contract_id')) {
                 $contract = Contract::findOrFail($request->input('contract_id'));
 
-                $contract->update([
+                $oldData = is_array($contract->data) ? $contract->data : [];
+                $oldDepositMethod = isset($oldData['deposit_payment_method']) ? trim((string) $oldData['deposit_payment_method']) : '';
+                $wasTransferDeposit = $oldDepositMethod === 'Átutalás';
+
+                $contractUpdate = [
                     'client_id' => $request->input('client_id') ?: null,
                     'lead_id' => $request->input('lead_id') ?: null,
                     'version' => $request->input('contract_version'),
@@ -497,8 +539,14 @@ class ContractController extends Controller
                     'place_of_birth' => $request->input('place_of_birth') ?? null,
                     'date_of_birth' => $request->input('date_of_birth') ?? null,
                     'id_number' => $request->input('id_number'),
-                    'data' => $this->normalizeContractData($request->input('contract_data', []))
-                ]);
+                    'data' => $normalizedContractData,
+                ];
+
+                if (!$wasTransferDeposit && $isTransferDeposit) {
+                    $contractUpdate['deposit_transfer_flag'] = 1;
+                }
+
+                $contract->update($contractUpdate);
 
                 if ($request->filled('signature')) {
                     $contract->update([
@@ -627,8 +675,9 @@ class ContractController extends Controller
                     'place_of_birth' => $request->input('place_of_birth') ?? null,
                     'date_of_birth' => $request->input('date_of_birth') ?? null,
                     'id_number' => $request->input('id_number'),
-                    'data' => $this->normalizeContractData($request->input('contract_data', [])),
+                    'data' => $normalizedContractData,
                     'signature_path' => "{$signatureName}",
+                    'deposit_transfer_flag' => $isTransferDeposit ? 1 : 0,
                     'created_by' => $creatorId,
                 ]);
 
