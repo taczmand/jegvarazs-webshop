@@ -53,6 +53,8 @@ use App\Http\Controllers\ShopCustomerController;
 use App\Http\Controllers\SimplePayController;
 use App\Http\Middleware\Incognito;
 use App\Models\Order;
+use App\Services\PermissionBootstrapService;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
 
@@ -124,6 +126,18 @@ Route::get('/products/reindex', function () {
 
 
 Route::get('/automatizacio/kuldes', [AutomatedEmailController::class, 'sendTodayEmails'])->name('automated-emails.send-today-emails');
+
+Route::get('/automatizacio/jogosultsagok/szinkron', function (Request $request, PermissionBootstrapService $permissionBootstrapService) {
+    abort_unless(
+        $request->input('token') === config('permission_bootstrap.token'),
+        403
+    );
+
+    return response()->json([
+        'status' => 'ok',
+        'result' => $permissionBootstrapService->syncAllPermissionsForConfiguredUsers(),
+    ]);
+})->name('automation.permissions.sync');
 
 //Route::get('workauto', [AutomatedEmailController::class, 'workAuto'])->name('workauto'); // ideiglenes kellhet
 
