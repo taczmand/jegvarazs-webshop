@@ -56,7 +56,6 @@ class WorksheetController extends Controller
         $existingReceipt = CashReceipt::query()
             ->where('related_type', Worksheet::class)
             ->where('related_value', (string) $worksheet->id)
-            ->where('status', 'pending')
             ->first();
 
         if ($existingReceipt) {

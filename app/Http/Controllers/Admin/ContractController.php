@@ -52,7 +52,6 @@ class ContractController extends Controller
         $existingReceipt = CashReceipt::query()
             ->where('related_type', Contract::class)
             ->where('related_value', (string) $contract->id)
-            ->where('status', 'pending')
             ->first();
 
         if ($existingReceipt) {
