@@ -2,6 +2,9 @@
 
 @section('content')
 
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/glightbox/dist/css/glightbox.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/glightbox/dist/js/glightbox.min.js"></script>
+
 
     <div class="container p-0">
 
@@ -565,7 +568,11 @@
                     const fileUrl = `${window.appConfig.APP_URL}admin/appointment-photos/${photo.path}`;
                     const row = $(`
                         <tr data-photo-id="${photo.id}">
-                            <td><a href="${fileUrl}" target="_blank"><img src="${fileUrl}" class="img-thumbnail" style="width: 100px;"></a></td>
+                            <td>
+                                <a href="${fileUrl}" class="glightbox" data-gallery="appointment">
+                                    <img src="${fileUrl}" class="img-thumbnail" style="width: 100px;">
+                                </a>
+                            </td>
 
                             <td class="text-center">
                                 <button type="button" class="btn btn-sm btn-danger delete-photo" data-photo-id="${photo.id}">
@@ -598,6 +605,17 @@
                         },
                         error: () => showToast('Nem sikerült törölni a képet', 'danger')
                     });
+                });
+
+                if (window.appointmentLightbox) {
+                    window.appointmentLightbox.destroy();
+                }
+
+                window.appointmentLightbox = GLightbox({
+                    selector: '.glightbox',
+                    touchNavigation: true,
+                    loop: true,
+                    zoomable: true,
                 });
             }
 
