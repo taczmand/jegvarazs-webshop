@@ -252,6 +252,7 @@ Route::get('/automatizacio/kuldes', [AutomatedEmailController::class, 'sendToday
 
             Route::get('/statisztika/termek-db-dolgozonkent', [WorksheetProductsByWorkerReportController::class, 'index'])->name('stats.worksheet_products_by_worker');
             Route::get('/statisztika/termek-db-dolgozonkent/data', [WorksheetProductsByWorkerReportController::class, 'data'])->name('stats.worksheet_products_by_worker.data');
+            Route::get('/statisztika/termek-db-dolgozonkent/data-by-month', [WorksheetProductsByWorkerReportController::class, 'dataByMonth'])->name('stats.worksheet_products_by_worker.data_by_month');
 
             Route::get('/statisztika/lead-konverzio', [LeadConversionReportController::class, 'index'])->name('stats.lead_conversion');
             Route::get('/statisztika/lead-konverzio/data', [LeadConversionReportController::class, 'data'])->name('stats.lead_conversion.data');

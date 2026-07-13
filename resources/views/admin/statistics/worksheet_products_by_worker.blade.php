@@ -3,7 +3,7 @@
 @section('content')
     <div class="container p-0">
         <div class="d-flex justify-content-between align-items-center mb-3 pb-2">
-            <h2 class="color-dark-blue mb-0">Jelentések / Dolgozók termék db</h2>
+            <h2 class="color-dark-blue mb-0">Jelentések / Termékmennyiségek</h2>
         </div>
 
         <div class="rounded-xl bg-white shadow-lg p-4">
@@ -38,10 +38,8 @@
                     <div class="col-12 col-md-3">
                         <label for="workTypeSelect" class="form-label">Munkalap típusa</label>
                         <select class="form-select" id="workTypeSelect">
-                            <option value="" @if(empty($currentWorkType)) selected @endif>Összes</option>
                             <option value="Karbantartás" @if(($currentWorkType ?? null) === 'Karbantartás') selected @endif>Karbantartás</option>
                             <option value="Szerelés" @if(($currentWorkType ?? null) === 'Szerelés') selected @endif>Szerelés</option>
-                            <option value="Felmérés" @if(($currentWorkType ?? null) === 'Felmérés') selected @endif>Felmérés</option>
                         </select>
                     </div>
 
@@ -52,6 +50,10 @@
 
                 <div id="chartScrollWrap" style="width: 100%; overflow-x: auto; overflow-y: hidden;">
                     <div id="chartContainer" style="width: 100%;"></div>
+                </div>
+
+                <div class="mt-4" id="monthlyChartScrollWrap" style="width: 100%; overflow-x: auto; overflow-y: hidden;">
+                    <div id="monthlyChartContainer" style="width: 100%;"></div>
                 </div>
             @else
                 <div class="alert alert-warning" role="alert">
@@ -66,9 +68,12 @@
     <script src="https://cdn.canvasjs.com/canvasjs.min.js"></script>
     <style>
         #chartContainer { height: 520px; }
+        #monthlyChartContainer { height: 420px; }
         #chartScrollWrap { -webkit-overflow-scrolling: touch; }
+        #monthlyChartScrollWrap { -webkit-overflow-scrolling: touch; }
         @media (max-width: 576px) {
             #chartContainer { height: 380px; }
+            #monthlyChartContainer { height: 320px; }
         }
     </style>
     <script type="module">
@@ -79,7 +84,11 @@
         const chartEl = document.getElementById('chartContainer');
         const chartScrollWrapEl = document.getElementById('chartScrollWrap');
 
+        const monthlyChartEl = document.getElementById('monthlyChartContainer');
+        const monthlyChartScrollWrapEl = document.getElementById('monthlyChartScrollWrap');
+
         let chart = null;
+        let monthlyChart = null;
 
         function isMobile() {
             return window.matchMedia && window.matchMedia('(max-width: 576px)').matches;
@@ -97,6 +106,18 @@
             chartEl.style.minWidth = `${Math.max(desired, wrapWidth)}px`;
         }
 
+        function ensureScrollableMinWidthMonthly(payload) {
+            if (!monthlyChartEl || !monthlyChartScrollWrapEl) return;
+
+            const points = Array.isArray(payload?.dataPoints) ? payload.dataPoints.length : 0;
+            const basePxPerColumn = isMobile() ? 40 : 34;
+            const padding = 160;
+            const desired = (Math.max(1, points) * basePxPerColumn) + padding;
+            const wrapWidth = monthlyChartScrollWrapEl.clientWidth || 0;
+
+            monthlyChartEl.style.minWidth = `${Math.max(desired, wrapWidth)}px`;
+        }
+
         function setHint(text) {
             if (!hintEl) return;
             hintEl.textContent = text || '';
@@ -111,6 +132,39 @@
                 theme: 'light2',
                 title: {
                     text: `Munkalapokon felhasznált termékek mennyisége dolgozónként – ${payload?.year ?? ''}`,
+                    fontSize: mobile ? 14 : 18,
+                    margin: mobile ? 8 : 10,
+                },
+                axisY: {
+                    title: mobile ? '' : 'Mennyiség (db)',
+                    includeZero: true,
+                    labelFontSize: mobile ? 10 : 12,
+                    titleFontSize: mobile ? 11 : 13,
+                },
+                axisX: {
+                    interval: 1,
+                    labelFontSize: mobile ? 10 : 12,
+                    labelAngle: mobile ? 0 : 0,
+                },
+                toolTip: {
+                    shared: false,
+                },
+                data: [{
+                    type: 'column',
+                    dataPoints: points,
+                }],
+            };
+        }
+
+        function buildMonthlyChartOptions(payload) {
+            const mobile = isMobile();
+            const points = Array.isArray(payload?.dataPoints) ? payload.dataPoints : [];
+
+            return {
+                animationEnabled: true,
+                theme: 'light2',
+                title: {
+                    text: `Havi összesített mennyiség – ${payload?.year ?? ''}`,
                     fontSize: mobile ? 14 : 18,
                     margin: mobile ? 8 : 10,
                 },
@@ -159,6 +213,27 @@
             return payload;
         }
 
+        async function loadMonthlyData(year, workType, month) {
+            const url = new URL(`{{ route('admin.stats.worksheet_products_by_worker.data_by_month') }}`, window.location.origin);
+            url.searchParams.set('year', year);
+            if (workType) {
+                url.searchParams.set('work_type', workType);
+            }
+            if (month) {
+                url.searchParams.set('month', month);
+            }
+
+            const res = await fetch(url.toString(), { headers: { 'Accept': 'application/json' } });
+            const payload = await res.json().catch(() => ({}));
+
+            if (!res.ok) {
+                setHint(payload?.message || 'Hiba történt az adatok betöltésekor.');
+                return null;
+            }
+
+            return payload;
+        }
+
         async function renderFor(year, workType, month) {
             const payload = await loadData(year, workType, month);
             if (!payload) return;
@@ -167,6 +242,14 @@
 
             chart = new CanvasJS.Chart('chartContainer', buildChartOptions(payload));
             chart.render();
+
+            const monthlyPayload = await loadMonthlyData(year, workType, month);
+            if (!monthlyPayload) return;
+
+            ensureScrollableMinWidthMonthly(monthlyPayload);
+
+            monthlyChart = new CanvasJS.Chart('monthlyChartContainer', buildMonthlyChartOptions(monthlyPayload));
+            monthlyChart.render();
         }
 
         function rerender() {

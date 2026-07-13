@@ -317,7 +317,7 @@
                         <a class="collapse-item" href="{{ route('admin.stats.contract_products') }}">Szerződések termék db</a>
                     @endif
                     @if($canViewWorksheetProductsByWorkerReport)
-                        <a class="collapse-item" href="{{ route('admin.stats.worksheet_products_by_worker') }}">Dolgozók termék db</a>
+                        <a class="collapse-item" href="{{ route('admin.stats.worksheet_products_by_worker') }}">Termékmennyiségek</a>
                     @endif
                 </div>
             </div>

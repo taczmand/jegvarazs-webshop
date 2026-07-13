@@ -25,6 +25,10 @@ class WorksheetProductsByWorkerReportController extends Controller
         $requestedType = $request->query('work_type');
         $workType = is_string($requestedType) ? trim($requestedType) : '';
 
+        if ($workType === '') {
+            $workType = 'Szerelés';
+        }
+
         $yearsQuery = Worksheet::query()
             ->selectRaw('YEAR(installation_date) as year')
             ->distinct()
@@ -128,6 +132,113 @@ class WorksheetProductsByWorkerReportController extends Controller
             $dataPoints[] = [
                 'label' => (string) $r->worker_name,
                 'y' => (int) $r->qty,
+            ];
+        }
+
+        return response()->json([
+            'year' => $year,
+            'work_type' => $workType,
+            'month' => $month,
+            'dataPoints' => $dataPoints,
+        ]);
+    }
+
+    public function dataByMonth(Request $request)
+    {
+        $user = auth('admin')->user();
+        if (!$user || !$user->can('view-worksheet-products-by-worker-report')) {
+            return response()->json(['message' => 'Nincs jogosultságod a jelentés megtekintéséhez.'], 403);
+        }
+
+        $year = (int) ($request->query('year') ?: now()->year);
+        if ($year < 2000 || $year > 2100) {
+            return response()->json(['message' => 'Érvénytelen év.'], 422);
+        }
+
+        $requestedMonth = $request->query('month');
+        $month = is_numeric($requestedMonth) ? (int) $requestedMonth : 0;
+        if ($month < 1 || $month > 12) {
+            $month = 0;
+        }
+
+        $requestedType = $request->query('work_type');
+        $workType = is_string($requestedType) ? trim($requestedType) : '';
+        $allowedTypes = ['Karbantartás', 'Szerelés', 'Felmérés'];
+        if ($workType !== '' && !in_array($workType, $allowedTypes, true)) {
+            return response()->json(['message' => 'Érvénytelen munkalap típus.'], 422);
+        }
+
+        if ($workType === 'Karbantartás') {
+            $query = DB::table('worksheets')
+                ->whereYear('installation_date', $year)
+                ->when($month > 0, fn ($q) => $q->whereMonth('installation_date', $month))
+                ->where('work_type', 'Karbantartás')
+                ->whereIn('work_status', ['Kész', 'Lezárva'])
+                ->select([
+                    DB::raw('MONTH(installation_date) as month'),
+                    DB::raw('SUM(CAST(COALESCE(JSON_UNQUOTE(JSON_EXTRACT(data, "$.device_qty")), "0") AS UNSIGNED)) as qty'),
+                ])
+                ->groupBy(DB::raw('MONTH(installation_date)'))
+                ->orderBy(DB::raw('MONTH(installation_date)'));
+        } else {
+            $query = DB::table('worksheets')
+                ->join('worksheet_products', 'worksheets.id', '=', 'worksheet_products.worksheet_id')
+                ->join('products', 'worksheet_products.product_id', '=', 'products.id')
+                ->whereYear('worksheets.installation_date', $year)
+                ->when($month > 0, fn ($q) => $q->whereMonth('worksheets.installation_date', $month))
+                ->when($workType !== '', fn ($q) => $q->where('worksheets.work_type', $workType), fn ($q) => $q->whereIn('worksheets.work_type', $allowedTypes))
+                ->whereIn('worksheets.work_status', ['Kész', 'Lezárva'])
+                ->select([
+                    DB::raw('MONTH(worksheets.installation_date) as month'),
+                    DB::raw('SUM(CASE WHEN COALESCE(products.count_in_contract_products_report, 1) = 1 THEN COALESCE(worksheet_products.quantity, 0) ELSE 0 END) as qty'),
+                ])
+                ->groupBy(DB::raw('MONTH(worksheets.installation_date)'))
+                ->orderBy(DB::raw('MONTH(worksheets.installation_date)'));
+        }
+
+        if ($user->can('view-own-worksheets') && !$user->can('view-worksheets')) {
+            $query->whereExists(function ($q) use ($user) {
+                $q->select(DB::raw(1))
+                    ->from('worksheet_workers')
+                    ->whereColumn('worksheet_workers.worksheet_id', 'worksheets.id')
+                    ->where('worksheet_workers.worker_id', $user->id);
+            });
+        }
+
+        $rows = $query->get();
+
+        $monthNames = [
+            1 => 'Január',
+            2 => 'Február',
+            3 => 'Március',
+            4 => 'Április',
+            5 => 'Május',
+            6 => 'Június',
+            7 => 'Július',
+            8 => 'Augusztus',
+            9 => 'Szeptember',
+            10 => 'Október',
+            11 => 'November',
+            12 => 'December',
+        ];
+
+        $map = [];
+        foreach ($rows as $r) {
+            $m = (int) ($r->month ?? 0);
+            if ($m < 1 || $m > 12) {
+                continue;
+            }
+            $map[$m] = (int) ($r->qty ?? 0);
+        }
+
+        $dataPoints = [];
+        for ($m = 1; $m <= 12; $m++) {
+            if ($month > 0 && $m !== $month) {
+                continue;
+            }
+            $dataPoints[] = [
+                'label' => $monthNames[$m],
+                'y' => (int) ($map[$m] ?? 0),
             ];
         }
 
