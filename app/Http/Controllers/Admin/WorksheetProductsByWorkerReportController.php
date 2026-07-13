@@ -29,10 +29,22 @@ class WorksheetProductsByWorkerReportController extends Controller
             $workType = 'Szerelés';
         }
 
+        $allowedStatuses = ['Folyamatban', 'Kész', 'Lezárva'];
+        $requestedStatuses = $request->query('work_statuses');
+        if (is_string($requestedStatuses)) {
+            $requestedStatuses = [$requestedStatuses];
+        }
+        $workStatuses = is_array($requestedStatuses) ? array_values(array_filter($requestedStatuses, fn ($s) => is_string($s) && $s !== '')) : [];
+        $workStatuses = array_values(array_unique($workStatuses));
+        $workStatuses = array_values(array_filter($workStatuses, fn ($s) => in_array($s, $allowedStatuses, true)));
+        if (count($workStatuses) < 1) {
+            $workStatuses = ['Kész', 'Lezárva'];
+        }
+
         $yearsQuery = Worksheet::query()
             ->selectRaw('YEAR(installation_date) as year')
             ->distinct()
-            ->whereIn('work_status', ['Kész', 'Lezárva']);
+            ->whereIn('work_status', $workStatuses);
 
         if ($month > 0) {
             $yearsQuery->whereMonth('installation_date', $month);
@@ -59,6 +71,8 @@ class WorksheetProductsByWorkerReportController extends Controller
             'currentYear' => $currentYear,
             'currentWorkType' => $workType,
             'currentMonth' => $month,
+            'allowedStatuses' => $allowedStatuses,
+            'currentWorkStatuses' => $workStatuses,
         ]);
     }
 
@@ -87,6 +101,22 @@ class WorksheetProductsByWorkerReportController extends Controller
             return response()->json(['message' => 'Érvénytelen munkalap típus.'], 422);
         }
 
+        $allowedStatuses = ['Folyamatban', 'Kész', 'Lezárva'];
+        $requestedStatuses = $request->query('work_statuses');
+        if (is_string($requestedStatuses)) {
+            $requestedStatuses = [$requestedStatuses];
+        }
+        $workStatuses = is_array($requestedStatuses) ? array_values(array_filter($requestedStatuses, fn ($s) => is_string($s) && $s !== '')) : [];
+        $workStatuses = array_values(array_unique($workStatuses));
+        foreach ($workStatuses as $s) {
+            if (!in_array($s, $allowedStatuses, true)) {
+                return response()->json(['message' => 'Érvénytelen munkalap állapot.'], 422);
+            }
+        }
+        if (count($workStatuses) < 1) {
+            $workStatuses = ['Kész', 'Lezárva'];
+        }
+
         if ($workType === 'Karbantartás') {
             $query = DB::table('worksheets')
                 ->join('worksheet_workers', 'worksheets.id', '=', 'worksheet_workers.worksheet_id')
@@ -94,7 +124,7 @@ class WorksheetProductsByWorkerReportController extends Controller
                 ->whereYear('worksheets.installation_date', $year)
                 ->when($month > 0, fn ($q) => $q->whereMonth('worksheets.installation_date', $month))
                 ->where('worksheets.work_type', 'Karbantartás')
-                ->whereIn('worksheets.work_status', ['Kész', 'Lezárva'])
+                ->whereIn('worksheets.work_status', $workStatuses)
                 ->select([
                     DB::raw('COALESCE(worker.id, 0) as worker_id'),
                     DB::raw('COALESCE(worker.name, "Ismeretlen") as worker_name'),
@@ -111,7 +141,7 @@ class WorksheetProductsByWorkerReportController extends Controller
                 ->whereYear('worksheets.installation_date', $year)
                 ->when($month > 0, fn ($q) => $q->whereMonth('worksheets.installation_date', $month))
                 ->when($workType !== '', fn ($q) => $q->where('worksheets.work_type', $workType), fn ($q) => $q->whereIn('worksheets.work_type', $allowedTypes))
-                ->whereIn('worksheets.work_status', ['Kész', 'Lezárva'])
+                ->whereIn('worksheets.work_status', $workStatuses)
                 ->select([
                     DB::raw('COALESCE(worker.id, 0) as worker_id'),
                     DB::raw('COALESCE(worker.name, "Ismeretlen") as worker_name'),
@@ -139,6 +169,7 @@ class WorksheetProductsByWorkerReportController extends Controller
             'year' => $year,
             'work_type' => $workType,
             'month' => $month,
+            'work_statuses' => $workStatuses,
             'dataPoints' => $dataPoints,
         ]);
     }
@@ -168,12 +199,28 @@ class WorksheetProductsByWorkerReportController extends Controller
             return response()->json(['message' => 'Érvénytelen munkalap típus.'], 422);
         }
 
+        $allowedStatuses = ['Folyamatban', 'Kész', 'Lezárva'];
+        $requestedStatuses = $request->query('work_statuses');
+        if (is_string($requestedStatuses)) {
+            $requestedStatuses = [$requestedStatuses];
+        }
+        $workStatuses = is_array($requestedStatuses) ? array_values(array_filter($requestedStatuses, fn ($s) => is_string($s) && $s !== '')) : [];
+        $workStatuses = array_values(array_unique($workStatuses));
+        foreach ($workStatuses as $s) {
+            if (!in_array($s, $allowedStatuses, true)) {
+                return response()->json(['message' => 'Érvénytelen munkalap állapot.'], 422);
+            }
+        }
+        if (count($workStatuses) < 1) {
+            $workStatuses = ['Kész', 'Lezárva'];
+        }
+
         if ($workType === 'Karbantartás') {
             $query = DB::table('worksheets')
                 ->whereYear('installation_date', $year)
                 ->when($month > 0, fn ($q) => $q->whereMonth('installation_date', $month))
                 ->where('work_type', 'Karbantartás')
-                ->whereIn('work_status', ['Kész', 'Lezárva'])
+                ->whereIn('work_status', $workStatuses)
                 ->select([
                     DB::raw('MONTH(installation_date) as month'),
                     DB::raw('SUM(CAST(COALESCE(JSON_UNQUOTE(JSON_EXTRACT(data, "$.device_qty")), "0") AS UNSIGNED)) as qty'),
@@ -187,7 +234,7 @@ class WorksheetProductsByWorkerReportController extends Controller
                 ->whereYear('worksheets.installation_date', $year)
                 ->when($month > 0, fn ($q) => $q->whereMonth('worksheets.installation_date', $month))
                 ->when($workType !== '', fn ($q) => $q->where('worksheets.work_type', $workType), fn ($q) => $q->whereIn('worksheets.work_type', $allowedTypes))
-                ->whereIn('worksheets.work_status', ['Kész', 'Lezárva'])
+                ->whereIn('worksheets.work_status', $workStatuses)
                 ->select([
                     DB::raw('MONTH(worksheets.installation_date) as month'),
                     DB::raw('SUM(CASE WHEN COALESCE(products.count_in_contract_products_report, 1) = 1 THEN COALESCE(worksheet_products.quantity, 0) ELSE 0 END) as qty'),
@@ -246,6 +293,7 @@ class WorksheetProductsByWorkerReportController extends Controller
             'year' => $year,
             'work_type' => $workType,
             'month' => $month,
+            'work_statuses' => $workStatuses,
             'dataPoints' => $dataPoints,
         ]);
     }

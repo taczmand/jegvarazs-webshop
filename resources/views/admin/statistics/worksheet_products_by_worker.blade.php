@@ -43,6 +43,25 @@
                         </select>
                     </div>
 
+                    <div class="col-12 col-md-4">
+                        <label class="form-label">Munkalap állapot</label>
+                        <div class="d-flex flex-wrap gap-3">
+                            @foreach(($allowedStatuses ?? []) as $status)
+                                <div class="form-check">
+                                    <input
+                                        class="form-check-input"
+                                        type="checkbox"
+                                        name="work_statuses[]"
+                                        id="workStatus_{{ md5($status) }}"
+                                        value="{{ $status }}"
+                                        @if(in_array($status, ($currentWorkStatuses ?? []), true)) checked @endif
+                                    >
+                                    <label class="form-check-label" for="workStatus_{{ md5($status) }}">{{ $status }}</label>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+
                     <div class="col-12 col-md-9">
                         <div class="small text-muted" id="chartHint"></div>
                     </div>
@@ -51,8 +70,6 @@
                 <div id="chartScrollWrap" style="width: 100%; overflow-x: auto; overflow-y: hidden;">
                     <div id="chartContainer" style="width: 100%;"></div>
                 </div>
-
-                <div class="mt-2 fw-bold" id="chartSum"></div>
 
                 <div class="mt-4" id="monthlyChartScrollWrap" style="width: 100%; overflow-x: auto; overflow-y: hidden;">
                     <div id="monthlyChartContainer" style="width: 100%;"></div>
@@ -88,7 +105,7 @@
         const chartEl = document.getElementById('chartContainer');
         const chartScrollWrapEl = document.getElementById('chartScrollWrap');
 
-        const chartSumEl = document.getElementById('chartSum');
+        const workStatusCheckboxes = Array.from(document.querySelectorAll('input[name="work_statuses[]"]'));
 
         const monthlyChartEl = document.getElementById('monthlyChartContainer');
         const monthlyChartScrollWrapEl = document.getElementById('monthlyChartScrollWrap');
@@ -136,6 +153,13 @@
             const points = Array.isArray(payload?.dataPoints) ? payload.dataPoints : [];
             const sum = points.reduce((acc, p) => acc + (parseInt(p?.y ?? 0, 10) || 0), 0);
             el.textContent = `Összesen: ${sum} db`;
+        }
+
+        function getSelectedWorkStatuses() {
+            return workStatusCheckboxes
+                .filter(cb => cb && cb.checked)
+                .map(cb => cb.value)
+                .filter(v => typeof v === 'string' && v !== '');
         }
 
         function buildChartOptions(payload) {
@@ -204,7 +228,7 @@
             };
         }
 
-        async function loadData(year, workType, month) {
+        async function loadData(year, workType, month, workStatuses) {
             setHint('Betöltés...');
 
             const url = new URL(`{{ route('admin.stats.worksheet_products_by_worker.data') }}`, window.location.origin);
@@ -214,6 +238,9 @@
             }
             if (month) {
                 url.searchParams.set('month', month);
+            }
+            if (Array.isArray(workStatuses)) {
+                workStatuses.forEach(s => url.searchParams.append('work_statuses[]', s));
             }
 
             const res = await fetch(url.toString(), { headers: { 'Accept': 'application/json' } });
@@ -228,7 +255,7 @@
             return payload;
         }
 
-        async function loadMonthlyData(year, workType, month) {
+        async function loadMonthlyData(year, workType, month, workStatuses) {
             const url = new URL(`{{ route('admin.stats.worksheet_products_by_worker.data_by_month') }}`, window.location.origin);
             url.searchParams.set('year', year);
             if (workType) {
@@ -236,6 +263,9 @@
             }
             if (month) {
                 url.searchParams.set('month', month);
+            }
+            if (Array.isArray(workStatuses)) {
+                workStatuses.forEach(s => url.searchParams.append('work_statuses[]', s));
             }
 
             const res = await fetch(url.toString(), { headers: { 'Accept': 'application/json' } });
@@ -249,8 +279,8 @@
             return payload;
         }
 
-        async function renderFor(year, workType, month) {
-            const payload = await loadData(year, workType, month);
+        async function renderFor(year, workType, month, workStatuses) {
+            const payload = await loadData(year, workType, month, workStatuses);
             if (!payload) return;
 
             ensureScrollableMinWidth(payload);
@@ -258,9 +288,7 @@
             chart = new CanvasJS.Chart('chartContainer', buildChartOptions(payload));
             chart.render();
 
-            setSum(chartSumEl, payload);
-
-            const monthlyPayload = await loadMonthlyData(year, workType, month);
+            const monthlyPayload = await loadMonthlyData(year, workType, month, workStatuses);
             if (!monthlyPayload) return;
 
             ensureScrollableMinWidthMonthly(monthlyPayload);
@@ -276,7 +304,8 @@
             const year = yearSelect.value;
             const workType = workTypeSelect ? workTypeSelect.value : '';
             const month = monthSelect ? monthSelect.value : '';
-            renderFor(year, workType, month);
+            const workStatuses = getSelectedWorkStatuses();
+            renderFor(year, workType, month, workStatuses);
         }
 
         if (yearSelect) {
@@ -288,6 +317,8 @@
         if (monthSelect) {
             monthSelect.addEventListener('change', rerender);
         }
+
+        workStatusCheckboxes.forEach(cb => cb.addEventListener('change', rerender));
 
         rerender();
     </script>
