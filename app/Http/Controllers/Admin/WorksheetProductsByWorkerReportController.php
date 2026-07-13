@@ -83,22 +83,39 @@ class WorksheetProductsByWorkerReportController extends Controller
             return response()->json(['message' => 'Érvénytelen munkalap típus.'], 422);
         }
 
-        $query = DB::table('worksheets')
-            ->join('worksheet_products', 'worksheets.id', '=', 'worksheet_products.worksheet_id')
-            ->join('products', 'worksheet_products.product_id', '=', 'products.id')
-            ->join('worksheet_workers', 'worksheets.id', '=', 'worksheet_workers.worksheet_id')
-            ->leftJoin('users as worker', 'worksheet_workers.worker_id', '=', 'worker.id')
-            ->whereYear('worksheets.installation_date', $year)
-            ->when($month > 0, fn ($q) => $q->whereMonth('worksheets.installation_date', $month))
-            ->when($workType !== '', fn ($q) => $q->where('worksheets.work_type', $workType), fn ($q) => $q->whereIn('worksheets.work_type', $allowedTypes))
-            ->whereIn('worksheets.work_status', ['Kész', 'Lezárva'])
-            ->select([
-                DB::raw('COALESCE(worker.id, 0) as worker_id'),
-                DB::raw('COALESCE(worker.name, "Ismeretlen") as worker_name'),
-                DB::raw('SUM(CASE WHEN COALESCE(products.count_in_contract_products_report, 1) = 1 THEN COALESCE(worksheet_products.quantity, 0) ELSE 0 END) as qty'),
-            ])
-            ->groupBy(DB::raw('COALESCE(worker.id, 0)'), DB::raw('COALESCE(worker.name, "Ismeretlen")'))
-            ->orderByDesc('qty');
+        if ($workType === 'Karbantartás') {
+            $query = DB::table('worksheets')
+                ->join('worksheet_workers', 'worksheets.id', '=', 'worksheet_workers.worksheet_id')
+                ->leftJoin('users as worker', 'worksheet_workers.worker_id', '=', 'worker.id')
+                ->whereYear('worksheets.installation_date', $year)
+                ->when($month > 0, fn ($q) => $q->whereMonth('worksheets.installation_date', $month))
+                ->where('worksheets.work_type', 'Karbantartás')
+                ->whereIn('worksheets.work_status', ['Kész', 'Lezárva'])
+                ->select([
+                    DB::raw('COALESCE(worker.id, 0) as worker_id'),
+                    DB::raw('COALESCE(worker.name, "Ismeretlen") as worker_name'),
+                    DB::raw('SUM(CAST(COALESCE(JSON_UNQUOTE(JSON_EXTRACT(worksheets.data, "$.device_qty")), "0") AS UNSIGNED)) as qty'),
+                ])
+                ->groupBy(DB::raw('COALESCE(worker.id, 0)'), DB::raw('COALESCE(worker.name, "Ismeretlen")'))
+                ->orderByDesc('qty');
+        } else {
+            $query = DB::table('worksheets')
+                ->join('worksheet_products', 'worksheets.id', '=', 'worksheet_products.worksheet_id')
+                ->join('products', 'worksheet_products.product_id', '=', 'products.id')
+                ->join('worksheet_workers', 'worksheets.id', '=', 'worksheet_workers.worksheet_id')
+                ->leftJoin('users as worker', 'worksheet_workers.worker_id', '=', 'worker.id')
+                ->whereYear('worksheets.installation_date', $year)
+                ->when($month > 0, fn ($q) => $q->whereMonth('worksheets.installation_date', $month))
+                ->when($workType !== '', fn ($q) => $q->where('worksheets.work_type', $workType), fn ($q) => $q->whereIn('worksheets.work_type', $allowedTypes))
+                ->whereIn('worksheets.work_status', ['Kész', 'Lezárva'])
+                ->select([
+                    DB::raw('COALESCE(worker.id, 0) as worker_id'),
+                    DB::raw('COALESCE(worker.name, "Ismeretlen") as worker_name'),
+                    DB::raw('SUM(CASE WHEN COALESCE(products.count_in_contract_products_report, 1) = 1 THEN COALESCE(worksheet_products.quantity, 0) ELSE 0 END) as qty'),
+                ])
+                ->groupBy(DB::raw('COALESCE(worker.id, 0)'), DB::raw('COALESCE(worker.name, "Ismeretlen")'))
+                ->orderByDesc('qty');
+        }
 
         if ($user->can('view-own-worksheets') && !$user->can('view-worksheets')) {
             $query->where('worksheet_workers.worker_id', $user->id);
