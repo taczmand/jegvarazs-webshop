@@ -59,21 +59,21 @@ class WorksheetController extends Controller
             ->where('status', 'pending')
             ->first();
 
-        $receivedDate = $receivedDateOverride ?: ($existingReceipt?->received_date ?: now()->toDateString());
+        if ($existingReceipt) {
+            return;
+        }
 
-        CashReceipt::updateOrCreate(
-            [
-                'related_type' => Worksheet::class,
-                'related_value' => (string) $worksheet->id,
-            ],
-            [
-                'received_by_user_id' => $receivedByUserId,
-                'amount' => (int) $worksheet->payment_amount,
-                'received_from_name' => $worksheet->name,
-                'received_date' => $receivedDate,
-                'status' => 'pending',
-            ]
-        );
+        $receivedDate = $receivedDateOverride ?: now()->toDateString();
+
+        CashReceipt::create([
+            'related_type' => Worksheet::class,
+            'related_value' => (string) $worksheet->id,
+            'received_by_user_id' => $receivedByUserId,
+            'amount' => (int) $worksheet->payment_amount,
+            'received_from_name' => $worksheet->name,
+            'received_date' => $receivedDate,
+            'status' => 'pending',
+        ]);
     }
 
     public function clientIdFix(Request $request)

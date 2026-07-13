@@ -49,19 +49,25 @@ class ContractController extends Controller
             $receivedByUserId = (int) $contract->created_by;
         }
 
-        CashReceipt::updateOrCreate(
-            [
-                'related_type' => Contract::class,
-                'related_value' => (string) $contract->id,
-            ],
-            [
-                'received_by_user_id' => $receivedByUserId,
-                'amount' => (int) $depositAmount,
-                'received_from_name' => $contract->name,
-                'received_date' => now()->toDateString(),
-                'status' => 'pending',
-            ]
-        );
+        $existingReceipt = CashReceipt::query()
+            ->where('related_type', Contract::class)
+            ->where('related_value', (string) $contract->id)
+            ->where('status', 'pending')
+            ->first();
+
+        if ($existingReceipt) {
+            return;
+        }
+
+        CashReceipt::create([
+            'related_type' => Contract::class,
+            'related_value' => (string) $contract->id,
+            'received_by_user_id' => $receivedByUserId,
+            'amount' => (int) $depositAmount,
+            'received_from_name' => $contract->name,
+            'received_date' => now()->toDateString(),
+            'status' => 'pending',
+        ]);
     }
 
     public function index()
