@@ -24,23 +24,27 @@ class AppointmentController extends Controller
     }
     public function data()
     {
-        $appointments = Appointment::select([
-            'id',
-            'client_id',
-            'name',
-            'email',
-            'phone',
-            'zip_code',
-            'city',
-            'address_line',
-            'appointment_date',
-            'appointment_type',
-            'message',
-            'status',
-            'created_at',
-            'viewed_by',
-            'viewed_at',
-        ]);
+        $appointments = Appointment::query()
+            ->select([
+                'appointments.id',
+                'appointments.client_id',
+                'appointments.name',
+                'appointments.email',
+                'appointments.phone',
+                'appointments.zip_code',
+                'appointments.city',
+                'appointments.address_line',
+                'appointments.appointment_date',
+                'appointments.appointment_type',
+                'appointments.message',
+                'appointments.status',
+                'appointments.created_at',
+                'appointments.viewed_by',
+                'appointments.viewed_at',
+                'appointments.created_by',
+                'users.name as creator_name',
+            ])
+            ->leftJoin('users', 'appointments.created_by', '=', 'users.id');
 
         return DataTables::of($appointments)
             ->editColumn('created_at', function ($item) {
@@ -54,6 +58,9 @@ class AppointmentController extends Controller
                     return '<span title="' . e($tooltip) . '">' . e($item->viewed_by) . '</span>';
                 }
                 return '<span class="text-warning"><i class="fa-solid fa-eye-slash"></i></span>';
+            })
+            ->addColumn('creator_name', function ($item) {
+                return $item->creator_name ?: '-';
             })
             ->filterColumn('status', function ($query, $keyword) {
                 $query->where('status', '=', "{$keyword}");
@@ -231,6 +238,7 @@ class AppointmentController extends Controller
                 'appointment_type' => $request->input('appointment_type', 'Karbantartás'),
                 'message'          => $request->input('message'),
                 'status'           => $request->input('status', 'Függőben'),
+                'created_by'        => auth('admin')->id(),
             ]);
 
             if ($request->input('email')) {

@@ -38,7 +38,7 @@
                         <input type="text" placeholder="Cím" class="filter-input form-control" data-column="6">
                     </div>
                     <div class="filter-group flex-grow-1 flex-md-shrink-0">
-                        <select class="form-select filter-input" data-column="11">
+                        <select class="form-select filter-input" data-column="12">
                             <option value="">Állapot (összes)</option>
                             <option value="Függőben">Függőben</option>
                             <option value="Folyamatban">Folyamatban</option>
@@ -62,6 +62,7 @@
                             <th>Típus</th>
                             <th style="display:none">Megjegyzés</th>
                             <th>Látta</th>
+                            <th>Készítette</th>
                             <th>Állapot</th>
                             <th>Létrehozva</th>
                             <th data-priority="2">Műveletek</th>
@@ -234,6 +235,7 @@
                     { data: 'appointment_type' },
                     { data: 'message', visible: false },
                     { data: 'viewed_by' },
+                    { data: 'creator_name' },
                     { data: 'status' },
                     { data: 'created_at' },
                     { data: 'action', orderable: false, searchable: false }
