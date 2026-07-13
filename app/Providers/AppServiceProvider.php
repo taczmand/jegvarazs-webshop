@@ -8,6 +8,8 @@ use App\Models\Category;
 use App\Models\Regulation;
 use App\Models\SensorEvent;
 use App\Models\Vehicle;
+use App\Services\InvoiceServiceInterface;
+use App\Services\SzamlazzHu\SzamlazzHuInvoiceService;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -23,7 +25,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->bind(InvoiceServiceInterface::class, SzamlazzHuInvoiceService::class);
     }
 
     /**
