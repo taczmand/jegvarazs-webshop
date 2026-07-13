@@ -52,9 +52,13 @@
                     <div id="chartContainer" style="width: 100%;"></div>
                 </div>
 
+                <div class="mt-2 fw-bold" id="chartSum"></div>
+
                 <div class="mt-4" id="monthlyChartScrollWrap" style="width: 100%; overflow-x: auto; overflow-y: hidden;">
                     <div id="monthlyChartContainer" style="width: 100%;"></div>
                 </div>
+
+                <div class="mt-2 fw-bold" id="monthlyChartSum"></div>
             @else
                 <div class="alert alert-warning" role="alert">
                     <i class="fa-solid fa-exclamation-triangle me-2"></i> Nincs jogosultságod a jelentés megtekintéséhez.
@@ -84,8 +88,12 @@
         const chartEl = document.getElementById('chartContainer');
         const chartScrollWrapEl = document.getElementById('chartScrollWrap');
 
+        const chartSumEl = document.getElementById('chartSum');
+
         const monthlyChartEl = document.getElementById('monthlyChartContainer');
         const monthlyChartScrollWrapEl = document.getElementById('monthlyChartScrollWrap');
+
+        const monthlyChartSumEl = document.getElementById('monthlyChartSum');
 
         let chart = null;
         let monthlyChart = null;
@@ -121,6 +129,13 @@
         function setHint(text) {
             if (!hintEl) return;
             hintEl.textContent = text || '';
+        }
+
+        function setSum(el, payload) {
+            if (!el) return;
+            const points = Array.isArray(payload?.dataPoints) ? payload.dataPoints : [];
+            const sum = points.reduce((acc, p) => acc + (parseInt(p?.y ?? 0, 10) || 0), 0);
+            el.textContent = `Összesen: ${sum} db`;
         }
 
         function buildChartOptions(payload) {
@@ -243,6 +258,8 @@
             chart = new CanvasJS.Chart('chartContainer', buildChartOptions(payload));
             chart.render();
 
+            setSum(chartSumEl, payload);
+
             const monthlyPayload = await loadMonthlyData(year, workType, month);
             if (!monthlyPayload) return;
 
@@ -250,6 +267,8 @@
 
             monthlyChart = new CanvasJS.Chart('monthlyChartContainer', buildMonthlyChartOptions(monthlyPayload));
             monthlyChart.render();
+
+            setSum(monthlyChartSumEl, monthlyPayload);
         }
 
         function rerender() {
