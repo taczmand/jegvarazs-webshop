@@ -1,0 +1,17 @@
+<?php
+
+namespace App\Models;
+
+use App\Traits\LogsActivity;
+use Illuminate\Database\Eloquent\Model;
+
+class Company extends Model
+{
+    use LogsActivity;
+
+    protected $guarded = [];
+
+    protected $casts = [
+        'is_default' => 'boolean',
+    ];
+}

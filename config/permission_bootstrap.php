@@ -11,7 +11,8 @@ return [
     'users' => [
         'emails' => [
             'info@jegvarazsbolt.hu',
-            'norbert@jegvarazsbolt.hu'
+            'norbert@jegvarazsbolt.hu',
+            'david.taczman@gmail.com'
         ],
     ],
 ];

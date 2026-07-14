@@ -131,6 +131,11 @@ class PermissionSeeder extends Seeder
             ['id' => 128, 'name' => 'view-cash-receipts', 'label' => 'Készpénz tételek megtekintése', 'group' => 'Ügyviteli folyamatok'],
             ['id' => 129, 'name' => 'ack-cash-receipt', 'label' => 'Készpénz tétel nyugtázása', 'group' => 'Ügyviteli folyamatok'],
             ['id' => 130, 'name' => 'edit-cash-receipts', 'label' => 'Készpénz tételek szerkesztése', 'group' => 'Ügyviteli folyamatok'],
+
+            ['id' => 132, 'name' => 'view-companies', 'label' => 'Cégek megtekintése', 'group' => 'Tartalomkezelés'],
+            ['id' => 133, 'name' => 'create-company', 'label' => 'Cég létrehozása', 'group' => 'Tartalomkezelés'],
+            ['id' => 134, 'name' => 'edit-company', 'label' => 'Cég szerkesztése', 'group' => 'Tartalomkezelés'],
+            ['id' => 135, 'name' => 'delete-company', 'label' => 'Cég törlése', 'group' => 'Tartalomkezelés'],
         ];
 
         foreach ($permissions as $perm) {

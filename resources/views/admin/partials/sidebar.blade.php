@@ -17,7 +17,8 @@
 
         $canViewBlogs = (bool) ($adminUser && $adminUser->can('view-blogs'));
         $canViewSettings = (bool) ($adminUser && $adminUser->can('view-settings'));
-        $canViewCMS = $canViewBlogs || $canViewSettings;
+        $canViewCompanies = (bool) ($adminUser && $adminUser->can('view-companies'));
+        $canViewCMS = $canViewBlogs || $canViewSettings || $canViewCompanies;
 
         $canViewOffers = (bool) ($adminUser && $adminUser->can('view-offers'));
         $canViewContracts = (bool) ($adminUser && $adminUser->can('view-contracts'));
@@ -141,6 +142,9 @@
                         <a class="collapse-item" href="{{ route('admin.settings.downloads.index') }}">Letöltések</a>
                         <a class="collapse-item" href="{{ route('admin.settings.regulations.index') }}">Szabályzatok</a>
                         <a class="collapse-item" href="{{ route('admin.settings.sites.index') }}">Telephelyek</a>
+                        @if($canViewCompanies)
+                            <a class="collapse-item" href="{{ route('admin.settings.companies.index') }}">Cégek</a>
+                        @endif
                         <a class="collapse-item" href="{{ route('admin.settings.employees.index') }}">Munkatársak</a>
                         <a class="collapse-item" href="{{ route('admin.settings.media.index') }}">Média</a>
                     @endif

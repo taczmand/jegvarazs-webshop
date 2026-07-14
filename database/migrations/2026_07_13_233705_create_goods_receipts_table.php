@@ -32,7 +32,7 @@ return new class extends Migration
 
             $table->date('received_at')->nullable()->comment('Bevételezés dátuma');
 
-            $table->foreignId('related_purchase_invoice_id')->nullable()->constrained('purchase_invoices')->nullOnDelete()->cascadeOnUpdate()->comment('Kapcsolódó bejövő számla azonosító (purchase_invoices.id)');
+            $table->unsignedBigInteger('related_purchase_invoice_id')->nullable()->comment('Kapcsolódó bejövő számla azonosító (purchase_invoices.id)');
 
             $table->text('note_before_items')->nullable()->comment('Megjegyzés a tételek fölé (pl. fejléc szöveg)');
             $table->text('note_after_items')->nullable()->comment('Megjegyzés a tételek alá (pl. záró szöveg)');
@@ -43,6 +43,7 @@ return new class extends Migration
 
             $table->unique(['document_number']);
             $table->index(['client_id', 'received_at']);
+            $table->index(['related_purchase_invoice_id']);
         });
 
         Schema::create('goods_receipt_items', function (Blueprint $table) {

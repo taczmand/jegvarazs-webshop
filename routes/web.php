@@ -11,6 +11,7 @@ use App\Http\Controllers\Admin\BrandController;
 use App\Http\Controllers\Admin\BulkEmailController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\ClientController;
+use App\Http\Controllers\Admin\CompanyController;
 use App\Http\Controllers\Admin\CompanySiteController;
 use App\Http\Controllers\Admin\ContractController;
 use App\Http\Controllers\Admin\ContractProductsReportController;
@@ -467,6 +468,14 @@ Route::get('/automatizacio/jogosultsagok/szinkron', function (Request $request, 
             Route::post('/telephelyek', [CompanySiteController::class, 'store'])->name('settings.sites.store');
             Route::put('/telephelyek/{id}', [CompanySiteController::class, 'update'])->name('settings.sites.update');
             Route::delete('/telephelyek/{id}', [CompanySiteController::class, 'destroy'])->name('settings.sites.destroy');
+
+            // Cégek
+
+            Route::get('/cegek', [CompanyController::class, 'index'])->name('settings.companies.index');
+            Route::get('/cegek/data', [CompanyController::class, 'data'])->name('settings.companies.data');
+            Route::post('/cegek', [CompanyController::class, 'store'])->name('settings.companies.store');
+            Route::put('/cegek/{id}', [CompanyController::class, 'update'])->name('settings.companies.update');
+            Route::delete('/cegek/{id}', [CompanyController::class, 'destroy'])->name('settings.companies.destroy');
 
             // Munkatársak
 
