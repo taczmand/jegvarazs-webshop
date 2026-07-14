@@ -249,8 +249,9 @@
                                 @php
                                     $isInStockFlag = (int) ($product->in_stock ?? 0) === 1;
                                     $status = $isInStockFlag
-                                        ? $stockHelper::resolve($product->stock)
-                                        : ['name' => 'Nincs raktáron', 'slug' => 'out_of_stock', 'color' => 'danger'];
+                                        ? ['name' => 'Raktáron', 'slug' => 'in_stock', 'color' => 'success']
+                                        : ($stockHelper::resolve((int) ($product->stock ?? 0))
+                                            ?? ['name' => 'Nincs raktáron', 'slug' => 'out_of_stock', 'color' => 'danger']);
                                     $mainPhoto = $product->photos->firstWhere('is_main', true);
 
                                     $fullSlug = $product->category->getFullSlug() . '/' . $product->slug;

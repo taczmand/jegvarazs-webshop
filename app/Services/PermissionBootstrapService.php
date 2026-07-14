@@ -13,13 +13,21 @@ class PermissionBootstrapService
         $emails = (array) config('permission_bootstrap.users.emails', []);
         $emails = array_values(array_filter(array_map('strval', $emails)));
 
+        $excludedPermissionNames = (array) config('permission_bootstrap.excluded_permissions', []);
+        $excludedPermissionNames = array_values(array_filter(array_map('strval', $excludedPermissionNames)));
+
         $allPermissionNames = Permission::query()
             ->where('guard_name', 'admin')
             ->pluck('name')
             ->all();
 
+        if (count($excludedPermissionNames) > 0) {
+            $allPermissionNames = array_values(array_diff($allPermissionNames, $excludedPermissionNames));
+        }
+
         $result = [
             'configured_emails' => $emails,
+            'excluded_permissions' => $excludedPermissionNames,
             'permissions_count' => count($allPermissionNames),
             'users' => [],
             'missing_users' => [],
