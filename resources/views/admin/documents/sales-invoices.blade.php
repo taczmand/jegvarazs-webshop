@@ -363,12 +363,59 @@
                 $('#sales_invoice_preview_zoom_label').show().text(`${Math.round(previewScale * 100)}%`);
             }
 
-            function loadTestPdfPreview() {
-                const testPdfUrl = 'https://mozilla.github.io/pdf.js/web/compressed.tracemonkey-pldi-09.pdf';
-                $('#sales_invoice_preview_placeholder').addClass('d-none');
-                $('#sales_invoice_preview_wrap').show();
-                $('#sales_invoice_preview_iframe').attr('src', testPdfUrl);
-                setPreviewScale(1);
+            async function loadInvoicePdfPreview() {
+                const previewBtn = document.getElementById('previewSalesInvoice');
+                const originalText = previewBtn ? previewBtn.innerHTML : null;
+                const saveBtn = document.getElementById('saveSalesInvoice');
+                const saveBtnWasDisabled = saveBtn ? saveBtn.disabled : false;
+                if (previewBtn) {
+                    previewBtn.disabled = true;
+                    previewBtn.innerHTML = 'Betöltés...';
+                }
+                if (saveBtn) {
+                    saveBtn.disabled = true;
+                }
+
+                try {
+                    syncItemsJson();
+                    const form = document.getElementById('salesInvoiceForm');
+                    const formData = new FormData(form);
+
+                    const resp = await fetch('{{ route('admin.documents.sales-invoices.preview-invoice-pdf') }}', {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': csrfToken,
+                        },
+                        body: formData,
+                    });
+
+                    if (!resp.ok) {
+                        let msg = 'Hiba történt a PDF előnézet generálásakor.';
+                        try {
+                            const json = await resp.json();
+                            if (json?.message) msg = json.message;
+                        } catch (e) {}
+                        throw new Error(msg);
+                    }
+
+                    const blob = await resp.blob();
+                    const blobUrl = URL.createObjectURL(blob);
+
+                    $('#sales_invoice_preview_placeholder').addClass('d-none');
+                    $('#sales_invoice_preview_wrap').show();
+                    $('#sales_invoice_preview_iframe').attr('src', blobUrl);
+                    setPreviewScale(1);
+                } catch (e) {
+                    showToast(e?.message || 'Hiba!', 'danger');
+                } finally {
+                    if (previewBtn) {
+                        previewBtn.disabled = false;
+                        if (originalText !== null) previewBtn.innerHTML = originalText;
+                    }
+                    if (saveBtn) {
+                        saveBtn.disabled = saveBtnWasDisabled;
+                    }
+                }
             }
 
             let partnerClientSearchDebounce = null;
@@ -544,7 +591,7 @@
             });
 
             $('#previewSalesInvoice').on('click', function () {
-                loadTestPdfPreview();
+                loadInvoicePdfPreview();
             });
 
             $('#sales_invoice_preview_wrap').on('wheel', function (e) {
@@ -618,6 +665,10 @@
                 const originalSaveButtonHtml = saveBtn.html();
                 saveBtn.html('Mentés...').prop('disabled', true);
 
+                const previewBtn = $('#previewSalesInvoice');
+                const originalPreviewButtonHtml = previewBtn.html();
+                previewBtn.prop('disabled', true);
+
                 const invoiceId = $('#invoice_id').val();
 
                 let url = '{{ route('admin.documents.sales-invoices.store') }}';
@@ -635,9 +686,54 @@
                     contentType: false,
                     processData: false,
                     success(response) {
-                        showToast(response.message || 'Sikeres!', 'success');
-                        table.ajax.reload(null, false);
-                        modal.hide();
+                        const savedId = response?.invoice?.id;
+                        if (!savedId) {
+                            showToast('Sikeres mentés, de hiányzik a bizonylat azonosítója.', 'warning');
+                            table.ajax.reload(null, false);
+                            saveBtn.html(originalSaveButtonHtml).prop('disabled', false);
+                            previewBtn.html(originalPreviewButtonHtml).prop('disabled', false);
+                            return;
+                        }
+
+                        const issueUrl = `{{ route('admin.documents.sales-invoices.issue-invoice-pdf', ['id' => '__ID__']) }}`.replace('__ID__', String(savedId));
+
+                        syncItemsJson();
+                        const issueForm = document.getElementById('salesInvoiceForm');
+                        const issueFormData = new FormData(issueForm);
+
+                        fetch(issueUrl, {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRF-TOKEN': csrfToken,
+                            },
+                            body: issueFormData,
+                        }).then(async (resp) => {
+                            if (!resp.ok) {
+                                let msg = 'Hiba történt a számla kiállításakor.';
+                                try {
+                                    const json = await resp.json();
+                                    if (json?.message) msg = json.message;
+                                } catch (e) {}
+                                throw new Error(msg);
+                            }
+
+                            const blob = await resp.blob();
+                            const blobUrl = URL.createObjectURL(blob);
+
+                            $('#sales_invoice_preview_placeholder').addClass('d-none');
+                            $('#sales_invoice_preview_wrap').show();
+                            $('#sales_invoice_preview_iframe').attr('src', blobUrl);
+                            setPreviewScale(1);
+
+                            showToast('Számla kiállítva.', 'success');
+                            table.ajax.reload(null, false);
+                        }).catch((err) => {
+                            showToast(err?.message || 'Hiba!', 'danger');
+                            table.ajax.reload(null, false);
+                        }).finally(() => {
+                            saveBtn.html(originalSaveButtonHtml).prop('disabled', false);
+                            previewBtn.html(originalPreviewButtonHtml).prop('disabled', false);
+                        });
                     },
                     error(xhr) {
                         let msg = 'Hiba!';
@@ -647,10 +743,11 @@
                             msg = xhr.responseJSON.message;
                         }
                         showToast(msg, 'danger');
-                    },
-                    complete: () => {
+
                         saveBtn.html(originalSaveButtonHtml).prop('disabled', false);
-                    }
+                        previewBtn.html(originalPreviewButtonHtml).prop('disabled', false);
+                    },
+                    complete: () => {}
                 });
             });
 

@@ -8,4 +8,6 @@ interface InvoiceServiceInterface
 {
     public function createInvoice(InvoiceData $invoice): string;
 
+    public function createInvoicePdf(InvoiceData $invoice, bool $preview = true): string;
+
 }
