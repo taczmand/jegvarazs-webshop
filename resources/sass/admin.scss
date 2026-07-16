@@ -70,6 +70,11 @@ body#page-top {
             overflow-y: auto;
         }
 
+        .modal-dialog.modal-fullscreen .modal-body {
+            max-height: none;
+            overflow-y: hidden;
+        }
+
         .modal-footer {
             margin-top: 0;
             border-top: 0;
@@ -246,6 +251,27 @@ body#page-top {
 
 .snapshot-locked {
     pointer-events: none;
+}
+
+body#page-top {
+    .admin-fieldset {
+        border: 1px solid #dee2e6;
+        border-radius: .375rem;
+        padding: .75rem;
+        min-width: 0;
+    }
+
+    .admin-fieldset__legend {
+        float: none;
+        width: auto;
+        padding: 0 .5rem;
+        margin-bottom: 0;
+        font-size: 1rem;
+        font-weight: 600;
+        line-height: 1.25;
+        color: #212529;
+        background: #fff;
+    }
 }
 
 /* Admin UI: Client search results list (used in modals like worksheets/contracts) */

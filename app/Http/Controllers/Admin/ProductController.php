@@ -45,7 +45,7 @@ class ProductController extends Controller
         }
 
         $products = Product::query()
-            ->with('taxCategory')
+            ->with(['taxCategory', 'unit'])
             ->where(function ($query) use ($q) {
                 $query->where('title', 'like', "%{$q}%")
                     ->orWhere('id', '=', is_numeric($q) ? (int) $q : 0);
@@ -59,7 +59,7 @@ class ProductController extends Controller
                     ->orderByDesc('is_main')
                     ->limit(1),
             ])
-            ->get(['id', 'title', 'gross_price', 'partner_gross_price', 'tax_id', 'main_photo_path']);
+            ->get(['id', 'title', 'gross_price', 'partner_gross_price', 'tax_id', 'unit_qty', 'unit_id', 'main_photo_path']);
 
         $partnerDiscounts = collect();
         if ($customer && $customer->is_partner && $products->isNotEmpty()) {
@@ -90,6 +90,9 @@ class ProductController extends Controller
                 'effective_gross_price' => $effective,
                 'main_photo_path' => $p->main_photo_path,
                 'tax_value' => $p->taxCategory?->tax_value,
+                'unit_qty' => $p->unit_qty,
+                'unit_name' => $p->unit?->name,
+                'unit_abbreviation' => $p->unit?->abbreviation,
             ];
         })->values();
 

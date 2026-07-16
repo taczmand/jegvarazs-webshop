@@ -30,6 +30,7 @@ use App\Http\Controllers\Admin\PaymentMethodController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Admin\PartnerOfferController as AdminPartnerOfferController;
 use App\Http\Controllers\Admin\RegulationController;
+use App\Http\Controllers\Admin\SalesInvoiceController;
 use App\Http\Controllers\Admin\ShippingMethodController;
 use App\Http\Controllers\Admin\StatController;
 use App\Http\Controllers\Admin\SensorReportController;
@@ -278,6 +279,15 @@ Route::get('/automatizacio/jogosultsagok/szinkron', function (Request $request, 
             Route::get('/statisztika/szenzorok', [SensorReportController::class, 'index'])->name('stats.sensors');
             Route::get('/statisztika/szenzorok/{deviceId}', [SensorReportController::class, 'show'])->name('stats.sensors.device');
             Route::get('/statisztika/szenzorok/{deviceId}/day', [SensorReportController::class, 'day'])->name('stats.sensors.device.day');
+
+
+            /* Bizonylatok */
+
+            // Kimenő számlák
+            Route::get('/bizonylatok/kimeno-szamlak', [SalesInvoiceController::class, 'index'])->name('documents.sales-invoices.index');
+            Route::get('/bizonylatok/kimeno-szamlak/data', [SalesInvoiceController::class, 'data'])->name('documents.sales-invoices.data');
+            Route::post('/bizonylatok/kimeno-szamlak', [SalesInvoiceController::class, 'store'])->name('documents.sales-invoices.store');
+            Route::put('/bizonylatok/kimeno-szamlak/{id}', [SalesInvoiceController::class, 'update'])->name('documents.sales-invoices.update');
 
 
             // Gyártók

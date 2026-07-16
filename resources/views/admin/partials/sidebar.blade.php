@@ -206,7 +206,9 @@
             </a>
             <div id="collapseBusinessDocuments" class="collapse" data-bs-parent="#accordionSidebar">
                 <div class="bg-white py-2 collapse-inner rounded">
-                    <a class="collapse-item" href="#">Kimenő számlák</a>
+                    @if($adminUser && $adminUser->can('view-sales-invoices'))
+                        <a class="collapse-item" href="{{ route('admin.documents.sales-invoices.index') }}">Kimenő számlák</a>
+                    @endif
                     <a class="collapse-item" href="#">Bejövő számlák</a>
                     <a class="collapse-item" href="#">Szállítólevelek</a>
                     <a class="collapse-item" href="#">Bevételezések</a>
