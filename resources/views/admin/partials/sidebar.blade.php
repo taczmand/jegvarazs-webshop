@@ -223,7 +223,6 @@
             </a>
             <div id="collapseWarehouse" class="collapse" data-bs-parent="#accordionSidebar">
                 <div class="bg-white py-2 collapse-inner rounded">
-                    <a class="collapse-item" href="#">Raktárkészletek</a>
                     <a class="collapse-item" href="#">Leltár</a>
                 </div>
             </div>

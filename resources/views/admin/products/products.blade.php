@@ -82,6 +82,7 @@
                     <div class="modal-body">
                         <ul class="nav nav-tabs admin-modal-tabs" id="productTab" role="tablist">
                             <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#basic" type="button">Alapadatok</button></li>
+                            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#stocks" type="button">Raktárkészletek</button></li>
                             <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#attributes" type="button">Egyedi tulajdonságok</button></li>
                             <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tags" type="button">Címkék</button></li>
                             <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#images" type="button">Képek</button></li>
@@ -139,7 +140,7 @@
                                     <div class="col-md-6">
                                         <div class="row mb-3">
                                             <div class="col-md-6">
-                                                <label class="form-label">Készlet*</label>
+                                                <label class="form-label">Készlet (kivezetésre kerül hamarosan)*</label>
                                                 <input type="number" class="form-control" name="stock" id="stock" required>
                                             </div>
                                             <div class="col-md-6">
@@ -181,6 +182,24 @@
                                 <div class="mb-3">
                                     <label class="form-label">Leírás</label>
                                     <textarea class="form-control" id="description" name="description" rows="6"></textarea>
+                                </div>
+                            </div>
+
+                            <div class="tab-pane fade" id="stocks">
+                                <div class="rounded bg-light p-2">
+                                    <div id="stocksEmptyState" class="alert alert-info d-none mb-0">
+                                        Ehhez a termékhez még nem volt készlet rögzítve.
+                                    </div>
+                                    <table class="table table-bordered display responsive nowrap mb-0" id="stocksTable" style="width:100%">
+                                        <thead>
+                                        <tr>
+                                            <th>Telephely</th>
+                                            <th>Mennyiség</th>
+                                            <th>Mértékegység</th>
+                                            <th>Utolsó frissítés</th>
+                                        </tr>
+                                        </thead>
+                                    </table>
                                 </div>
                             </div>
 
@@ -645,7 +664,9 @@
                 await editProductModal(productId);
             });
 
+            let stocksTable = null;
             let productHistoryTable = null;
+            let currentStockUnitLabel = '';
 
             async function editProductModal(productId) {
                 const allMetaData = await getAllMetaData();
@@ -702,6 +723,10 @@
 
                     renderQuantityDiscounts(currentQuantityDiscounts);
                     initProductHistory(product.id);
+                    const units = allMetaData?.original?.units || [];
+                    const unit = units.find(u => Number(u.id) === Number(product.unit_id));
+                    currentStockUnitLabel = unit ? (unit.abbreviation || unit.name || '') : '';
+                    initStocksTable(product.id, currentStockUnitLabel);
 
                     productModal.show();
                 }).fail(function(xhr, status, error) {
@@ -875,6 +900,79 @@
                 } catch (e) {
                     showToast(e.message || 'Hiba történt', 'danger');
                 }
+            });
+
+            function initStocksTable(productId, unitLabel = '') {
+                if (!productId) {
+                    return;
+                }
+
+                if (stocksTable) {
+                    stocksTable.destroy();
+                    $('#stocksTable').empty();
+                }
+
+                const emptyState = document.getElementById('stocksEmptyState');
+
+                stocksTable = $('#stocksTable').DataTable({
+                    language: {
+                        url: '/lang/datatables/hu.json'
+                    },
+                    processing: true,
+                    serverSide: true,
+                    ajax: {
+                        url: `{{ url('/admin/termekek') }}/${productId}/stocks/data`,
+                        dataSrc: function (json) {
+                            const hasAny = !!json?.has_any_stock;
+
+                            if (emptyState) {
+                                if (!hasAny) {
+                                    emptyState.classList.remove('d-none');
+                                    $('#stocksTable_wrapper').hide();
+                                } else {
+                                    emptyState.classList.add('d-none');
+                                    $('#stocksTable_wrapper').show();
+                                }
+                            }
+
+                            return json.data;
+                        }
+                    },
+                    order: [[0, 'asc']],
+                    columns: [
+                        { data: 'company_site_name', title: 'Telephely' },
+                        { data: 'quantity', title: 'Mennyiség' },
+                        {
+                            data: null,
+                            title: 'Mértékegység',
+                            orderable: false,
+                            searchable: false,
+                            render: function () {
+                                return unitLabel || '';
+                            }
+                        },
+                        { data: 'updated_at', title: 'Utolsó frissítés' },
+                    ],
+                });
+            }
+
+            $('#productTab').on('shown.bs.tab', function (e) {
+                const target = e.target;
+                if (!target) {
+                    return;
+                }
+
+                const href = target.getAttribute('data-bs-target') || target.getAttribute('href') || '';
+                if (href !== '#stocks') {
+                    return;
+                }
+
+                const productId = $('#product_id').val();
+                if (!productId) {
+                    return;
+                }
+
+                initStocksTable(productId, currentStockUnitLabel);
             });
 
             function initProductHistory(productId) {

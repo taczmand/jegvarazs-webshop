@@ -13,6 +13,7 @@ use App\Models\ProductQuantityDiscount;
 use App\Models\ProductPhoto;
 use App\Services\Admin\ProductService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Yajra\DataTables\Facades\DataTables;
 
@@ -395,6 +396,50 @@ class ProductController extends Controller
                     'changes' => $changes,
                 ];
             })
+            ->make(true);
+    }
+
+    public function stocksData($id)
+    {
+        $user = auth('admin')->user();
+        if (!$user || !$user->can('edit-product')) {
+            return response()->json(['message' => 'Nincs jogosultságod a raktárkészletek megtekintéséhez.'], 403);
+        }
+
+        $productId = (int) $id;
+        if ($productId <= 0) {
+            return response()->json(['message' => 'Érvénytelen termék azonosító.'], 422);
+        }
+
+        $hasAnyStock = DB::table('product_stocks')
+            ->where('product_id', '=', $productId)
+            ->exists();
+
+        $items = DB::table('company_sites')
+            ->leftJoin('product_stocks', function ($join) use ($productId) {
+                $join->on('product_stocks.company_site_id', '=', 'company_sites.id')
+                    ->where('product_stocks.product_id', '=', $productId);
+            })
+            ->select([
+                'company_sites.id as company_site_id',
+                'company_sites.name as company_site_name',
+                DB::raw('COALESCE(product_stocks.quantity, 0) as quantity'),
+                'product_stocks.updated_at as updated_at',
+            ])
+            ->orderBy('company_sites.name');
+
+        return DataTables::of($items)
+            ->editColumn('quantity', function ($row) {
+                $qty = $row->quantity;
+                if ($qty === null || $qty === '') {
+                    return '0';
+                }
+                return rtrim(rtrim(number_format((float) $qty, 3, '.', ''), '0'), '.');
+            })
+            ->editColumn('updated_at', function ($row) {
+                return $row->updated_at ? (string) $row->updated_at : '';
+            })
+            ->with('has_any_stock', $hasAnyStock)
             ->make(true);
     }
 
