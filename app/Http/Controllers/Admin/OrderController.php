@@ -227,11 +227,13 @@ class OrderController extends Controller
     {
         $orders = Order::select([
             'orders.id',
+            'orders.payment_method',
             'orders.status',
             'orders.created_at',
             'orders.customer_id',
             'orders.contact_last_name',
             'orders.contact_first_name',
+            'orders.shipping_city',
             'customers.last_name',
             'customers.first_name',
             'orders.viewed_by',
@@ -259,10 +261,34 @@ class OrderController extends Controller
                         ->orWhere('customers.first_name', 'like', "%{$keyword}%");
                 });
             })
+            ->filterColumn('shipping_city', function ($query, $keyword) {
+                if (!empty($keyword)) {
+                    $query->where('orders.shipping_city', 'like', "%{$keyword}%");
+                }
+            })
+            ->filterColumn('payment_method', function ($query, $keyword) {
+                if (!empty($keyword)) {
+                    $query->where('orders.payment_method', '=', $keyword);
+                }
+            })
             ->filterColumn('status', function ($query, $keyword) {
                 if (!empty($keyword)) {
                     $query->where('orders.status', 'like', "%{$keyword}%");
                 }
+            })
+            ->addColumn('shipping_city', function ($order) {
+                return $order->shipping_city ?? '';
+            })
+            ->addColumn('payment_method', function ($order) {
+                if (isset($order->payment_label)) {
+                    return $order->payment_label;
+                }
+
+                if (isset($order->payment_method_label)) {
+                    return $order->payment_method_label;
+                }
+
+                return $order->payment_method;
             })
             ->addColumn('status', function ($order) {
                 $translations = [

@@ -3,7 +3,7 @@
 @section('content')
 
 
-    <div class="container p-0">
+    <div class="container-fluid px-0">
 
         <div class="d-flex justify-content-between align-items-center mb-3 pb-2">
             <h2 class="color-dark-blue mb-0">Értékesítés / Rendelések</h2>
@@ -32,7 +32,16 @@
                     </div>
 
                     <div class="filter-group flex-grow-1 flex-md-shrink-0">
-                        <select class="form-select filter-input" data-column="4">
+                        <select class="form-select filter-input" data-column="5">
+                            <option value="">Fizetés (összes)</option>
+                            @foreach(config('payment_methods') as $method)
+                                <option value="{{ $method['slug'] }}">{{ $method['name'] }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="filter-group flex-grow-1 flex-md-shrink-0">
+                        <select class="form-select filter-input" data-column="7">
                             <option value="">Állapot (összes)</option>
                             <option value="pending">Függőben</option>
                             <option value="processing">Feldolgozás alatt</option>
@@ -51,6 +60,8 @@
                         <th data-priority="2">Vásárló</th>
                         <th>Partner?</th>
                         <th>Teljes összeg</th>
+                        <th>Fizetés módja</th>
+                        <th>Szállítási város</th>
                         <th>Állapot</th>
                         <th>Termékek száma</th>
                         <th>Látta</th>
@@ -404,6 +415,8 @@
                     {data: 'customer_name'},
                     {data: 'is_partner'},
                     {data: 'total_amount'},
+                    {data: 'payment_method'},
+                    {data: 'shipping_city'},
                     {data: 'status'},
                     {data: 'items_count'},
                     {data: 'viewed_by'},
