@@ -163,6 +163,8 @@ class ClientController extends Controller
 
     public function data()
     {
+        $addressFilter = trim((string) request()->input('filter_address', ''));
+
         $clients = Client::select([
             'id',
             'name',
@@ -175,7 +177,19 @@ class ClientController extends Controller
             'comment',
             'created_at as created',
             'updated_at as updated',
-        ]);
+        ])
+            ->when($addressFilter !== '', function ($query) use ($addressFilter) {
+                $query->whereHas('addresses', function ($q) use ($addressFilter) {
+                    $q->where(function ($inner) use ($addressFilter) {
+                        $inner
+                            ->where('country', 'like', "%{$addressFilter}%")
+                            ->orWhere('zip_code', 'like', "%{$addressFilter}%")
+                            ->orWhere('city', 'like', "%{$addressFilter}%")
+                            ->orWhere('address_line', 'like', "%{$addressFilter}%")
+                            ->orWhere('comment', 'like', "%{$addressFilter}%");
+                    });
+                });
+            });
 
         return DataTables::of($clients)
             ->addColumn('action', function ($client) {

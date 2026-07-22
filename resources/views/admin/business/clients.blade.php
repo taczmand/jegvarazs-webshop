@@ -32,6 +32,10 @@
                     <div class="filter-group flex-grow-1 flex-md-shrink-0">
                         <input type="text" placeholder="E-mail" class="filter-input form-control" data-column="2">
                     </div>
+
+                    <div class="filter-group flex-grow-1 flex-md-shrink-0">
+                        <input type="text" placeholder="Cím" class="form-control" id="filter_address">
+                    </div>
                 </div>
 
                 <table class="table table-bordered display responsive nowrap" id="adminTable" style="width:100%">
@@ -349,7 +353,12 @@
                 },
                 processing: true,
                 serverSide: true,
-                ajax: '{{ route('admin.clients.data') }}',
+                ajax: {
+                    url: '{{ route('admin.clients.data') }}',
+                    data: function (d) {
+                        d.filter_address = ($('#filter_address').val() || '').toString().trim();
+                    }
+                },
                 order: [[0, 'desc']],
                 columns: [
                     { data: 'id' },
@@ -457,6 +466,10 @@
                 var i =$(this).attr('data-column');
                 var v =$(this).val();
                 table.columns(i).search(v).draw();
+            });
+
+            $('#filter_address').on('change keyup', function () {
+                table.draw();
             });
 
             $('#addButton').on('click', async function () {

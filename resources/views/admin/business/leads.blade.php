@@ -31,6 +31,10 @@
                     </div>
 
                     <div class="filter-group flex-grow-1 flex-md-shrink-0">
+                        <input type="text" placeholder="Telefonszám" class="filter-input form-control" data-column="3">
+                    </div>
+
+                    <div class="filter-group flex-grow-1 flex-md-shrink-0">
                         <input type="text" placeholder="Város" class="filter-input form-control" data-column="4">
                     </div>
 
