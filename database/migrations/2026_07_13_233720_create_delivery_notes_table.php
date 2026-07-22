@@ -15,7 +15,6 @@ return new class extends Migration
         Schema::create('delivery_notes', function (Blueprint $table) {
             $table->id()->comment('Egyedi azonosító');
 
-            $table->foreignId('client_id')->nullable()->constrained('clients')->nullOnDelete()->cascadeOnUpdate()->comment('Partner (ügyfél) azonosító (clients.id)');
             $table->foreignId('company_id')->nullable()->constrained('companies')->nullOnDelete()->cascadeOnUpdate()->comment('Cég azonosító (companies.id)');
 
             $table->string('document_number')->comment('Szállítólevél sorszám / bizonylatszám');
@@ -27,6 +26,16 @@ return new class extends Migration
             $table->string('partner_zip_code')->nullable()->comment('Partner irányítószám');
             $table->string('partner_city')->nullable()->comment('Partner város');
             $table->string('partner_address_line')->nullable()->comment('Partner cím');
+
+            $table->string('company_name')->nullable()->comment('Cég neve (pillanatkép)');
+            $table->string('company_tax_number')->nullable()->comment('Cég adószáma');
+            $table->string('company_country', 2)->nullable()->comment('Cég országkód (ISO2)');
+            $table->string('company_zip_code')->nullable()->comment('Cég irányítószám');
+            $table->string('company_city')->nullable()->comment('Cég város');
+            $table->string('company_address_line')->nullable()->comment('Cég cím');
+            $table->string('company_email')->nullable()->comment('Cég e-mail');
+            $table->string('company_phone')->nullable()->comment('Cég telefonszám');
+            $table->string('company_bank_account')->nullable()->comment('Cég bankszámlaszám');
 
             $table->string('shipping_country', 2)->nullable()->comment('Szállítási országkód (ISO2)');
             $table->string('shipping_zip_code')->nullable()->comment('Szállítási irányítószám');
@@ -50,7 +59,6 @@ return new class extends Migration
             $table->timestamp('updated_at')->default(DB::raw('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))->comment('Módosítás időpontja');
 
             $table->unique(['document_number']);
-            $table->index(['client_id', 'issued_at']);
             $table->index(['status', 'delivered_at']);
         });
 

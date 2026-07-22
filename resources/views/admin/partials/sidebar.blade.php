@@ -210,7 +210,7 @@
                         <a class="collapse-item" href="{{ route('admin.documents.sales-invoices.index') }}">Kimenő számlák</a>
                     @endif
                     <a class="collapse-item" href="#">Bejövő számlák</a>
-                    <a class="collapse-item" href="#">Szállítólevelek</a>
+                    <a class="collapse-item" href="{{ route('admin.documents.delivery-notes.index') }}">Szállítólevelek</a>
                     <a class="collapse-item" href="#">Bevételezések</a>
                 </div>
             </div>

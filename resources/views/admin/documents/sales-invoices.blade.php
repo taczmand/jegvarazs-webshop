@@ -110,14 +110,14 @@
                 <legend class="admin-fieldset__legend">Vevő</legend>
 
                 <div class="row g-2">
-                    <div class="col-12 col-md-7">
+                    <div class="col-12">
                         <label for="partner_name" class="form-label">Név*</label>
                         <div class="position-relative">
                             <input type="text" class="form-control" id="partner_name" name="partner_name" required autocomplete="off">
                             <div id="partner_client_search_results" class="list-group w-100 admin-client-search-results" style="z-index: 1100; display:none; max-height: 260px; overflow-y: auto;"></div>
                         </div>
                     </div>
-                    <div class="col-12 col-md-5">
+                    <div class="col-12">
                         <label for="partner_tax_number" class="form-label">Adószám</label>
                         <input type="text" class="form-control" id="partner_tax_number" name="partner_tax_number">
                     </div>
@@ -262,35 +262,24 @@
             </fieldset>
         </x-slot:middle>
 
-        <x-slot:right>
-            <div class="d-flex flex-column" style="height: 100%; min-height: 0;">
-                <div class="d-flex align-items-center justify-content-between mb-2">
-                    <div class="fw-semibold">Előnézet</div>
-                    <div class="small text-muted" id="sales_invoice_preview_zoom_label" style="display:none;">100%</div>
-                </div>
-
-                <div id="sales_invoice_preview_placeholder" class="d-flex align-items-center justify-content-center flex-grow-1" style="min-height: 0;">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="220" height="220" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round" style="color: #cfd4da;">
-                        <path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7z"/>
-                        <path d="M14 2v5h5"/>
-                        <path d="M8 13h8"/>
-                        <path d="M8 17h8"/>
-                        <path d="M8 9h4"/>
-                    </svg>
-                </div>
-
-                <div id="sales_invoice_preview_wrap" class="border rounded bg-white flex-grow-1" style="display:none; overflow:auto; min-height: 0;">
-                    <div id="sales_invoice_preview_inner" style="transform-origin: 0 0; height: 100%; display:flex;">
-                        <iframe id="sales_invoice_preview_iframe" title="PDF előnézet" style="width: 100%; height: 100%; border: 0; display:block; flex: 1;"></iframe>
-                    </div>
-                </div>
-            </div>
-        </x-slot:right>
-
         <x-slot:footer>
             <button type="button" class="btn btn-outline-primary" id="previewSalesInvoice">Előnézet</button>
         </x-slot:footer>
     </x-admin.document-modal>
+
+    <div class="modal fade" id="salesInvoicePreviewModal" tabindex="-1" aria-labelledby="salesInvoicePreviewModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered" style="max-width: 1100px;">
+            <div class="modal-content" style="height: 80vh;">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="salesInvoicePreviewModalLabel">Kimenő számla előnézet</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Bezárás"></button>
+                </div>
+                <div class="modal-body p-0" style="height: 100%;">
+                    <iframe id="sales_invoice_preview_iframe" title="PDF előnézet" style="width: 100%; height: 100%; border: 0; display:block;"></iframe>
+                </div>
+            </div>
+        </div>
+    </div>
 
 @endsection
 
@@ -302,6 +291,8 @@
 
         const modalDOM = document.getElementById('salesInvoiceModal');
         const modal = new bootstrap.Modal(modalDOM);
+        const previewModalDOM = document.getElementById('salesInvoicePreviewModal');
+        const previewModal = previewModalDOM ? new bootstrap.Modal(previewModalDOM) : null;
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
         $(document).ready(function() {
@@ -345,26 +336,13 @@
                 $('#company_display_bank').text(bank || '-');
             }
 
-            let previewScale = 1;
-
             function resetPreview() {
-                previewScale = 1;
                 $('#sales_invoice_preview_iframe').attr('src', 'about:blank');
-                $('#sales_invoice_preview_wrap').hide();
-                $('#sales_invoice_preview_placeholder').removeClass('d-none');
-                $('#sales_invoice_preview_zoom_label').hide().text('100%');
-                $('#sales_invoice_preview_inner').css('transform', 'scale(1)');
-            }
-
-            function setPreviewScale(scale) {
-                const clamped = Math.max(0.5, Math.min(3, Number(scale) || 1));
-                previewScale = clamped;
-                $('#sales_invoice_preview_inner').css('transform', `scale(${previewScale})`);
-                $('#sales_invoice_preview_zoom_label').show().text(`${Math.round(previewScale * 100)}%`);
             }
 
             async function loadInvoicePdfPreview() {
                 const previewBtn = document.getElementById('previewSalesInvoice');
+                if (!previewBtn) return;
                 const originalText = previewBtn ? previewBtn.innerHTML : null;
                 const saveBtn = document.getElementById('saveSalesInvoice');
                 const saveBtnWasDisabled = saveBtn ? saveBtn.disabled : false;
@@ -400,11 +378,8 @@
 
                     const blob = await resp.blob();
                     const blobUrl = URL.createObjectURL(blob);
-
-                    $('#sales_invoice_preview_placeholder').addClass('d-none');
-                    $('#sales_invoice_preview_wrap').show();
                     $('#sales_invoice_preview_iframe').attr('src', blobUrl);
-                    setPreviewScale(1);
+                    if (previewModal) previewModal.show();
                 } catch (e) {
                     showToast(e?.message || 'Hiba!', 'danger');
                 } finally {
@@ -424,8 +399,9 @@
                 $('#partner_client_search_results').hide().empty();
             }
 
-            function fillPartnerFromClient({ name = '', email = '', phone = '', country = 'HU', zip = '', city = '', line = '' } = {}) {
+            function fillPartnerFromClient({ name = '', tax = '', email = '', phone = '', country = 'HU', zip = '', city = '', line = '' } = {}) {
                 $('#partner_name').val(name || '');
+                $('#partner_tax_number').val(tax || '');
                 $('#partner_email').val(email || '');
                 $('#partner_phone').val(phone || '');
 
@@ -446,10 +422,10 @@
 
                 partnerClientSearchDebounce = setTimeout(() => {
                     $.ajax({
-                        url: `${window.appConfig.APP_URL}admin/ugyfelek/kereses?q=${encodeURIComponent(q)}`,
+                        url: `${window.appConfig.APP_URL}admin/bizonylatok/partner-kereses?q=${encodeURIComponent(q)}`,
                         method: 'GET',
                         success: function (response) {
-                            const clients = response?.clients || [];
+                            const clients = response?.partners || [];
                             const $list = $('#partner_client_search_results');
                             $list.empty();
 
@@ -472,6 +448,7 @@
                                         $list.append(`
                                             <button type="button" class="list-group-item list-group-item-action client-no-address"
                                                 data-name="${escapeHtml(name)}"
+                                                data-tax="${escapeHtml(idNumber)}"
                                                 data-email="${escapeHtml(email)}"
                                                 data-phone="${escapeHtml(phone)}">
                                                 <div class="fw-bold">Kiválasztás</div>
@@ -486,6 +463,7 @@
                                         $list.append(`
                                             <button type="button" class="list-group-item list-group-item-action client-address-item"
                                                 data-name="${escapeHtml(name)}"
+                                                data-tax="${escapeHtml(idNumber)}"
                                                 data-email="${escapeHtml(email)}"
                                                 data-phone="${escapeHtml(phone)}"
                                                 data-country="${escapeHtml(a?.country || 'HU')}"
@@ -525,6 +503,7 @@
                 const $btn = $(this);
                 fillPartnerFromClient({
                     name: $btn.data('name') || '',
+                    tax: $btn.data('tax') || '',
                     email: $btn.data('email') || '',
                     phone: $btn.data('phone') || '',
                     country: $btn.data('country') || 'HU',
@@ -539,6 +518,7 @@
                 const $btn = $(this);
                 fillPartnerFromClient({
                     name: $btn.data('name') || '',
+                    tax: $btn.data('tax') || '',
                     email: $btn.data('email') || '',
                     phone: $btn.data('phone') || '',
                     country: 'HU',
@@ -594,14 +574,6 @@
                 loadInvoicePdfPreview();
             });
 
-            $('#sales_invoice_preview_wrap').on('wheel', function (e) {
-                if (!e.ctrlKey) return;
-                e.preventDefault();
-                const delta = e.originalEvent.deltaY;
-                const next = previewScale + (delta > 0 ? -0.1 : 0.1);
-                setPreviewScale(next);
-            });
-
             $('#company_id').on('change', function () {
                 renderCompanyBlock($(this).val());
             });
@@ -629,11 +601,7 @@
                     const src = String(pdfPath).startsWith('http')
                         ? String(pdfPath)
                         : (String(pdfPath).startsWith('/') ? String(pdfPath) : `${window.appConfig.APP_URL}${String(pdfPath)}`);
-
-                    $('#sales_invoice_preview_placeholder').hide();
-                    $('#sales_invoice_preview_wrap').show();
                     $('#sales_invoice_preview_iframe').attr('src', src);
-                    setPreviewScale(1);
                 } else {
                     resetPreview();
                 }
@@ -666,8 +634,8 @@
                 saveBtn.html('Mentés...').prop('disabled', true);
 
                 const previewBtn = $('#previewSalesInvoice');
-                const originalPreviewButtonHtml = previewBtn.html();
-                previewBtn.prop('disabled', true);
+                const originalPreviewButtonHtml = previewBtn.length ? previewBtn.html() : null;
+                if (previewBtn.length) previewBtn.prop('disabled', true);
 
                 const invoiceId = $('#invoice_id').val();
 
@@ -691,7 +659,7 @@
                             showToast('Sikeres mentés, de hiányzik a bizonylat azonosítója.', 'warning');
                             table.ajax.reload(null, false);
                             saveBtn.html(originalSaveButtonHtml).prop('disabled', false);
-                            previewBtn.html(originalPreviewButtonHtml).prop('disabled', false);
+                            if (previewBtn.length) previewBtn.html(originalPreviewButtonHtml).prop('disabled', false);
                             return;
                         }
 
@@ -719,11 +687,7 @@
 
                             const blob = await resp.blob();
                             const blobUrl = URL.createObjectURL(blob);
-
-                            $('#sales_invoice_preview_placeholder').addClass('d-none');
-                            $('#sales_invoice_preview_wrap').show();
                             $('#sales_invoice_preview_iframe').attr('src', blobUrl);
-                            setPreviewScale(1);
 
                             showToast('Számla kiállítva.', 'success');
                             table.ajax.reload(null, false);
@@ -732,7 +696,7 @@
                             table.ajax.reload(null, false);
                         }).finally(() => {
                             saveBtn.html(originalSaveButtonHtml).prop('disabled', false);
-                            previewBtn.html(originalPreviewButtonHtml).prop('disabled', false);
+                            if (previewBtn.length) previewBtn.html(originalPreviewButtonHtml).prop('disabled', false);
                         });
                     },
                     error(xhr) {
@@ -745,7 +709,7 @@
                         showToast(msg, 'danger');
 
                         saveBtn.html(originalSaveButtonHtml).prop('disabled', false);
-                        previewBtn.html(originalPreviewButtonHtml).prop('disabled', false);
+                        if (previewBtn.length) previewBtn.html(originalPreviewButtonHtml).prop('disabled', false);
                     },
                     complete: () => {}
                 });

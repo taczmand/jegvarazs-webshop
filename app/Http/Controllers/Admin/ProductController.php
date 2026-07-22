@@ -36,6 +36,10 @@ class ProductController extends Controller
         $q = trim((string) $request->query('q', ''));
         $customerId = $request->query('customer_id');
         $showPartnerPrices = $request->boolean('show_partner_prices');
+        $companySiteIdRaw = $request->query('company_site_id');
+        $companySiteId = ($companySiteIdRaw !== null && $companySiteIdRaw !== '' && is_numeric($companySiteIdRaw))
+            ? (int) $companySiteIdRaw
+            : null;
         if ($q === '') {
             return response()->json(['products' => []]);
         }
@@ -45,13 +49,30 @@ class ProductController extends Controller
             $customer = Customer::query()->find((int) $customerId);
         }
 
-        $products = Product::query()
+        $productsQuery = Product::query()
             ->with(['taxCategory', 'unit'])
+            ->select([
+                'products.id',
+                'products.title',
+                'products.gross_price',
+                'products.partner_gross_price',
+                'products.tax_id',
+                'products.unit_qty',
+                'products.unit_id',
+            ])
             ->where(function ($query) use ($q) {
-                $query->where('title', 'like', "%{$q}%")
-                    ->orWhere('id', '=', is_numeric($q) ? (int) $q : 0);
+                $query->where('products.title', 'like', "%{$q}%")
+                    ->orWhere('products.id', '=', is_numeric($q) ? (int) $q : 0);
             })
-            ->orderBy('title')
+            ->when($companySiteId !== null, function ($query) use ($companySiteId) {
+                $query
+                    ->leftJoin('product_stocks', function ($join) use ($companySiteId) {
+                        $join->on('product_stocks.product_id', '=', 'products.id')
+                            ->where('product_stocks.company_site_id', '=', $companySiteId);
+                    })
+                    ->addSelect(DB::raw('COALESCE(product_stocks.quantity, 0) as available_quantity'));
+            })
+            ->orderBy('products.title')
             ->limit(20)
             ->addSelect([
                 'main_photo_path' => ProductPhoto::query()
@@ -60,7 +81,9 @@ class ProductController extends Controller
                     ->orderByDesc('is_main')
                     ->limit(1),
             ])
-            ->get(['id', 'title', 'gross_price', 'partner_gross_price', 'tax_id', 'unit_qty', 'unit_id', 'main_photo_path']);
+            ->get();
+
+        $products = $productsQuery;
 
         $partnerDiscounts = collect();
         if ($customer && $customer->is_partner && $products->isNotEmpty()) {
@@ -90,6 +113,7 @@ class ProductController extends Controller
                 'partner_gross_price' => $p->partner_gross_price,
                 'effective_gross_price' => $effective,
                 'main_photo_path' => $p->main_photo_path,
+                'available_quantity' => isset($p->available_quantity) ? (float) $p->available_quantity : null,
                 'tax_value' => $p->taxCategory?->tax_value,
                 'unit_qty' => $p->unit_qty,
                 'unit_name' => $p->unit?->name,

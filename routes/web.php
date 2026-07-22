@@ -20,6 +20,7 @@ use App\Http\Controllers\Admin\CustomerController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\LaravelLogController;
 use App\Http\Controllers\Admin\DownloadsController;
+use App\Http\Controllers\Admin\DeliveryNoteController;
 use App\Http\Controllers\Admin\EmployeeController;
 use App\Http\Controllers\Admin\LeadConversionReportController;
 use App\Http\Controllers\Admin\LeadController;
@@ -27,6 +28,7 @@ use App\Http\Controllers\Admin\OfferController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\OrderStatusesController;
 use App\Http\Controllers\Admin\PaymentMethodController;
+use App\Http\Controllers\Admin\PartnerSearchController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Admin\PartnerOfferController as AdminPartnerOfferController;
 use App\Http\Controllers\Admin\RegulationController;
@@ -292,6 +294,17 @@ Route::get('/automatizacio/jogosultsagok/szinkron', function (Request $request, 
             Route::post('/bizonylatok/kimeno-szamlak/{id}/issue-invoice-pdf', [SalesInvoiceController::class, 'issueInvoicePdf'])->name('documents.sales-invoices.issue-invoice-pdf');
             Route::put('/bizonylatok/kimeno-szamlak/{id}', [SalesInvoiceController::class, 'update'])->name('documents.sales-invoices.update');
 
+            // Szállítólevelek
+            Route::get('/bizonylatok/szallitolevelek', [DeliveryNoteController::class, 'index'])->name('documents.delivery-notes.index');
+            Route::get('/bizonylatok/szallitolevelek/data', [DeliveryNoteController::class, 'data'])->name('documents.delivery-notes.data');
+            Route::post('/bizonylatok/szallitolevelek', [DeliveryNoteController::class, 'store'])->name('documents.delivery-notes.store');
+            Route::get('/bizonylatok/szallitolevelek/{id}', [DeliveryNoteController::class, 'show'])->name('documents.delivery-notes.show');
+            Route::get('/bizonylatok/szallitolevelek/{id}/pdf', [DeliveryNoteController::class, 'pdf'])->name('documents.delivery-notes.pdf');
+            Route::put('/bizonylatok/szallitolevelek/{id}', [DeliveryNoteController::class, 'update'])->name('documents.delivery-notes.update');
+            Route::post('/bizonylatok/szallitolevelek/preview-pdf', [DeliveryNoteController::class, 'previewPdf'])->name('documents.delivery-notes.preview-pdf');
+            Route::post('/bizonylatok/szallitolevelek/{id}/issue-pdf', [DeliveryNoteController::class, 'issuePdf'])->name('documents.delivery-notes.issue-pdf');
+            Route::delete('/bizonylatok/szallitolevelek/{id}', [DeliveryNoteController::class, 'destroy'])->name('documents.delivery-notes.destroy');
+
 
             // Gyártók
             Route::get('/gyartok', [BrandController::class, 'index'])->name('brands.index');
@@ -391,6 +404,7 @@ Route::get('/automatizacio/jogosultsagok/szinkron', function (Request $request, 
             // Ügyfelek
             Route::get('/ugyfelek', [ClientController::class, 'index'])->name('clients.index');
             Route::get('/ugyfelek/kereses', [ClientController::class, 'search'])->name('clients.search');
+            Route::get('/bizonylatok/partner-kereses', [PartnerSearchController::class, 'search'])->name('documents.partner-search');
             Route::get('/ugyfelek/check-email', [ClientController::class, 'checkEmail'])->name('clients.check-email');
             Route::get('/ugyfelek/data', [ClientController::class, 'data'])->name('clients.data');
             Route::get('/ugyfelek/{id}/timeline', [ClientController::class, 'timeline'])->name('clients.timeline');
