@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Company;
+use App\Models\CompanySite;
 use App\Models\SalesInvoice;
 use App\Models\SalesInvoiceItem;
 use App\Services\InvoiceServiceInterface;
@@ -39,9 +40,17 @@ class SalesInvoiceController extends Controller
 
         $defaultCompanyId = optional($companies->firstWhere('is_default', true))->id;
 
+        $companySites = CompanySite::query()
+            ->orderBy('name')
+            ->get([
+                'id',
+                'name',
+            ]);
+
         return view('admin.documents.sales-invoices', [
             'companies' => $companies,
             'defaultCompanyId' => $defaultCompanyId,
+            'companySites' => $companySites,
         ]);
     }
 

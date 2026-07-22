@@ -15,7 +15,6 @@ return new class extends Migration
         Schema::create('sales_invoices', function (Blueprint $table) {
             $table->id()->comment('Egyedi azonosító');
 
-            $table->foreignId('client_id')->nullable()->constrained('clients')->nullOnDelete()->cascadeOnUpdate()->comment('Partner (ügyfél) azonosító (clients.id)');
             $table->foreignId('company_id')->nullable()->constrained('companies')->nullOnDelete()->cascadeOnUpdate()->comment('Cég azonosító (companies.id)');
 
             $table->string('invoice_number')->comment('Számlaszám');
@@ -79,7 +78,7 @@ return new class extends Migration
             $table->timestamp('updated_at')->default(DB::raw('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))->comment('Módosítás időpontja');
 
             $table->unique(['invoice_number']);
-            $table->index(['client_id', 'issued_at']);
+            $table->index(['issued_at']);
             $table->index(['status', 'due_at']);
         });
 

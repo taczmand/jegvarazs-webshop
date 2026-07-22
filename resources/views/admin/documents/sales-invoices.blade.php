@@ -97,6 +97,15 @@
                     </select>
                 </div>
 
+                <div class="mb-3">
+                    <label for="company_site_id" class="form-label">Telephely*</label>
+                    <select class="form-select" id="company_site_id" name="company_site_id" required>
+                        @foreach(($companySites ?? []) as $s)
+                            <option value="{{ $s->id }}">{{ $s->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
                 <div class="p-3 bg-light border rounded mb-3" style="line-height: 1.25;">
                     <div class="fw-semibold" id="company_display_name">-</div>
                     <div class="small" id="company_display_address">-</div>
@@ -287,6 +296,7 @@
     <script type="module">
 
         const companies = @json($companies ?? []);
+        const companySites = @json($companySites ?? []);
         const defaultCompanyId = @json($defaultCompanyId ?? null);
 
         const modalDOM = document.getElementById('salesInvoiceModal');
@@ -566,6 +576,11 @@
                 if (companyId) {
                     $('#company_id').val(companyId);
                 }
+
+                if (companySites.length) {
+                    $('#company_site_id').val(companySites[0].id);
+                }
+
                 renderCompanyBlock($('#company_id').val());
                 modal.show();
             });
@@ -585,6 +600,7 @@
                 const row_data = $('#adminTable').DataTable().row($(this).parents('tr')).data();
                 $('#invoice_id').val(row_data.id);
                 $('#company_id').val(row_data.company_id || defaultCompanyId);
+                $('#company_site_id').val($('#company_site_id').val() || (companySites[0]?.id ?? ''));
                 renderCompanyBlock($('#company_id').val());
                 $('#invoice_number').val(row_data.invoice_number);
                 $('#partner_name').val(row_data.partner_name);
@@ -848,9 +864,15 @@
                     return;
                 }
 
+                const siteId = String($('#company_site_id').val() || '').trim();
+                if (!siteId) {
+                    $('#product_search_results').empty();
+                    return;
+                }
+
                 searchTimeout = setTimeout(() => {
                     $.ajax({
-                        url: `${window.appConfig.APP_URL}admin/termekek/search?q=${encodeURIComponent(q)}`,
+                        url: `${window.appConfig.APP_URL}admin/termekek/search?q=${encodeURIComponent(q)}&company_site_id=${encodeURIComponent(siteId)}`,
                         method: 'GET',
                         success: function (resp) {
                             const results = resp?.products ?? [];
@@ -862,20 +884,29 @@
                                 const packagingLabel = Number.isFinite(unitQty) && unitQty > 1
                                     ? ` (kiszerelés: ${escapeHtml(unitQty)}${unitText ? ' ' + unitText : ''})`
                                     : '';
+                                const qty = Number(p.available_quantity ?? 0);
+                                const qtyText = Number.isFinite(qty) ? String(qty) : '0';
+                                const isOut = !Number.isFinite(qty) || qty <= 0;
                                 const btn = $(
-                                    `<button type="button" class="list-group-item list-group-item-action">
+                                    `<button type="button" class="list-group-item list-group-item-action" ${isOut ? 'disabled aria-disabled="true"' : ''}>
                                         <div class="d-flex justify-content-between align-items-center">
                                             <div><strong>${escapeHtml(p.title)}</strong>${packagingLabel}</div>
                                             <div class="text-muted">${formatMoney(p.effective_gross_price ?? p.gross_price ?? 0)} HUF</div>
                                         </div>
+                                        <div class="d-flex justify-content-between align-items-center mt-1">
+                                            <div class="small text-muted">Készlet: ${escapeHtml(qtyText)}</div>
+                                            ${isOut ? '<span class="badge text-bg-secondary">nincs készleten</span>' : ''}
+                                        </div>
                                      </button>`
                                 );
-                                btn.on('click', function () {
-                                    addProductAsItem(p);
-                                    $('#product_search').val('');
-                                    $('#product_search_results').empty();
-                                    $('#product_search').trigger('focus');
-                                });
+                                if (!isOut) {
+                                    btn.on('click', function () {
+                                        addProductAsItem(p);
+                                        $('#product_search').val('');
+                                        $('#product_search_results').empty();
+                                        $('#product_search').trigger('focus');
+                                    });
+                                }
                                 container.append(btn);
                             });
                         },
@@ -1030,6 +1061,10 @@
                     $('#company_id').val(defaultCompanyId);
                 }
                 renderCompanyBlock($('#company_id').val());
+
+                if (companySites.length) {
+                    $('#company_site_id').val(companySites[0].id);
+                }
 
                 $('#currency').val('HUF');
                 $('#partner_country').val('HU');
