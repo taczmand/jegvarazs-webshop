@@ -27,9 +27,10 @@
         $canViewCashReceipts = (bool) ($adminUser && $adminUser->can('view-cash-receipts'));
         $canViewLeads = (bool) ($adminUser && $adminUser->can('view-leads'));
         $canViewClients = (bool) ($adminUser && $adminUser->can('view-clients'));
+        $canViewWarehouses = (bool) ($adminUser && $adminUser->can('view-warehouses'));
         $canViewAutomatedEmails = (bool) ($adminUser && $adminUser->can('view-automated-emails'));
         $canViewBulkEmails = (bool) ($adminUser && $adminUser->can('view-bulk-emails'));
-        $canViewBusiness = $canViewOffers || $canViewContracts || $canViewAppointments || $canViewWorksheets || $canViewCashReceipts || $canViewLeads || $canViewClients || $canViewAutomatedEmails || $canViewBulkEmails;
+        $canViewBusiness = $canViewOffers || $canViewContracts || $canViewAppointments || $canViewWorksheets || $canViewCashReceipts || $canViewLeads || $canViewClients || $canViewWarehouses || $canViewAutomatedEmails || $canViewBulkEmails;
 
         $canViewVehicles = (bool) ($adminUser && $adminUser->can('view-vehicles'));
 
@@ -223,6 +224,9 @@
             </a>
             <div id="collapseWarehouse" class="collapse" data-bs-parent="#accordionSidebar">
                 <div class="bg-white py-2 collapse-inner rounded">
+                    @if($canViewWarehouses)
+                        <a class="collapse-item" href="{{ route('admin.warehouses.index') }}">Raktárak</a>
+                    @endif
                     <a class="collapse-item" href="#">Leltár</a>
                 </div>
             </div>

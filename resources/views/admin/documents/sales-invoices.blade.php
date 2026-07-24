@@ -98,10 +98,10 @@
                 </div>
 
                 <div class="mb-3">
-                    <label for="company_site_id" class="form-label">Telephely*</label>
-                    <select class="form-select" id="company_site_id" name="company_site_id" required>
-                        @foreach(($companySites ?? []) as $s)
-                            <option value="{{ $s->id }}">{{ $s->name }}</option>
+                    <label for="warehouse_id" class="form-label">Raktár*</label>
+                    <select class="form-select" id="warehouse_id" name="warehouse_id" required>
+                        @foreach(($warehouses ?? []) as $w)
+                            <option value="{{ $w->id }}">{{ $w->name }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -296,7 +296,7 @@
     <script type="module">
 
         const companies = @json($companies ?? []);
-        const companySites = @json($companySites ?? []);
+        const warehouses = @json($warehouses ?? []);
         const defaultCompanyId = @json($defaultCompanyId ?? null);
 
         const modalDOM = document.getElementById('salesInvoiceModal');
@@ -577,8 +577,8 @@
                     $('#company_id').val(companyId);
                 }
 
-                if (companySites.length) {
-                    $('#company_site_id').val(companySites[0].id);
+                if (warehouses.length) {
+                    $('#warehouse_id').val(warehouses[0].id);
                 }
 
                 renderCompanyBlock($('#company_id').val());
@@ -600,7 +600,7 @@
                 const row_data = $('#adminTable').DataTable().row($(this).parents('tr')).data();
                 $('#invoice_id').val(row_data.id);
                 $('#company_id').val(row_data.company_id || defaultCompanyId);
-                $('#company_site_id').val($('#company_site_id').val() || (companySites[0]?.id ?? ''));
+                $('#warehouse_id').val($('#warehouse_id').val() || (warehouses[0]?.id ?? ''));
                 renderCompanyBlock($('#company_id').val());
                 $('#invoice_number').val(row_data.invoice_number);
                 $('#partner_name').val(row_data.partner_name);
@@ -864,15 +864,15 @@
                     return;
                 }
 
-                const siteId = String($('#company_site_id').val() || '').trim();
-                if (!siteId) {
+                const warehouseId = String($('#warehouse_id').val() || '').trim();
+                if (!warehouseId) {
                     $('#product_search_results').empty();
                     return;
                 }
 
                 searchTimeout = setTimeout(() => {
                     $.ajax({
-                        url: `${window.appConfig.APP_URL}admin/termekek/search?q=${encodeURIComponent(q)}&company_site_id=${encodeURIComponent(siteId)}`,
+                        url: `${window.appConfig.APP_URL}admin/termekek/search?q=${encodeURIComponent(q)}&warehouse_id=${encodeURIComponent(warehouseId)}`,
                         method: 'GET',
                         success: function (resp) {
                             const results = resp?.products ?? [];
@@ -1062,8 +1062,8 @@
                 }
                 renderCompanyBlock($('#company_id').val());
 
-                if (companySites.length) {
-                    $('#company_site_id').val(companySites[0].id);
+                if (warehouses.length) {
+                    $('#warehouse_id').val(warehouses[0].id);
                 }
 
                 $('#currency').val('HUF');

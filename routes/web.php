@@ -43,6 +43,7 @@ use App\Http\Controllers\Admin\UnitController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\VehicleController;
 use App\Http\Controllers\Admin\VehicleKmController;
+use App\Http\Controllers\Admin\WarehouseController;
 use App\Http\Controllers\Admin\WorksheetController;
 use App\Http\Controllers\Admin\WorksheetProductsByWorkerReportController;
 use App\Http\Controllers\Admin\CashReceiptController;
@@ -248,6 +249,13 @@ Route::get('/automatizacio/jogosultsagok/szinkron', function (Request $request, 
             Route::post('/tulajdonsagok', [AttributeController::class, 'store'])->name('attributes.store');
             Route::put('tulajdonsagok/{id}', [AttributeController::class, 'update'])->name('attributes.update');
             Route::delete('/tulajdonsagok/{id}', [AttributeController::class, 'destroy'])->name('attributes.destroy');
+
+            // Raktározás - Raktárak
+            Route::get('/raktarozas/raktarak', [WarehouseController::class, 'index'])->name('warehouses.index');
+            Route::get('/raktarozas/raktarak/data', [WarehouseController::class, 'data'])->name('warehouses.data');
+            Route::post('/raktarozas/raktarak', [WarehouseController::class, 'store'])->name('warehouses.store');
+            Route::put('/raktarozas/raktarak/{id}', [WarehouseController::class, 'update'])->name('warehouses.update');
+            Route::delete('/raktarozas/raktarak/{id}', [WarehouseController::class, 'destroy'])->name('warehouses.destroy');
 
             // Címkék
             Route::get('/cimkek', [TagController::class, 'index'])->name('tags.index');

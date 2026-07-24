@@ -15,7 +15,7 @@ return new class extends Migration
         Schema::create('product_stocks', function (Blueprint $table) {
             $table->id()->comment('Egyedi azonosító');
 
-            $table->foreignId('company_site_id')->constrained('company_sites')->cascadeOnDelete()->cascadeOnUpdate()->comment('Telephely azonosító (company_sites.id)');
+            $table->foreignId('warehouse_id')->constrained('warehouses')->cascadeOnDelete()->cascadeOnUpdate()->comment('Raktár azonosító (warehouses.id)');
             $table->foreignId('product_id')->constrained('products')->cascadeOnDelete()->cascadeOnUpdate()->comment('Termék azonosító (products.id)');
 
             $table->decimal('quantity', 14, 3)->default(0)->comment('Készleten lévő mennyiség');
@@ -26,7 +26,7 @@ return new class extends Migration
             $table->timestamp('created_at')->default(DB::raw('CURRENT_TIMESTAMP'))->comment('Létrehozás időpontja');
             $table->timestamp('updated_at')->default(DB::raw('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))->comment('Módosítás időpontja');
 
-            $table->unique(['company_site_id', 'product_id']);
+            $table->unique(['warehouse_id', 'product_id']);
             $table->index(['product_id']);
         });
     }

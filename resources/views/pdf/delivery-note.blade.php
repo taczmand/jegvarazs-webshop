@@ -57,10 +57,10 @@
     </div>
     <div class="col col-50" style="padding-left:8px;">
         <div class="box">
-            <div class="bar">Telephely</div>
-            <div style="font-weight:700;">{{ $company_site?->name ?? '-' }}</div>
-            <div class="muted small">{{ trim(($company_site?->country ?? '') . ' ' . ($company_site?->zip_code ?? '') . ' ' . ($company_site?->city ?? '') . ' ' . ($company_site?->address_line ?? '')) }}</div>
-            <div class="muted small">{{ $company_site?->email ?? '' }}{{ ($company_site?->email && $company_site?->phone) ? ' | ' : '' }}{{ $company_site?->phone ?? '' }}</div>
+            <div class="bar">Raktár</div>
+            <div style="font-weight:700;">{{ $warehouse?->name ?? '-' }}</div>
+            <div class="muted small">{{ trim(($warehouse?->country ?? '') . ' ' . ($warehouse?->zip_code ?? '') . ' ' . ($warehouse?->city ?? '') . ' ' . ($warehouse?->address_line ?? '')) }}</div>
+            <div class="muted small">{{ $warehouse?->email ?? '' }}{{ ($warehouse?->email && $warehouse?->phone) ? ' | ' : '' }}{{ $warehouse?->phone ?? '' }}</div>
         </div>
     </div>
 </div>

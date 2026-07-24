@@ -15,7 +15,7 @@ return new class extends Migration
         Schema::create('stocktakes', function (Blueprint $table) {
             $table->id()->comment('Egyedi azonosító');
 
-            $table->foreignId('company_site_id')->constrained('company_sites')->cascadeOnDelete()->cascadeOnUpdate()->comment('Telephely azonosító (company_sites.id)');
+            $table->foreignId('warehouse_id')->constrained('warehouses')->cascadeOnDelete()->cascadeOnUpdate()->comment('Raktár azonosító (warehouses.id)');
             $table->foreignId('created_by_user_id')->nullable()->constrained('users')->nullOnDelete()->cascadeOnUpdate()->comment('Leltárt létrehozó felhasználó (users.id)');
             $table->foreignId('closed_by_user_id')->nullable()->constrained('users')->nullOnDelete()->cascadeOnUpdate()->comment('Leltárt lezáró felhasználó (users.id)');
 
@@ -30,7 +30,7 @@ return new class extends Migration
             $table->timestamp('created_at')->default(DB::raw('CURRENT_TIMESTAMP'))->comment('Létrehozás időpontja');
             $table->timestamp('updated_at')->default(DB::raw('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))->comment('Módosítás időpontja');
 
-            $table->index(['company_site_id', 'status']);
+            $table->index(['warehouse_id', 'status']);
         });
 
         Schema::create('stocktake_items', function (Blueprint $table) {

@@ -4,9 +4,9 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Company;
-use App\Models\CompanySite;
 use App\Models\SalesInvoice;
 use App\Models\SalesInvoiceItem;
+use App\Models\Warehouse;
 use App\Services\InvoiceServiceInterface;
 use App\Services\SzamlazzHu\Dto\CustomerData;
 use App\Services\SzamlazzHu\Dto\InvoiceData;
@@ -40,7 +40,7 @@ class SalesInvoiceController extends Controller
 
         $defaultCompanyId = optional($companies->firstWhere('is_default', true))->id;
 
-        $companySites = CompanySite::query()
+        $warehouses = Warehouse::query()
             ->orderBy('name')
             ->get([
                 'id',
@@ -50,7 +50,7 @@ class SalesInvoiceController extends Controller
         return view('admin.documents.sales-invoices', [
             'companies' => $companies,
             'defaultCompanyId' => $defaultCompanyId,
-            'companySites' => $companySites,
+            'warehouses' => $warehouses,
         ]);
     }
 

@@ -4,10 +4,10 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Company;
-use App\Models\CompanySite;
 use App\Models\DeliveryNote;
 use App\Models\DeliveryNoteItem;
 use App\Models\Product;
+use App\Models\Warehouse;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -38,23 +38,17 @@ class DeliveryNoteController extends Controller
 
         $defaultCompanyId = optional($companies->firstWhere('is_default', true))->id;
 
-        $companySites = CompanySite::query()
+        $warehouses = Warehouse::query()
             ->orderBy('name')
             ->get([
                 'id',
                 'name',
-                'country',
-                'zip_code',
-                'city',
-                'address_line',
-                'email',
-                'phone',
             ]);
 
         return view('admin.documents.delivery-notes', [
             'companies' => $companies,
             'defaultCompanyId' => $defaultCompanyId,
-            'companySites' => $companySites,
+            'warehouses' => $warehouses,
         ]);
     }
 
@@ -109,7 +103,7 @@ class DeliveryNoteController extends Controller
 
         $validated = $request->validate([
             'company_id' => 'required|integer|exists:companies,id',
-            'company_site_id' => 'required|integer|exists:company_sites,id',
+            'warehouse_id' => 'required|integer|exists:warehouses,id',
 
             'partnerable_type' => 'nullable|string|max:255',
             'partnerable_id' => 'nullable|integer',
@@ -150,9 +144,9 @@ class DeliveryNoteController extends Controller
             return response()->json(['message' => 'Kérlek válassz egy céget.'], 422);
         }
 
-        $companySite = CompanySite::query()->find($validated['company_site_id']);
-        if (!$companySite) {
-            return response()->json(['message' => 'Kérlek válassz egy telephelyet.'], 422);
+        $warehouse = Warehouse::query()->find($validated['warehouse_id']);
+        if (!$warehouse) {
+            return response()->json(['message' => 'Kérlek válassz egy raktárat.'], 422);
         }
 
         $validated['company_id'] = $company->id;
@@ -166,14 +160,14 @@ class DeliveryNoteController extends Controller
         $validated['company_phone'] = $company->phone;
         $validated['company_bank_account'] = $company->bank_account;
 
-        $companySiteId = (int) $validated['company_site_id'];
-        unset($validated['company_site_id']);
+        $warehouseId = (int) $validated['warehouse_id'];
+        unset($validated['warehouse_id']);
 
         $payload = array_merge([
             'status' => 'draft',
         ], $validated);
 
-        $note = DB::transaction(function () use ($payload, $request, $companySiteId) {
+        $note = DB::transaction(function () use ($payload, $request, $warehouseId) {
             $number = trim((string) ($payload['document_number'] ?? ''));
             $payload['document_number'] = $number !== '' ? $number : 'DRAFT-' . uniqid();
 
@@ -188,7 +182,7 @@ class DeliveryNoteController extends Controller
             $this->syncItemsFromJson($note->id, (string) $request->input('items_json', '[]'));
 
             $itemsForPdf = $this->parseItemsForPdf((string) $request->input('items_json', '[]'));
-            $relativePath = $this->generateAndStorePdf($note->fresh(), $companySiteId, $itemsForPdf);
+            $relativePath = $this->generateAndStorePdf($note->fresh(), $warehouseId, $itemsForPdf);
             $note->update([
                 'pdf_path' => $relativePath,
             ]);
@@ -213,7 +207,7 @@ class DeliveryNoteController extends Controller
 
         $validated = $request->validate([
             'company_id' => 'required|integer|exists:companies,id',
-            'company_site_id' => 'required|integer|exists:company_sites,id',
+            'warehouse_id' => 'required|integer|exists:warehouses,id',
 
             'partnerable_type' => 'nullable|string|max:255',
             'partnerable_id' => 'nullable|integer',
@@ -254,9 +248,9 @@ class DeliveryNoteController extends Controller
             return response()->json(['message' => 'Kérlek válassz egy céget.'], 422);
         }
 
-        $companySite = CompanySite::query()->find($validated['company_site_id']);
-        if (!$companySite) {
-            return response()->json(['message' => 'Kérlek válassz egy telephelyet.'], 422);
+        $warehouse = Warehouse::query()->find($validated['warehouse_id']);
+        if (!$warehouse) {
+            return response()->json(['message' => 'Kérlek válassz egy raktárat.'], 422);
         }
 
         $validated['company_id'] = $company->id;
@@ -270,11 +264,11 @@ class DeliveryNoteController extends Controller
         $validated['company_phone'] = $company->phone;
         $validated['company_bank_account'] = $company->bank_account;
 
-        $companySiteId = (int) $validated['company_site_id'];
+        $warehouseId = (int) $validated['warehouse_id'];
 
-        unset($validated['company_site_id']);
+        unset($validated['warehouse_id']);
 
-        $note = DB::transaction(function () use ($note, $validated, $request, $companySiteId) {
+        $note = DB::transaction(function () use ($note, $validated, $request, $warehouseId) {
             $number = trim((string) ($validated['document_number'] ?? ''));
             if ($number === '') {
                 unset($validated['document_number']);
@@ -284,7 +278,7 @@ class DeliveryNoteController extends Controller
             $this->syncItemsFromJson($note->id, (string) $request->input('items_json', '[]'));
 
             $itemsForPdf = $this->parseItemsForPdf((string) $request->input('items_json', '[]'));
-            $relativePath = $this->generateAndStorePdf($note->fresh(), $companySiteId, $itemsForPdf);
+            $relativePath = $this->generateAndStorePdf($note->fresh(), $warehouseId, $itemsForPdf);
             $note->update([
                 'pdf_path' => $relativePath,
             ]);
@@ -346,7 +340,7 @@ class DeliveryNoteController extends Controller
 
         $validated = $request->validate([
             'company_id' => 'required|integer|exists:companies,id',
-            'company_site_id' => 'required|integer|exists:company_sites,id',
+            'warehouse_id' => 'required|integer|exists:warehouses,id',
             'document_number' => 'nullable|string|max:255',
             'partnerable_type' => 'nullable|string|max:255',
             'partnerable_id' => 'nullable|integer',
@@ -383,9 +377,9 @@ class DeliveryNoteController extends Controller
             return response()->json(['message' => 'Kérlek válassz egy céget.'], 422);
         }
 
-        $companySite = CompanySite::query()->find($validated['company_site_id']);
-        if (!$companySite) {
-            return response()->json(['message' => 'Kérlek válassz egy telephelyet.'], 422);
+        $warehouse = Warehouse::query()->find($validated['warehouse_id']);
+        if (!$warehouse) {
+            return response()->json(['message' => 'Kérlek válassz egy raktárat.'], 422);
         }
 
         $noteData = $validated;
@@ -400,12 +394,14 @@ class DeliveryNoteController extends Controller
         $noteData['company_phone'] = $company->phone;
         $noteData['company_bank_account'] = $company->bank_account;
 
+        unset($noteData['warehouse_id']);
+
         $note = new DeliveryNote($noteData);
 
         $pdf = Pdf::loadView('pdf.delivery-note', [
             'delivery_note' => $note,
             'items' => $items,
-            'company_site' => $companySite,
+            'warehouse' => $warehouse,
         ]);
 
         return response($pdf->output(), 200, [
@@ -425,7 +421,7 @@ class DeliveryNoteController extends Controller
 
         $validated = $request->validate([
             'company_id' => 'required|integer|exists:companies,id',
-            'company_site_id' => 'required|integer|exists:company_sites,id',
+            'warehouse_id' => 'required|integer|exists:warehouses,id',
             'document_number' => 'nullable|string|max:255',
 
             'partnerable_type' => 'nullable|string|max:255',
@@ -459,18 +455,18 @@ class DeliveryNoteController extends Controller
             return response()->json(['message' => 'Nincs tétel a szállítólevélen.'], 422);
         }
 
-        $companySiteId = (int) $validated['company_site_id'];
+        $warehouseId = (int) $validated['warehouse_id'];
 
-        $pdfBytes = DB::transaction(function () use ($note, $validated, $itemsForPdf, $companySiteId) {
+        $pdfBytes = DB::transaction(function () use ($note, $validated, $itemsForPdf, $warehouseId) {
             $note->refresh();
 
-            $companySite = CompanySite::query()->find($companySiteId);
-            if (!$companySite) {
-                throw new \RuntimeException('Kérlek válassz egy telephelyet.');
+            $warehouse = Warehouse::query()->find($warehouseId);
+            if (!$warehouse) {
+                throw new \RuntimeException('Kérlek válassz egy raktárat.');
             }
 
             $validatedForUpdate = $validated;
-            unset($validatedForUpdate['company_site_id']);
+            unset($validatedForUpdate['warehouse_id']);
 
             $company = Company::query()->where('status', 'active')->find($validatedForUpdate['company_id'] ?? null);
             if (!$company) {
@@ -494,7 +490,7 @@ class DeliveryNoteController extends Controller
             $pdf = Pdf::loadView('pdf.delivery-note', [
                 'delivery_note' => $note->fresh(),
                 'items' => $itemsForPdf,
-                'company_site' => $companySite,
+                'warehouse' => $warehouse,
             ]);
 
             $bytes = $pdf->output();
@@ -507,7 +503,7 @@ class DeliveryNoteController extends Controller
             Storage::disk('local')->put($relativePath, $bytes);
 
             if ($note->stock_deducted_at === null) {
-                $this->deductStockForIssuedDeliveryNote($note->fresh(), $companySiteId);
+                $this->deductStockForIssuedDeliveryNote($note->fresh(), $warehouseId);
             }
 
             $note->update([
@@ -623,10 +619,10 @@ class DeliveryNoteController extends Controller
         return $items;
     }
 
-    private function deductStockForIssuedDeliveryNote(DeliveryNote $note, int $companySiteId): void
+    private function deductStockForIssuedDeliveryNote(DeliveryNote $note, int $warehouseId): void
     {
-        if ($companySiteId <= 0) {
-            throw new \RuntimeException('Hiányzó telephely a készlet csökkentéshez.');
+        if ($warehouseId <= 0) {
+            throw new \RuntimeException('Hiányzó raktár a készlet csökkentéshez.');
         }
 
         $items = DeliveryNoteItem::query()->where('delivery_note_id', $note->id)->get();
@@ -640,7 +636,7 @@ class DeliveryNoteController extends Controller
         }
 
         $stocks = DB::table('product_stocks')
-            ->where('company_site_id', '=', $companySiteId)
+            ->where('warehouse_id', '=', $warehouseId)
             ->whereIn('product_id', $productIds)
             ->lockForUpdate()
             ->get(['product_id', 'quantity']);
@@ -659,7 +655,7 @@ class DeliveryNoteController extends Controller
 
             DB::table('product_stocks')->updateOrInsert(
                 [
-                    'company_site_id' => $companySiteId,
+                    'warehouse_id' => $warehouseId,
                     'product_id' => (int) $item->product_id,
                 ],
                 [
@@ -674,21 +670,21 @@ class DeliveryNoteController extends Controller
         ]);
     }
 
-    private function generateAndStorePdf(DeliveryNote $note, int $companySiteId, array $itemsForPdf): string
+    private function generateAndStorePdf(DeliveryNote $note, int $warehouseId, array $itemsForPdf): string
     {
-        if ($companySiteId <= 0) {
-            throw new \RuntimeException('Hiányzó telephely a PDF generáláshoz.');
+        if ($warehouseId <= 0) {
+            throw new \RuntimeException('Hiányzó raktár a PDF generáláshoz.');
         }
 
-        $companySite = CompanySite::query()->find($companySiteId);
-        if (!$companySite) {
-            throw new \RuntimeException('Kérlek válassz egy telephelyet.');
+        $warehouse = Warehouse::query()->find($warehouseId);
+        if (!$warehouse) {
+            throw new \RuntimeException('Kérlek válassz egy raktárat.');
         }
 
         $pdf = Pdf::loadView('pdf.delivery-note', [
             'delivery_note' => $note,
             'items' => $itemsForPdf,
-            'company_site' => $companySite,
+            'warehouse' => $warehouse,
         ]);
 
         $bytes = $pdf->output();

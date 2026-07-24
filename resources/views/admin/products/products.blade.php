@@ -940,7 +940,7 @@
                     },
                     order: [[0, 'asc']],
                     columns: [
-                        { data: 'company_site_name', title: 'Telephely' },
+                        { data: 'warehouse_name', title: 'Raktár' },
                         { data: 'quantity', title: 'Mennyiség' },
                         {
                             data: null,

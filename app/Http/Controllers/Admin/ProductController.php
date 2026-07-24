@@ -36,9 +36,9 @@ class ProductController extends Controller
         $q = trim((string) $request->query('q', ''));
         $customerId = $request->query('customer_id');
         $showPartnerPrices = $request->boolean('show_partner_prices');
-        $companySiteIdRaw = $request->query('company_site_id');
-        $companySiteId = ($companySiteIdRaw !== null && $companySiteIdRaw !== '' && is_numeric($companySiteIdRaw))
-            ? (int) $companySiteIdRaw
+        $warehouseIdRaw = $request->query('warehouse_id');
+        $warehouseId = ($warehouseIdRaw !== null && $warehouseIdRaw !== '' && is_numeric($warehouseIdRaw))
+            ? (int) $warehouseIdRaw
             : null;
         if ($q === '') {
             return response()->json(['products' => []]);
@@ -64,11 +64,11 @@ class ProductController extends Controller
                 $query->where('products.title', 'like', "%{$q}%")
                     ->orWhere('products.id', '=', is_numeric($q) ? (int) $q : 0);
             })
-            ->when($companySiteId !== null, function ($query) use ($companySiteId) {
+            ->when($warehouseId !== null, function ($query) use ($warehouseId) {
                 $query
-                    ->leftJoin('product_stocks', function ($join) use ($companySiteId) {
+                    ->leftJoin('product_stocks', function ($join) use ($warehouseId) {
                         $join->on('product_stocks.product_id', '=', 'products.id')
-                            ->where('product_stocks.company_site_id', '=', $companySiteId);
+                            ->where('product_stocks.warehouse_id', '=', $warehouseId);
                     })
                     ->addSelect(DB::raw('COALESCE(product_stocks.quantity, 0) as available_quantity'));
             })
@@ -439,18 +439,18 @@ class ProductController extends Controller
             ->where('product_id', '=', $productId)
             ->exists();
 
-        $items = DB::table('company_sites')
+        $items = DB::table('warehouses')
             ->leftJoin('product_stocks', function ($join) use ($productId) {
-                $join->on('product_stocks.company_site_id', '=', 'company_sites.id')
+                $join->on('product_stocks.warehouse_id', '=', 'warehouses.id')
                     ->where('product_stocks.product_id', '=', $productId);
             })
             ->select([
-                'company_sites.id as company_site_id',
-                'company_sites.name as company_site_name',
+                'warehouses.id as warehouse_id',
+                'warehouses.name as warehouse_name',
                 DB::raw('COALESCE(product_stocks.quantity, 0) as quantity'),
                 'product_stocks.updated_at as updated_at',
             ])
-            ->orderBy('company_sites.name');
+            ->orderBy('warehouses.name');
 
         return DataTables::of($items)
             ->editColumn('quantity', function ($row) {
