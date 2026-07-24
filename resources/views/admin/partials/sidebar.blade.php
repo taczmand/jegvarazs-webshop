@@ -200,22 +200,36 @@
             </div>
         </li>
 
-        <li class="nav-item">
-            <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseBusinessDocuments" aria-expanded="false">
-                <i class="fa-solid fa-file-invoice"></i>
-                <span>Bizonylatok</span>
-            </a>
-            <div id="collapseBusinessDocuments" class="collapse" data-bs-parent="#accordionSidebar">
-                <div class="bg-white py-2 collapse-inner rounded">
-                    @if($adminUser && $adminUser->can('view-sales-invoices'))
-                        <a class="collapse-item" href="{{ route('admin.documents.sales-invoices.index') }}">Kimenő számlák</a>
-                    @endif
-                    <a class="collapse-item" href="#">Bejövő számlák</a>
-                    <a class="collapse-item" href="{{ route('admin.documents.delivery-notes.index') }}">Szállítólevelek</a>
-                    <a class="collapse-item" href="#">Bevételezések</a>
+        @php
+            $canViewBusinessDocuments = (bool) ($adminUser && (
+                $adminUser->can('view-sales-invoices') ||
+                $adminUser->can('view-delivery-notes') ||
+                $adminUser->can('view-goods-receipts')
+            ));
+        @endphp
+
+        @if($canViewBusinessDocuments)
+            <li class="nav-item">
+                <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseBusinessDocuments" aria-expanded="false">
+                    <i class="fa-solid fa-file-invoice"></i>
+                    <span>Bizonylatok</span>
+                </a>
+                <div id="collapseBusinessDocuments" class="collapse" data-bs-parent="#accordionSidebar">
+                    <div class="bg-white py-2 collapse-inner rounded">
+                        @if($adminUser && $adminUser->can('view-sales-invoices'))
+                            <a class="collapse-item" href="{{ route('admin.documents.sales-invoices.index') }}">Kimenő számlák</a>
+                        @endif
+                        <a class="collapse-item" href="#">Bejövő számlák</a>
+                        @if($adminUser && $adminUser->can('view-delivery-notes'))
+                            <a class="collapse-item" href="{{ route('admin.documents.delivery-notes.index') }}">Szállítólevelek</a>
+                        @endif
+                        @if($adminUser && $adminUser->can('view-goods-receipts'))
+                            <a class="collapse-item" href="{{ route('admin.documents.goods-receipts.index') }}">Bevételezések</a>
+                        @endif
+                    </div>
                 </div>
-            </div>
-        </li>
+            </li>
+        @endif
 
         <li class="nav-item">
             <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseWarehouse" aria-expanded="false">

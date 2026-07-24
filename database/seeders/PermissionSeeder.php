@@ -146,6 +146,11 @@ class PermissionSeeder extends Seeder
             ['id' => 146, 'name' => 'edit-delivery-note', 'label' => 'Szállítólevél szerkesztése', 'group' => 'Bizonylatok'],
             ['id' => 147, 'name' => 'delete-delivery-note', 'label' => 'Szállítólevél törlése', 'group' => 'Bizonylatok'],
 
+            ['id' => 152, 'name' => 'view-goods-receipts', 'label' => 'Bevételezések megtekintése', 'group' => 'Bizonylatok'],
+            ['id' => 153, 'name' => 'create-goods-receipt', 'label' => 'Bevételezés létrehozása', 'group' => 'Bizonylatok'],
+            ['id' => 154, 'name' => 'edit-goods-receipt', 'label' => 'Bevételezés szerkesztése', 'group' => 'Bizonylatok'],
+            ['id' => 155, 'name' => 'delete-goods-receipt', 'label' => 'Bevételezés törlése', 'group' => 'Bizonylatok'],
+
             ['id' => 148, 'name' => 'view-warehouses', 'label' => 'Raktárak megtekintése', 'group' => 'Raktározás'],
             ['id' => 149, 'name' => 'create-warehouse', 'label' => 'Raktár létrehozása', 'group' => 'Raktározás'],
             ['id' => 150, 'name' => 'edit-warehouse', 'label' => 'Raktár szerkesztése', 'group' => 'Raktározás'],

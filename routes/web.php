@@ -21,6 +21,7 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\LaravelLogController;
 use App\Http\Controllers\Admin\DownloadsController;
 use App\Http\Controllers\Admin\DeliveryNoteController;
+use App\Http\Controllers\Admin\GoodsReceiptController;
 use App\Http\Controllers\Admin\EmployeeController;
 use App\Http\Controllers\Admin\LeadConversionReportController;
 use App\Http\Controllers\Admin\LeadController;
@@ -312,6 +313,17 @@ Route::get('/automatizacio/jogosultsagok/szinkron', function (Request $request, 
             Route::post('/bizonylatok/szallitolevelek/preview-pdf', [DeliveryNoteController::class, 'previewPdf'])->name('documents.delivery-notes.preview-pdf');
             Route::post('/bizonylatok/szallitolevelek/{id}/issue-pdf', [DeliveryNoteController::class, 'issuePdf'])->name('documents.delivery-notes.issue-pdf');
             Route::delete('/bizonylatok/szallitolevelek/{id}', [DeliveryNoteController::class, 'destroy'])->name('documents.delivery-notes.destroy');
+
+            // Bevételezések
+            Route::get('/bizonylatok/bevetelezesek', [GoodsReceiptController::class, 'index'])->name('documents.goods-receipts.index');
+            Route::get('/bizonylatok/bevetelezesek/data', [GoodsReceiptController::class, 'data'])->name('documents.goods-receipts.data');
+            Route::post('/bizonylatok/bevetelezesek', [GoodsReceiptController::class, 'store'])->name('documents.goods-receipts.store');
+            Route::get('/bizonylatok/bevetelezesek/{id}', [GoodsReceiptController::class, 'show'])->name('documents.goods-receipts.show');
+            Route::get('/bizonylatok/bevetelezesek/{id}/pdf', [GoodsReceiptController::class, 'pdf'])->name('documents.goods-receipts.pdf');
+            Route::put('/bizonylatok/bevetelezesek/{id}', [GoodsReceiptController::class, 'update'])->name('documents.goods-receipts.update');
+            Route::post('/bizonylatok/bevetelezesek/preview-pdf', [GoodsReceiptController::class, 'previewPdf'])->name('documents.goods-receipts.preview-pdf');
+            Route::post('/bizonylatok/bevetelezesek/{id}/issue-pdf', [GoodsReceiptController::class, 'issuePdf'])->name('documents.goods-receipts.issue-pdf');
+            Route::delete('/bizonylatok/bevetelezesek/{id}', [GoodsReceiptController::class, 'destroy'])->name('documents.goods-receipts.destroy');
 
 
             // Gyártók

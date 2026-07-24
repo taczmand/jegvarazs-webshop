@@ -15,7 +15,6 @@ return new class extends Migration
         Schema::create('goods_receipts', function (Blueprint $table) {
             $table->id()->comment('Egyedi azonosító');
 
-            $table->foreignId('client_id')->nullable()->constrained('clients')->nullOnDelete()->cascadeOnUpdate()->comment('Partner (szállító) azonosító (clients.id)');
             $table->foreignId('company_id')->nullable()->constrained('companies')->nullOnDelete()->cascadeOnUpdate()->comment('Cég azonosító (companies.id)');
             $table->foreignId('received_by_user_id')->nullable()->constrained('users')->nullOnDelete()->cascadeOnUpdate()->comment('Bevételezést rögzítő felhasználó (users.id)');
 
@@ -42,7 +41,7 @@ return new class extends Migration
             $table->timestamp('updated_at')->default(DB::raw('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))->comment('Módosítás időpontja');
 
             $table->unique(['document_number']);
-            $table->index(['client_id', 'received_at']);
+            $table->index(['company_id', 'received_at']);
             $table->index(['related_purchase_invoice_id']);
         });
 
