@@ -4,12 +4,15 @@ namespace App\Services;
 
 use App\Models\User;
 use Illuminate\Support\Facades\Artisan;
+use Spatie\Permission\PermissionRegistrar;
 use Spatie\Permission\Models\Permission;
 
 class PermissionBootstrapService
 {
     public function syncAllPermissionsForConfiguredUsers(): array
     {
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
+
         $emails = (array) config('permission_bootstrap.users.emails', []);
         $emails = array_values(array_filter(array_map('strval', $emails)));
 
