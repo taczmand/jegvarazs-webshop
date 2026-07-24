@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Mail\NewOrder;
 use App\Mail\NewOrderToOffice;
 use App\Mail\UpdateOrder;
+use App\Models\Customer;
 use App\Models\Order;
 use Exception;
 use Illuminate\Http\Request;
@@ -67,6 +68,13 @@ class SimplePayController extends Controller
 
 
             $order->save();
+
+            if ($status === 'FINISHED' && $order->customer_id) {
+                $customer = Customer::with('cart.items')->find($order->customer_id);
+                if ($customer && $customer->cart) {
+                    $customer->cart->items()->delete();
+                }
+            }
 
             $order_items = $order->items;
             try {
