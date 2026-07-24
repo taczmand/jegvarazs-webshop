@@ -67,7 +67,7 @@
     </div>
 
 
-    <x-admin.document-modal id="deliveryNoteModal" title="Szállítólevél" form-id="deliveryNoteForm" save-button-id="saveDeliveryNote" pane-left="33.333%" pane-mid="66.667%">
+    <x-admin.document-modal id="deliveryNoteModal" title="Szállítólevél" form-id="deliveryNoteForm" save-button-id="saveDeliveryNote" pane-left="40%" pane-mid="60%">
         <x-slot:left>
             <input type="hidden" id="delivery_note_id" name="id">
 
@@ -92,13 +92,6 @@
                             <option value="{{ $w->id }}">{{ $w->name }}</option>
                         @endforeach
                     </select>
-                </div>
-
-                <div class="p-3 bg-light border rounded mb-0" style="line-height: 1.25;">
-                    <div class="fw-semibold" id="company_display_name">-</div>
-                    <div class="small" id="company_display_address">-</div>
-                    <div class="small text-muted" id="company_display_tax">-</div>
-                    <div class="small text-muted" id="company_display_contact">-</div>
                 </div>
             </fieldset>
 
@@ -142,6 +135,17 @@
                     <div class="col-12 col-md-5">
                         <label for="partner_address_line" class="form-label">Cím</label>
                         <input type="text" class="form-control" id="partner_address_line" name="partner_address_line">
+                    </div>
+                </div>
+
+                <div class="row g-2 mt-1">
+                    <div class="col-12 col-md-6">
+                        <label for="partner_email" class="form-label">E-mail</label>
+                        <input type="email" class="form-control" id="partner_email" name="partner_email">
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label for="partner_phone" class="form-label">Telefon</label>
+                        <input type="text" class="form-control" id="partner_phone" name="partner_phone">
                     </div>
                 </div>
             </fieldset>
@@ -302,32 +306,6 @@
                     .replace(/'/g, '&#039;');
             }
 
-            function renderCompanyBlock(companyId) {
-                const id = companyId ? parseInt(companyId, 10) : null;
-                const c = companies.find(x => parseInt(x.id, 10) === id);
-
-                if (!c) {
-                    $('#company_display_name').text('-');
-                    $('#company_display_tax').text('-');
-                    $('#company_display_address').text('-');
-                    $('#company_display_contact').text('-');
-                    return;
-                }
-
-                const tax = c.tax_number ? `Adószám: ${escapeHtml(c.tax_number)}` : '';
-                const addressParts = [c.country, c.zip_code, c.city, c.address_line].filter(Boolean).map(escapeHtml);
-                const address = addressParts.length ? addressParts.join(' ') : '';
-                const contactParts = [];
-                if (c.email) contactParts.push(escapeHtml(c.email));
-                if (c.phone) contactParts.push(escapeHtml(c.phone));
-                const contact = contactParts.join(' | ');
-
-                $('#company_display_name').text(c.name || '-');
-                $('#company_display_tax').text(tax || '-');
-                $('#company_display_address').text(address || '-');
-                $('#company_display_contact').text(contact || '-');
-            }
-
             function todayDate() {
                 const d = new Date();
                 const m = String(d.getMonth() + 1).padStart(2, '0');
@@ -398,9 +376,11 @@
                 $('#partner_client_search_results').hide().empty();
             }
 
-            function fillPartnerFromClient({ name = '', tax = '', country = 'HU', zip = '', city = '', line = '' } = {}) {
+            function fillPartnerFromClient({ name = '', tax = '', email = '', phone = '', country = 'HU', zip = '', city = '', line = '' } = {}) {
                 $('#partner_name').val(name || '');
                 $('#partner_tax_number').val(tax || '');
+                $('#partner_email').val(email || '');
+                $('#partner_phone').val(phone || '');
                 $('#partner_country').val(country || 'HU');
                 $('#partner_zip_code').val(zip || '');
                 $('#partner_city').val(city || '');
@@ -434,10 +414,12 @@
                                 clients.forEach(c => {
                                     const name = c?.name || '';
                                     const email = c?.email || '';
+                                    const phone = c?.phone || '';
                                     const tax = c?.id_number || '';
+                                    const source = c?.source || '';
                                     const addresses = Array.isArray(c?.addresses) ? c.addresses : [];
 
-                                    const headerParts = [email].filter(Boolean).join(', ');
+                                    const headerParts = [source, tax, email, phone].filter(Boolean).join(', ');
                                     $list.append(`
                                         <div class="list-group-item client-search-header">
                                             <div class="fw-bold">${escapeHtml(name || email || 'N/A')}${headerParts ? ' (' + escapeHtml(headerParts) + ')' : ''}</div>
@@ -450,11 +432,14 @@
                                             <button type="button" class="list-group-item list-group-item-action client-address-item"
                                                 data-name="${escapeHtml(name)}"
                                                 data-tax="${escapeHtml(tax)}"
+                                                data-email="${escapeHtml(email)}"
+                                                data-phone="${escapeHtml(phone)}"
                                                 data-country="${escapeHtml(a?.country || 'HU')}"
                                                 data-zip="${escapeHtml(a?.zip_code || '')}"
                                                 data-city="${escapeHtml(a?.city || '')}"
                                                 data-line="${escapeHtml(a?.address_line || '')}">
                                                 <div class="fw-bold">${escapeHtml(addrText || 'Cím nélkül')}${a?.is_default ? ' (alapértelmezett)' : ''}</div>
+                                                <div class="small text-muted">${escapeHtml(a?.country || '')}</div>
                                             </button>
                                         `);
                                     });
@@ -488,6 +473,8 @@
                 fillPartnerFromClient({
                     name: $btn.data('name') || '',
                     tax: $btn.data('tax') || '',
+                    email: $btn.data('email') || '',
+                    phone: $btn.data('phone') || '',
                     country: $btn.data('country') || 'HU',
                     zip: $btn.data('zip') || '',
                     city: $btn.data('city') || '',
@@ -549,8 +536,6 @@
                     $('#warehouse_id').val(warehouses[0].id);
                 }
 
-                renderCompanyBlock($('#company_id').val());
-
                 items.splice(0, items.length);
                 renderItems();
                 syncItemsJson();
@@ -574,10 +559,6 @@
                 loadDeliveryNotePdfPreview();
             });
 
-            $('#company_id').on('change', function () {
-                renderCompanyBlock($(this).val());
-            });
-
             $('#adminTable').on('click', '.edit', async function () {
                 resetForm('Szállítólevél szerkesztése');
 
@@ -593,7 +574,6 @@
                 $('#delivery_note_id').val(note.id);
                 $('#company_id').val(note.company_id || defaultCompanyId);
                 $('#warehouse_id').val($('#warehouse_id').val() || (warehouses[0]?.id ?? ''));
-                renderCompanyBlock($('#company_id').val());
 
                 $('#partner_name').val(note.partner_name || '');
                 $('#partner_tax_number').val(note.partner_tax_number || '');

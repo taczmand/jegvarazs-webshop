@@ -81,7 +81,7 @@
     </div>
 
 
-    <x-admin.document-modal id="salesInvoiceModal" title="Kimenő számla" form-id="salesInvoiceForm" save-button-id="saveSalesInvoice" pane-left="33.333%" pane-mid="66.667%">
+    <x-admin.document-modal id="salesInvoiceModal" title="Kimenő számla" form-id="salesInvoiceForm" save-button-id="saveSalesInvoice" pane-left="40%" pane-mid="60%">
         <x-slot:left>
             <input type="hidden" id="invoice_id" name="id">
 
@@ -104,14 +104,6 @@
                             <option value="{{ $w->id }}">{{ $w->name }}</option>
                         @endforeach
                     </select>
-                </div>
-
-                <div class="p-3 bg-light border rounded mb-3" style="line-height: 1.25;">
-                    <div class="fw-semibold" id="company_display_name">-</div>
-                    <div class="small" id="company_display_address">-</div>
-                    <div class="small text-muted" id="company_display_tax">-</div>
-                    <div class="small text-muted" id="company_display_contact">-</div>
-                    <div class="small text-muted" id="company_display_bank">-</div>
                 </div>
             </fieldset>
 
@@ -315,35 +307,6 @@
                     .replace(/>/g, '&gt;')
                     .replace(/"/g, '&quot;')
                     .replace(/'/g, '&#039;');
-            }
-
-            function renderCompanyBlock(companyId) {
-                const id = companyId ? parseInt(companyId, 10) : null;
-                const c = companies.find(x => parseInt(x.id, 10) === id);
-
-                if (!c) {
-                    $('#company_display_name').text('-');
-                    $('#company_display_tax').text('-');
-                    $('#company_display_address').text('-');
-                    $('#company_display_contact').text('-');
-                    $('#company_display_bank').text('-');
-                    return;
-                }
-
-                const tax = c.tax_number ? `Adószám: ${escapeHtml(c.tax_number)}` : '';
-                const addressParts = [c.country, c.zip_code, c.city, c.address_line].filter(Boolean).map(escapeHtml);
-                const address = addressParts.length ? addressParts.join(' ') : '';
-                const contactParts = [];
-                if (c.email) contactParts.push(escapeHtml(c.email));
-                if (c.phone) contactParts.push(escapeHtml(c.phone));
-                const contact = contactParts.join(' | ');
-                const bank = c.bank_account ? `Bank: ${escapeHtml(c.bank_account)}` : '';
-
-                $('#company_display_name').text(c.name || '-');
-                $('#company_display_tax').text(tax || '-');
-                $('#company_display_address').text(address || '-');
-                $('#company_display_contact').text(contact || '-');
-                $('#company_display_bank').text(bank || '-');
             }
 
             function resetPreview() {
@@ -580,17 +543,11 @@
                 if (warehouses.length) {
                     $('#warehouse_id').val(warehouses[0].id);
                 }
-
-                renderCompanyBlock($('#company_id').val());
                 modal.show();
             });
 
             $('#previewSalesInvoice').on('click', function () {
                 loadInvoicePdfPreview();
-            });
-
-            $('#company_id').on('change', function () {
-                renderCompanyBlock($(this).val());
             });
 
             $('#adminTable').on('click', '.edit', async function () {
@@ -601,7 +558,6 @@
                 $('#invoice_id').val(row_data.id);
                 $('#company_id').val(row_data.company_id || defaultCompanyId);
                 $('#warehouse_id').val($('#warehouse_id').val() || (warehouses[0]?.id ?? ''));
-                renderCompanyBlock($('#company_id').val());
                 $('#invoice_number').val(row_data.invoice_number);
                 $('#partner_name').val(row_data.partner_name);
                 $('#issued_at').val(todayDate());
@@ -1060,7 +1016,6 @@
                 if (defaultCompanyId) {
                     $('#company_id').val(defaultCompanyId);
                 }
-                renderCompanyBlock($('#company_id').val());
 
                 if (warehouses.length) {
                     $('#warehouse_id').val(warehouses[0].id);
