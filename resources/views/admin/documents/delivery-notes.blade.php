@@ -67,7 +67,7 @@
     </div>
 
 
-    <x-admin.document-modal id="deliveryNoteModal" title="Szállítólevél" form-id="deliveryNoteForm" save-button-id="saveDeliveryNote">
+    <x-admin.document-modal id="deliveryNoteModal" title="Szállítólevél" form-id="deliveryNoteForm" save-button-id="saveDeliveryNote" pane-left="33.333%" pane-mid="66.667%">
         <x-slot:left>
             <input type="hidden" id="delivery_note_id" name="id">
 

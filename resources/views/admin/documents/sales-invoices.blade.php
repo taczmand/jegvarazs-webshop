@@ -81,7 +81,7 @@
     </div>
 
 
-    <x-admin.document-modal id="salesInvoiceModal" title="Kimenő számla" form-id="salesInvoiceForm" save-button-id="saveSalesInvoice">
+    <x-admin.document-modal id="salesInvoiceModal" title="Kimenő számla" form-id="salesInvoiceForm" save-button-id="saveSalesInvoice" pane-left="33.333%" pane-mid="66.667%">
         <x-slot:left>
             <input type="hidden" id="invoice_id" name="id">
 
