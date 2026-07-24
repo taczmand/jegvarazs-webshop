@@ -116,7 +116,7 @@ class WarehouseController extends Controller
 
         return $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'code' => [$codeRule],
+            'code' => $codeRule,
             'country' => ['required', 'string', 'max:2'],
             'zip_code' => ['nullable', 'string', 'max:50'],
             'city' => ['nullable', 'string', 'max:255'],
