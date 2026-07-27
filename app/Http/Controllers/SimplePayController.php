@@ -147,16 +147,28 @@ class SimplePayController extends Controller
         if ($status === 'SUCCESS') {
             // Sikeres fizetés
             $order_items = $order->items;
-            try {
-                Mail::to($order->contact_email)->send(new NewOrder($order, $order_items));
-                if (!app()->environment('local')) {
-                    Mail::to("jegvarazsiroda@gmail.com")->send(new NewOrderToOffice(
-                        $order,
-                        $order_items
-                    ));
+
+            $markedAsSent = Order::whereKey($order->id)
+                ->whereNull('order_confirmation_sent_at')
+                ->update(['order_confirmation_sent_at' => now()]);
+
+            if ($markedAsSent === 1) {
+                try {
+                    Mail::to($order->contact_email)->send(new NewOrder($order, $order_items));
+                    if (!app()->environment('local')) {
+                        Mail::to("jegvarazsiroda@gmail.com")->send(new NewOrderToOffice(
+                            $order,
+                            $order_items
+                        ));
+                    }
+                } catch(Exception $e) {
+                    \Log::error('E-mail küldési hiba: ' . $e->getMessage());
                 }
-            } catch(Exception $e) {
-                \Log::error('E-mail küldési hiba: ' . $e->getMessage());
+            } else {
+                \Log::info('NewOrder email already sent for order on return, skipping duplicate send', [
+                    'order_id' => $order->id,
+                    'transaction_id' => $transaction_id,
+                ]);
             }
 
             return view('simplepay.success', compact('order', 'order_total', 'transaction_id'));
