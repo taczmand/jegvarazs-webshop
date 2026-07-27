@@ -45,6 +45,7 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\VehicleController;
 use App\Http\Controllers\Admin\VehicleKmController;
 use App\Http\Controllers\Admin\WarehouseController;
+use App\Http\Controllers\Admin\WarehouseTransferController;
 use App\Http\Controllers\Admin\WorksheetController;
 use App\Http\Controllers\Admin\WorksheetProductsByWorkerReportController;
 use App\Http\Controllers\Admin\CashReceiptController;
@@ -257,6 +258,17 @@ Route::get('/automatizacio/jogosultsagok/szinkron', function (Request $request, 
             Route::post('/raktarozas/raktarak', [WarehouseController::class, 'store'])->name('warehouses.store');
             Route::put('/raktarozas/raktarak/{id}', [WarehouseController::class, 'update'])->name('warehouses.update');
             Route::delete('/raktarozas/raktarak/{id}', [WarehouseController::class, 'destroy'])->name('warehouses.destroy');
+
+            // Raktározás - Raktárközi átvezetések
+            Route::get('/raktarozas/raktarkozi-atvezetesek', [WarehouseTransferController::class, 'index'])->name('warehouse-transfers.index');
+            Route::get('/raktarozas/raktarkozi-atvezetesek/data', [WarehouseTransferController::class, 'data'])->name('warehouse-transfers.data');
+            Route::post('/raktarozas/raktarkozi-atvezetesek', [WarehouseTransferController::class, 'store'])->name('warehouse-transfers.store');
+            Route::get('/raktarozas/raktarkozi-atvezetesek/{id}', [WarehouseTransferController::class, 'show'])->name('warehouse-transfers.show');
+            Route::get('/raktarozas/raktarkozi-atvezetesek/{id}/pdf', [WarehouseTransferController::class, 'pdf'])->name('warehouse-transfers.pdf');
+            Route::put('/raktarozas/raktarkozi-atvezetesek/{id}', [WarehouseTransferController::class, 'update'])->name('warehouse-transfers.update');
+            Route::post('/raktarozas/raktarkozi-atvezetesek/preview-pdf', [WarehouseTransferController::class, 'previewPdf'])->name('warehouse-transfers.preview-pdf');
+            Route::post('/raktarozas/raktarkozi-atvezetesek/{id}/issue-pdf', [WarehouseTransferController::class, 'issuePdf'])->name('warehouse-transfers.issue-pdf');
+            Route::delete('/raktarozas/raktarkozi-atvezetesek/{id}', [WarehouseTransferController::class, 'destroy'])->name('warehouse-transfers.destroy');
 
             // Címkék
             Route::get('/cimkek', [TagController::class, 'index'])->name('tags.index');

@@ -155,6 +155,11 @@ class PermissionSeeder extends Seeder
             ['id' => 149, 'name' => 'create-warehouse', 'label' => 'Raktár létrehozása', 'group' => 'Raktározás'],
             ['id' => 150, 'name' => 'edit-warehouse', 'label' => 'Raktár szerkesztése', 'group' => 'Raktározás'],
             ['id' => 151, 'name' => 'delete-warehouse', 'label' => 'Raktár törlése', 'group' => 'Raktározás'],
+
+            ['id' => 156, 'name' => 'view-warehouse-transfers', 'label' => 'Raktárközi átvezetések megtekintése', 'group' => 'Raktározás'],
+            ['id' => 157, 'name' => 'create-warehouse-transfer', 'label' => 'Raktárközi átvezetés létrehozása', 'group' => 'Raktározás'],
+            ['id' => 158, 'name' => 'edit-warehouse-transfer', 'label' => 'Raktárközi átvezetés szerkesztése', 'group' => 'Raktározás'],
+            ['id' => 159, 'name' => 'delete-warehouse-transfer', 'label' => 'Raktárközi átvezetés törlése', 'group' => 'Raktározás'],
         ];
 
         foreach ($permissions as $perm) {
