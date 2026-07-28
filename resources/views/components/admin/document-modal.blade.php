@@ -19,9 +19,9 @@
 @endphp
 
 <div class="modal fade" id="{{ $id }}" tabindex="-1" aria-labelledby="{{ $id }}Label" aria-hidden="true">
-    <div class="modal-dialog modal-fullscreen m-0 p-0 d-flex flex-column" style="height: 100vh;">
-        <form id="{{ $formId ?? $id . '_form' }}" class="w-100 d-flex flex-column" style="height: 100%;">
-            <div class="modal-content d-flex flex-column" style="height: 100%;">
+    <div class="modal-dialog modal-fullscreen m-0 p-0 d-flex flex-column" style="height: 100vh; min-height: 100vh; max-height: 100vh;">
+        <form id="{{ $formId ?? $id . '_form' }}" class="w-100 d-flex flex-column" style="height: 100%; min-height: 100%; max-height: 100%;">
+            <div class="modal-content d-flex flex-column" style="height: 100%; min-height: 100%; max-height: 100%;">
                 <div class="modal-header">
                     <h5 class="modal-title" id="{{ $id }}Label">{{ $title }}</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Bezárás"></button>

@@ -45,6 +45,7 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\VehicleController;
 use App\Http\Controllers\Admin\VehicleKmController;
 use App\Http\Controllers\Admin\WarehouseController;
+use App\Http\Controllers\Admin\StocktakeController;
 use App\Http\Controllers\Admin\WarehouseTransferController;
 use App\Http\Controllers\Admin\WorksheetController;
 use App\Http\Controllers\Admin\WorksheetProductsByWorkerReportController;
@@ -269,6 +270,17 @@ Route::get('/automatizacio/jogosultsagok/szinkron', function (Request $request, 
             Route::post('/raktarozas/raktarkozi-atvezetesek/preview-pdf', [WarehouseTransferController::class, 'previewPdf'])->name('warehouse-transfers.preview-pdf');
             Route::post('/raktarozas/raktarkozi-atvezetesek/{id}/issue-pdf', [WarehouseTransferController::class, 'issuePdf'])->name('warehouse-transfers.issue-pdf');
             Route::delete('/raktarozas/raktarkozi-atvezetesek/{id}', [WarehouseTransferController::class, 'destroy'])->name('warehouse-transfers.destroy');
+
+            // Raktározás - Leltár
+            Route::get('/raktarozas/leltar', [StocktakeController::class, 'index'])->name('warehouse.stocktakes.index');
+            Route::get('/raktarozas/leltar/data', [StocktakeController::class, 'data'])->name('warehouse.stocktakes.data');
+            Route::get('/raktarozas/leltar/products', [StocktakeController::class, 'products'])->name('warehouse.stocktakes.products');
+            Route::get('/raktarozas/leltar/{id}/products', [StocktakeController::class, 'products'])->name('warehouse.stocktakes.products-for');
+            Route::post('/raktarozas/leltar', [StocktakeController::class, 'store'])->name('warehouse.stocktakes.store');
+            Route::get('/raktarozas/leltar/{id}', [StocktakeController::class, 'show'])->name('warehouse.stocktakes.show');
+            Route::get('/raktarozas/leltar/{id}/pdf', [StocktakeController::class, 'pdf'])->name('warehouse.stocktakes.pdf');
+            Route::put('/raktarozas/leltar/{id}', [StocktakeController::class, 'update'])->name('warehouse.stocktakes.update');
+            Route::delete('/raktarozas/leltar/{id}', [StocktakeController::class, 'destroy'])->name('warehouse.stocktakes.destroy');
 
             // Címkék
             Route::get('/cimkek', [TagController::class, 'index'])->name('tags.index');

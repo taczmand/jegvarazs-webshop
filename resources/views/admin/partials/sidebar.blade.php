@@ -245,7 +245,9 @@
                     @if($adminUser && $adminUser->can('view-warehouse-transfers'))
                         <a class="collapse-item" href="{{ route('admin.warehouse-transfers.index') }}">Raktárközi átvezetés</a>
                     @endif
-                    <a class="collapse-item" href="#">Leltár</a>
+                    @if($adminUser && $adminUser->can('view-stocktakes'))
+                        <a class="collapse-item" href="{{ route('admin.warehouse.stocktakes.index') }}">Leltár</a>
+                    @endif
                 </div>
             </div>
         </li>
