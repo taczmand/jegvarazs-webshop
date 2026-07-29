@@ -423,7 +423,7 @@ class WarehouseTransferController extends Controller
             $docRule .= ',' . $transferId;
         }
 
-        return $request->validate([
+        $validated = $request->validate([
             'from_warehouse_id' => 'required|integer|exists:warehouses,id',
             'to_warehouse_id' => 'required|integer|exists:warehouses,id',
             'document_number' => $docRule,
@@ -434,6 +434,11 @@ class WarehouseTransferController extends Controller
             'note' => 'nullable|string',
             'items_json' => ($requireItemsJson ? 'required' : 'nullable') . '|string',
         ]);
+
+        // items_json is not a DB column; it's only used to sync document items.
+        unset($validated['items_json']);
+
+        return $validated;
     }
 
     private function syncItemsFromJson(int $transferId, string $itemsJson): void

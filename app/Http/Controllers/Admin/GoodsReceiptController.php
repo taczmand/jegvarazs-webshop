@@ -124,6 +124,9 @@ class GoodsReceiptController extends Controller
             'items_json' => 'nullable|string',
         ]);
 
+        // items_json is not a DB column; it's only used to sync document items.
+        unset($validated['items_json']);
+
         $company = Company::query()->where('status', 'active')->find($validated['company_id']);
         if (!$company) {
             return response()->json(['message' => 'Kérlek válassz egy céget.'], 422);
@@ -216,6 +219,9 @@ class GoodsReceiptController extends Controller
 
             'items_json' => 'nullable|string',
         ]);
+
+        // items_json is not a DB column; it's only used to sync document items.
+        unset($validated['items_json']);
 
         $company = Company::query()->where('status', 'active')->find($validated['company_id']);
         if (!$company) {

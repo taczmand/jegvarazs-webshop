@@ -142,6 +142,9 @@ class SalesInvoiceController extends Controller
             'items_json' => 'nullable|string',
         ]);
 
+        // items_json is not a DB column; it's only used to sync invoice items.
+        unset($validated['items_json']);
+
         $companyId = $validated['company_id'] ?? null;
         if (!$companyId) {
             $companyId = Company::query()->where('status', 'active')->where('is_default', true)->value('id');
@@ -246,6 +249,9 @@ class SalesInvoiceController extends Controller
 
             'items_json' => 'nullable|string',
         ]);
+
+        // items_json is not a DB column; it's only used to sync invoice items.
+        unset($validated['items_json']);
 
         $companyId = $validated['company_id'] ?? null;
         if (!$companyId) {
