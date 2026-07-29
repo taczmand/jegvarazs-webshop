@@ -82,15 +82,30 @@ class CompanyController extends Controller
             'email' => 'nullable|email|max:255',
             'phone' => 'nullable|string|max:255',
             'bank_account' => 'nullable|string|max:255',
+            'billing_provider_api_key' => 'nullable|string|max:255',
             'status' => 'nullable|string|max:50',
             'is_default' => 'nullable|boolean',
         ]);
+
+        if (array_key_exists('billing_provider_api_key', $validated)) {
+            $validated['billing_provider_api_key'] = trim((string) ($validated['billing_provider_api_key'] ?? ''));
+            if ($validated['billing_provider_api_key'] === '') {
+                unset($validated['billing_provider_api_key']);
+            }
+        }
 
         $payload = array_merge([
             'country' => 'HU',
             'status' => 'active',
             'is_default' => false,
         ], $validated);
+
+        if (array_key_exists('billing_provider_api_key', $payload)) {
+            $payload['billing_provider_api_key'] = trim((string) ($payload['billing_provider_api_key'] ?? ''));
+            if ($payload['billing_provider_api_key'] === '') {
+                unset($payload['billing_provider_api_key']);
+            }
+        }
 
         if (!array_key_exists('country', $payload) || !$payload['country']) {
             $payload['country'] = 'HU';
@@ -131,9 +146,17 @@ class CompanyController extends Controller
             'email' => 'nullable|email|max:255',
             'phone' => 'nullable|string|max:255',
             'bank_account' => 'nullable|string|max:255',
+            'billing_provider_api_key' => 'nullable|string|max:255',
             'status' => 'nullable|string|max:50',
             'is_default' => 'nullable|boolean',
         ]);
+
+        if (array_key_exists('billing_provider_api_key', $validated)) {
+            $validated['billing_provider_api_key'] = trim((string) ($validated['billing_provider_api_key'] ?? ''));
+            if ($validated['billing_provider_api_key'] === '') {
+                unset($validated['billing_provider_api_key']);
+            }
+        }
 
         $company->update($validated);
 

@@ -9,5 +9,6 @@ readonly class InvoiceData
         public array $items,
         public string $paymentMethod,
         public string $currency = 'HUF',
+        public ?string $agentKey = null,
     ) {}
 }

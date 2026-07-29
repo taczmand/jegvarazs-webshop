@@ -48,8 +48,4 @@ return [
         'engine' => env('PRODUCT_SEARCH_ENGINE', 'fulltext'),
     ],
 
-    'szamlazzhu' => [
-        'agent_key' => env('SZAMLAZZHU_AGENT_KEY'),
-    ],
-
 ];

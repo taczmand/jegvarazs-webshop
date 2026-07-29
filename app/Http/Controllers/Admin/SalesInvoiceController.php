@@ -296,6 +296,7 @@ class SalesInvoiceController extends Controller
         }
 
         $validated = $request->validate([
+            'company_id' => 'required|integer|exists:companies,id',
             'partner_name' => 'required|string|max:255',
             'partner_tax_number' => 'nullable|string|max:255',
             'partner_country' => 'nullable|string|max:2',
@@ -306,6 +307,15 @@ class SalesInvoiceController extends Controller
             'currency' => 'nullable|string|size:3',
             'items_json' => 'required|string',
         ]);
+
+        $company = Company::query()->where('status', 'active')->find((int) $validated['company_id']);
+        if (!$company) {
+            return response()->json(['message' => 'Kérlek válassz egy céget.'], 422);
+        }
+
+        if (!is_string($company->billing_provider_api_key ?? null) || trim((string) $company->billing_provider_api_key) === '') {
+            return response()->json(['message' => 'A kiválasztott céghez nincs beállítva Számlázz.hu API kulcs.'], 422);
+        }
 
         $itemsRaw = json_decode((string) $validated['items_json'], true);
         if (!is_array($itemsRaw) || count($itemsRaw) === 0) {
@@ -359,6 +369,7 @@ class SalesInvoiceController extends Controller
             items: $items,
             paymentMethod: (string) $validated['payment_method'],
             currency: (string) ($validated['currency'] ?? 'HUF'),
+            agentKey: $company->billing_provider_api_key ? (string) $company->billing_provider_api_key : null,
         );
 
         try {
@@ -384,6 +395,18 @@ class SalesInvoiceController extends Controller
         }
 
         $invoice = SalesInvoice::query()->findOrFail($id);
+
+        $company = null;
+        if (!empty($invoice->company_id)) {
+            $company = Company::query()->where('status', 'active')->find((int) $invoice->company_id);
+        }
+        if (!$company) {
+            return response()->json(['message' => 'A számlához nincs érvényes cég rendelve.'], 422);
+        }
+
+        if (!is_string($company->billing_provider_api_key ?? null) || trim((string) $company->billing_provider_api_key) === '') {
+            return response()->json(['message' => 'A számlához tartozó céghez nincs beállítva Számlázz.hu API kulcs.'], 422);
+        }
 
         $validated = $request->validate([
             'partner_name' => 'required|string|max:255',
@@ -449,6 +472,7 @@ class SalesInvoiceController extends Controller
             items: $items,
             paymentMethod: (string) $validated['payment_method'],
             currency: (string) ($validated['currency'] ?? 'HUF'),
+            agentKey: $company->billing_provider_api_key ? (string) $company->billing_provider_api_key : null,
         );
 
         try {

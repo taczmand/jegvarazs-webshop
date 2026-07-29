@@ -50,7 +50,6 @@ use App\Http\Controllers\Admin\WarehouseTransferController;
 use App\Http\Controllers\Admin\WorksheetController;
 use App\Http\Controllers\Admin\WorksheetProductsByWorkerReportController;
 use App\Http\Controllers\Admin\CashReceiptController;
-use App\Http\Controllers\Admin\SzamlazzHuTestController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\FacebookWebhookController;
@@ -161,8 +160,6 @@ Route::get('/automatizacio/jogosultsagok/szinkron', function (Request $request, 
         Route::middleware(['admin.auth', 'ensure.monthly_vehicle_km'])->group(function () {
             Route::get('contract/{id}/pdf', [ContractController::class, 'getPdf'])->name('contract.pdf');
             Route::post('contract/preview', [ContractController::class, 'previewPdf'])->name('contract.preview');
-
-            Route::get('/szamlazzhu/test-invoice', [SzamlazzHuTestController::class, 'createTestInvoice'])->name('szamlazzhu.test-invoice');
             /* Dashboard */
 
             Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');

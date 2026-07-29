@@ -140,6 +140,11 @@
                             <input type="text" class="form-control" id="bank_account" name="bank_account">
                         </div>
 
+                        <div class="mb-3 mt-2">
+                            <label for="billing_provider_api_key" class="form-label">Számlázz.hu API kulcs</label>
+                            <input type="password" class="form-control" id="billing_provider_api_key" name="billing_provider_api_key" autocomplete="new-password">
+                        </div>
+
                         <div class="row g-2">
                             <div class="col-6">
                                 <label for="status" class="form-label">Állapot</label>
@@ -237,6 +242,7 @@
                 $('#email').val(row_data.email);
                 $('#phone').val(row_data.phone);
                 $('#bank_account').val(row_data.bank_account);
+                $('#billing_provider_api_key').val('');
                 $('#status').val(row_data.status || 'active');
                 $('#is_default').prop('checked', !!row_data.is_default);
 

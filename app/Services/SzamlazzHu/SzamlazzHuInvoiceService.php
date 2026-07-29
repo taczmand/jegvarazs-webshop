@@ -66,18 +66,16 @@ class SzamlazzHuInvoiceService implements InvoiceServiceInterface
 
     public function createInvoice(InvoiceData $data): string
     {
-        $apiKey = (string) config('szamlazzhu.agent_key');
-        $apiKey = trim($apiKey);
-
+        $apiKey = trim((string) ($data->agentKey ?? ''));
         if ($apiKey === '') {
-            throw new \RuntimeException('Hiányzik a SZAMLAZZHU_AGENT_KEY.');
+            throw new \RuntimeException('Hiányzik a számlázó API kulcs (cég szinten).');
         }
 
         // Prefer silent logging for API calls from web requests.
         // Signature differs across package versions, so we keep it defensive.
         if (method_exists(SzamlaAgentAPI::class, 'create')) {
             try {
-                $agent = SzamlaAgentAPI::create($apiKey, (bool) config('szamlazzhu.download_pdf'), SzamlazzLog::LOG_LEVEL_OFF);
+                $agent = SzamlaAgentAPI::create($apiKey, true, SzamlazzLog::LOG_LEVEL_OFF);
             } catch (\Throwable $e) {
                 $agent = SzamlaAgentAPI::create($apiKey);
             }
@@ -102,12 +100,6 @@ class SzamlazzHuInvoiceService implements InvoiceServiceInterface
 
         $invoice = new Invoice(Invoice::INVOICE_TYPE_P_INVOICE);
         $invoice->setBuyer($buyer);
-
-        $sellerName = config('szamlazzhu.seller_name');
-        $sellerTax = config('szamlazzhu.seller_tax_number');
-        if (is_string($sellerName) && trim($sellerName) !== '' && is_string($sellerTax) && trim($sellerTax) !== '') {
-            $invoice->setSeller(new Seller(trim($sellerName), trim($sellerTax)));
-        }
 
         foreach ($data->items as $itemData) {
             if (!$itemData instanceof ItemData) {
@@ -173,16 +165,14 @@ class SzamlazzHuInvoiceService implements InvoiceServiceInterface
 
     public function createInvoicePdf(InvoiceData $data, bool $preview = true): string
     {
-        $apiKey = (string) config('szamlazzhu.agent_key');
-        $apiKey = trim($apiKey);
-
+        $apiKey = trim((string) ($data->agentKey ?? ''));
         if ($apiKey === '') {
-            throw new \RuntimeException('Hiányzik a SZAMLAZZHU_AGENT_KEY.');
+            throw new \RuntimeException('Hiányzik a számlázó API kulcs (cég szinten).');
         }
 
         if (method_exists(SzamlaAgentAPI::class, 'create')) {
             try {
-                $agent = SzamlaAgentAPI::create($apiKey, (bool) config('szamlazzhu.download_pdf'), SzamlazzLog::LOG_LEVEL_OFF);
+                $agent = SzamlaAgentAPI::create($apiKey, true, SzamlazzLog::LOG_LEVEL_OFF);
             } catch (\Throwable $e) {
                 $agent = SzamlaAgentAPI::create($apiKey);
             }
@@ -222,12 +212,6 @@ class SzamlazzHuInvoiceService implements InvoiceServiceInterface
             } catch (\Throwable $e) {
                 // ignore
             }
-        }
-
-        $sellerName = config('szamlazzhu.seller_name');
-        $sellerTax = config('szamlazzhu.seller_tax_number');
-        if (is_string($sellerName) && trim($sellerName) !== '' && is_string($sellerTax) && trim($sellerTax) !== '') {
-            $invoice->setSeller(new Seller(trim($sellerName), trim($sellerTax)));
         }
 
         foreach ($data->items as $itemData) {
