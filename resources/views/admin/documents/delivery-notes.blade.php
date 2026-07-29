@@ -714,6 +714,8 @@
                         showToast('Sikeres mentés!', 'success');
                         table.ajax.reload(null, false);
 
+                        modal.hide();
+
                         saveBtn.html(originalSaveButtonHtml).prop('disabled', false);
                         if (previewBtn.length) previewBtn.html(originalPreviewButtonHtml).prop('disabled', false);
                     },

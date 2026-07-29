@@ -581,6 +581,7 @@
 
                     showToast(json?.message || 'Sikeres mentés!', 'success');
                     $('#adminTable').DataTable().ajax.reload(null, false);
+                    modal.hide();
                 } catch (e) {
                     showToast(e?.message || 'Hiba!', 'danger');
                 } finally {

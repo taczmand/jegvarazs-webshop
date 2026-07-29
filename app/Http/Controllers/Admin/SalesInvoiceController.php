@@ -491,9 +491,19 @@ class SalesInvoiceController extends Controller
 
             Storage::disk('local')->put($relativePath, $pdfBytes);
 
+            if ($invoice->stock_deducted_at === null) {
+                DB::transaction(function () use ($invoice) {
+                    $invoice = SalesInvoice::query()->lockForUpdate()->findOrFail($invoice->id);
+                    if ($invoice->stock_deducted_at === null) {
+                        $this->deductStockForIssuedSalesInvoice($invoice);
+                    }
+                });
+            }
+
             $invoice->update([
                 'pdf_path' => $relativePath,
                 'status' => 'issued',
+                'stock_deducted_at' => $invoice->stock_deducted_at ?: now(),
             ]);
 
             return response($pdfBytes, 200, [
@@ -526,6 +536,11 @@ class SalesInvoiceController extends Controller
                 $productId = null;
             }
 
+            $warehouseId = $row['warehouse_id'] ?? null;
+            if ($warehouseId !== null && $warehouseId !== '' && !is_numeric($warehouseId)) {
+                $warehouseId = null;
+            }
+
             $quantity = $row['quantity'] ?? 1;
             if (!is_numeric($quantity)) {
                 $quantity = 1;
@@ -544,6 +559,7 @@ class SalesInvoiceController extends Controller
             SalesInvoiceItem::create([
                 'sales_invoice_id' => $salesInvoiceId,
                 'product_id' => $productId !== null ? (int) $productId : null,
+                'warehouse_id' => $warehouseId !== null ? (int) $warehouseId : null,
                 'sort_order' => $sort,
                 'name' => (string) ($row['name'] ?? ''),
                 'quantity' => (float) $quantity,
@@ -570,6 +586,48 @@ class SalesInvoiceController extends Controller
 
         $invoice->update([
             'gross_total' => $gross,
+        ]);
+    }
+
+    private function deductStockForIssuedSalesInvoice(SalesInvoice $invoice): void
+    {
+        $items = SalesInvoiceItem::query()->where('sales_invoice_id', $invoice->id)->get();
+        if ($items->isEmpty()) {
+            return;
+        }
+
+        foreach ($items as $item) {
+            if (!$item->product_id) {
+                continue;
+            }
+
+            $warehouseId = (int) ($item->warehouse_id ?? 0);
+            if ($warehouseId <= 0) {
+                throw new \RuntimeException('Készletcsökkentéshez hiányzik a raktár a számla tételben.');
+            }
+
+            $currentQty = (float) (DB::table('product_stocks')
+                ->where('warehouse_id', '=', $warehouseId)
+                ->where('product_id', '=', (int) $item->product_id)
+                ->lockForUpdate()
+                ->value('quantity') ?? 0);
+            $deduct = (float) ($item->quantity ?? 0);
+            $newQty = $currentQty - $deduct;
+
+            DB::table('product_stocks')->updateOrInsert(
+                [
+                    'warehouse_id' => $warehouseId,
+                    'product_id' => (int) $item->product_id,
+                ],
+                [
+                    'quantity' => $newQty,
+                    'updated_at' => now(),
+                ]
+            );
+        }
+
+        $invoice->update([
+            'stock_deducted_at' => now(),
         ]);
     }
 }

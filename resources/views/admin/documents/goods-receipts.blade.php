@@ -847,6 +847,8 @@
                         showToast(resp?.message || 'Sikeres mentés!', 'success');
                         table.ajax.reload(null, false);
 
+                        modal.hide();
+
                         const receipt = resp?.goods_receipt;
                         if (receipt?.id) {
                             $('#goods_receipt_id').val(receipt.id);

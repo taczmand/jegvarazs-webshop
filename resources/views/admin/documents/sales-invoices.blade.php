@@ -97,14 +97,7 @@
                     </select>
                 </div>
 
-                <div class="mb-3">
-                    <label for="warehouse_id" class="form-label">Raktár*</label>
-                    <select class="form-select" id="warehouse_id" name="warehouse_id" required>
-                        @foreach(($warehouses ?? []) as $w)
-                            <option value="{{ $w->id }}">{{ $w->name }}</option>
-                        @endforeach
-                    </select>
-                </div>
+
             </fieldset>
 
             <fieldset class="admin-fieldset mt-3">
@@ -540,9 +533,7 @@
                     $('#company_id').val(companyId);
                 }
 
-                if (warehouses.length) {
-                    $('#warehouse_id').val(warehouses[0].id);
-                }
+
                 modal.show();
             });
 
@@ -557,7 +548,6 @@
                 const row_data = $('#adminTable').DataTable().row($(this).parents('tr')).data();
                 $('#invoice_id').val(row_data.id);
                 $('#company_id').val(row_data.company_id || defaultCompanyId);
-                $('#warehouse_id').val($('#warehouse_id').val() || (warehouses[0]?.id ?? ''));
                 $('#invoice_number').val(row_data.invoice_number);
                 $('#partner_name').val(row_data.partner_name);
                 $('#issued_at').val(todayDate());
@@ -663,6 +653,7 @@
 
                             showToast('Számla kiállítva.', 'success');
                             table.ajax.reload(null, false);
+                            modal.hide();
                         }).catch((err) => {
                             showToast(err?.message || 'Hiba!', 'danger');
                             table.ajax.reload(null, false);
@@ -820,15 +811,9 @@
                     return;
                 }
 
-                const warehouseId = String($('#warehouse_id').val() || '').trim();
-                if (!warehouseId) {
-                    $('#product_search_results').empty();
-                    return;
-                }
-
                 searchTimeout = setTimeout(() => {
                     $.ajax({
-                        url: `${window.appConfig.APP_URL}admin/termekek/search?q=${encodeURIComponent(q)}&warehouse_id=${encodeURIComponent(warehouseId)}`,
+                        url: `${window.appConfig.APP_URL}admin/termekek/search?q=${encodeURIComponent(q)}`,
                         method: 'GET',
                         success: function (resp) {
                             const results = resp?.products ?? [];
@@ -1015,10 +1000,6 @@
 
                 if (defaultCompanyId) {
                     $('#company_id').val(defaultCompanyId);
-                }
-
-                if (warehouses.length) {
-                    $('#warehouse_id').val(warehouses[0].id);
                 }
 
                 $('#currency').val('HUF');
