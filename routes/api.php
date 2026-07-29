@@ -15,5 +15,6 @@ Route::get('/postal-codes/search', [PostalCodeController::class, 'searchPostalCo
 Route::get('/streets/search', [StreetController::class, 'search']);
 
 Route::middleware('api.key')->group(function () {
+    Route::get('/sensor-events', [SensorEventController::class, 'store']);
     Route::post('/sensor-events', [SensorEventController::class, 'store']);
 });
