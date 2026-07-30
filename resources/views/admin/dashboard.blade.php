@@ -738,7 +738,7 @@
                                         ${row('Időpont', data.appointment_date)}
                                         ${row('Típus', data.appointment_type)}
                                         ${row('Státusz', data.status)}
-                                        ${row('Üzenet', data.message)}
+                                        ${row('Üzenet', (data.message ?? '').toString().toLocaleLowerCase('hu-HU'))}
                                     </table>
                                 </div>
                             `;
