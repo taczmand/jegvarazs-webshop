@@ -280,6 +280,10 @@
                             div.innerHTML += `<small>${w.description}</small><br>`;
                         }
 
+                        if (w.model === 'appointment' && w.message) {
+                            div.innerHTML += `<small>${String(w.message).toLocaleLowerCase('hu-HU')}</small><br>`;
+                        }
+
                         if (w.worker_name) {
                             div.innerHTML += `
                                 <i class="fa-solid fa-users-gear"></i>
@@ -738,7 +742,7 @@
                                         ${row('Időpont', data.appointment_date)}
                                         ${row('Típus', data.appointment_type)}
                                         ${row('Státusz', data.status)}
-                                        ${row('Üzenet', (data.message ?? '').toString().toLocaleLowerCase('hu-HU'))}
+                                        ${row('Üzenet', data.message)}
                                     </table>
                                 </div>
                             `;
