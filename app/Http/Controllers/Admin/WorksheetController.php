@@ -319,6 +319,7 @@ class WorksheetController extends Controller
                         'worker_name' => null,
                         'model' => 'appointment',
                         'type' => $appointment->appointment_type,
+                        'message' => $appointment->message,
                         'sort_order' => $appointment->sort_order,
                     ])
                 );
