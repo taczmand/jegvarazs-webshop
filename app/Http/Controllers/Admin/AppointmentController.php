@@ -573,7 +573,23 @@ class AppointmentController extends Controller
 
     public function show($id) {
          $appointment = Appointment::with('photos')->findOrFail($id);
-         return response()->json($appointment);
+         return response()->json([
+             'id' => $appointment->id,
+             'client_id' => $appointment->client_id,
+             'name' => $appointment->name,
+             'email' => $appointment->email,
+             'phone' => $appointment->phone,
+             'zip_code' => $appointment->zip_code,
+             'city' => $appointment->city,
+             'address_line' => $appointment->address_line,
+             'appointment_date' => $appointment->appointment_date,
+             'appointment_type' => $appointment->appointment_type,
+             'status' => $appointment->status,
+             'message' => $appointment->message,
+             'created_at' => $appointment->created_at,
+             'updated_at' => $appointment->updated_at,
+             'photos' => $appointment->photos,
+         ]);
     }
 
     public function deleteAppointmentPhoto(Request $request) {
