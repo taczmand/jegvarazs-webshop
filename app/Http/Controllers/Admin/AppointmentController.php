@@ -470,6 +470,14 @@ class AppointmentController extends Controller
                 'status'           => $request->input('status', 'Függőben'),
             ]);
 
+            if ($request->input('email')) {
+                $mail = Mail::to($request->input('email'));
+                if (!app()->environment('local')) {
+                    $mail->bcc('jegvarazsiroda@gmail.com');
+                }
+                $mail->send(new NewAppointment($appointment));
+            }
+
             if (!empty($request->file('new_photos'))) {
 
                 $photos = [];
