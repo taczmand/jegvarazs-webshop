@@ -74,7 +74,7 @@
                     <button class="btn btn-sm btn-success" type="button" id="openCreateCashReceipt">+ Új tétel</button>
                 </div>
 
-                <table class="table table-bordered display responsive nowrap" id="adminTable" style="width:100%">
+                <table class="table table-bordered display nowrap" id="adminTable" style="width:100%">
                     <thead>
                     <tr>
                         <th><input type="checkbox" id="selectAllRows" /></th>
@@ -272,7 +272,8 @@
                 },
                 processing: true,
                 serverSide: true,
-                responsive: true,
+                responsive: false,
+                scrollX: true,
                 order: [[1, 'desc']],
                 ajax: {
                     type: 'POST',

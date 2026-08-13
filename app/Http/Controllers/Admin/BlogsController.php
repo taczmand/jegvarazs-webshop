@@ -165,8 +165,8 @@ class BlogsController extends Controller
                 'slug' => Str::slug($request->input('blog_title')),
                 'content' => $request->input('blog_content'),
                 'featured_image' => $path,
-                'cta_title' => trim((string) $request->input('cta_title')) !== '' ? $request->input('cta_title') : 'Érdeklődés',
-                'cta_url' => trim((string) $request->input('cta_url')) !== '' ? $request->input('cta_url') : url('/ajanlatkeres'),
+                'cta_title' => $request->input('cta_title'),
+                'cta_url' => $request->input('cta_url'),
                 'status' => $request->input('status') ?? 'draft',
                 'user_id' => auth('admin')->id()
             ]);
@@ -236,8 +236,8 @@ class BlogsController extends Controller
                 'title' => $request['blog_title'],
                 'slug' => Str::slug($request['blog_title']),
                 'content' => $request['blog_content'],
-                'cta_title' => trim((string) $request->input('cta_title')) !== '' ? $request->input('cta_title') : 'Érdeklődés',
-                'cta_url' => trim((string) $request->input('cta_url')) !== '' ? $request->input('cta_url') : url('/ajanlatkeres'),
+                'cta_title' => $request->input('cta_title'),
+                'cta_url' => $request->input('cta_url'),
                 'status' => $request['status'] ?? 'draft',
                 'user_id' => auth('admin')->id()
             ]);

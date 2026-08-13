@@ -15,11 +15,13 @@
                     <div class="col-lg-4 col-md-4 col-sm-6 mb-4">
                         <div class="blog__item h-100">
                             <div class="blog__item__pic">
-                                <img src="{{ $blog->featured_image ? asset('storage/' . $blog->featured_image) : asset('static_media/no-image.jpg') }}" alt="{{ $blog->title }}">
-                                <div class="blog__item__overlay"></div>
-                                <div class="blog__item__title-overlay">
-                                    {{ $blog->title }}
-                                </div>
+                                <a href="{{ route('blog.post', $blog->slug) }}">
+                                    <img src="{{ $blog->featured_image ? asset('storage/' . $blog->featured_image) : asset('static_media/no-image.jpg') }}" alt="{{ $blog->title }}">
+                                    <div class="blog__item__overlay"></div>
+                                    <div class="blog__item__title-overlay">
+                                        {{ $blog->title }}
+                                    </div>
+                                </a>
                             </div>
                             <div class="blog__item__text">
                                 <ul class="mb-2">
