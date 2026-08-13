@@ -281,7 +281,13 @@
                         }
 
                         if (w.model === 'appointment' && w.message) {
-                            div.innerHTML += `<small>${String(w.message).toLocaleLowerCase('hu-HU')}</small><br>`;
+                            let appointment_message = w.message;
+                            appointment_message = appointment_message.slice(0, 20);
+                            appointment_message += appointment_message.length > 20 ? '...' : '';
+                            div.innerHTML += `<small>${String(appointment_message).toLocaleLowerCase('hu-HU')}</small><br>`;
+                        }
+                        if (w.created_by) {
+                            div.innerHTML += '<small>Készítette: ' + w.created_by + '</small>';
                         }
 
                         if (w.worker_name) {

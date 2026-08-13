@@ -288,6 +288,7 @@ class WorksheetController extends Controller
                     'type' => $worksheet->work_type,
                     'sort_order' => $worksheet->sort_order,
                     'description' => $worksheet->description,
+                    'created_by' => null
                 ])
             );
         }
@@ -305,6 +306,11 @@ class WorksheetController extends Controller
 
             if ($user->can('view-appointments')) {
                 $appointments = Appointment::whereBetween('appointment_date', [$startDate, $endDate])
+                    ->leftJoin('users', 'appointments.created_by', 'users.id')
+                    ->select(
+                        'appointments.*',
+                        'users.name as created_by_name'
+                    )
                     ->orderBy('sort_order', 'ASC')
                     ->get();
 
@@ -321,6 +327,7 @@ class WorksheetController extends Controller
                         'type' => $appointment->appointment_type,
                         'message' => $appointment->message,
                         'sort_order' => $appointment->sort_order,
+                        'created_by' => $appointment->created_by_name ?? null,
                     ])
                 );
             }
