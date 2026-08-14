@@ -27,6 +27,14 @@
                         </select>
                     </div>
                     <div class="col-12 col-md-3">
+                        <label for="onlineOfflineSelect" class="form-label">Online / Offline</label>
+                        <select class="form-select" id="onlineOfflineSelect">
+                            <option value="">Összes</option>
+                            <option value="online">Online</option>
+                            <option value="offline">Offline</option>
+                        </select>
+                    </div>
+                    <div class="col-12 col-md-3">
                         <div class="small text-muted" id="chartHint"></div>
                     </div>
                 </div>
@@ -48,6 +56,7 @@
         const fromEl = document.getElementById('fromDate');
         const toEl = document.getElementById('toDate');
         const formNameEl = document.getElementById('formNameSelect');
+        const onlineOfflineEl = document.getElementById('onlineOfflineSelect')
 
         let chart = null;
 
@@ -78,15 +87,42 @@
                 },
                 toolTip: {
                     shared: true,
+                    contentFormatter: function (e) {
+                        const dp = e.entries[0].dataPoint;
+
+                        return `${dp.label}: <strong>${dp.y}</strong>`;
+                    }
                 },
                 data: [
                     {
                         type: 'column',
+                        name: 'Konverzió',
                         dataPoints: [
-                            { label: `Érdeklődések`, y: leads },
-                            { label: `Felmérés (${p1}%)`, y: survey },
-                            { label: `Szerződés (${p2}%) – ${contractProductsQty} db termék`, y: contract },
-                        ],
+                            {
+                                label: `Érdeklődések (${leads}db)`,
+                                y: leads,
+                                showInLegend: true,
+                                legendText: 'Érdeklődések'
+                            },
+                            {
+                                label: `Felmérés (${p1}%)`,
+                                y: survey,
+                                showInLegend: true,
+                                legendText: 'Felmérés'
+                            },
+                            {
+                                label: `Szerződés (${p2}%)`,
+                                y: contract,
+                                showInLegend: true,
+                                legendText: 'Szerződés'
+                            },
+                            {
+                                label: `Termékek (${contractProductsQty}db)`,
+                                y: contractProductsQty,
+                                showInLegend: true,
+                                legendText: 'Termékek'
+                            }
+                        ]
                     }
                 ]
             };
@@ -96,6 +132,7 @@
             const from = fromEl?.value;
             const to = toEl?.value;
             const formName = formNameEl?.value;
+            const onlineOffline = onlineOfflineEl?.value;
             if (!from || !to) return;
 
             setHint('Betöltés...');
@@ -105,6 +142,9 @@
             url.searchParams.set('to', to);
             if (formName) {
                 url.searchParams.set('form_name', formName);
+            }
+            if (onlineOffline) {
+                url.searchParams.set('online_offline', onlineOffline);
             }
 
             const res = await fetch(url.toString(), { headers: { 'Accept': 'application/json' } });
@@ -129,6 +169,7 @@
         if (fromEl) fromEl.addEventListener('change', load);
         if (toEl) toEl.addEventListener('change', load);
         if (formNameEl) formNameEl.addEventListener('change', load);
+        if (onlineOfflineEl) onlineOfflineEl.addEventListener('change', load);
 
         load();
     </script>

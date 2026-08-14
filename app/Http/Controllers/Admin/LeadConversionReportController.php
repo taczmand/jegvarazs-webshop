@@ -60,6 +60,7 @@ class LeadConversionReportController extends Controller
             'from' => ['required', 'date'],
             'to' => ['required', 'date'],
             'form_name' => ['nullable', 'string'],
+            'online_offline' => ['nullable', 'string'],
         ]);
 
         $from = Carbon::parse($request->query('from'))->startOfDay();
@@ -73,12 +74,21 @@ class LeadConversionReportController extends Controller
         $formName = is_string($formName) ? trim($formName) : null;
         $formName = $formName !== '' ? $formName : null;
 
+        $online_offline = $request->query('online_offline');
+
         $leadsQuery = Lead::query()
             ->whereBetween('created_at', [$from, $to])
             ->select(['id', 'email', 'phone', 'status', 'created_at']);
 
         if ($formName) {
             $leadsQuery->where('form_name', $formName);
+        }
+        if ($online_offline) {
+            if ($online_offline === 'offline') {
+                $leadsQuery->where('form_name', "Offline");
+            } else {
+                $leadsQuery->whereNot('form_name', "Offline");
+            }
         }
 
         $leads = $leadsQuery->get();
