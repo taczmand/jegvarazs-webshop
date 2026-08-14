@@ -456,34 +456,19 @@ class AppointmentController extends Controller
 
             $appointment = Appointment::findOrFail($request->input('id'));
 
-            $appointment->fill([
+            $appointment->update([
                 'client_id'         => $request->input('client_id') ?: null,
-                'name'              => $request->input('name'),
-                'email'             => $request->input('email'),
-                'phone'             => $request->input('phone'),
-                'zip_code'          => $request->input('zip_code'),
-                'city'              => $request->input('city'),
-                'address_line'      => $request->input('address_line'),
-                'appointment_date'  => $request->input('appointment_date'),
-                'appointment_type'  => $request->input('appointment_type', 'Karbantartás'),
-                'message'           => $request->input('message'),
-                'status'            => $request->input('status', 'Függőben'),
+                'name'             => $request->input('name'),
+                'email'            => $request->input('email'),
+                'phone'            => $request->input('phone'),
+                'zip_code'         => $request->input('zip_code'),
+                'city'             => $request->input('city'),
+                'address_line'     => $request->input('address_line'),
+                'appointment_date' => $request->input('appointment_date'),
+                'appointment_type' => $request->input('appointment_type', 'Karbantartás'),
+                'message'          => $request->input('message'),
+                'status'           => $request->input('status', 'Függőben'),
             ]);
-
-            $changed = $appointment->getDirty();
-            unset($changed['status']);
-
-            $appointment->save();
-
-            if (!empty($changed) && $appointment->email) {
-                $mail = Mail::to($appointment->email);
-
-                if (!app()->environment('local')) {
-                    $mail->bcc('jegvarazsiroda@gmail.com');
-                }
-
-                $mail->send(new NewAppointment($appointment));
-            }
 
             if (!empty($request->file('new_photos'))) {
 
