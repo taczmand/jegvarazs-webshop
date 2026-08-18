@@ -152,6 +152,10 @@
                                             <input type="hidden" name="in_stock" value="0">
                                             <input type="checkbox" name="in_stock" id="in_stock" class="form-check-input" value="1" checked>
                                             <label for="in_stock" class="form-check-label">Raktáron van?</label>
+
+                                            <input type="hidden" name="stock_tracking" value="0">
+                                            <input type="checkbox" name="stock_tracking" id="stock_tracking" class="form-check-input ml-3" value="1" checked>
+                                            <label for="stock_tracking" class="form-check-label ml-4">Készletkezelés?</label>
                                         </div>
                                         <div class="mb-3">
                                             <label class="form-label">Mértékegység</label>
@@ -704,6 +708,7 @@
                     $('#partner_gross_price').val(product.partner_gross_price);
                     $('#stock').val(product.stock);
                     $('#in_stock').prop('checked', product.in_stock === undefined ? true : !!product.in_stock);
+                    $('#stock_tracking').prop('checked', product.stock_tracking === undefined ? true : !!product.stock_tracking);
                     $('#unit_qty').val(product.unit_qty);
                     $('#status').val(product.status);
                     $('#is_offerable').prop('checked', product.is_offerable);
@@ -1360,6 +1365,7 @@
                 $('#attribute-fields').empty();
 
                 $('#in_stock').prop('checked', true);
+                $('#stock_tracking').prop('checked', true);
 
                 currentQuantityDiscounts = [];
                 renderQuantityDiscounts([]);
