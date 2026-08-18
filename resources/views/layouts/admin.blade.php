@@ -221,6 +221,16 @@
 <script src="https://cdn.datatables.net/responsive/3.0.5/js/dataTables.responsive.js"></script>
 <script src="https://cdn.datatables.net/responsive/3.0.5/js/responsive.dataTables.js"></script>
 
+<script>
+    $.extend(true, $.fn.dataTable.defaults, {
+        scrollY: '500px',
+        lengthMenu: [
+            [10, 25, 50, 100, 500, 1000],
+            ['10', '25', '50', '100', '500', '1000']
+        ]
+    });
+</script>
+
 <!-- Custom Scripts with Vite load -->
 @vite('resources/js/admin.js')
 @yield('scripts')
