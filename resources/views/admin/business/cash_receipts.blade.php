@@ -103,6 +103,9 @@
                     </tr>
                     </tfoot>
                 </table>
+                <div class="alert alert-info py-2 mb-3">
+                    <strong>Kijelöltek nyugtázása</strong> – csak a kijelölt, függőben lévő tételek kerülnek nyugtázásra.
+                </div>
             @endif
         </div>
 
@@ -339,8 +342,7 @@
                         searchable: false,
                         render: function (data, type, row) {
                             const checked = selectedIds.has(String(row.id)) ? 'checked' : '';
-                            const disabled = (row.status !== 'Függőben') ? 'disabled' : '';
-                            return '<input type="checkbox" class="row-select" data-id="' + row.id + '" ' + checked + ' ' + disabled + ' />';
+                            return '<input type="checkbox" class="row-select" data-id="' + row.id + '" ' + checked + ' />';
                         }
                     },
                     {data: 'id', name: 'id'},
