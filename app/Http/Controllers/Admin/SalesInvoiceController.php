@@ -14,6 +14,7 @@ use App\Services\SzamlazzHu\Dto\ItemData;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 use Yajra\DataTables\Facades\DataTables;
 
 class SalesInvoiceController extends Controller
@@ -86,6 +87,15 @@ class SalesInvoiceController extends Controller
                 }
 
                 return $buttons;
+            })
+            ->editColumn('issued_at', function ($invoice) {
+                return $invoice->issued_at ? $invoice->issued_at->format('Y-m-d') : '';
+            })
+            ->editColumn('due_at', function ($invoice) {
+                return $invoice->due_at ? $invoice->due_at->format('Y-m-d') : '';
+            })
+            ->editColumn('created_at', function ($invoice) {
+                return $invoice->created_at ? $invoice->created_at->format('Y-m-d H:i:s') : '';
             })
             ->rawColumns(['action'])
             ->make(true);
@@ -301,7 +311,7 @@ class SalesInvoiceController extends Controller
             return response()->json(['message' => 'Nincs jogosultságod.'], 403);
         }
 
-        $validated = $request->validate([
+        $validator = Validator::make($request->all(), [
             'company_id' => 'required|integer|exists:companies,id',
             'partner_name' => 'required|string|max:255',
             'partner_tax_number' => 'nullable|string|max:255',
@@ -312,7 +322,31 @@ class SalesInvoiceController extends Controller
             'payment_method' => 'required|string|max:255',
             'currency' => 'nullable|string|size:3',
             'items_json' => 'required|string',
+        ], [
+            'company_id.required' => 'A számlázó cég kiválasztása kötelező.',
+            'company_id.integer' => 'A számlázó cég azonosítója hibás.',
+            'company_id.exists' => 'A kiválasztott számlázó cég nem létezik.',
+
+            'partner_name.required' => 'A partner neve kötelező.',
+            'partner_zip_code.required' => 'Az irányítószám megadása kötelező.',
+            'partner_city.required' => 'A város megadása kötelező.',
+            'partner_address_line.required' => 'A cím megadása kötelező.',
+
+            'payment_method.required' => 'A fizetési mód kiválasztása kötelező.',
+
+            'currency.size' => 'A pénznemnek 3 karakterből kell állnia.',
+
+            'items_json.required' => 'Legalább egy számlatétel megadása kötelező.',
         ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Hiányos vagy hibás adatok.',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        $validated = $validator->validated();
 
         $company = Company::query()->where('status', 'active')->find((int) $validated['company_id']);
         if (!$company) {

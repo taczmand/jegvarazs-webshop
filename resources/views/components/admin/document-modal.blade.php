@@ -49,7 +49,6 @@
                 </div>
                 <div class="modal-footer">
                     {{ $footer ?? '' }}
-                    <button type="submit" class="btn btn-success" id="{{ $saveButtonId ?? $id . '_save' }}">Mentés</button>
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Mégse</button>
                 </div>
             </div>

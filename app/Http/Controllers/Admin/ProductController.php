@@ -11,6 +11,7 @@ use App\Models\PartnerProduct;
 use App\Models\Product;
 use App\Models\ProductQuantityDiscount;
 use App\Models\ProductPhoto;
+use App\Models\Warehouse;
 use App\Services\Admin\ProductService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -36,20 +37,33 @@ class ProductController extends Controller
         $q = trim((string) $request->query('q', ''));
         $customerId = $request->query('customer_id');
         $showPartnerPrices = $request->boolean('show_partner_prices');
+
         $warehouseIdRaw = $request->query('warehouse_id');
-        $warehouseId = ($warehouseIdRaw !== null && $warehouseIdRaw !== '' && is_numeric($warehouseIdRaw))
+
+        $warehouseId = (
+            $warehouseIdRaw !== null
+            && $warehouseIdRaw !== ''
+            && is_numeric($warehouseIdRaw)
+        )
             ? (int) $warehouseIdRaw
             : null;
+
         if ($q === '') {
             return response()->json(['products' => []]);
         }
 
         $customer = null;
-        if ($customerId !== null && $customerId !== '' && is_numeric($customerId)) {
-            $customer = Customer::query()->find((int) $customerId);
+
+        if (
+            $customerId !== null
+            && $customerId !== ''
+            && is_numeric($customerId)
+        ) {
+            $customer = Customer::query()
+                ->find((int) $customerId);
         }
 
-        $productsQuery = Product::query()
+        $products = Product::query()
             ->with(['taxCategory', 'unit'])
             ->select([
                 'products.id',
@@ -61,67 +75,188 @@ class ProductController extends Controller
                 'products.unit_id',
             ])
             ->where(function ($query) use ($q) {
-                $query->where('products.title', 'like', "%{$q}%")
-                    ->orWhere('products.id', '=', is_numeric($q) ? (int) $q : 0);
+                $query
+                    ->where('products.title', 'like', "%{$q}%")
+                    ->orWhere(
+                        'products.id',
+                        '=',
+                        is_numeric($q) ? (int) $q : 0
+                    );
             })
             ->when($warehouseId !== null, function ($query) use ($warehouseId) {
                 $query
                     ->leftJoin('product_stocks', function ($join) use ($warehouseId) {
-                        $join->on('product_stocks.product_id', '=', 'products.id')
-                            ->where('product_stocks.warehouse_id', '=', $warehouseId);
+                        $join
+                            ->on('product_stocks.product_id', '=', 'products.id')
+                            ->where(
+                                'product_stocks.warehouse_id',
+                                '=',
+                                $warehouseId
+                            );
                     })
-                    ->addSelect(DB::raw('COALESCE(product_stocks.quantity, 0) as available_quantity'));
+                    ->addSelect(
+                        DB::raw(
+                            'COALESCE(product_stocks.quantity, 0) as available_quantity'
+                        )
+                    );
             })
             ->orderBy('products.title')
             ->limit(20)
             ->addSelect([
                 'main_photo_path' => ProductPhoto::query()
                     ->select('path')
-                    ->whereColumn('product_photos.product_id', 'products.id')
+                    ->whereColumn(
+                        'product_photos.product_id',
+                        'products.id'
+                    )
                     ->orderByDesc('is_main')
                     ->limit(1),
             ])
             ->get();
 
-        $products = $productsQuery;
 
+        /*
+         * Összes raktár lekérése
+         */
+        $warehouses = Warehouse::query()
+            ->select([
+                'id',
+                'name',
+            ])
+            ->orderBy('name')
+            ->get();
+
+
+        /*
+         * A keresésben szereplő termékek összes készletének lekérése.
+         *
+         * Nincs ProductStock model, ezért közvetlenül a táblát használjuk.
+         */
+        $productStocks = DB::table('product_stocks')
+            ->select([
+                'product_id',
+                'warehouse_id',
+                'quantity',
+            ])
+            ->whereIn(
+                'product_id',
+                $products->pluck('id')->all()
+            )
+            ->get()
+            ->groupBy('product_id');
+
+
+        /*
+         * Partner kedvezményes árak
+         */
         $partnerDiscounts = collect();
-        if ($customer && $customer->is_partner && $products->isNotEmpty()) {
+
+        if (
+            $customer
+            && $customer->is_partner
+            && $products->isNotEmpty()
+        ) {
             $partnerDiscounts = PartnerProduct::query()
                 ->where('customer_id', $customer->id)
-                ->whereIn('product_id', $products->pluck('id')->all())
-                ->pluck('discount_gross_price', 'product_id');
+                ->whereIn(
+                    'product_id',
+                    $products->pluck('id')->all()
+                )
+                ->pluck(
+                    'discount_gross_price',
+                    'product_id'
+                );
         }
 
-        $payload = $products->map(function ($p) use ($customer, $partnerDiscounts, $showPartnerPrices) {
-            $effective = (float) ($p->gross_price ?? 0);
-            if ($customer && $customer->is_partner) {
-                $disc = $partnerDiscounts->get($p->id);
-                if ($disc !== null) {
-                    $effective = (float) $disc;
-                } elseif ($p->partner_gross_price !== null) {
+
+        $payload = $products
+            ->map(function (
+                $p
+            ) use (
+                $customer,
+                $partnerDiscounts,
+                $showPartnerPrices,
+                $warehouses,
+                $productStocks
+            ) {
+                $effective = (float) ($p->gross_price ?? 0);
+
+                if ($customer && $customer->is_partner) {
+                    $disc = $partnerDiscounts->get($p->id);
+
+                    if ($disc !== null) {
+                        $effective = (float) $disc;
+                    } elseif ($p->partner_gross_price !== null) {
+                        $effective = (float) $p->partner_gross_price;
+                    }
+                } elseif (
+                    !$customer
+                    && $showPartnerPrices
+                    && $p->partner_gross_price !== null
+                ) {
                     $effective = (float) $p->partner_gross_price;
                 }
-            } elseif (!$customer && $showPartnerPrices && $p->partner_gross_price !== null) {
-                $effective = (float) $p->partner_gross_price;
-            }
 
-            return [
-                'id' => $p->id,
-                'title' => $p->title,
-                'gross_price' => $p->gross_price,
-                'partner_gross_price' => $p->partner_gross_price,
-                'effective_gross_price' => $effective,
-                'main_photo_path' => $p->main_photo_path,
-                'available_quantity' => isset($p->available_quantity) ? (float) $p->available_quantity : null,
-                'tax_value' => $p->taxCategory?->tax_value,
-                'unit_qty' => $p->unit_qty,
-                'unit_name' => $p->unit?->name,
-                'unit_abbreviation' => $p->unit?->abbreviation,
-            ];
-        })->values();
 
-        return response()->json(['products' => $payload]);
+                /*
+                 * Az adott termék készleteinek gyors lookup táblája:
+                 *
+                 * [
+                 *     warehouse_id => quantity
+                 * ]
+                 */
+                $stocksByWarehouse = ($productStocks->get($p->id) ?? collect())
+                    ->pluck('quantity', 'warehouse_id');
+
+
+                /*
+                 * MINDEN raktár bekerül.
+                 * Ha nincs készlet rekord, akkor quantity = 0.
+                 */
+                $warehouseStocks = $warehouses
+                    ->map(function ($warehouse) use ($stocksByWarehouse) {
+                        return [
+                            'id' => $warehouse->id,
+                            'name' => $warehouse->name,
+                            'quantity' => (float) (
+                                $stocksByWarehouse->get($warehouse->id) ?? 0
+                            ),
+                        ];
+                    })
+                    ->values();
+
+
+                return [
+                    'id' => $p->id,
+                    'title' => $p->title,
+                    'gross_price' => $p->gross_price,
+                    'partner_gross_price' => $p->partner_gross_price,
+                    'effective_gross_price' => $effective,
+                    'main_photo_path' => $p->main_photo_path,
+
+                    /*
+                     * A kiválasztott raktár készlete.
+                     */
+                    'available_quantity' => isset($p->available_quantity)
+                        ? (float) $p->available_quantity
+                        : null,
+
+                    /*
+                     * Minden raktár készlete.
+                     */
+                    'warehouses' => $warehouseStocks,
+
+                    'tax_value' => $p->taxCategory?->tax_value,
+                    'unit_qty' => $p->unit_qty,
+                    'unit_name' => $p->unit?->name,
+                    'unit_abbreviation' => $p->unit?->abbreviation,
+                ];
+            })
+            ->values();
+
+        return response()->json([
+            'products' => $payload,
+        ]);
     }
 
     public function data()

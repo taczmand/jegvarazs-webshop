@@ -81,7 +81,7 @@
     </div>
 
 
-    <x-admin.document-modal id="salesInvoiceModal" title="Kimenő számla" form-id="salesInvoiceForm" save-button-id="saveSalesInvoice" pane-left="40%" pane-mid="60%">
+    <x-admin.document-modal id="salesInvoiceModal" title="Kimenő számla" form-id="salesInvoiceForm" save-button-id="saveDraftSalesInvoice" pane-left="40%" pane-mid="60%">
         <x-slot:left>
             <input type="hidden" id="invoice_id" name="id">
 
@@ -237,6 +237,7 @@
                         <thead>
                         <tr>
                             <th>Megnevezés</th>
+                            <th>Raktár</th>
                             <th class="text-end">Mennyiség</th>
                             <th class="text-center">Mee.</th>
                             <th class="text-end">Kedvezmény</th>
@@ -258,11 +259,12 @@
 
         <x-slot:footer>
             <button type="button" class="btn btn-outline-primary" id="previewSalesInvoice">Előnézet</button>
+            <button type="button" class="btn btn-primary saveDraftSalesInvoice">Piszkozat mentése</button>
         </x-slot:footer>
     </x-admin.document-modal>
 
     <div class="modal fade" id="salesInvoicePreviewModal" tabindex="-1" aria-labelledby="salesInvoicePreviewModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-xl modal-dialog-centered" style="max-width: 1100px;">
+        <div class="modal-dialog modal-fullscreen m-0 p-0 d-flex flex-column" style="height: 100vh; min-height: 100vh; max-height: 100vh;">
             <div class="modal-content" style="height: 80vh;">
                 <div class="modal-header">
                     <h5 class="modal-title" id="salesInvoicePreviewModalLabel">Kimenő számla előnézet</h5>
@@ -270,6 +272,19 @@
                 </div>
                 <div class="modal-body p-0" style="height: 100%;">
                     <iframe id="sales_invoice_preview_iframe" title="PDF előnézet" style="width: 100%; height: 100%; border: 0; display:block;"></iframe>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-success" id="createSalesInvoice">
+                        Számla létrehozása
+                    </button>
+
+                    <button type="button" class="btn btn-primary saveDraftSalesInvoice">
+                        Piszkozat mentése
+                    </button>
+
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        Mégse
+                    </button>
                 </div>
             </div>
         </div>
@@ -310,14 +325,14 @@
                 const previewBtn = document.getElementById('previewSalesInvoice');
                 if (!previewBtn) return;
                 const originalText = previewBtn ? previewBtn.innerHTML : null;
-                const saveBtn = document.getElementById('saveSalesInvoice');
-                const saveBtnWasDisabled = saveBtn ? saveBtn.disabled : false;
+                const saveDraftBtn = document.getElementsByClassName('saveDraftSalesInvoice');
+                const saveDraftBtnWasDisabled = saveDraftBtn ? saveDraftBtn.disabled : false;
                 if (previewBtn) {
                     previewBtn.disabled = true;
                     previewBtn.innerHTML = 'Betöltés...';
                 }
-                if (saveBtn) {
-                    saveBtn.disabled = true;
+                if (saveDraftBtn) {
+                    saveDraftBtn.disabled = true;
                 }
 
                 try {
@@ -353,8 +368,8 @@
                         previewBtn.disabled = false;
                         if (originalText !== null) previewBtn.innerHTML = originalText;
                     }
-                    if (saveBtn) {
-                        saveBtn.disabled = saveBtnWasDisabled;
+                    if (saveDraftBtn) {
+                        saveDraftBtn.disabled = saveDraftBtnWasDisabled;
                     }
                 }
             }
@@ -583,31 +598,35 @@
                 clearPartnerClientResults();
             });
 
-            $('#salesInvoiceForm').on('submit', function (e) {
+            // Számla létrehozása
+            $('#createSalesInvoice').on('click', function (e) {
                 e.preventDefault();
 
                 syncItemsJson();
 
-                const formData = new FormData(this);
+                const formData = new FormData(document.getElementById('salesInvoiceForm'));
                 formData.append('_token', csrfToken);
 
-                const saveBtn = $('#saveSalesInvoice');
+                const saveBtn = $('#createSalesInvoice');
                 const originalSaveButtonHtml = saveBtn.html();
-                saveBtn.html('Mentés...').prop('disabled', true);
+                saveBtn.html('Létrehozás...').prop('disabled', true);
+
+                const saveDraftBtn = $('.saveDraftSalesInvoice');
+                if (saveDraftBtn.length) saveDraftBtn.prop('disabled', true);
 
                 const previewBtn = $('#previewSalesInvoice');
                 const originalPreviewButtonHtml = previewBtn.length ? previewBtn.html() : null;
                 if (previewBtn.length) previewBtn.prop('disabled', true);
 
-                const invoiceId = $('#invoice_id').val();
+                //const invoiceId = $('#invoice_id').val();
 
                 let url = '{{ route('admin.documents.sales-invoices.store') }}';
                 let method = 'POST';
 
-                if (invoiceId) {
+                /*if (invoiceId) {
                     url = `${window.appConfig.APP_URL}admin/bizonylatok/kimeno-szamlak/${invoiceId}`;
                     formData.append('_method', 'PUT');
-                }
+                }*/
 
                 $.ajax({
                     url: url,
@@ -660,6 +679,7 @@
                         }).finally(() => {
                             saveBtn.html(originalSaveButtonHtml).prop('disabled', false);
                             if (previewBtn.length) previewBtn.html(originalPreviewButtonHtml).prop('disabled', false);
+                            if (saveDraftBtn.length) saveDraftBtn.html(originalPreviewButtonHtml).prop('disabled', false);
                         });
                     },
                     error(xhr) {
@@ -673,10 +693,80 @@
 
                         saveBtn.html(originalSaveButtonHtml).prop('disabled', false);
                         if (previewBtn.length) previewBtn.html(originalPreviewButtonHtml).prop('disabled', false);
+                        if (saveDraftBtn.length) saveDraftBtn.html(originalPreviewButtonHtml).prop('disabled', false);
                     },
                     complete: () => {}
                 });
             });
+
+            // Piszkozat mentése gomb megnyomása
+            $('.saveDraftSalesInvoice').on('click', function (e) {
+                e.preventDefault();
+                saveDraftInvoice();
+            });
+
+            // Piszkozat mentése (létrehozás vagy frissítés szamlazó nélkül)
+            function saveDraftInvoice() {
+                syncItemsJson();
+
+                const formData = new FormData(document.getElementById('salesInvoiceForm'));
+                formData.append('_token', csrfToken);
+
+                const saveBtn = $('#createSalesInvoice');
+                const originalSaveButtonHtml = saveBtn.html();
+                if (saveBtn.length) saveBtn.prop('disabled', true);
+
+                const saveDraftBtn = $('.saveDraftSalesInvoice');
+                const originalSaveDraftButtonHtml = saveDraftBtn.html();
+                saveDraftBtn.html('Mentés...').prop('disabled', true);
+                if (saveDraftBtn.length) saveDraftBtn.prop('disabled', true);
+
+                const previewBtn = $('#previewSalesInvoice');
+                const originalPreviewButtonHtml = previewBtn.length ? previewBtn.html() : null;
+                if (previewBtn.length) previewBtn.prop('disabled', true);
+
+                const invoiceId = $('#invoice_id').val();
+
+                let url = '{{ route('admin.documents.sales-invoices.store') }}';
+                let method = 'POST';
+
+                if (invoiceId) {
+                    url = `${window.appConfig.APP_URL}admin/bizonylatok/kimeno-szamlak/${invoiceId}`;
+                    formData.append('_method', 'PUT');
+                }
+
+                $.ajax({
+                    url: url,
+                    method: method,
+                    data: formData,
+                    contentType: false,
+                    processData: false,
+                    success(response) {
+                        const savedId = response?.invoice?.id;
+                        if (!savedId) {
+                            showToast('Sikeres mentés, de hiányzik a bizonylat azonosítója.', 'warning');
+                            table.ajax.reload(null, false);
+                            saveDraftBtn.html(originalSaveDraftButtonHtml).prop('disabled', false);
+                            if (previewBtn.length) previewBtn.html(originalPreviewButtonHtml).prop('disabled', false);
+                            return;
+                        }
+                    },
+                    error(xhr) {
+                        let msg = 'Hiba!';
+                        if (xhr.responseJSON?.errors) {
+                            msg = Object.values(xhr.responseJSON.errors).flat().join(' ');
+                        } else if (xhr.responseJSON?.message) {
+                            msg = xhr.responseJSON.message;
+                        }
+                        showToast(msg, 'danger');
+
+                        saveBtn.html(originalSaveButtonHtml).prop('disabled', false);
+                        if (previewBtn.length) previewBtn.html(originalPreviewButtonHtml).prop('disabled', false);
+                        if (saveDraftBtn.length) saveDraftBtn.html(originalSaveDraftButtonHtml).prop('disabled', false);
+                    },
+                    complete: () => {}
+                });
+            }
 
             const items = [];
 
@@ -722,6 +812,9 @@
                         `<tr data-idx="${idx}">
                             <td>
                                 <div class="fw-semibold">${item.name}</div>
+                            </td>
+                            <td>
+                                <div>${item.warehouse_name}</div>
                             </td>
                             <td style="width: 120px;">
                                 <input type="number" min="${item.qty_step ?? 1}" step="${item.qty_step ?? 1}" class="form-control form-control-sm text-end item-qty" value="${item.quantity}">
@@ -783,6 +876,8 @@
 
                 const item = {
                     product_id: product.id,
+                    warehouse_id: product.warehouse_id,
+                    warehouse_name: product.warehouse_name,
                     name: product.title,
                     quantity: qtyStep,
                     qty_step: qtyStep,
@@ -803,9 +898,12 @@
             }
 
             let searchTimeout = null;
+
             $('#product_search').on('input', function () {
                 const q = $(this).val().trim();
+
                 clearTimeout(searchTimeout);
+
                 if (q.length < 2) {
                     $('#product_search_results').empty();
                     return;
@@ -815,42 +913,127 @@
                     $.ajax({
                         url: `${window.appConfig.APP_URL}admin/termekek/search?q=${encodeURIComponent(q)}`,
                         method: 'GET',
+
                         success: function (resp) {
                             const results = resp?.products ?? [];
                             const container = $('#product_search_results');
+
                             container.empty();
+
                             results.forEach(p => {
                                 const unitQty = Number(p.unit_qty);
-                                const unitText = (p.unit_abbreviation || p.unit_name) ? `${escapeHtml(p.unit_abbreviation || p.unit_name)}` : '';
-                                const packagingLabel = Number.isFinite(unitQty) && unitQty > 1
-                                    ? ` (kiszerelés: ${escapeHtml(unitQty)}${unitText ? ' ' + unitText : ''})`
-                                    : '';
-                                const qty = Number(p.available_quantity ?? 0);
-                                const qtyText = Number.isFinite(qty) ? String(qty) : '0';
-                                const isOut = !Number.isFinite(qty) || qty <= 0;
-                                const btn = $(
-                                    `<button type="button" class="list-group-item list-group-item-action" ${isOut ? 'disabled aria-disabled="true"' : ''}>
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <div><strong>${escapeHtml(p.title)}</strong>${packagingLabel}</div>
-                                            <div class="text-muted">${formatMoney(p.effective_gross_price ?? p.gross_price ?? 0)} HUF</div>
-                                        </div>
-                                        <div class="d-flex justify-content-between align-items-center mt-1">
-                                            <div class="small text-muted">Készlet: ${escapeHtml(qtyText)}</div>
-                                            ${isOut ? '<span class="badge text-bg-secondary">nincs készleten</span>' : ''}
-                                        </div>
-                                     </button>`
+
+                                const unitText =
+                                    (p.unit_abbreviation || p.unit_name)
+                                        ? escapeHtml(p.unit_abbreviation || p.unit_name)
+                                        : '';
+
+                                const packagingLabel =
+                                    Number.isFinite(unitQty) && unitQty > 1
+                                        ? ` (kiszerelés: ${escapeHtml(unitQty)}${unitText ? ' ' + unitText : ''})`
+                                        : '';
+
+                                const warehouses = Array.isArray(p.warehouses)
+                                    ? p.warehouses
+                                    : [];
+
+                                const productItem = $(
+                                    `<div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>${escapeHtml(p.title)}</strong>
+                                    ${packagingLabel}
+                                </div>
+
+                                <div class="text-muted">
+                                    ${formatMoney(p.effective_gross_price ?? p.gross_price ?? 0)} HUF
+                                </div>
+                            </div>
+
+                            <div class="mt-2">
+                                <div class="small text-muted mb-1">
+                                    Raktárak:
+                                </div>
+
+                                <div class="d-flex flex-wrap gap-1 product-warehouses">
+                                </div>
+                            </div>
+                        </div>`
                                 );
-                                if (!isOut) {
-                                    btn.on('click', function () {
-                                        addProductAsItem(p);
-                                        $('#product_search').val('');
-                                        $('#product_search_results').empty();
-                                        $('#product_search').trigger('focus');
-                                    });
+
+                                const warehousesContainer =
+                                    productItem.find('.product-warehouses');
+
+                                if (warehouses.length === 0) {
+                                    warehousesContainer.append(
+                                        `<span class="badge text-bg-secondary">
+                                nincs készletinformáció
+                            </span>`
+                                    );
                                 }
-                                container.append(btn);
+
+                                warehouses.forEach(warehouse => {
+                                    const quantity = Number(warehouse.quantity ?? 0);
+
+                                    const isAvailable =
+                                        Number.isFinite(quantity) &&
+                                        quantity > 0;
+
+                                    const quantityText =
+                                        Number.isFinite(quantity)
+                                            ? String(quantity)
+                                            : '0';
+
+                                    const warehouseButton = $(
+                                        `<button
+                                type="button"
+                                class="btn btn-sm ${
+                                            isAvailable
+                                                ? 'btn-outline-primary'
+                                                : 'btn-outline-secondary'
+                                        }"
+                                ${
+                                            !isAvailable
+                                                ? 'disabled aria-disabled="true"'
+                                                : ''
+                                        }
+                            >
+                                ${escapeHtml(warehouse.name)}
+                                <span class="ms-1">
+                                    (${escapeHtml(quantityText)})
+                                </span>
+                            </button>`
+                                    );
+
+                                    if (isAvailable) {
+                                        warehouseButton.on('click', function (e) {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+
+                                            /*
+                                             * A termékhez hozzárakjuk,
+                                             * hogy melyik raktárból választották.
+                                             */
+                                            addProductAsItem({
+                                                ...p,
+                                                warehouse_id: warehouse.id,
+                                                warehouse_name: warehouse.name,
+                                                available_quantity: quantity,
+                                            });
+
+                                            $('#product_search').val('');
+                                            $('#product_search_results').empty();
+                                            $('#product_search').trigger('focus');
+                                        });
+                                    }
+
+                                    warehousesContainer.append(warehouseButton);
+                                });
+
+                                container.append(productItem);
                             });
                         },
+
                         error: function () {
                             $('#product_search_results').empty();
                         }
