@@ -42,6 +42,16 @@ class PagesController extends Controller
             ->orderBy('title', 'asc')
             ->get();
 
+        // Akciós termékek a slider-hez
+        $sale_products = Product::where('status', 'active')
+            ->whereHas('tags', function($q) {
+                $q->where('name', 'Akciós');
+            })
+            ->with(['photos' => function($q) {
+                $q->orderBy('id', 'asc');
+            }])
+            ->take(8)
+            ->get();
 
         $last_blogs = BlogPost::latest()
             ->where('status', 'published')
@@ -52,6 +62,7 @@ class PagesController extends Controller
 
         return view('pages.index', [
             'all_categories' => $all_categories,
+            'sale_products' => $sale_products,
             'last_blogs' => $last_blogs,
             'brands' => $brands
         ]);
