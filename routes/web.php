@@ -15,6 +15,7 @@ use App\Http\Controllers\Admin\CompanyController;
 use App\Http\Controllers\Admin\CompanySiteController;
 use App\Http\Controllers\Admin\ContractController;
 use App\Http\Controllers\Admin\ContractProductsReportController;
+use App\Http\Controllers\Admin\DocumentController;
 use App\Http\Controllers\Admin\CouponController;
 use App\Http\Controllers\Admin\CustomerController;
 use App\Http\Controllers\Admin\DashboardController;
@@ -432,6 +433,15 @@ Route::get('/automatizacio/jogosultsagok/szinkron', function (Request $request, 
             Route::get('/idopontfoglalasok/{id}', [AppointmentController::class, 'show'])->name('appointments.show');
             Route::delete('/idopontfoglalasok/delete-photo', [AppointmentController::class, 'deleteAppointmentPhoto'])->name('appointments.delete_appointment_photo');
             Route::delete('/idopontfoglalasok/{id}', [AppointmentController::class, 'destroy'])->name('appointments.destroy');
+
+            // Dokumentumok
+            Route::get('/dokumentumok', [DocumentController::class, 'index'])->name('documents.index');
+            Route::get('/dokumentumok/data', [DocumentController::class, 'data'])->name('documents.data');
+            Route::post('/dokumentumok', [DocumentController::class, 'store'])->name('documents.store');
+            Route::get('/dokumentumok/{id}', [DocumentController::class, 'show'])->name('documents.show');
+            Route::put('/dokumentumok/{id}', [DocumentController::class, 'update'])->name('documents.update');
+            Route::delete('/dokumentumok/{id}', [DocumentController::class, 'destroy'])->name('documents.destroy');
+            Route::get('/dokumentumok/{id}/letoltes', [DocumentController::class, 'download'])->name('documents.download');
 
             // Érdeklődők
             Route::get('/leads', [LeadController::class, 'index'])->name('leads.index');

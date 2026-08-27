@@ -31,7 +31,8 @@
         $canViewWarehouseTransfers = (bool) ($adminUser && $adminUser->can('view-warehouse-transfers'));
         $canViewAutomatedEmails = (bool) ($adminUser && $adminUser->can('view-automated-emails'));
         $canViewBulkEmails = (bool) ($adminUser && $adminUser->can('view-bulk-emails'));
-        $canViewBusiness = $canViewOffers || $canViewContracts || $canViewAppointments || $canViewWorksheets || $canViewCashReceipts || $canViewLeads || $canViewClients || $canViewWarehouses || $canViewWarehouseTransfers || $canViewAutomatedEmails || $canViewBulkEmails;
+        $canViewDocuments = (bool) ($adminUser && $adminUser->can('view-documents'));
+        $canViewBusiness = $canViewOffers || $canViewContracts || $canViewAppointments || $canViewWorksheets || $canViewCashReceipts || $canViewLeads || $canViewClients || $canViewWarehouses || $canViewWarehouseTransfers || $canViewAutomatedEmails || $canViewBulkEmails || $canViewDocuments;
 
         $canViewVehicles = (bool) ($adminUser && $adminUser->can('view-vehicles'));
 
@@ -196,6 +197,9 @@
                     @endif
                     @if($canViewBulkEmails)
                         <a class="collapse-item" href="{{ route('admin.bulk-emails.index') }}">Tömeges e-mail</a>
+                    @endif
+                    @if($canViewDocuments)
+                        <a class="collapse-item" href="{{ route('admin.documents.index') }}">Dokumentumok</a>
                     @endif
                 </div>
             </div>

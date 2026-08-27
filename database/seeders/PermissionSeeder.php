@@ -165,6 +165,11 @@ class PermissionSeeder extends Seeder
             ['id' => 161, 'name' => 'create-stocktake', 'label' => 'Leltár létrehozása', 'group' => 'Raktározás'],
             ['id' => 162, 'name' => 'edit-stocktake', 'label' => 'Leltár szerkesztése', 'group' => 'Raktározás'],
             ['id' => 163, 'name' => 'delete-stocktake', 'label' => 'Leltár törlése', 'group' => 'Raktározás'],
+
+            ['id' => 164, 'name' => 'view-documents', 'label' => 'Dokumentumok megtekintése', 'group' => 'Ügyviteli folyamatok'],
+            ['id' => 165, 'name' => 'create-documents', 'label' => 'Dokumentum létrehozása', 'group' => 'Ügyviteli folyamatok'],
+            ['id' => 166, 'name' => 'edit-documents', 'label' => 'Dokumentum szerkesztése', 'group' => 'Ügyviteli folyamatok'],
+            ['id' => 167, 'name' => 'delete-documents', 'label' => 'Dokumentum törlése', 'group' => 'Ügyviteli folyamatok'],
         ];
 
         foreach ($permissions as $perm) {
