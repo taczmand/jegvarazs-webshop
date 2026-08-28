@@ -9,7 +9,10 @@
 
     </div>
 </div>
-<div class="row mt-3" style="width:95%; padding-left: 5%">
+<div class="row mt-3 justify-content-center" style="width:95%;">
+    <div class="text-center mx-auto">
+        <h4>Akciós termékeink</h4>
+    </div>
     <div class="categories__slider owl-carousel">
         @foreach($sale_products as $product)
             @php

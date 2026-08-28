@@ -122,7 +122,7 @@ import * as bootstrap from "bootstrap";
     $(".categories__slider").owlCarousel({
         loop: true,
         margin: 0,
-        items: 4,
+        items: 3,
         dots: false,
         nav: true,
         navText: ["<span class='fa fa-angle-left'><span/>", "<span class='fa fa-angle-right'><span/>"],
@@ -146,7 +146,7 @@ import * as bootstrap from "bootstrap";
             },
 
             992: {
-                items: 4,
+                items: 3,
             }
         }
     });

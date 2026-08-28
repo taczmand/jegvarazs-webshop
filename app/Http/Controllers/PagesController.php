@@ -50,7 +50,6 @@ class PagesController extends Controller
             ->with(['photos' => function($q) {
                 $q->orderBy('id', 'asc');
             }])
-            ->take(8)
             ->get();
 
         $last_blogs = BlogPost::latest()
