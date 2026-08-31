@@ -23,6 +23,9 @@
                             <a href="storage/{{ $regulation->file_path }}" target="_blank"><li>{{ $regulation->file_name }}</li></a>
                         @endforeach
                     </ul>
+                    <div class="footer__widget__palyazati">
+                        <a href="{{ route('ginopplusz') }}"><img src="{{ asset('static_media/top_plusz.jpg') }}" alt="GINOP PLUSZ"></a>
+                    </div>
                 </div>
             </div>
             <div class="col-lg-4 col-md-12">
@@ -83,7 +86,6 @@
                         @endif
                     </div>
                     <div class="footer__copyright__payment">
-                        <a href="{{ route('topplusz') }}"><img src="{{ asset('static_media/top_plusz.jpg') }}" alt="TOP Plusz"></a>
                         <a href="{{ env('SIMPLEPAY_LOGO_URL') }}" target="_blank"><img src="{{ asset('static_media/'.env('SIMPLEPAY_LOGO')) }}" alt="SimplePay"></a>
                     </div>
                 </div>

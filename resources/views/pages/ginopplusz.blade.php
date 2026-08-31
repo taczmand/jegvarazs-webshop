@@ -6,10 +6,10 @@
 
 @section('content')
     @include('partials.breadcrumbs', ['breadcrumbs' => [
-        'page_title' => 'TOP Plusz',
+        'page_title' => 'GINOP PLUSZ',
         'nav' => [
             ['title' => 'Főoldal', 'url' => route('index')],
-            ['title' => 'TOP Plusz', 'url' => route('topplusz')]
+            ['title' => 'GINOP PLUSZ', 'url' => route('ginopplusz')]
         ],
     ]
     ])
@@ -35,9 +35,11 @@
                 <b>A támogatás intenzitása:</b> 100%
                 <br>
                 <b>A támogatás formája:</b> Vissza nem térítendő
+                <br>
+                <b style="font-size: 1.2em;">Tényleges befejezési dátum:</b> <span style="font-size: 1.2em; font-weight: bold;">2026.07.07</span>
             </p>
 
-            <img src="{{ asset('static_media/2026-61-7_10-40-5_a2_fekvo_nyomda_page-0001.jpg') }}" alt="GINOP Plusz támogatás" class="img-fluid" style="max-width: 100%; height: auto;">
+            <img src="{{ asset('static_media/2026-71-31_11-22-2_europlakat_nyomda_page-0001.jpg') }}" alt="GINOP Plusz támogatás" class="img-fluid" style="max-width: 100%; height: auto; padding-top: 32px">
         </div>
     </div>
 @endsection

@@ -85,8 +85,8 @@ class PagesController extends Controller
         return view('pages.about');
     }
 
-    public function topplusz() {
-        return view('pages.topplusz');
+    public function ginopplusz() {
+        return view('pages.ginopplusz');
     }
 
     public function contact() {

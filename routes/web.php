@@ -691,7 +691,7 @@ Route::get('/automatizacio/jogosultsagok/szinkron', function (Request $request, 
     Route::get('/', [PagesController::class, 'index'])->name('index');
     Route::get('/rolunk', [PagesController::class, 'about'])->name('about');
     Route::get('/kapcsolat', [PagesController::class, 'contact'])->name('contact');
-    Route::get('/top-plusz', [PagesController::class, 'topplusz'])->name('topplusz');
+    Route::get('/ginop-plusz', [PagesController::class, 'ginopplusz'])->name('ginopplusz');
 
     Route::post('/idopontfoglalas', [PagesController::class, 'addAppointment'])->name('appointment.post');
     Route::post('/ajanlatkeres', [PagesController::class, 'addOffer'])->name('offer.post');
