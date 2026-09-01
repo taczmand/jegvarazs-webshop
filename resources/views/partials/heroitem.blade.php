@@ -11,7 +11,7 @@
 </div>
 <div class="row mt-3 justify-content-center" style="width:95%;">
     <div class="text-center mx-auto">
-        <h4>Akciós termékeink</h4>
+        <h4 class="sale-heading">Akciós termékeink</h4>
     </div>
     <div class="categories__slider owl-carousel">
         @foreach($sale_products as $product)

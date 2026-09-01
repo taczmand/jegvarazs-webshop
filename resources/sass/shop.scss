@@ -4099,6 +4099,32 @@ a {
     }
 }
 
+/* Sale heading styling */
+.sale-heading {
+    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a5a 100%);
+    color: #ffffff !important;
+    font-weight: 800;
+    margin-top: 24px;
+    padding: 15px 30px;
+    border-radius: 8px;
+    display: inline-block;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    box-shadow: 0 4px 15px rgba(238, 90, 90, 0.4);
+    animation: pulse-sale 2s ease-in-out infinite;
+}
+
+@keyframes pulse-sale {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 4px 15px rgba(238, 90, 90, 0.4);
+    }
+    50% {
+        transform: scale(1.02);
+        box-shadow: 0 6px 20px rgba(238, 90, 90, 0.6);
+    }
+}
+
 
 
 
