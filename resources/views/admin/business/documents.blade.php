@@ -11,6 +11,14 @@
 
         <div class="rounded-xl bg-white shadow-lg p-4">
             @if(auth('admin')->user()->can('view-documents'))
+                <div class="mb-4">
+                    <div class="d-flex align-items-center gap-2">
+                        <label for="folderFilter" class="form-label mb-0 fw-bold">Mappa:</label>
+                        <select id="folderFilter" class="form-select form-select-sm" style="width: auto;">
+                            <option value="">Összes</option>
+                        </select>
+                    </div>
+                </div>
                 <div id="documentsGrid" class="row g-4">
                     <!-- Documents will be loaded here via JavaScript -->
                 </div>
@@ -51,6 +59,17 @@
                         <div class="mb-3">
                             <label for="description" class="form-label">Leírás</label>
                             <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="folder" class="form-label">Mappa</label>
+                            <div class="input-group position-relative">
+                                <input type="text" class="form-control" id="folder" name="folder" placeholder="Mappa neve (pl. Számlák, Szerződések)">
+                                <button class="btn btn-outline-secondary" type="button" id="folderSuggestionsBtn" title="Mappa javaslatok">
+                                    <i class="fas fa-folder"></i>
+                                </button>
+                                <div id="folderSuggestions" class="dropdown-menu shadow" style="position: absolute; bottom: 100%; left: 0; right: 0; margin-bottom: 5px; z-index: 1050; max-height: 400px; overflow-y: auto;"></div>
+                            </div>
                         </div>
 
                         <div class="mb-3">
@@ -112,6 +131,8 @@
     <script>
         $(document).ready(function() {
             let documents = [];
+            let folders = [];
+            let currentFolderFilter = '';
 
             function formatFileSize(bytes) {
                 if (bytes === 0) return '0 B';
@@ -146,7 +167,9 @@
                     url: '{{ route("admin.documents.data") }}',
                     method: 'GET',
                     success: function(response) {
-                        documents = response;
+                        documents = response.documents;
+                        folders = response.folders || [];
+                        populateFolderFilter();
                         renderDocuments();
                     },
                     error: function(xhr) {
@@ -157,10 +180,28 @@
                 });
             }
 
+            function populateFolderFilter() {
+                const filter = $('#folderFilter');
+                filter.empty().append('<option value="">Összes</option>');
+                folders.forEach(folder => {
+                    filter.append(`<option value="${folder}">${folder}</option>`);
+                });
+                filter.val(currentFolderFilter);
+            }
+
+            function filterDocuments() {
+                if (!currentFolderFilter) {
+                    return documents;
+                }
+                return documents.filter(doc => doc.folder === currentFolderFilter);
+            }
+
             function renderDocuments() {
                 $('#documentsLoader').addClass('d-none');
 
-                if (documents.length === 0) {
+                const filteredDocs = filterDocuments();
+
+                if (filteredDocs.length === 0) {
                     $('#documentsEmpty').removeClass('d-none');
                     $('#documentsGrid').addClass('d-none');
                     return;
@@ -172,7 +213,7 @@
                 const grid = $('#documentsGrid');
                 grid.empty();
 
-                documents.forEach(doc => {
+                filteredDocs.forEach(doc => {
                     const fileIcon = getFileIcon(doc.file_type);
                     const isImage = doc.file_type && doc.file_type.includes('image');
                     const canEdit = {{ auth('admin')->user()->can('edit-documents') ? 'true' : 'false' }};
@@ -192,6 +233,7 @@
                                         <div class="flex-grow-1 overflow-hidden">
                                             <a href="${doc.file_url}" target="_blank" class="card-title mb-1 text-truncate text-decoration-none text-dark" title="${doc.title}">${doc.title}</a>
                                             <small class="text-muted d-block text-truncate" title="${doc.file_name}">${doc.file_name}</small>
+                                            ${doc.folder ? `<small class="text-muted d-block"><i class="fas fa-folder me-1"></i>${doc.folder}</small>` : ''}
                                         </div>
                                     </div>
 
@@ -232,6 +274,39 @@
                 $('#documentModal').modal('show');
             });
 
+            // Folder filter change
+            $('#folderFilter').on('change', function() {
+                currentFolderFilter = $(this).val();
+                renderDocuments();
+            });
+
+            // Folder suggestions
+            $('#folderSuggestionsBtn').click(function() {
+                const suggestions = $('#folderSuggestions');
+                if (folders.length === 0) {
+                    suggestions.empty().append('<div class="dropdown-item text-muted">Nincsenek mappák</div>');
+                } else {
+                    suggestions.empty();
+                    folders.forEach(folder => {
+                        suggestions.append(`<a class="dropdown-item" href="#" data-folder="${folder}">${folder}</a>`);
+                    });
+                }
+                suggestions.toggle();
+            });
+
+            $(document).on('click', '#folderSuggestions .dropdown-item', function(e) {
+                e.preventDefault();
+                const folder = $(this).data('folder');
+                $('#folder').val(folder);
+                $('#folderSuggestions').hide();
+            });
+
+            $(document).on('click', function(e) {
+                if (!$(e.target).closest('#folderSuggestionsBtn, #folderSuggestions').length) {
+                    $('#folderSuggestions').hide();
+                }
+            });
+
             // Edit button click
             $(document).on('click', '.edit-btn', function() {
                 const id = $(this).data('id');
@@ -242,6 +317,7 @@
                     $('#document_id').val(doc.id);
                     $('#title').val(doc.title);
                     $('#description').val(doc.description || '');
+                    $('#folder').val(doc.folder || '');
                     $('#file').prop('required', false);
 
                     $('#currentFileInfo').removeClass('d-none');
