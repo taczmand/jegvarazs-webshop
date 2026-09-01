@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class Document extends Model
 {
     use LogsActivity;
-    
+
     protected $fillable = [
         'title',
         'description',

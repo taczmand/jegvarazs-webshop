@@ -68,7 +68,7 @@
                                 <button class="btn btn-outline-secondary" type="button" id="folderSuggestionsBtn" title="Mappa javaslatok">
                                     <i class="fas fa-folder"></i>
                                 </button>
-                                <div id="folderSuggestions" class="dropdown-menu shadow" style="position: absolute; bottom: 100%; left: 0; right: 0; margin-bottom: 5px; z-index: 1050; max-height: 400px; overflow-y: auto;"></div>
+                                <div id="folderSuggestions" class="dropdown-menu shadow" style="position: absolute; bottom: 100%; left: 0; right: 0; margin-bottom: 5px; z-index: 1050; height: 100px; overflow-y: auto;"></div>
                             </div>
                         </div>
 
