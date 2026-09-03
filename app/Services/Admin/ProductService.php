@@ -130,7 +130,7 @@ class ProductService
 
             $countInContractProductsReport = array_key_exists('count_in_contract_products_report', $data)
                 ? (int) $data['count_in_contract_products_report']
-                : 1;
+                : 0;
 
             // Termék alapadatok mentése
             $product = Product::create([
@@ -250,7 +250,7 @@ class ProductService
 
             $countInContractProductsReport = array_key_exists('count_in_contract_products_report', $data)
                 ? (int) $data['count_in_contract_products_report']
-                : 1;
+                : (int) ($product->count_in_contract_products_report ?? 0);
 
             $old_gross_price = (float) ($product->gross_price ?? 0);
             $old_partner_gross_price = $product->partner_gross_price;
