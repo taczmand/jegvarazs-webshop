@@ -9,9 +9,11 @@
 
     </div>
 </div>
-<div class="row mt-3 justify-content-center" style="width:95%;">
+<div class="row mt-3 justify-content-center sale-products-row" style="width:95%;">
     <div class="text-center mx-auto">
-        <h4 class="sale-heading">Akciós termékeink</h4>
+        <a href="{{ url('/termekek') }}?tag={{ rawurlencode('Akciós') }}" class="text-decoration-none">
+            <h4 class="sale-heading">Akciós termékeink</h4>
+        </a>
     </div>
     <div class="categories__slider owl-carousel">
         @foreach($sale_products as $product)

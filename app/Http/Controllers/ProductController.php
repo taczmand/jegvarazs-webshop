@@ -29,10 +29,36 @@ class ProductController extends Controller
 
         // 🔍 Tag szűrés, ha van
         if ($tags) {
-            $tagArray = explode('|', $tags);
-            $query->whereHas('tags', function ($q) use ($tagArray) {
-                $q->whereIn('tag_id', $tagArray);
-            });
+            $tagTokens = array_values(array_filter(array_map('trim', explode('|', (string) $tags)), function ($v) {
+                return $v !== '';
+            }));
+
+            $numericTagIds = array_values(array_filter($tagTokens, function ($v) {
+                return ctype_digit((string) $v);
+            }));
+
+            $nameTokens = array_values(array_filter($tagTokens, function ($v) {
+                return !ctype_digit((string) $v);
+            }));
+
+            $resolvedNameTagIds = [];
+            if (!empty($nameTokens)) {
+                $resolvedNameTagIds = Tag::query()
+                    ->whereIn('name', $nameTokens)
+                    ->pluck('id')
+                    ->map(fn ($id) => (string) $id)
+                    ->all();
+            }
+
+            $resolvedTagIds = array_values(array_unique(array_merge($numericTagIds, $resolvedNameTagIds)));
+
+            if (empty($resolvedTagIds)) {
+                $query->whereRaw('1 = 0');
+            } else {
+                $query->whereHas('tags', function ($q) use ($resolvedTagIds) {
+                    $q->whereIn('tag_id', $resolvedTagIds);
+                });
+            }
         }
 
         // 🔍 Brand szűrés, ha van

@@ -47,6 +47,7 @@ class PagesController extends Controller
             ->whereHas('tags', function($q) {
                 $q->where('name', 'Akciós');
             })
+            ->inRandomOrder()
             ->with(['photos' => function($q) {
                 $q->orderBy('id', 'asc');
             }])
