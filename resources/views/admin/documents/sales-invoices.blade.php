@@ -187,15 +187,15 @@
                     <div class="row g-2 mt-1">
                         <div class="col-12 col-md-4">
                             <label for="issued_at" class="form-label">Számla kelte</label>
-                            <input type="date" class="form-control" id="issued_at" name="issued_at" readonly style="pointer-events:none; background-color: #e9ecef;">
+                            <input type="date" class="form-control" id="issued_at" name="issued_at" max="2099-12-31" readonly style="pointer-events:none; background-color: #e9ecef;">
                         </div>
                         <div class="col-12 col-md-4">
                             <label for="fulfilled_at" class="form-label">Teljesítés dátuma</label>
-                            <input type="date" class="form-control" id="fulfilled_at" name="fulfilled_at">
+                            <input type="date" class="form-control" id="fulfilled_at" name="fulfilled_at" max="2099-12-31">
                         </div>
                         <div class="col-12 col-md-4">
                             <label for="due_at" class="form-label">Fizetési határidő</label>
-                            <input type="date" class="form-control" id="due_at" name="due_at">
+                            <input type="date" class="form-control" id="due_at" name="due_at" max="2099-12-31">
                         </div>
                     </div>
             </fieldset>

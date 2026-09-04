@@ -203,7 +203,7 @@
                                     </tr>
                                     <tr>
                                         <td class="w-25">Munka dátuma</td>
-                                        <td><input type="date" class="form-control" id="installation_date" name="installation_date" {{ $readonly }} required></td>
+                                        <td><input type="date" class="form-control" id="installation_date" name="installation_date" max="2099-12-31" {{ $readonly }} required></td>
                                     </tr>
 
                                     <tr class="worksheet-client-fields" style="display:none;">

@@ -157,7 +157,7 @@
                                     </tr>
                                     <tr>
                                         <td>Dátum*</td>
-                                        <td><input type="date" class="form-control" id="appointment_date" name="appointment_date" required></td>
+                                        <td><input type="date" class="form-control" id="appointment_date" name="appointment_date" max="2099-12-31" required></td>
                                     </tr>
                                     <tr>
                                         <td>Típus*</td>

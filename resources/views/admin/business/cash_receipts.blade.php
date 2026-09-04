@@ -38,11 +38,11 @@
                     </div>
                     <div class="col-6 col-md-2">
                         <label class="form-label mb-1">Létrehozva tól</label>
-                        <input type="date" class="form-control form-control-sm" id="filter_created_at_from" />
+                        <input type="date" class="form-control form-control-sm" id="filter_created_at_from" max="2099-12-31" />
                     </div>
                     <div class="col-6 col-md-2">
                         <label class="form-label mb-1">Létrehozva ig</label>
-                        <input type="date" class="form-control form-control-sm" id="filter_created_at_to" />
+                        <input type="date" class="form-control form-control-sm" id="filter_created_at_to" max="2099-12-31" />
                     </div>
                     <div class="col-12 col-md-2">
                         <label class="form-label mb-1">Státusz</label>
@@ -58,11 +58,11 @@
                     </div>
                     <div class="col-6 col-md-2">
                         <label class="form-label mb-1">Nyugtázva tól</label>
-                        <input type="date" class="form-control form-control-sm" id="filter_acknowledged_at_from" />
+                        <input type="date" class="form-control form-control-sm" id="filter_acknowledged_at_from" max="2099-12-31" />
                     </div>
                     <div class="col-6 col-md-2">
                         <label class="form-label mb-1">Nyugtázva ig</label>
-                        <input type="date" class="form-control form-control-sm" id="filter_acknowledged_at_to" />
+                        <input type="date" class="form-control form-control-sm" id="filter_acknowledged_at_to" max="2099-12-31" />
                     </div>
                     <div class="col-12 col-md-4 d-flex align-items-end gap-2">
                         <button class="btn btn-sm btn-primary" id="applyFilters" type="button">Szűrés</button>
@@ -139,7 +139,7 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Dátum</label>
-                        <input type="date" class="form-control" name="received_date" />
+                        <input type="date" class="form-control" name="received_date" max="2099-12-31" />
                     </div>
                     <div class="mb-0">
                         <label class="form-label">Megjegyzés</label>
@@ -179,7 +179,7 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Dátum</label>
-                        <input type="date" class="form-control" name="received_date" />
+                        <input type="date" class="form-control" name="received_date" max="2099-12-31" />
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Elszámolt összeg (Ft)</label>

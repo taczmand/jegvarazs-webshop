@@ -90,7 +90,7 @@
 
                 <div class="mb-2">
                     <label for="transferred_at" class="form-label">Átvezetés dátuma</label>
-                    <input type="date" class="form-control" id="transferred_at" name="transferred_at">
+                    <input type="date" class="form-control" id="transferred_at" name="transferred_at" max="2099-12-31">
                 </div>
             </fieldset>
 

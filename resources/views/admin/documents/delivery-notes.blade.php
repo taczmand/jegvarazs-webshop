@@ -186,11 +186,11 @@
                 <div class="row g-2">
                     <div class="col-12 col-md-6">
                         <label for="issued_at" class="form-label">Kelt</label>
-                        <input type="date" class="form-control" id="issued_at" name="issued_at">
+                        <input type="date" class="form-control" id="issued_at" name="issued_at" max="2099-12-31">
                     </div>
                     <div class="col-12 col-md-6">
                         <label for="delivered_at" class="form-label">Átadás / kiszállítás</label>
-                        <input type="date" class="form-control" id="delivered_at" name="delivered_at">
+                        <input type="date" class="form-control" id="delivered_at" name="delivered_at" max="2099-12-31">
                     </div>
                 </div>
 

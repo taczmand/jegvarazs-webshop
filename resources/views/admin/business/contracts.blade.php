@@ -203,7 +203,7 @@
                                         </tr>
                                         <tr class="contract-client-fields" style="display:none;">
                                             <td>Születési idő</td>
-                                            <td><input type="date" class="form-control" name="date_of_birth" id="date_of_birth"></td>
+                                            <td><input type="date" class="form-control" name="date_of_birth" id="date_of_birth" max="2099-12-31"></td>
                                         </tr>
                                         <tr class="contract-client-fields" style="display:none;">
                                             <td>Személyi igazolványszám</td>
@@ -211,7 +211,7 @@
                                         </tr>
                                         <tr class="contract-client-fields" style="display:none;">
                                             <td>Szerelés időpontja</td>
-                                            <td><input type="date" class="form-control" name="installation_date" id="installation_date"></td>
+                                            <td><input type="date" class="form-control" name="installation_date" id="installation_date" max="2099-12-31"></td>
                                         </tr>
 
                                         @if(auth('admin')->user() && auth('admin')->user()->can('select-contract-creator'))
@@ -1066,7 +1066,7 @@
                             break;
 
                         case 'date':
-                            input = `<input type="date" name="${inputName}" value="${value}" class="form-control">`;
+                            input = `<input type="date" name="${inputName}" value="${value}" class="form-control" max="2099-12-31">`;
                             break;
 
                         case 'select':

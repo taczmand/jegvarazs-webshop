@@ -108,7 +108,7 @@
                             </div>
                             <div class="col-md-3">
                                 <label for="date_of_birth" class="form-label">Születési idő</label>
-                                <input type="date" class="form-control" id="date_of_birth" name="date_of_birth">
+                                <input type="date" class="form-control" id="date_of_birth" name="date_of_birth" max="2099-12-31">
                             </div>
                             <div class="col-md-3">
                                 <label for="id_number" class="form-label">Személyi szám</label>

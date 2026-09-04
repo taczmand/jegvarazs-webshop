@@ -101,7 +101,7 @@
 
                                             <div class="col-12 mb-3">
                                                 <label for="technical_inspection_expires_at" class="form-label">Műszaki lejárati dátum</label>
-                                                <input type="date" class="form-control" id="technical_inspection_expires_at" name="technical_inspection_expires_at">
+                                                <input type="date" class="form-control" id="technical_inspection_expires_at" name="technical_inspection_expires_at" max="2099-12-31">
                                             </div>
 
                                             <div class="col-12 mb-3">
@@ -150,7 +150,7 @@
                                                 <div class="fw-semibold mb-2">Km rögzítés</div>
                                                 <div class="mb-2">
                                                     <label for="timeline_odometer_date" class="form-label mb-1">Dátum*</label>
-                                                    <input type="date" class="form-control" id="timeline_odometer_date">
+                                                    <input type="date" class="form-control" id="timeline_odometer_date" max="2099-12-31">
                                                 </div>
                                                 <div class="mb-2">
                                                     <label for="timeline_odometer_value" class="form-label mb-1">Km óra állás*</label>
@@ -171,7 +171,7 @@
                                                 <div class="fw-semibold mb-2">Olajcsere</div>
                                                 <div class="mb-2">
                                                     <label for="timeline_oil_change_date" class="form-label mb-1">Dátum*</label>
-                                                    <input type="date" class="form-control" id="timeline_oil_change_date">
+                                                    <input type="date" class="form-control" id="timeline_oil_change_date" max="2099-12-31">
                                                 </div>
                                                 <div class="mb-2">
                                                     <label for="timeline_oil_change_km" class="form-label mb-1">Km óra állás*</label>

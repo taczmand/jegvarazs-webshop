@@ -100,7 +100,7 @@
 
                 <div class="mb-2">
                     <label for="received_at" class="form-label">Bevételezés dátuma</label>
-                    <input type="date" class="form-control" id="received_at" name="received_at">
+                    <input type="date" class="form-control" id="received_at" name="received_at" max="2099-12-31">
                 </div>
             </fieldset>
 

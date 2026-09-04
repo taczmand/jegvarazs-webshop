@@ -11,11 +11,11 @@
                 <div class="row g-3 align-items-end mb-3">
                     <div class="col-12 col-md-3">
                         <label for="fromDate" class="form-label">Kezdő dátum</label>
-                        <input type="date" class="form-control" id="fromDate" value="{{ $from ?? '' }}">
+                        <input type="date" class="form-control" id="fromDate" max="2099-12-31" value="{{ $from ?? '' }}">
                     </div>
                     <div class="col-12 col-md-3">
                         <label for="toDate" class="form-label">Záró dátum</label>
-                        <input type="date" class="form-control" id="toDate" value="{{ $to ?? '' }}">
+                        <input type="date" class="form-control" id="toDate" max="2099-12-31" value="{{ $to ?? '' }}">
                     </div>
                     <div class="col-12 col-md-3">
                         <label for="formNameSelect" class="form-label">Form</label>
