@@ -684,6 +684,8 @@ class ContractController extends Controller
                     'signature_path' => "{$signatureName}",
                     'deposit_transfer_flag' => $isTransferDeposit ? 1 : 0,
                     'created_by' => $creatorId,
+                    'viewed_by' => $creatorName,
+                    'viewed_at' => $creatorName ? now() : null,
                 ]);
 
                 $products = [];
