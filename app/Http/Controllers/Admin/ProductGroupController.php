@@ -236,6 +236,7 @@ class ProductGroupController extends Controller
 
         $products = Product::query()
             ->select(['products.id', 'products.title', 'products.cat_id', 'products.status'])
+            ->where('products.status', 'active')
             ->orderBy('products.title')
             ->get()
             ->groupBy('cat_id');
