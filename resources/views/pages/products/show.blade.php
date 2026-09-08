@@ -35,6 +35,7 @@
 
 
 
+
     <!-- Product Details Section Begin -->
     <section class="product-details spad">
         <div class="container">
@@ -112,6 +113,54 @@
                                                 <tr>
                                                     <td>{{ (int) $rule->min_quantity }}+ db</td>
                                                     <td><strong>{{ number_format($discounted, 0, ',', ' ') }} Ft</strong></td>
+                                                </tr>
+                                            @endforeach
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            @endif
+                        @endauth
+
+                        @php
+                            $activeGroupDiscounts = ($product->productGroups ?? collect())
+                                ->map(fn ($g) => $g->quantityDiscount)
+                                ->filter()
+                                ->filter(fn ($d) => (bool) $d->is_active)
+                                ->filter(fn ($d) => !$d->starts_at || $d->starts_at->lte($now))
+                                ->filter(fn ($d) => !$d->ends_at || $d->ends_at->gte($now))
+                                ->values();
+                        @endphp
+
+                        @auth('customer')
+                            @if($activeGroupDiscounts->count() > 0)
+                                <div class="mt-3">
+                                    <div class="fw-bold mb-2">Termékcsoportos mennyiségi kedvezmény</div>
+                                    <div class="text-muted" style="font-size: 0.95rem;">
+                                        Ha a kosárban a termékcsoport összes mennyisége eléri az alap mennyiséget, akkor a kedvezmény lépcsőnként nő.
+                                    </div>
+
+                                    <div class="table-responsive mt-2">
+                                        <table class="table table-sm table-bordered mb-0">
+                                            <thead>
+                                            <tr>
+                                                <th>Alap mennyiség</th>
+                                                <th>Lépés kedvezmény</th>
+                                                <th>Max. kedvezmény</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody>
+                                            @foreach($activeGroupDiscounts as $gd)
+                                                <tr>
+                                                    <td>{{ (int) $gd->base_quantity }} db</td>
+                                                    <td>{{ number_format((float) $gd->percent_per_step, 2, ',', ' ') }}%</td>
+                                                    <td>
+                                                        @if($gd->max_percent !== null)
+                                                            {{ number_format((float) $gd->max_percent, 2, ',', ' ') }}%
+                                                        @else
+                                                            -
+                                                        @endif
+                                                    </td>
                                                 </tr>
                                             @endforeach
                                             </tbody>
