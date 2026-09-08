@@ -7,6 +7,7 @@
 
 @section('content')
     @inject('qdService', 'App\Services\Pricing\QuantityDiscountService')
+    @inject('pgqdService', 'App\Services\Pricing\ProductGroupQuantityDiscountService')
     @include('partials.breadcrumbs', ['breadcrumbs' => [
         'page_title' => 'Kosár',
         'nav' => [
@@ -72,6 +73,10 @@
                                                 $nextRowTotal = ($nextUnitGross !== null && $nextQty !== null)
                                                     ? round($nextUnitGross * $nextQty, 2)
                                                     : null;
+
+                                                $groupHint = ($item->product && $cart)
+                                                    ? $pgqdService->nextStepHintForCart($item->product, (int) $cart->id)
+                                                    : null;
                                             @endphp
                                             <tr id="cart_item_{{ $item->id }}">
                                                 <td class="shoping__cart__item">
@@ -105,6 +110,13 @@
                                                             <div class="text-primary mt-1" style="font-size: 0.85rem; line-height: 1.2;">
                                                                 Ha még <strong>{{ $needMore }}</strong> db-ot veszel, akkor <strong>{{ $nextQty }}</strong> db esetén csak
                                                                 <strong>{{ number_format($nextRowTotal, 0, ',', ' ') }} Ft</strong> ({{ number_format($nextUnitGross, 0, ',', ' ') }} Ft/db)
+                                                            </div>
+                                                        @endif
+
+                                                        @if($groupHint && ($groupHint['need_more'] ?? 0) > 0 && ($groupHint['next_percent'] ?? 0) > 0)
+                                                            <div class="text-primary mt-1" style="font-size: 0.85rem; line-height: 1.2;">
+                                                                Ha még <strong>{{ (int) $groupHint['need_more'] }}</strong> db-ot veszel ebből a termékcsoportból, akkor
+                                                                <strong>{{ (int) $groupHint['next_total_qty'] }}</strong> db esetén <strong>{{ number_format((float) $groupHint['next_percent'], 0, ',', ' ') }}%</strong> kedvezményt kapsz.
                                                             </div>
                                                         @endif
                                                     </div>

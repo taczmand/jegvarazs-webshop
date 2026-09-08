@@ -10,10 +10,11 @@
 
         $canViewProducts = (bool) ($adminUser && $adminUser->can('view-products'));
         $canViewCategories = (bool) ($adminUser && $adminUser->can('view-categories'));
+        $canViewProductGroups = (bool) ($adminUser && $adminUser->can('view-product-groups'));
         $canViewAttributes = (bool) ($adminUser && $adminUser->can('view-attributes'));
         $canViewTags = (bool) ($adminUser && $adminUser->can('view-tags'));
         $canViewBrands = (bool) ($adminUser && $adminUser->can('view-brands'));
-        $canViewProductSection = $canViewProducts || $canViewCategories || $canViewAttributes || $canViewTags || $canViewBrands;
+        $canViewProductSection = $canViewProducts || $canViewCategories || $canViewProductGroups || $canViewAttributes || $canViewTags || $canViewBrands;
 
         $canViewBlogs = (bool) ($adminUser && $adminUser->can('view-blogs'));
         $canViewSettings = (bool) ($adminUser && $adminUser->can('view-settings'));
@@ -115,6 +116,9 @@
                     @endif
                     @if($canViewCategories)
                         <a class="collapse-item" href="{{ route('admin.categories.index') }}">Kategóriák<span id="new_product_category_badge" class="badge badge-secondary ml-2 d-none">0</span></a>
+                    @endif
+                    @if($canViewProductGroups)
+                        <a class="collapse-item" href="{{ route('admin.product-groups.index') }}">Termékcsoportok</a>
                     @endif
                     @if($canViewAttributes)
                         <a class="collapse-item" href="{{ route('admin.attributes.index') }}">Egyedi tulajdonságok<span id="new_attribute_badge" class="badge badge-secondary ml-2 d-none">0</span></a>

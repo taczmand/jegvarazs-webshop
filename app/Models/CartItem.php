@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Observers\CartItemObserver;
+use App\Services\Pricing\ProductGroupQuantityDiscountService;
 use App\Services\Pricing\QuantityDiscountService;
 use App\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
@@ -44,8 +45,24 @@ class CartItem extends Model
         $base = (float) $this->product->display_gross_price;
         $qty = (int) $this->quantity;
 
-        return app(QuantityDiscountService::class)
+        $productDiscounted = app(QuantityDiscountService::class)
             ->discountedUnitGrossPrice($this->product, $qty, $base);
+
+        $groupDiscounted = null;
+        if ($this->cart_id) {
+            $percent = app(ProductGroupQuantityDiscountService::class)
+                ->percentForCart($this->product, (int) $this->cart_id);
+
+            if ($percent > 0) {
+                $groupDiscounted = (float) max(0, round($base * (1 - $percent / 100), 2));
+            }
+        }
+
+        if ($groupDiscounted === null) {
+            return (float) $productDiscounted;
+        }
+
+        return (float) min((float) $productDiscounted, (float) $groupDiscounted);
     }
 
     public function getDiscountedUnitNetPriceAttribute(): ?float

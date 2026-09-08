@@ -40,6 +40,11 @@ class PermissionSeeder extends Seeder
             ['id' => 28, 'name' => 'create-brand', 'label' => 'Gyártó létrehozása', 'group' => 'Termékek'],
             ['id' => 29, 'name' => 'edit-brand', 'label' => 'Gyártó szerkesztése', 'group' => 'Termékek'],
             ['id' => 30, 'name' => 'delete-brand', 'label' => 'Gyártó törlése', 'group' => 'Termékek'],
+
+            ['id' => 168, 'name' => 'view-product-groups', 'label' => 'Termékcsoportok megtekintése', 'group' => 'Termékek'],
+            ['id' => 169, 'name' => 'create-product-group', 'label' => 'Termékcsoport létrehozása', 'group' => 'Termékek'],
+            ['id' => 170, 'name' => 'edit-product-group', 'label' => 'Termékcsoport szerkesztése', 'group' => 'Termékek'],
+            ['id' => 171, 'name' => 'delete-product-group', 'label' => 'Termékcsoport törlése', 'group' => 'Termékek'],
             ['id' => 31, 'name' => 'view-taxes', 'label' => 'Adó osztályok megtekintése', 'group' => 'Webshop'],
             ['id' => 32, 'name' => 'edit-tax', 'label' => 'Adó osztály szerkesztése', 'group' => 'Webshop'],
             ['id' => 33, 'name' => 'create-tax', 'label' => 'Adó osztály létrehozása', 'group' => 'Webshop'],

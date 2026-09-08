@@ -21,7 +21,7 @@ class CartController extends Controller
         $cart = Cart::where('customer_id', $customer->id)
             ->with(['items' => function ($query) {
                 $query->where('product_id', '<>', 1);
-            }, 'items.product.unit', 'items.product.taxCategory', 'items.product.quantityDiscounts'])
+            }, 'items.product.unit', 'items.product.taxCategory', 'items.product.quantityDiscounts', 'items.product.productGroups'])
             ->first();
 
         $snapshot = [];
@@ -91,7 +91,7 @@ class CartController extends Controller
         $cart = Cart::where('customer_id', $customer->id)
         ->with(['items' => function ($query) {
             $query->where('product_id', '<>', 1);
-        }, 'items.product.taxCategory', 'items.product.quantityDiscounts'])
+        }, 'items.product.taxCategory', 'items.product.quantityDiscounts', 'items.product.productGroups'])
         ->first();
 
 

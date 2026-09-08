@@ -20,6 +20,11 @@ class Product extends Model
         return $this->hasMany(ProductQuantityDiscount::class);
     }
 
+    public function productGroups()
+    {
+        return $this->belongsToMany(ProductGroup::class, 'product_group_product');
+    }
+
     public function unit()
     {
         return $this->belongsTo(Unit::class, 'unit_id');

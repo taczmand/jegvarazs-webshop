@@ -32,6 +32,7 @@ use App\Http\Controllers\Admin\OrderStatusesController;
 use App\Http\Controllers\Admin\PaymentMethodController;
 use App\Http\Controllers\Admin\PartnerSearchController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
+use App\Http\Controllers\Admin\ProductGroupController;
 use App\Http\Controllers\Admin\PartnerOfferController as AdminPartnerOfferController;
 use App\Http\Controllers\Admin\RegulationController;
 use App\Http\Controllers\Admin\SalesInvoiceController;
@@ -243,6 +244,25 @@ Route::get('/automatizacio/jogosultsagok/szinkron', function (Request $request, 
             Route::post('/kategoriak', [CategoryController::class, 'store'])->name('categories.store');
             Route::put('/kategoriak/{id}', [CategoryController::class, 'update'])->name('categories.update');
             Route::delete('/kategoriak/{id}', [CategoryController::class, 'destroy'])->name('products.destroy');
+
+            // Termékcsoportok
+            Route::get('/termekcsoportok', [ProductGroupController::class, 'index'])->name('product-groups.index');
+            Route::get('/termekcsoportok/data', [ProductGroupController::class, 'data'])->name('product-groups.data');
+            Route::get('/termekcsoportok/{id}', [ProductGroupController::class, 'show'])->name('product-groups.show');
+            Route::post('/termekcsoportok', [ProductGroupController::class, 'store'])->name('product-groups.store');
+            Route::put('/termekcsoportok/{id}', [ProductGroupController::class, 'update'])->name('product-groups.update');
+            Route::delete('/termekcsoportok/{id}', [ProductGroupController::class, 'destroy'])->name('product-groups.destroy');
+
+            Route::get('/termekcsoportok/{id}/mennyisegi-kedvezmeny', [ProductGroupController::class, 'quantityDiscount'])->name('product-groups.quantity-discount');
+            Route::post('/termekcsoportok/{id}/mennyisegi-kedvezmeny', [ProductGroupController::class, 'upsertQuantityDiscount'])->name('product-groups.quantity-discount.upsert');
+            Route::delete('/termekcsoportok/{id}/mennyisegi-kedvezmeny', [ProductGroupController::class, 'destroyQuantityDiscount'])->name('product-groups.quantity-discount.destroy');
+
+            Route::get('/termekcsoportok/{id}/termekek', [ProductGroupController::class, 'products'])->name('product-groups.products');
+            Route::get('/termekcsoportok/{id}/termekek/katalogus', [ProductGroupController::class, 'productsCatalog'])->name('product-groups.products.catalog');
+            Route::post('/termekcsoportok/{id}/termekek/add', [ProductGroupController::class, 'addProducts'])->name('product-groups.products.add');
+            Route::post('/termekcsoportok/{id}/kategoriak/add', [ProductGroupController::class, 'addCategory'])->name('product-groups.categories.add');
+            Route::post('/termekcsoportok/{id}/termekek/remove', [ProductGroupController::class, 'removeProducts'])->name('product-groups.products.remove');
+            Route::post('/termekcsoportok/{id}/termekek/sync', [ProductGroupController::class, 'syncProducts'])->name('product-groups.products.sync');
 
             // Egyedi tulajdonságok
             Route::get('/tulajdonsagok', [AttributeController::class, 'index'])->name('attributes.index');
