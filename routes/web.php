@@ -165,6 +165,7 @@ Route::get('/automatizacio/jogosultsagok/szinkron', function (Request $request, 
             /* Dashboard */
 
             Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+            Route::get('/dashboard/hu-public-holidays', [DashboardController::class, 'huPublicHolidays'])->name('dashboard.hu-public-holidays');
             Route::get('/profil', [UserController::class, 'profil'])->name('profile');
 
 

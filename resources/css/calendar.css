@@ -69,6 +69,21 @@ h2 {
     border: 2px solid #90be6d;
 }
 
+#calendar th.holiday,
+#calendar td.holiday {
+    background-color: #fecaca;
+}
+
+#calendar th.holiday {
+    border-top: 4px solid #b91c1c;
+    border-bottom: 2px solid #ef4444;
+}
+
+#calendar td.holiday {
+    border-left: 2px solid #ef4444;
+    border-right: 2px solid #ef4444;
+}
+
 .calendar-header-label {
     margin-bottom: 0.25rem;
 }

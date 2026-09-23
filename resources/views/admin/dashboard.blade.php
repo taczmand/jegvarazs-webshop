@@ -148,6 +148,22 @@
                 }
             }
 
+            async function fetchHuPublicHolidays(year) {
+                const url = new URL('{{ route("admin.dashboard.hu-public-holidays") }}', window.location.origin);
+                url.searchParams.append('year', String(year));
+
+                try {
+                    const response = await fetch(url);
+                    if (!response.ok) {
+                        return [];
+                    }
+                    const data = await response.json();
+                    return Array.isArray(data?.holidays) ? data.holidays : [];
+                } catch (e) {
+                    return [];
+                }
+            }
+
             async function renderCalendar() {
 
                 // 🔹 Loader megjelenítése
@@ -158,6 +174,19 @@
                 const days = getWeekDays(currentMonday);
                 const startStr = formatDate(days[0]);
                 const endStr = formatDate(days[6]);
+
+                const years = Array.from(new Set(days.map(d => d.getFullYear())));
+                const holidaysByDate = new Set();
+                const holidayNamesByDate = new Map();
+                const holidayFetches = await Promise.all(years.map(y => fetchHuPublicHolidays(y)));
+                holidayFetches.flat().forEach(h => {
+                    if (h && typeof h.date === 'string') {
+                        holidaysByDate.add(h.date);
+                        if (!holidayNamesByDate.has(h.date) && typeof h.localName === 'string' && h.localName.trim() !== '') {
+                            holidayNamesByDate.set(h.date, h.localName.trim());
+                        }
+                    }
+                });
 
                 if (weekLabel) {
                     weekLabel.textContent = `${startStr} - ${endStr}`;
@@ -180,9 +209,11 @@
                     // régi címke törlése
                     const label = th.querySelector('.calendar-header-label');
                     if (label) {
+                        const holidayName = holidayNamesByDate.get(dateStr);
                         label.innerHTML = `
                             <div><small><strong>${daysOfWeek[days[i].getDay()]}</strong></small></div>
                             <div>${formatDayLabel(days[i])}</div>
+                            ${holidayName ? `<div class="text-danger" style="font-size: 0.75em; font-weight: 600; line-height: 1.2;">${holidayName}</div>` : ''}
                         `;
                     }
 
@@ -202,6 +233,12 @@
                     } else {
                         th.classList.remove("today");
                     }
+
+                    if (holidaysByDate.has(dateStr)) {
+                        th.classList.add('holiday');
+                    } else {
+                        th.classList.remove('holiday');
+                    }
                 });
 
                 // 🔸 Tartalom cellák
@@ -214,6 +251,10 @@
                     const todayStr = formatDate(new Date());
                     if (td.dataset.date === todayStr) {
                         td.classList.add("today");
+                    }
+
+                    if (holidaysByDate.has(td.dataset.date)) {
+                        td.classList.add('holiday');
                     }
 
                     const dayWorksheets = worksheets.filter(w => w.installation_date === td.dataset.date);
