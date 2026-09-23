@@ -707,6 +707,7 @@ Route::get('/automatizacio/jogosultsagok/szinkron', function (Request $request, 
     Route::post('elfelejtett-jelszo/reset', [ShopCustomerController::class, 'passwordReset'])->name('password.update');
 
     Route::get('/kereses', [PagesController::class, 'search'])->name('search');
+    Route::get('/kereses/autocomplete', [PagesController::class, 'searchAutocomplete'])->name('search.autocomplete');
 
     Route::get('/', [PagesController::class, 'index'])->name('index');
     Route::get('/rolunk', [PagesController::class, 'about'])->name('about');

@@ -45,7 +45,7 @@ return [
     'product_search' => [
         // legacy: AI-enriched + LIKE based search
         // fulltext: FULLTEXT(search_text) boolean prefix search + optional fuzzy fallback
-        'engine' => env('PRODUCT_SEARCH_ENGINE', 'fulltext'),
+        'engine' => env('PRODUCT_SEARCH_ENGINE', 'normal'),
     ],
 
 ];

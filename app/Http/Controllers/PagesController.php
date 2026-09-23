@@ -278,283 +278,134 @@ class PagesController extends Controller
             return redirect()->back()->with('error', 'Kérjük, adjon meg keresési kifejezést.');
         }
 
-        $engine = (string) config('services.product_search.engine', 'fulltext');
+        $engine = (string) config('services.product_search.engine', 'normal');
 
-        $originalQuery = trim((string) $query);
-        $originalTokens = preg_split('/\s+/u', $originalQuery) ?: [];
-        $originalTokens = array_values(array_filter(array_map('trim', $originalTokens), fn ($t) => $t !== ''));
-
-        // Ha a keresésben van rövid, csupa nagybetűs token (márkanév / rövidítés gyanús),
-        // akkor azt kötelező feltételként kezeljük, hogy ne "szélesítse ki" az AI az eredményeket.
-        $mandatoryToken = null;
-        foreach ($originalTokens as $tok) {
-            if (preg_match('/^[A-Z0-9]{2,6}$/u', $tok)) {
-                $mandatoryToken = $tok;
-                break;
-            }
-        }
-
-        $assistant = app(SearchQueryAssistant::class);
-        $categories = Category::query()->pluck('title')->all();
-        $enriched = $assistant->enrich((string) $query, [
-            'categories' => $categories,
-        ]);
-
-        $keywords = $enriched['keywords'] ?? [];
-        if (!is_array($keywords) || $keywords === []) {
-            $keywords = [trim((string) $query)];
-        }
-
-        $must = $enriched['must'] ?? [];
-        if (!is_array($must)) {
-            $must = [];
-        }
-
-        $should = $enriched['should'] ?? [];
-        if (!is_array($should)) {
-            $should = [];
-        }
-
-        // A felhasználó által begépelt rövid, nagybetűs token (pl. AUX) legyen kötelező találat.
-        if (is_string($mandatoryToken) && trim($mandatoryToken) !== '') {
-            array_unshift($must, trim($mandatoryToken));
-        }
-
-        $must = array_values(array_unique(array_filter(array_map('strval', $must), fn ($v) => trim($v) !== '')));
-        $should = array_values(array_unique(array_filter(array_map('strval', $should), fn ($v) => trim($v) !== '')));
-
-        $brand = $enriched['brand'] ?? null;
-        $brand = is_string($brand) && trim($brand) !== '' ? trim($brand) : null;
-
-        $attributeFilters = $enriched['attribute_filters'] ?? [];
-        if (!is_array($attributeFilters)) {
-            $attributeFilters = [];
-        }
-
-        $categoryTitle = $enriched['category'] ?? null;
-        $categoryId = null;
-        if (is_string($categoryTitle) && $categoryTitle !== '') {
-            $categoryId = Category::query()->where('title', $categoryTitle)->value('id');
-        }
-
-        $buildQueryProducts = function (?int $categoryIdFilter, ?string $brandFilter) use ($keywords, $mandatoryToken, $must, $should, $brand, $attributeFilters) {
-            $queryProducts = Product::where('status', 'active');
-
-            if ($categoryIdFilter) {
-                $queryProducts->where('cat_id', $categoryIdFilter);
-            }
-
-            $resolvedBrand = $brandFilter ?? $brand;
-            if ($resolvedBrand) {
-                $queryProducts->whereHas('brands', function ($q) use ($resolvedBrand) {
-                    $q->where('title', 'like', '%' . $resolvedBrand . '%');
-                });
-            }
-
-            if ($attributeFilters !== []) {
-                foreach ($attributeFilters as $f) {
-                    if (!is_array($f)) {
-                        continue;
-                    }
-                    $attrName = isset($f['name']) && is_string($f['name']) ? trim($f['name']) : '';
-                    if ($attrName === '') {
-                        continue;
-                    }
-                    $attrValue = null;
-                    if (array_key_exists('value', $f) && is_string($f['value'])) {
-                        $attrValue = trim($f['value']);
-                        if ($attrValue === '') {
-                            $attrValue = null;
-                        }
-                    }
-
-                    $queryProducts->whereHas('attributes', function ($q) use ($attrName, $attrValue) {
-                        $q->where('attributes.name', 'like', '%' . $attrName . '%');
-                        if ($attrValue !== null) {
-                            $q->where('product_attributes.value', 'like', '%' . $attrValue . '%');
-                        }
-                    });
-                }
-            }
-
-            $engine = (string) config('services.product_search.engine', 'fulltext');
-
-            if ($engine === 'legacy') {
-                $termVariants = function (string $term): array {
-                    $term = trim($term);
-                    if ($term === '') {
-                        return [];
-                    }
-
-                    $variants = [$term];
-
-                    // tizedes elválasztó: 3.2 <-> 3,2
-                    if (preg_match('/\d[\.,]\d/u', $term)) {
-                        $variants[] = str_replace('.', ',', $term);
-                        $variants[] = str_replace(',', '.', $term);
-                    }
-
-                    return array_values(array_unique(array_filter($variants, fn ($v) => trim((string) $v) !== '')));
-                };
-
-                // MUST: minden kifejezésnek illeszkednie kell legalább egy mezőre
-                if ($must !== []) {
-                    foreach ($must as $mt) {
-                        $mt = trim((string) $mt);
-                        if ($mt === '') {
-                            continue;
-                        }
-                        $variants = $termVariants($mt);
-                        $queryProducts->where(function ($q) use ($variants) {
-                            foreach ($variants as $v) {
-                                $q->orWhere('title', 'like', '%' . $v . '%')
-                                    ->orWhere('description', 'like', '%' . $v . '%')
-                                    ->orWhereHas('brands', function ($qb) use ($v) {
-                                        $qb->where('title', 'like', '%' . $v . '%');
-                                    })
-                                    ->orWhereHas('tags', function ($q2) use ($v) {
-                                        $q2->where('name', 'like', '%' . $v . '%');
-                                    })
-                                    ->orWhereHas('attributes', function ($q3) use ($v) {
-                                        $q3->where('attributes.name', 'like', '%' . $v . '%')
-                                            ->orWhere('product_attributes.value', 'like', '%' . $v . '%');
-                                    });
-                            }
-                        });
-                    }
-                }
-
-                // SHOULD: rásegítés. Legacy LIKE mellett ezt csak akkor szűrjük,
-                // ha nincs MUST (különben túlzottan leszűkítené).
-                if ($should !== [] && $must === []) {
-                    $queryProducts->where(function ($q) use ($should, $mandatoryToken, $termVariants) {
-                        foreach ($should as $kw) {
-                            if (!is_string($kw) || trim($kw) === '') {
-                                continue;
-                            }
-                            $kw = trim($kw);
-                            if (is_string($mandatoryToken) && $mandatoryToken !== '' && strcasecmp($kw, $mandatoryToken) === 0) {
-                                continue;
-                            }
-
-                            $variants = $termVariants($kw);
-                            foreach ($variants as $v) {
-                                $q->orWhere('title', 'like', '%' . $v . '%')
-                                    ->orWhere('description', 'like', '%' . $v . '%')
-                                    ->orWhereHas('brands', function ($qb) use ($v) {
-                                        $qb->where('title', 'like', '%' . $v . '%');
-                                    })
-                                    ->orWhereHas('tags', function ($q2) use ($v) {
-                                        $q2->where('name', 'like', '%' . $v . '%');
-                                    })
-                                    ->orWhereHas('attributes', function ($q3) use ($v) {
-                                        $q3->where('attributes.name', 'like', '%' . $v . '%')
-                                            ->orWhere('product_attributes.value', 'like', '%' . $v . '%');
-                                    });
-                            }
-                        }
-                    });
-                }
-
-                // Ha nincs structured terv (MUST/SHOULD üres), maradjon az egyszerű keywords OR keresés
-                if ($must === [] && $should === []) {
-                    $queryProducts->where(function ($q) use ($keywords) {
-                        foreach ($keywords as $kw) {
-                            if (!is_string($kw) || trim($kw) === '') {
-                                continue;
-                            }
-                            $kw = trim($kw);
-                            $q->orWhere('title', 'like', '%' . $kw . '%')
-                                ->orWhere('description', 'like', '%' . $kw . '%')
-                                ->orWhereHas('brands', function ($qb) use ($kw) {
-                                    $qb->where('title', 'like', '%' . $kw . '%');
-                                })
-                                ->orWhereHas('tags', function ($q2) use ($kw) {
-                                    $q2->where('name', 'like', '%' . $kw . '%');
-                                })
-                                ->orWhereHas('attributes', function ($q3) use ($kw) {
-                                    $q3->where('attributes.name', 'like', '%' . $kw . '%')
-                                        ->orWhere('product_attributes.value', 'like', '%' . $kw . '%');
-                                });
-                        }
-                    });
-                }
-            } else {
-                $search = app(ProductSearchService::class);
-                $search->apply($queryProducts, $must, $should, is_string($mandatoryToken) ? $mandatoryToken : null);
-
-                if ($must === [] && $should === []) {
-                    $search->apply($queryProducts, [], [], implode(' ', array_values(array_filter(array_map('strval', $keywords), fn ($v) => trim($v) !== ''))));
-                }
-            }
-
-            return $queryProducts;
-        };
-
-        $queryProducts = $buildQueryProducts($categoryId, $brand);
-
-
-        // Eredeti találatok száma
-        $totalHits = $queryProducts->count();
-
-        // Ha az AI által tippelt kategória lenullázta a találatokat, próbáljuk újra kategória szűrés nélkül
-        if ($totalHits === 0) {
-            // 1) először próbáljuk brand szűrés nélkül (gyakori, hogy nincs rendesen bekötve a brand)
-            if ($brand) {
-                $queryProducts = $buildQueryProducts($categoryId, null);
-                $totalHits = $queryProducts->count();
-            }
-
-            // 2) ha még mindig 0 és van kategória szűrés, próbáljuk kategória nélkül
-            if ($totalHits === 0 && $categoryId) {
-                $categoryId = null;
-                $queryProducts = $buildQueryProducts(null, $brand);
-                $totalHits = $queryProducts->count();
-            }
-
-            // 3) ha még mindig 0 és volt brand/kategória, próbáljuk mindkettő nélkül
-            if ($totalHits === 0 && ($brand || $categoryId)) {
-                $queryProducts = $buildQueryProducts(null, null);
-                $totalHits = $queryProducts->count();
-            }
-        }
-
-        if ($totalHits === 0 && $engine !== 'legacy') {
-            $search = app(ProductSearchService::class);
-            $candidates = Product::query()
-                ->where('status', 'active')
-                ->limit(200)
-                ->get();
-
-            $reranked = $search->fuzzyRerank($candidates->all(), $originalQuery, 12);
-            $products = new LengthAwarePaginator(
-                collect($reranked),
-                count($reranked),
-                12,
-                1,
-                ['path' => $request->url(), 'query' => ['query' => $query]]
-            );
-
-            Searched::create([
-                'search_term' => $query,
-                'number_of_hits' => 0,
-                'ip_address' => $request->ip()
+        $queryProducts = app(ProductSearchService::class)
+            ->query($query, $engine)
+            ->with([
+                'category',
+                'photos' => function ($q) {
+                    $q->orderBy('id', 'asc');
+                },
             ]);
-
-            return view('pages.search_results', compact('products', 'query'));
-        }
 
         // Paginate
         $products = $queryProducts->paginate(12)->appends(['query' => $query]);
 
         Searched::create([
             'search_term' => $query,
-            'number_of_hits' => $totalHits,
+            'number_of_hits' => $products->total(),
             'ip_address' => $request->ip()
         ]);
 
-
         return view('pages.search_results', compact('products', 'query'));
+    }
+
+    public function searchAutocomplete(Request $request)
+    {
+        $query = (string) $request->input('query', '');
+        $query = trim($query);
+
+        if (mb_strlen($query) < 2) {
+            return response()->json([
+                'query' => $query,
+                'categories' => [],
+                'products' => [],
+            ]);
+        }
+
+        $engine = (string) config('services.product_search.engine', 'normal');
+
+        $baseQuery = app(ProductSearchService::class)
+            ->query($query, $engine);
+
+        $categoryCounts = (clone $baseQuery)
+            ->reorder()
+            ->selectRaw('cat_id, COUNT(*) as cnt')
+            ->whereNotNull('cat_id')
+            ->groupBy('cat_id')
+            ->orderByDesc('cnt')
+            ->limit(6)
+            ->pluck('cnt', 'cat_id');
+
+        $categoryIds = $categoryCounts->keys()->map(fn ($v) => (int) $v)->all();
+        $categoriesById = Category::query()
+            ->whereIn('id', $categoryIds)
+            ->get()
+            ->keyBy('id');
+
+        $categories = [];
+        foreach ($categoryIds as $catId) {
+            $cat = $categoriesById->get($catId);
+            if (!$cat) {
+                continue;
+            }
+
+            $catImage = asset('storage/static_media/no-image.jpg');
+            $productWithPhoto = Product::query()
+                ->where('status', 'active')
+                ->where('cat_id', $catId)
+                ->whereHas('photos')
+                ->with(['photos' => function ($q) {
+                    $q->orderBy('id', 'asc');
+                }])
+                ->orderBy('id', 'asc')
+                ->first();
+            if ($productWithPhoto) {
+                $mainPhoto = $productWithPhoto->photos->firstWhere('is_main', true) ?? $productWithPhoto->photos->first();
+                if ($mainPhoto?->path) {
+                    $catImage = asset('storage/' . $mainPhoto->path);
+                }
+            }
+
+            $categories[] = [
+                'id' => (int) $cat->id,
+                'title' => (string) $cat->title,
+                'url' => route('products.resolve', ['slugs' => $cat->getFullSlug()]),
+                'image' => $catImage,
+                'hits' => (int) ($categoryCounts[$catId] ?? 0),
+            ];
+        }
+
+        $products = (clone $baseQuery)
+            ->with([
+                'category',
+                'photos' => function ($q) {
+                    $q->orderBy('id', 'asc');
+                },
+                'tags',
+            ])
+            ->limit(8)
+            ->get()
+            ->map(function (Product $p) {
+                $fullSlug = $p->category ? ($p->category->getFullSlug() . '/' . $p->slug) : $p->slug;
+                $mainPhoto = $p->photos->firstWhere('is_main', true) ?? $p->photos->first();
+
+                $tags = [];
+                foreach ($p->tags ?? [] as $t) {
+                    $name = isset($t->name) ? trim((string) $t->name) : '';
+                    if ($name !== '') {
+                        $tags[] = $name;
+                    }
+                }
+                $tags = array_slice(array_values(array_unique($tags)), 0, 3);
+
+                return [
+                    'id' => (int) $p->id,
+                    'title' => (string) $p->title,
+                    'url' => route('products.resolve', ['slugs' => $fullSlug]),
+                    'image' => $mainPhoto?->path ? asset('storage/' . $mainPhoto->path) : asset('storage/static_media/no-image.jpg'),
+                    'tags' => $tags,
+                ];
+            })
+            ->values()
+            ->all();
+
+        return response()->json([
+            'query' => $query,
+            'categories' => $categories,
+            'products' => $products,
+        ]);
     }
 
     public function newSubscription(Request $request)
