@@ -88,6 +88,9 @@
                                 ->sortBy('min_quantity')
                                 ->values();
                             $baseGross = (float) $product->display_gross_price;
+                            $unitLabel = $product->unit
+                                ? ($product->unit->abbreviation ?? $product->unit->name)
+                                : 'db';
                         @endphp
 
                         @auth('customer')
@@ -135,33 +138,51 @@
                         @auth('customer')
                             @if($activeGroupDiscounts->count() > 0)
                                 <div class="mt-3">
-                                    <div class="fw-bold mb-2">Termékcsoportos mennyiségi kedvezmény</div>
-                                    <div class="text-muted" style="font-size: 0.95rem;">
-                                        Ha a kosárban a termékcsoport összes mennyisége eléri az alap mennyiséget, akkor a kedvezmény lépcsőnként nő.
-                                    </div>
+                                    <div class="fw-bold mb-2">Mennyiségi kedvezmények</div>
 
                                     <div class="table-responsive mt-2">
                                         <table class="table table-sm table-bordered mb-0">
                                             <thead>
                                             <tr>
-                                                <th>Alap mennyiség</th>
-                                                <th>Lépés kedvezmény</th>
-                                                <th>Max. kedvezmény</th>
+                                                <th>Mennyiség</th>
+                                                <th>Kedvezményes bruttó ár / {{ $unitLabel }}</th>
                                             </tr>
                                             </thead>
                                             <tbody>
                                             @foreach($activeGroupDiscounts as $gd)
-                                                <tr>
-                                                    <td>{{ (int) $gd->base_quantity }} db</td>
-                                                    <td>{{ number_format((float) $gd->percent_per_step, 2, ',', ' ') }}%</td>
-                                                    <td>
-                                                        @if($gd->max_percent !== null)
-                                                            {{ number_format((float) $gd->max_percent, 2, ',', ' ') }}%
-                                                        @else
-                                                            -
-                                                        @endif
-                                                    </td>
-                                                </tr>
+                                                @php
+                                                    $baseQty = (int) $gd->base_quantity;
+                                                    $stepPercent = (float) $gd->percent_per_step;
+                                                    $maxPercent = $gd->max_percent !== null ? (float) $gd->max_percent : null;
+
+                                                    $rows = [];
+                                                    if ($baseQty > 0 && $stepPercent > 0) {
+                                                        if ($maxPercent !== null && $maxPercent > 0) {
+                                                            $maxSteps = (int) ceil($maxPercent / $stepPercent);
+                                                        } else {
+                                                            $maxSteps = 1;
+                                                        }
+
+                                                        for ($step = 1; $step <= $maxSteps; $step++) {
+                                                            $percent = (float) $step * $stepPercent;
+                                                            if ($maxPercent !== null) {
+                                                                $percent = min($percent, $maxPercent);
+                                                            }
+                                                            $discounted = (float) max(0, round($baseGross * (1 - $percent / 100), 2));
+                                                            $rows[] = [
+                                                                'qty' => $step * $baseQty,
+                                                                'discounted' => $discounted,
+                                                            ];
+                                                        }
+                                                    }
+                                                @endphp
+
+                                                @foreach($rows as $r)
+                                                    <tr>
+                                                        <td>{{ (int) $r['qty'] }}+ {{ $unitLabel }}</td>
+                                                        <td><strong>{{ number_format((float) $r['discounted'], 0, ',', ' ') }} Ft</strong></td>
+                                                    </tr>
+                                                @endforeach
                                             @endforeach
                                             </tbody>
                                         </table>

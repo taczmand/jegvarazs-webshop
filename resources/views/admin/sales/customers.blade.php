@@ -282,8 +282,8 @@
                         <div class="tab-pane fade" id="pricemanager">
                             <i id="only_partner_msg">Csak partnerek számára adható egyedi ár!</i>
                             <div id="partner_prices_section">
-                                <label for="discount_percentage" class="form-label">Kedvezményes százalékos ár beállítása az összes termékre az alapértelmezett partneri bruttó árból számolva:</label>
-                                <input type="number" class="form-control" id="discount_percentage" name="discount_percentage" min="0" max="100" step="0.01" value="0">
+                                <label for="discount_percentage" class="form-label">Százalékos ár beállítása az összes termékre az alapértelmezett partneri bruttó árból számolva (pozitív = kedvezmény, negatív = áremelés):</label>
+                                <input type="number" class="form-control" id="discount_percentage" name="discount_percentage" min="-100" max="100" step="0.01" value="0">
                                 <button class="btn btn-success mt-2" id="applyDiscount">Százalékos ár beállítása az összes termékre</button>
                                 <div class="mt-3">
                                     <label for="discount_category_id" class="form-label">Kategória kiválasztása (csak a kiválasztott kategória termékeire):</label>
@@ -885,8 +885,8 @@
             $('#applyDiscount').on('click', async function () {
                 if (!confirm('Biztosan beállítod az összes terméknél a százalékos árat?')) return;
                 const discount_percentage = $('#discount_percentage').val();
-                if (discount_percentage < 0 || discount_percentage > 100) {
-                    showToast('Kedvezmény százalék 0 és 100 között kell legyen!', 'danger');
+                if (discount_percentage < -100 || discount_percentage > 100) {
+                    showToast('A százalék érték -100 és 100 között kell legyen!', 'danger');
                     return;
                 }
 
@@ -924,8 +924,8 @@
                 if (!confirm('Biztosan beállítod a kiválasztott kategóriánál a százalékos árat?')) return;
 
                 const discount_percentage = $('#discount_percentage').val();
-                if (discount_percentage < 0 || discount_percentage > 100) {
-                    showToast('Kedvezmény százalék 0 és 100 között kell legyen!', 'danger');
+                if (discount_percentage < -100 || discount_percentage > 100) {
+                    showToast('A százalék érték -100 és 100 között kell legyen!', 'danger');
                     return;
                 }
 

@@ -238,7 +238,7 @@ class CustomerController extends Controller
         $discount_percentage = null;
         if ($base_price > 0) {
             $discount_percentage = round((1 - ((float) $discount_gross_price / $base_price)) * 100, 4);
-            $discount_percentage = max(0, min(100, $discount_percentage));
+            $discount_percentage = max(-100, min(100, $discount_percentage));
         }
 
         $partner_product = PartnerProduct::updateOrCreate(
@@ -273,7 +273,7 @@ class CustomerController extends Controller
     {
         $request->validate([
             'customer_id' => 'required|integer|exists:customers,id',
-            'discount_percentage' => 'required|numeric|min:0|max:100',
+            'discount_percentage' => 'required|numeric|min:-100|max:100',
         ]);
 
         $customer_id = (int) $request->input('customer_id');
@@ -288,11 +288,7 @@ class CustomerController extends Controller
                 $basePrice = $product->gross_price;
             }
 
-            if(100 === $percent) {
-                $discounted_price = 0.00;
-            } else {
-                $discounted_price = round($basePrice * (1 - $percent / 100), 2);
-            }
+            $discounted_price = round($basePrice * (1 - $percent / 100), 2);
 
             PartnerProduct::updateOrInsert(
                 [
@@ -317,7 +313,7 @@ class CustomerController extends Controller
         $request->validate([
             'customer_id' => 'required|integer|exists:customers,id',
             'category_id' => 'required|integer|exists:categories,id',
-            'discount_percentage' => 'required|numeric|min:0|max:100',
+            'discount_percentage' => 'required|numeric|min:-100|max:100',
         ]);
 
         $customer_id = (int) $request->input('customer_id');
@@ -341,11 +337,7 @@ class CustomerController extends Controller
                 $basePrice = $product->gross_price;
             }
 
-            if (100 === $percent) {
-                $discounted_price = 0.00;
-            } else {
-                $discounted_price = round($basePrice * (1 - $percent / 100), 2);
-            }
+            $discounted_price = round($basePrice * (1 - $percent / 100), 2);
 
             PartnerProduct::updateOrInsert(
                 [

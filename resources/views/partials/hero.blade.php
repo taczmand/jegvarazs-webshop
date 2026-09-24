@@ -129,15 +129,6 @@
             }
 
             let html = '';
-            if (categories.length > 0) {
-                html += '<div style="font-weight:600; margin-bottom:6px;">Kategóriák</div>';
-                html += '<div style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px;">';
-                for (const c of categories) {
-                    const img = c.image ? ('<img src="' + escapeHtml(c.image) + '" alt="" style="width:18px; height:18px; object-fit:cover; border-radius:4px; border:1px solid rgba(0,0,0,.08);" />') : '';
-                    html += '<a href="' + escapeHtml(c.url) + '" style="display:inline-flex; gap:6px; align-items:center; padding:4px 8px; border:1px solid rgba(0,0,0,.1); border-radius:999px; font-size:12px; color:#111; text-decoration:none;">' + img + '<span>' + escapeHtml(c.title) + '</span></a>';
-                }
-                html += '</div>';
-            }
 
             if (products.length > 0) {
                 html += '<div style="font-weight:600; margin-bottom:6px;">Termékek</div>';
@@ -168,6 +159,16 @@
                 html += '<div style="margin-top:10px; padding-top:10px; border-top:1px solid rgba(0,0,0,.08);">'
                     + '<a href="{{ route('search') }}?query=' + encodeURIComponent(q) + '" style="font-weight:600; color:#19ACE2; text-decoration:none;">Az összes eredmény megtekintése</a>'
                     + '</div>';
+            }
+
+            if (categories.length > 0) {
+                html += '<div style="margin-top:10px; padding-top:10px; border-top:1px solid rgba(0,0,0,.08); font-weight:600; margin-bottom:6px;">Kategóriák</div>';
+                html += '<div style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px;">';
+                for (const c of categories) {
+                    const img = c.image ? ('<img src="' + escapeHtml(c.image) + '" alt="" style="width:18px; height:18px; object-fit:cover; border-radius:4px; border:1px solid rgba(0,0,0,.08);" />') : '';
+                    html += '<a href="' + escapeHtml(c.url) + '" style="display:inline-flex; gap:6px; align-items:center; padding:4px 8px; border:1px solid rgba(0,0,0,.1); border-radius:999px; font-size:12px; color:#111; text-decoration:none;">' + img + '<span>' + escapeHtml(c.title) + '</span></a>';
+                }
+                html += '</div>';
             }
 
             panel.innerHTML = html;
