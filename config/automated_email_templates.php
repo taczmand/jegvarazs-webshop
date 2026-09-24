@@ -9,5 +9,12 @@ return [
         'variables'   => [],
     ],
 
+    'appointment_reminder' => [
+        'title'       => 'Időpont emlékeztető',
+        'view'        => 'automations.appointment-reminder',
+        'description' => 'Időpont emlékeztető email',
+        'variables'   => [],
+    ],
+
 ];
 

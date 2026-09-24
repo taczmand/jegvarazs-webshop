@@ -160,12 +160,17 @@
                                         <td><input type="date" class="form-control" id="appointment_date" name="appointment_date" max="2099-12-31" required></td>
                                     </tr>
                                     <tr>
+                                        <td>Időpont</td>
+                                        <td><input type="time" class="form-control" id="appointment_time" name="appointment_time"></td>
+                                    </tr>
+                                    <tr>
                                         <td>Típus*</td>
                                         <td>
                                             <select id="appointment_type" name="appointment_type" class="form-control">
                                                 <option value="Karbantartás">Karbantartás</option>
                                                 <option value="Felmérés">Felmérés</option>
                                                 <option value="Egyéb">Egyéb</option>
+                                                <option value="Részletfizetés">Részletfizetés</option>
                                             </select>
                                         </td>
                                     </tr>
@@ -480,6 +485,7 @@
                     $('#city').val(data.city);
                     $('#address_line').val(data.address_line);
                     $('#appointment_date').val(data.appointment_date);
+                    $('#appointment_time').val(data.appointment_time);
                     $('#appointment_type').val(data.appointment_type);
                     $('#status').val(data.status);
                     $('#message').val(data.message);

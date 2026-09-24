@@ -8,6 +8,7 @@ use App\Services\Admin\AutomatedEmailScheduler;
 use App\Http\Controllers\Controller;
 use App\Mail\AutomatedEmailMailable;
 use App\Models\AutomatedEmail;
+use App\Models\BasicData;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
@@ -205,9 +206,12 @@ class AutomatedEmailController extends Controller
         $template = collect(config('automated_email_templates'))
             ->firstWhere('title', $automation->email_template);
 
+        $basic_data = BasicData::pluck('value', 'key')->toArray();
+
         $body = view($template['view'], [
             'automation' => $automation,
             'vars'       => $this->configTemplate['variables'] ?? [],
+            'basic_data' => $basic_data,
         ])->render();
 
         try {

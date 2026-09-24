@@ -18,6 +18,15 @@ class AutomatedEmailScheduler
 
         return AutomatedEmail::all()->filter(function ($automation) use ($today) {
 
+            // Egyszeri, időzített küldés (send_at)
+            if (!is_null($automation->send_at)) {
+                if (!is_null($automation->last_sent_at)) {
+                    return false;
+                }
+
+                return Carbon::parse($automation->send_at)->startOfDay()->lessThanOrEqualTo($today);
+            }
+
             // Ha még nem lett küldve: start_date vagy azonnal küldhető
             if (is_null($automation->last_sent_at)) {
                 return true;

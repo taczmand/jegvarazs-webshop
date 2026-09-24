@@ -3,6 +3,7 @@
 namespace App\Mail;
 
 use App\Models\AutomatedEmail;
+use App\Models\BasicData;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Envelope;
@@ -44,11 +45,14 @@ class AutomatedEmailMailable extends Mailable
      */
     public function content(): Content
     {
+        $basic_data = BasicData::pluck('value', 'key')->toArray();
+
         return new Content(
             view: $this->configTemplate['view'],
             with: [
                 'automation' => $this->automation,
                 'vars'       => $this->configTemplate['variables'] ?? [],
+                'basic_data' => $basic_data,
             ]
         );
     }

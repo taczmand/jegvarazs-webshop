@@ -158,6 +158,7 @@ class PagesController extends Controller
                     }
                 },
             ],
+            'appointment_type' => 'required|in:Karbantartás,Felmérés,Egyéb',
         ], [
             'name.regex' => 'A név nem tartalmazhat számot.',
             'phone.regex' => 'A telefonszám formátuma nem megfelelő.',

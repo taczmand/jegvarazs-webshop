@@ -9,6 +9,10 @@ class AutomatedEmail extends Model
 {
     use LogsActivity;
 
+    protected $casts = [
+        'payload' => 'array',
+    ];
+
     protected $fillable = [
         'email_id',
         'email_address',
@@ -18,8 +22,10 @@ class AutomatedEmail extends Model
         'address',
         'zip',
         'city',
+        'payload',
         'frequency_unit',
         'frequency_interval',
+        'send_at',
         'last_sent_at',
     ];
 }

@@ -6,9 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Mail\NewAppointment;
 use App\Models\Appointment;
 use App\Models\AppointmentPhoto;
+use App\Models\AutomatedEmail;
 use App\Models\Client;
 use App\Models\ClientAddress;
 use App\Models\ProductPhoto;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
@@ -107,6 +109,7 @@ class AppointmentController extends Controller
                 'city' => 'nullable|string|max:100',
                 'address_line' => 'nullable|string|max:255',
                 'appointment_date' => 'nullable|date',
+                'appointment_time' => 'nullable|date_format:H:i',
                 'appointment_type' => 'nullable|string|max:50',
                 'message' => 'nullable|string',
                 'status' => 'nullable|string|max:50',
@@ -235,11 +238,37 @@ class AppointmentController extends Controller
                 'city'             => $request->input('city'),
                 'address_line'     => $request->input('address_line'),
                 'appointment_date' => $request->input('appointment_date'),
+                'appointment_time' => $request->input('appointment_time'),
                 'appointment_type' => $request->input('appointment_type', 'Karbantartás'),
                 'message'          => $request->input('message'),
                 'status'           => $request->input('status', 'Függőben'),
                 'created_by'        => auth('admin')->id(),
             ]);
+
+            if ($appointment->appointment_type === 'Részletfizetés' && $appointment->email && $appointment->appointment_date) {
+                $sendAt = Carbon::parse($appointment->appointment_date)
+                    ->subDay()
+                    ->setTime(9, 0, 0);
+
+                AutomatedEmail::create([
+                    'email_template' => 'Időpont emlékeztető',
+                    'email_address' => (string) $appointment->email,
+                    'full_name' => (string) $appointment->name,
+                    'phone' => (string) ($appointment->phone ?? ''),
+                    'zip' => (string) ($appointment->zip_code ?? ''),
+                    'city' => (string) ($appointment->city ?? ''),
+                    'address' => (string) ($appointment->address_line ?? ''),
+                    'payload' => [
+                        'appointment' => [
+                            'date' => $appointment->appointment_date,
+                            'time' => $appointment->appointment_time,
+                        ],
+                    ],
+                    'frequency_unit' => 'naponta',
+                    'frequency_interval' => 1,
+                    'send_at' => $sendAt,
+                ]);
+            }
 
             if ($request->input('email')) {
                 $mail = Mail::to($request->input('email'));
@@ -335,6 +364,7 @@ class AppointmentController extends Controller
                 'city' => 'nullable|string|max:100',
                 'address_line' => 'nullable|string|max:255',
                 'appointment_date' => 'nullable|date',
+                'appointment_time' => 'nullable|date_format:H:i',
                 'appointment_type' => 'nullable|string|max:50',
                 'message' => 'nullable|string',
                 'status' => 'nullable|string|max:50',
@@ -465,6 +495,7 @@ class AppointmentController extends Controller
                 'city'             => $request->input('city'),
                 'address_line'     => $request->input('address_line'),
                 'appointment_date' => $request->input('appointment_date'),
+                'appointment_time' => $request->input('appointment_time'),
                 'appointment_type' => $request->input('appointment_type', 'Karbantartás'),
                 'message'          => $request->input('message'),
                 'status'           => $request->input('status', 'Függőben'),
