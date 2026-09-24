@@ -30,6 +30,14 @@
                     <div class="filter-group flex-grow-1 flex-md-shrink-0">
                         <input type="text" placeholder="Sablon" class="filter-input form-control" data-column="2">
                     </div>
+
+                    <div class="filter-group flex-grow-1 flex-md-shrink-0">
+                        <select id="automation_type" class="form-select">
+                            <option value="">Minden típus</option>
+                            <option value="one_time">Egyszeri</option>
+                            <option value="recurring">Ismétlődő</option>
+                        </select>
+                    </div>
                 </div>
 
                 <table class="table table-bordered display responsive nowrap" id="adminTable" style="width:100%">
@@ -38,8 +46,10 @@
                         <th>ID</th>
                         <th data-priority="1">E-mail cím</th>
                         <th data-priority="3">Sablon</th>
-                        <th data-priority="4">Periódus értéke</th>
-                        <th data-priority="5">Periódus</th>
+                        <th>Típus</th>
+                        <th data-priority="4">Kiküldés ideje</th>
+                        <th>Periódus értéke</th>
+                        <th>Periódus</th>
                         <th>Utolsó küldés</th>
                         <th>Létrehozva</th>
                         <th>Módosítva</th>
@@ -166,12 +176,19 @@
                 },
                 processing: true,
                 serverSide: true,
-                ajax: '{{ route('admin.automated-emails.data') }}',
+                ajax: {
+                    url: '{{ route('admin.automated-emails.data') }}',
+                    data: function (d) {
+                        d.type = $('#automation_type').val();
+                    }
+                },
                 order: [[0, 'desc']],
                 columns: [
                     { data: 'id' },
                     { data: 'email_address' },
                     { data: 'email_template' },
+                    { data: 'type', orderable: false, searchable: false },
+                    { data: 'next_send_at', orderable: false, searchable: false },
                     { data: 'frequency_interval' },
                     { data: 'frequency_unit' },
                     { data: 'last_sent_at' },
@@ -179,6 +196,12 @@
                     { data: 'updated_at' },
                     { data: 'action', orderable: false, searchable: false }
                 ],
+                createdRow: function (row, data) {
+                    if (data && data.type === 'Egyszeri') {
+                        $(row).css('background-color', 'rgba(255, 193, 7, 0.45)');
+                        $(row).css('border-left', '6px solid #ffc107');
+                    }
+                }
             });
 
             // Szűrők beállítása
@@ -187,6 +210,10 @@
                 var i =$(this).attr('data-column');
                 var v =$(this).val();
                 table.columns(i).search(v).draw();
+            });
+
+            $('#automation_type').on('change', function () {
+                table.ajax.reload();
             });
 
             // Új automatizáció létrehozása modal megjelenítése

@@ -37,11 +37,43 @@ class AutomatedEmailController extends Controller
             'frequency_interval',
             'frequency_unit',
             'last_sent_at',
+            'send_at',
             'created_at',
             'updated_at'
         ]);
 
+        $type = request()->input('type');
+        if ('one_time' === $type) {
+            $leads->whereNotNull('send_at');
+        } elseif ('recurring' === $type) {
+            $leads->whereNull('send_at');
+        }
+
         return DataTables::of($leads)
+            ->addColumn('type', function ($item) {
+                return $item->send_at ? 'Egyszeri' : 'Ismétlődő';
+            })
+            ->editColumn('send_at', function ($item) {
+                return $item->send_at ? Carbon::parse($item->send_at)->format('Y-m-d H:i:s') : '';
+            })
+            ->addColumn('next_send_at', function ($item) {
+                $next = $this->scheduler->nextSendAt($item);
+                return $next ? $next->format('Y-m-d H:i:s') : '';
+            })
+            ->editColumn('frequency_interval', function ($item) {
+                if ($item->send_at) {
+                    return '-';
+                }
+
+                return $item->frequency_interval;
+            })
+            ->editColumn('frequency_unit', function ($item) {
+                if ($item->send_at) {
+                    return 'Egyszeri';
+                }
+
+                return $item->frequency_unit;
+            })
             ->editColumn('last_sent_at', function ($item) {
                 return $item->last_sent_at ? Carbon::parse($item->last_sent_at)->format('Y-m-d H:i:s') : '';
             })

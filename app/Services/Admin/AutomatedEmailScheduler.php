@@ -40,6 +40,21 @@ class AutomatedEmailScheduler
         });
     }
 
+    public function nextSendAt(AutomatedEmail $automation): ?Carbon
+    {
+        if (!is_null($automation->send_at)) {
+            return Carbon::parse($automation->send_at);
+        }
+
+        if (is_null($automation->last_sent_at)) {
+            return null;
+        }
+
+        $last = Carbon::parse($automation->last_sent_at);
+
+        return $this->calculateNextSend($last, (string) $automation->frequency_unit, (int) $automation->frequency_interval);
+    }
+
     /**
      * Következő küldési dátum számítása.
      *
