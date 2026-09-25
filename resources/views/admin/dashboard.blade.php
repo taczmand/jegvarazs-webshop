@@ -112,6 +112,28 @@
             const calendarBody = document.querySelector('#calendar tbody');
             const weekLabel = document.getElementById('weekLabel');
 
+            const prevWeekBtn = document.getElementById('prevWeek');
+            const nextWeekBtn = document.getElementById('nextWeek');
+            const prevWeekBtnHtml = prevWeekBtn ? prevWeekBtn.innerHTML : '';
+            const nextWeekBtnHtml = nextWeekBtn ? nextWeekBtn.innerHTML : '';
+
+            let isCalendarLoading = false;
+
+            function setCalendarNavLoading(loading) {
+                isCalendarLoading = !!loading;
+
+                if (prevWeekBtn) {
+                    prevWeekBtn.disabled = isCalendarLoading;
+                    prevWeekBtn.style.visibility = isCalendarLoading ? 'hidden' : 'visible';
+                    prevWeekBtn.innerHTML = prevWeekBtnHtml;
+                }
+                if (nextWeekBtn) {
+                    nextWeekBtn.disabled = isCalendarLoading;
+                    nextWeekBtn.style.visibility = isCalendarLoading ? 'hidden' : 'visible';
+                    nextWeekBtn.innerHTML = nextWeekBtnHtml;
+                }
+            }
+
             let currentMonday = new Date();
             currentMonday.setDate(currentMonday.getDate() - (currentMonday.getDay() + 6) % 7); // hétfőre igazítás
 
@@ -127,6 +149,17 @@
                     days.push(d);
                 }
                 return days;
+            }
+
+            function formatTimeNoSeconds(value) {
+                if (value === null || value === undefined) return '';
+                const s = String(value).trim();
+                if (!s) return '';
+                const parts = s.split(':');
+                if (parts.length >= 2) {
+                    return `${parts[0]}:${parts[1]}`;
+                }
+                return s;
             }
 
             async function fetchWorksheets(startDate, endDate, selectedType) {
@@ -166,39 +199,43 @@
 
             async function renderCalendar() {
 
-                // 🔹 Loader megjelenítése
-                document.getElementById('calendarLoader').style.display = 'block';
-
-                calendarBody.innerHTML = '';
-
-                const days = getWeekDays(currentMonday);
-                const startStr = formatDate(days[0]);
-                const endStr = formatDate(days[6]);
-
-                const years = Array.from(new Set(days.map(d => d.getFullYear())));
-                const holidaysByDate = new Set();
-                const holidayNamesByDate = new Map();
-                const holidayFetches = await Promise.all(years.map(y => fetchHuPublicHolidays(y)));
-                holidayFetches.flat().forEach(h => {
-                    if (h && typeof h.date === 'string') {
-                        holidaysByDate.add(h.date);
-                        if (!holidayNamesByDate.has(h.date) && typeof h.localName === 'string' && h.localName.trim() !== '') {
-                            holidayNamesByDate.set(h.date, h.localName.trim());
-                        }
-                    }
-                });
-
-                if (weekLabel) {
-                    weekLabel.textContent = `${startStr} - ${endStr}`;
+                if (isCalendarLoading) {
+                    return;
                 }
 
-                const selectedType = document.getElementById('selectedType').value;
-                const worksheets = await fetchWorksheets(startStr, endStr, selectedType);
+                setCalendarNavLoading(true);
 
-                // 🔹 Loader elrejtése
-                document.getElementById('calendarLoader').style.display = 'none';
+                document.getElementById('calendarLoader').style.display = 'block';
 
-                const daysOfWeek = ["Vasárnap", "Hétfő", "Kedd", "Szerda", "Csütörtök", "Péntek", "Szombat"];
+                    calendarBody.innerHTML = '';
+
+                    const days = getWeekDays(currentMonday);
+                    const startStr = formatDate(days[0]);
+                    const endStr = formatDate(days[6]);
+
+                    const years = Array.from(new Set(days.map(d => d.getFullYear())));
+                    const holidaysByDate = new Set();
+                    const holidayNamesByDate = new Map();
+                    const holidayFetches = await Promise.all(years.map(y => fetchHuPublicHolidays(y)));
+                    holidayFetches.flat().forEach(h => {
+                        if (h && typeof h.date === 'string') {
+                            holidaysByDate.add(h.date);
+                            if (!holidayNamesByDate.has(h.date) && typeof h.localName === 'string' && h.localName.trim() !== '') {
+                                holidayNamesByDate.set(h.date, h.localName.trim());
+                            }
+                        }
+                    });
+
+                    if (weekLabel) {
+                        weekLabel.textContent = `${startStr} - ${endStr}`;
+                    }
+
+                    const selectedType = document.getElementById('selectedType').value;
+                    const worksheets = await fetchWorksheets(startStr, endStr, selectedType);
+
+                    document.getElementById('calendarLoader').style.display = 'none';
+
+                    const daysOfWeek = ["Vasárnap", "Hétfő", "Kedd", "Szerda", "Csütörtök", "Péntek", "Szombat"];
 
                 // 🔸 Meglévő <th>-ek dátum hozzárendelése (Blade-ből jöttek)
                 const headerThs = document.querySelectorAll('#calendar thead tr th');
@@ -308,6 +345,10 @@
                             <p style="font-style: italic">${w.work_status}</p>
                         `;
 
+                        if (w.model === 'appointment' && w.appointment_time) {
+                            div.innerHTML += `<small><strong>${formatTimeNoSeconds(w.appointment_time)}</strong></small><br>`;
+                        }
+
                         if (w.work_status === 'Kész') {
                             div.style.backgroundColor = '#d4edda';
                         } else {
@@ -353,7 +394,7 @@
                     tr.appendChild(td);
                 });
 
-                calendarBody.appendChild(tr);
+                    calendarBody.appendChild(tr);
 
                 $("#calendar td").sortable({
                     items: ".worksheet-entry",
@@ -401,6 +442,8 @@
                 }
 
 
+                document.getElementById('calendarLoader').style.display = 'none';
+                setCalendarNavLoading(false);
             }
 
 
@@ -787,6 +830,7 @@
                                 <div class="table-responsive">
                                     <table class="table table-sm mb-0">
                                         ${row('Időpont', data.appointment_date)}
+                                        ${row('Idő', formatTimeNoSeconds(data.appointment_time))}
                                         ${row('Típus', data.appointment_type)}
                                         ${row('Státusz', data.status)}
                                         ${row('Üzenet', data.message)}
@@ -909,9 +953,11 @@
             }
 
             $('#prevWeek').click(function() {
+                if (isCalendarLoading) return;
                 changeWeek(-1);
             });
             $('#nextWeek').click(function() {
+                if (isCalendarLoading) return;
                 changeWeek(1);
             });
 

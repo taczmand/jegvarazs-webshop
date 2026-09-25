@@ -322,6 +322,7 @@ class WorksheetController extends Controller
                         'work_name' => null,
                         'work_status' => $appointment->status,
                         'installation_date' => $appointment->appointment_date,
+                        'appointment_time' => $appointment->appointment_time,
                         'worker_name' => null,
                         'model' => 'appointment',
                         'type' => $appointment->appointment_type,
