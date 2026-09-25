@@ -24,6 +24,41 @@ class AppointmentController extends Controller
     {
         return view('admin.business.appointments');
     }
+
+    private function validateAppointmentTime($attribute, $value, $fail)
+    {
+        if ($value === null || $value === '') {
+            return;
+        }
+
+        if (!is_string($value)) {
+            $fail(trans('validation.string', ['attribute' => $attribute]));
+            return;
+        }
+
+        $value = trim($value);
+
+        $isHi = false;
+        $isHis = false;
+
+        try {
+            Carbon::createFromFormat('H:i', $value);
+            $isHi = true;
+        } catch (\Exception $e) {
+            $isHi = false;
+        }
+
+        try {
+            Carbon::createFromFormat('H:i:s', $value);
+            $isHis = true;
+        } catch (\Exception $e) {
+            $isHis = false;
+        }
+
+        if (!$isHi && !$isHis) {
+            $fail(trans('validation.date_format', ['attribute' => $attribute, 'format' => 'H:i(:s)']));
+        }
+    }
     public function data()
     {
         $appointments = Appointment::query()
@@ -109,7 +144,9 @@ class AppointmentController extends Controller
                 'city' => 'nullable|string|max:100',
                 'address_line' => 'nullable|string|max:255',
                 'appointment_date' => 'nullable|date',
-                'appointment_time' => 'nullable|date_format:H:i',
+                'appointment_time' => ['nullable', function ($attribute, $value, $fail) {
+                    $this->validateAppointmentTime($attribute, $value, $fail);
+                }],
                 'appointment_type' => 'nullable|string|max:50',
                 'message' => 'nullable|string',
                 'status' => 'nullable|string|max:50',
@@ -364,7 +401,9 @@ class AppointmentController extends Controller
                 'city' => 'nullable|string|max:100',
                 'address_line' => 'nullable|string|max:255',
                 'appointment_date' => 'nullable|date',
-                'appointment_time' => 'nullable|date_format:H:i',
+                'appointment_time' => ['nullable', function ($attribute, $value, $fail) {
+                    $this->validateAppointmentTime($attribute, $value, $fail);
+                }],
                 'appointment_type' => 'nullable|string|max:50',
                 'message' => 'nullable|string',
                 'status' => 'nullable|string|max:50',
