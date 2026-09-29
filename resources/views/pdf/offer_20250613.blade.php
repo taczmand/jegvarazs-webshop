@@ -85,10 +85,12 @@
             @endforeach
 
         </table>
-        <div style="margin-top: 15mm; text-align: right; float: right; display: block; font-style: italic">
-            <b style="text-decoration: underline">Összesen: {{ number_format($total_gross, 0, ',', ' ') }} Ft</b>
-            <p>Az árak forintban értendők és tartalmazzák az ÁFÁT!</p>
-        </div>
+        @if (!empty($show_total))
+            <div style="margin-top: 15mm; text-align: right; float: right; display: block; font-style: italic">
+                <b style="text-decoration: underline">Összesen: {{ number_format($total_gross, 0, ',', ' ') }} Ft</b>
+                <p>Az árak forintban értendők és tartalmazzák az ÁFÁT!</p>
+            </div>
+        @endif
         <div style="clear: both;"></div>
         <h4 style="font-style: italic; margin-top: 30mm">Az árváltozás jogát fenntartjuk.</h4>
         <h4 style="font-style: italic">Árajánlatunk a kiadástól számítva 14 napig érvényes!</h4>
