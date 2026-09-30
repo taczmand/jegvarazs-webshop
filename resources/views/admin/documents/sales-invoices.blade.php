@@ -703,7 +703,7 @@
 
                         saveBtn.html(originalSaveButtonHtml).prop('disabled', false);
                         if (previewBtn.length) previewBtn.html(originalPreviewButtonHtml).prop('disabled', false);
-                        if (saveDraftBtn.length) saveDraftBtn.html(originalPreviewButtonHtml).prop('disabled', false);
+                        if (saveDraftBtn.length) saveDraftBtn.html(originalSaveDraftButtonHtml).prop('disabled', false);
                     },
                     complete: () => {}
                 });
@@ -760,6 +760,17 @@
                             if (previewBtn.length) previewBtn.html(originalPreviewButtonHtml).prop('disabled', false);
                             return;
                         }
+
+                        $('#invoice_id').val(savedId);
+
+                        showToast('Sikeres mentés!', 'success');
+                        table.ajax.reload(null, false);
+                        modal.hide();
+                        resetForm(null);
+
+                        saveBtn.html(originalSaveButtonHtml).prop('disabled', false);
+                        saveDraftBtn.html(originalSaveDraftButtonHtml).prop('disabled', false);
+                        if (previewBtn.length) previewBtn.html(originalPreviewButtonHtml).prop('disabled', false);
                     },
                     error(xhr) {
                         let msg = 'Hiba!';
