@@ -65,8 +65,8 @@
     </div>
 </div>
 
-@if(($goods_receipt->note_before_items ?? '') !== '')
-    <div class="mb-8">{!! nl2br(e($goods_receipt->note_before_items)) !!}</div>
+@if(($goods_receipt->note_for_document ?? '') !== '')
+    <div class="mb-8">{!! nl2br(e($goods_receipt->note_for_document)) !!}</div>
 @endif
 
 @php
@@ -122,12 +122,8 @@
     </table>
 </div>
 
-@if(($goods_receipt->note_after_items ?? '') !== '')
-    <div class="mb-8">{!! nl2br(e($goods_receipt->note_after_items)) !!}</div>
-@endif
-
 @if(($goods_receipt->note ?? '') !== '')
-    <div class="muted small">{!! nl2br(e($goods_receipt->note)) !!}</div>
+    <div class="mb-8">{!! nl2br(e($goods_receipt->note)) !!}</div>
 @endif
 
 </body>

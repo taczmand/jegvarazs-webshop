@@ -429,8 +429,7 @@ class WarehouseTransferController extends Controller
             'document_number' => $docRule,
             'transferred_at' => 'nullable|date',
             'status' => 'nullable|string|max:50',
-            'note_before_items' => 'nullable|string',
-            'note_after_items' => 'nullable|string',
+            'note_for_document' => 'nullable|string',
             'note' => 'nullable|string',
             'items_json' => ($requireItemsJson ? 'required' : 'nullable') . '|string',
         ]);

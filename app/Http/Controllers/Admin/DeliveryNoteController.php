@@ -132,11 +132,11 @@ class DeliveryNoteController extends Controller
             'handed_over_at' => 'nullable|date',
             'received_by_name' => 'nullable|string|max:255',
 
-            'note_before_items' => 'nullable|string',
-            'note_after_items' => 'nullable|string',
+            'note_for_document' => 'nullable|string',
             'note' => 'nullable|string',
 
             'items_json' => 'nullable|string',
+            'company_site_id' => 'nullable|integer|exists:company_sites,id',
         ]);
 
         // items_json is not a DB column; it's only used to sync document items.
@@ -239,11 +239,11 @@ class DeliveryNoteController extends Controller
             'handed_over_at' => 'nullable|date',
             'received_by_name' => 'nullable|string|max:255',
 
-            'note_before_items' => 'nullable|string',
-            'note_after_items' => 'nullable|string',
+            'note_for_document' => 'nullable|string',
             'note' => 'nullable|string',
 
             'items_json' => 'nullable|string',
+            'company_site_id' => 'nullable|integer|exists:company_sites,id',
         ]);
 
         // items_json is not a DB column; it's only used to sync document items.
@@ -367,10 +367,10 @@ class DeliveryNoteController extends Controller
             'driver_name' => 'nullable|string|max:255',
             'handed_over_at' => 'nullable|date',
             'received_by_name' => 'nullable|string|max:255',
-            'note_before_items' => 'nullable|string',
-            'note_after_items' => 'nullable|string',
+            'note_for_document' => 'nullable|string',
             'note' => 'nullable|string',
             'items_json' => 'required|string',
+            'company_site_id' => 'required|integer|exists:company_sites,id',
         ]);
 
         $items = $this->parseItemsForPdf((string) $validated['items_json']);
@@ -450,8 +450,7 @@ class DeliveryNoteController extends Controller
             'driver_name' => 'nullable|string|max:255',
             'handed_over_at' => 'nullable|date',
             'received_by_name' => 'nullable|string|max:255',
-            'note_before_items' => 'nullable|string',
-            'note_after_items' => 'nullable|string',
+            'note_for_document' => 'nullable|string',
             'note' => 'nullable|string',
             'items_json' => 'required|string',
         ]);

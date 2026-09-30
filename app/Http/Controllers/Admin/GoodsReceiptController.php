@@ -117,8 +117,7 @@ class GoodsReceiptController extends Controller
 
             'received_at' => 'nullable|date',
 
-            'note_before_items' => 'nullable|string',
-            'note_after_items' => 'nullable|string',
+            'note_for_document' => 'nullable|string',
             'note' => 'nullable|string',
 
             'items_json' => 'nullable|string',
@@ -213,8 +212,7 @@ class GoodsReceiptController extends Controller
 
             'received_at' => 'nullable|date',
 
-            'note_before_items' => 'nullable|string',
-            'note_after_items' => 'nullable|string',
+            'note_for_document' => 'nullable|string',
             'note' => 'nullable|string',
 
             'items_json' => 'nullable|string',
@@ -334,8 +332,7 @@ class GoodsReceiptController extends Controller
 
             'received_at' => 'nullable|date',
 
-            'note_before_items' => 'nullable|string',
-            'note_after_items' => 'nullable|string',
+            'note_for_document' => 'nullable|string',
             'note' => 'nullable|string',
 
             'items_json' => 'required|string',
@@ -408,8 +405,7 @@ class GoodsReceiptController extends Controller
 
             'received_at' => 'nullable|date',
 
-            'note_before_items' => 'nullable|string',
-            'note_after_items' => 'nullable|string',
+            'note_for_document' => 'nullable|string',
             'note' => 'nullable|string',
 
             'items_json' => 'required|string',

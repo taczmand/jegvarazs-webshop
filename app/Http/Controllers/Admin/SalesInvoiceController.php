@@ -145,8 +145,7 @@ class SalesInvoiceController extends Controller
             'outstanding_amount' => 'nullable|integer',
             'rounding_amount' => 'nullable|integer',
 
-            'note_before_items' => 'nullable|string',
-            'note_after_items' => 'nullable|string',
+            'note_for_document' => 'nullable|string',
             'note' => 'nullable|string',
 
             'items_json' => 'nullable|string',
@@ -253,8 +252,7 @@ class SalesInvoiceController extends Controller
             'outstanding_amount' => 'nullable|integer',
             'rounding_amount' => 'nullable|integer',
 
-            'note_before_items' => 'nullable|string',
-            'note_after_items' => 'nullable|string',
+            'note_for_document' => 'nullable|string',
             'note' => 'nullable|string',
 
             'items_json' => 'nullable|string',
@@ -321,6 +319,7 @@ class SalesInvoiceController extends Controller
             'partner_address_line' => 'required|string|max:255',
             'payment_method' => 'required|string|max:255',
             'currency' => 'nullable|string|size:3',
+            'note_for_document' => 'nullable|string',
             'items_json' => 'required|string',
         ], [
             'company_id.required' => 'A számlázó cég kiválasztása kötelező.',
@@ -408,6 +407,7 @@ class SalesInvoiceController extends Controller
             ),
             items: $items,
             paymentMethod: (string) $validated['payment_method'],
+            noteForDocument: isset($validated['note_for_document']) ? (string) $validated['note_for_document'] : null,
             currency: (string) ($validated['currency'] ?? 'HUF'),
             agentKey: $company->billing_provider_api_key ? (string) $company->billing_provider_api_key : null,
         );
@@ -457,6 +457,7 @@ class SalesInvoiceController extends Controller
             'partner_address_line' => 'required|string|max:255',
             'payment_method' => 'required|string|max:255',
             'currency' => 'nullable|string|size:3',
+            'note_for_document' => 'nullable|string',
             'items_json' => 'required|string',
         ]);
 
@@ -511,6 +512,7 @@ class SalesInvoiceController extends Controller
             ),
             items: $items,
             paymentMethod: (string) $validated['payment_method'],
+            noteForDocument: isset($validated['note_for_document']) ? (string) $validated['note_for_document'] : null,
             currency: (string) ($validated['currency'] ?? 'HUF'),
             agentKey: $company->billing_provider_api_key ? (string) $company->billing_provider_api_key : null,
         );

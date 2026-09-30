@@ -8,6 +8,7 @@ readonly class InvoiceData
         public CustomerData $customer,
         public array $items,
         public string $paymentMethod,
+        public ?string $noteForDocument = null,
         public string $currency = 'HUF',
         public ?string $agentKey = null,
     ) {}

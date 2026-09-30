@@ -65,8 +65,8 @@
     </div>
 </div>
 
-@if(($delivery_note->note_before_items ?? '') !== '')
-    <div class="mb-8">{!! nl2br(e($delivery_note->note_before_items)) !!}</div>
+@if(($delivery_note->note_for_document ?? '') !== '')
+    <div class="mb-8">{!! nl2br(e($delivery_note->note_for_document)) !!}</div>
 @endif
 
 <div class="mb-12">
@@ -97,15 +97,8 @@
     </table>
 </div>
 
-@if(($delivery_note->note_after_items ?? '') !== '')
-    <div class="mb-12">{!! nl2br(e($delivery_note->note_after_items)) !!}</div>
-@endif
-
 @if(($delivery_note->note ?? '') !== '')
-    <div class="box">
-        <div class="h2">Megjegyzés</div>
-        <div>{!! nl2br(e($delivery_note->note)) !!}</div>
-    </div>
+    <div class="mb-8">{!! nl2br(e($delivery_note->note)) !!}</div>
 @endif
 
 </body>

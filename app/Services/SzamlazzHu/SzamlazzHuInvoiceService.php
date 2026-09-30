@@ -101,6 +101,20 @@ class SzamlazzHuInvoiceService implements InvoiceServiceInterface
         $invoice = new Invoice(Invoice::INVOICE_TYPE_P_INVOICE);
         $invoice->setBuyer($buyer);
 
+        $headerComment = isset($data->noteForDocument) ? trim((string) $data->noteForDocument) : '';
+        if ($headerComment !== '') {
+            try {
+                if (method_exists($invoice, 'getHeader')) {
+                    $header = $invoice->getHeader();
+                    if ($header && method_exists($header, 'setComment')) {
+                        $header->setComment($headerComment);
+                    }
+                }
+            } catch (\Throwable $e) {
+                // ignore
+            }
+        }
+
         foreach ($data->items as $itemData) {
             if (!$itemData instanceof ItemData) {
                 continue;
@@ -200,6 +214,20 @@ class SzamlazzHuInvoiceService implements InvoiceServiceInterface
 
         $invoice = new Invoice(Invoice::INVOICE_TYPE_P_INVOICE);
         $invoice->setBuyer($buyer);
+
+        $headerComment = isset($data->noteForDocument) ? trim((string) $data->noteForDocument) : '';
+        if ($headerComment !== '') {
+            try {
+                if (method_exists($invoice, 'getHeader')) {
+                    $header = $invoice->getHeader();
+                    if ($header && method_exists($header, 'setComment')) {
+                        $header->setComment($headerComment);
+                    }
+                }
+            } catch (\Throwable $e) {
+                // ignore
+            }
+        }
 
         if ($preview) {
             try {

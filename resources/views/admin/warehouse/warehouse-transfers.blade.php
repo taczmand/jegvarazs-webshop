@@ -98,12 +98,8 @@
                 <legend class="admin-fieldset__legend">Megjegyzések</legend>
 
                 <div class="mb-2">
-                    <label for="note_before_items" class="form-label">Megjegyzés (tételek előtt)</label>
-                    <textarea class="form-control" id="note_before_items" name="note_before_items" rows="2"></textarea>
-                </div>
-                <div class="mb-2">
-                    <label for="note_after_items" class="form-label">Megjegyzés (tételek után)</label>
-                    <textarea class="form-control" id="note_after_items" name="note_after_items" rows="2"></textarea>
+                    <label for="note_for_document" class="form-label">Megjegyzés a bizonylatra</label>
+                    <textarea class="form-control" id="note_for_document" name="note_for_document" rows="2"></textarea>
                 </div>
                 <div class="mb-0">
                     <label for="note" class="form-label">Megjegyzés</label>
@@ -258,8 +254,7 @@
 
                 $('#transferred_at').val(todayDate());
 
-                $('#note_before_items').val('');
-                $('#note_after_items').val('');
+                $('#note_for_document').val('');
                 $('#note').val('');
 
                 resetPreview();
@@ -462,8 +457,16 @@
                     const form = document.getElementById('warehouseTransferForm');
                     const formData = new FormData(form);
 
-                    const resp = await fetch(`{{ url('/admin/raktarozas/raktarkozi-atvezetesek') }}/${id}/issue-pdf`, {
-                        method: 'POST',
+                    let url = '{{ url('/admin/raktarozas/raktarkozi-atvezetesek') }}';
+                    let method = 'POST';
+                    if (isEdit) {
+                        url = `${url}/${id}`;
+                        method = 'POST';
+                        formData.append('_method', 'PUT');
+                    }
+
+                    const resp = await fetch(url, {
+                        method: method,
                         headers: {
                             'X-CSRF-TOKEN': csrfToken,
                         },
@@ -471,7 +474,7 @@
                     });
 
                     if (!resp.ok) {
-                        let msg = 'Hiba történt a PDF kiállításakor.';
+                        let msg = 'Hiba történt a mentés során.';
                         try {
                             const json = await resp.json();
                             if (json?.message) msg = json.message;
@@ -479,13 +482,15 @@
                         throw new Error(msg);
                     }
 
-                    const blob = await resp.blob();
-                    const blobUrl = URL.createObjectURL(blob);
-                    $('#warehouse_transfer_preview_iframe').attr('src', blobUrl);
-                    $('#warehouse_transfer_preview_iframe_modal').attr('src', blobUrl);
-                    if (previewModal) previewModal.show();
+                    const json = await resp.json();
+                    const transfer = json?.warehouse_transfer;
+                    if (transfer?.id) {
+                        $('#warehouse_transfer_id').val(transfer.id);
+                    }
 
+                    showToast(json?.message || 'Sikeres mentés!', 'success');
                     $('#adminTable').DataTable().ajax.reload(null, false);
+                    modal.hide();
                 } catch (e) {
                     showToast(e?.message || 'Hiba!', 'danger');
                 } finally {
@@ -499,8 +504,7 @@
                 $('#from_warehouse_id').val(transfer.from_warehouse_id || '');
                 $('#to_warehouse_id').val(transfer.to_warehouse_id || '');
                 $('#transferred_at').val(transfer.transferred_at || '');
-                $('#note_before_items').val(transfer.note_before_items || '');
-                $('#note_after_items').val(transfer.note_after_items || '');
+                $('#note_for_document').val(transfer.note_for_document || '');
                 $('#note').val(transfer.note || '');
 
                 items.splice(0, items.length);

@@ -209,13 +209,8 @@
                 </div>
 
                 <div class="mb-3 mt-3">
-                    <label for="note_before_items" class="form-label">Megjegyzés tételek fölé</label>
-                    <textarea class="form-control" id="note_before_items" name="note_before_items" rows="3"></textarea>
-                </div>
-
-                <div class="mb-3 mt-3">
-                    <label for="note_after_items" class="form-label">Megjegyzés tételek alá</label>
-                    <textarea class="form-control" id="note_after_items" name="note_after_items" rows="3"></textarea>
+                    <label for="note_for_document" class="form-label">Megjegyzés a bizonylatra</label>
+                    <textarea class="form-control" id="note_for_document" name="note_for_document" rows="3"></textarea>
                 </div>
 
             </fieldset>
@@ -263,14 +258,14 @@
         </x-slot:footer>
     </x-admin.document-modal>
 
-    <div class="modal fade" id="salesInvoicePreviewModal" tabindex="-1" aria-labelledby="salesInvoicePreviewModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-fullscreen m-0 p-0 d-flex flex-column" style="height: 100vh; min-height: 100vh; max-height: 100vh;">
-            <div class="modal-content" style="height: 80vh;">
+    <div class="modal fade" id="salesInvoicePreviewModal" tabindex="-1" aria-labelledby="salesInvoicePreviewModalLabel" aria-hidden="true" style="z-index: 2000;">
+        <div class="modal-dialog modal-fullscreen m-0 p-0">
+            <div class="modal-content" style="height: 100vh; border-radius: 0; display: flex; flex-direction: column;">
                 <div class="modal-header">
                     <h5 class="modal-title" id="salesInvoicePreviewModalLabel">Kimenő számla előnézet</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Bezárás"></button>
                 </div>
-                <div class="modal-body p-0" style="height: 100%;">
+                <div class="modal-body p-0" style="flex: 1 1 auto;">
                     <iframe id="sales_invoice_preview_iframe" title="PDF előnézet" style="width: 100%; height: 100%; border: 0; display:block;"></iframe>
                 </div>
                 <div class="modal-footer">
@@ -306,6 +301,21 @@
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
         $(document).ready(function() {
+
+            if (previewModalDOM) {
+                previewModalDOM.addEventListener('shown.bs.modal', function () {
+                    if (modalDOM) {
+                        modalDOM.style.visibility = 'hidden';
+                    }
+                });
+
+                previewModalDOM.addEventListener('hidden.bs.modal', function () {
+                    if (modalDOM) {
+                        modalDOM.style.visibility = '';
+                    }
+                    resetPreview();
+                });
+            }
 
             function escapeHtml(value) {
                 if (value === null || value === undefined) return '';

@@ -53,8 +53,8 @@
     </div>
 </div>
 
-@if(($warehouse_transfer->note_before_items ?? '') !== '')
-    <div class="mb-8">{!! nl2br(e($warehouse_transfer->note_before_items)) !!}</div>
+@if(($warehouse_transfer->note_for_document ?? '') !== '')
+    <div class="mb-8">{!! nl2br(e($warehouse_transfer->note_for_document)) !!}</div>
 @endif
 
 <div class="mb-12">
@@ -85,12 +85,8 @@
     </table>
 </div>
 
-@if(($warehouse_transfer->note_after_items ?? '') !== '')
-    <div class="mb-8">{!! nl2br(e($warehouse_transfer->note_after_items)) !!}</div>
-@endif
-
 @if(($warehouse_transfer->note ?? '') !== '')
-    <div class="muted small">{!! nl2br(e($warehouse_transfer->note)) !!}</div>
+    <div class="mb-8">{!! nl2br(e($warehouse_transfer->note)) !!}</div>
 @endif
 
 </body>

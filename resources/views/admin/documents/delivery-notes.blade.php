@@ -215,17 +215,39 @@
 
                 <div class="row g-2 mt-1">
                     <div class="col-12">
-                        <label for="note_before_items" class="form-label">Megjegyzés tételek fölé</label>
-                        <textarea class="form-control" id="note_before_items" name="note_before_items" rows="3"></textarea>
+                        <label for="note_for_document" class="form-label">Megjegyzés a bizonylatra</label>
+                        <textarea class="form-control" id="note_for_document" name="note_for_document" rows="3"></textarea>
                     </div>
+                </div>
+            </fieldset>
+
+            <fieldset class="admin-fieldset mb-2">
+                <legend class="admin-fieldset__legend">Tételek</legend>
+
+                <div class="mb-2">
+                    <label for="product_search" class="form-label">Termék keresés</label>
+                    <input type="text" class="form-control form-control-sm" id="product_search" placeholder="Kezdj el gépelni..." style="font-size: 0.85rem;">
                 </div>
 
-                <div class="row g-2 mt-1">
-                    <div class="col-12">
-                        <label for="note_after_items" class="form-label">Megjegyzés tételek alá</label>
-                        <textarea class="form-control" id="note_after_items" name="note_after_items" rows="3"></textarea>
-                    </div>
+                <div class="list-group mb-3" id="product_search_results" style="max-height: 240px; overflow:auto; font-size: 0.85rem;"></div>
+
+                <div class="table-responsive" style="overflow-x:auto;">
+                    <table class="table table-sm table-bordered align-middle" id="delivery_note_items_table" style="font-size: 0.85rem; min-width: 900px;">
+                        <thead>
+                        <tr>
+                            <th>Megnevezés</th>
+                            <th class="text-end">Mennyiség</th>
+                            <th class="text-center">Mee.</th>
+                            <th class="text-center">SKU</th>
+                            <th>Megjegyzés</th>
+                            <th></th>
+                        </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
                 </div>
+
+                <input type="hidden" name="items_json" id="items_json" value="[]">
             </fieldset>
         </x-slot:left>
 
@@ -524,8 +546,7 @@
                 $('#shipping_city').val('');
                 $('#shipping_address_line').val('');
                 $('#note').val('');
-                $('#note_before_items').val('');
-                $('#note_after_items').val('');
+                $('#note_for_document').val('');
 
                 const companyId = defaultCompanyId || $('#company_id').val();
                 if (companyId) {
@@ -592,8 +613,7 @@
                 $('#status').val(note.status || 'draft');
 
                 $('#note').val(note.note || '');
-                $('#note_before_items').val(note.note_before_items || '');
-                $('#note_after_items').val(note.note_after_items || '');
+                $('#note_for_document').val(note.note_for_document || '');
 
                 const pdfPath = row_data.pdf_path;
                 if (pdfPath) {

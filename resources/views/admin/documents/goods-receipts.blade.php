@@ -163,12 +163,8 @@
                 <legend class="admin-fieldset__legend">Megjegyzések</legend>
 
                 <div class="mb-2">
-                    <label for="note_before_items" class="form-label">Megjegyzés (tételek előtt)</label>
-                    <textarea class="form-control" id="note_before_items" name="note_before_items" rows="2"></textarea>
-                </div>
-                <div class="mb-2">
-                    <label for="note_after_items" class="form-label">Megjegyzés (tételek után)</label>
-                    <textarea class="form-control" id="note_after_items" name="note_after_items" rows="2"></textarea>
+                    <label for="note_for_document" class="form-label">Megjegyzés a bizonylatra</label>
+                    <textarea class="form-control" id="note_for_document" name="note_for_document" rows="2"></textarea>
                 </div>
                 <div class="mb-0">
                     <label for="note" class="form-label">Megjegyzés</label>
@@ -369,8 +365,7 @@
                 $('#partner_phone').val('');
 
                 $('#supplier_document_number').val('');
-                $('#note_before_items').val('');
-                $('#note_after_items').val('');
+                $('#note_for_document').val('');
                 $('#note').val('');
 
                 resetPreview();
@@ -767,8 +762,7 @@
                 $('#partner_email').val(receipt.partner_email || '');
                 $('#partner_phone').val(receipt.partner_phone || '');
 
-                $('#note_before_items').val(receipt.note_before_items || '');
-                $('#note_after_items').val(receipt.note_after_items || '');
+                $('#note_for_document').val(receipt.note_for_document || '');
                 $('#note').val(receipt.note || '');
 
                 items.splice(0, items.length);
