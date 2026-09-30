@@ -77,7 +77,7 @@
                         @if(auth('customer')->user()->is_partner)
                             <div class="col-md-6 mb-3">
                                 <div class="mb-3">
-                                    <label for="fgaz" class="form-label">F-Gáz azonosító</label>
+                                    <label for="fgaz" class="form-label">Vállalkozás F-gáz azonosító (Kérjük az 1-es számjeggyel kezdődő F-gáz azonosítót adja meg.)</label>
                                     <input type="text" class="form-control" id="fgaz" name="fgaz" value="{{ old('fgaz', auth('customer')->user()->fgaz) }}">
                                 </div>
                             </div>

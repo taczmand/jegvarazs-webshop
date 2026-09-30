@@ -70,7 +70,7 @@
 
         <div class="d-none" id="only_partner_fields">
             <div class="mb-3">
-                <label for="fgaz" class="form-label">F-Gáz azonosító*</label>
+                <label for="fgaz" class="form-label">Vállalkozás F-gáz azonosító (kérjük az 1-es számjeggyel kezdődő F-gáz azonosítót adja meg.)*</label>
                 <input type="fgaz" name="fgaz" id="fgaz" class="form-control" value="" placeholder="">
             </div>
         </div>
