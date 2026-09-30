@@ -310,7 +310,6 @@
                         <tr data-idx="${idx}">
                             <td>
                                 <div class="fw-semibold">${escapeHtml(row.name || '')}</div>
-                                <div class="small text-muted">${escapeHtml(row.sku || '')}</div>
                             </td>
                             <td class="text-end">
                                 <input type="number" step="0.001" class="form-control form-control-sm item-qty" value="${escapeHtml(row.quantity ?? 1)}">
@@ -429,15 +428,13 @@
                             container.empty();
                             results.forEach(p => {
                                 const unitText = (p.unit_abbreviation || p.unit_name) ? `${escapeHtml(p.unit_abbreviation || p.unit_name)}` : '';
-                                const sku = p.sku ? `SKU: ${escapeHtml(p.sku)}` : '';
                                 container.append(`
                                     <button type="button" class="list-group-item list-group-item-action product-result"
                                         data-id="${escapeHtml(p.id)}"
                                         data-name="${escapeHtml(p.name)}"
-                                        data-sku="${escapeHtml(p.sku || '')}"
                                         data-unit="${escapeHtml(p.unit_abbreviation || p.unit_name || 'db')}">
                                         <div class="fw-semibold">${escapeHtml(p.name)}</div>
-                                        <div class="small text-muted">${sku}${sku ? ' | ' : ''}${unitText}</div>
+                                        <div class="small text-muted">${unitText}</div>
                                     </button>
                                 `);
                             });
@@ -451,7 +448,6 @@
                 items.push({
                     product_id: $btn.data('id'),
                     name: $btn.data('name'),
-                    sku: $btn.data('sku'),
                     unit: $btn.data('unit') || 'db',
                     quantity: 1,
                     unit_net_price: 0,
@@ -770,7 +766,6 @@
                     items.push({
                         product_id: it.product_id,
                         name: it.name,
-                        sku: it.sku,
                         unit: it.unit || 'db',
                         quantity: Number(it.quantity || 0),
                         unit_net_price: Number(it.unit_net_price || 0),

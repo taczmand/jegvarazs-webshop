@@ -101,6 +101,21 @@ class SalesInvoiceController extends Controller
             ->make(true);
     }
 
+    public function show(int $id)
+    {
+        $user = auth('admin')->user();
+        if (!$user || !$user->can('edit-sales-invoice')) {
+            return response()->json(['message' => 'Nincs jogosultságod.'], 403);
+        }
+
+        $invoice = SalesInvoice::query()->with(['items'])->findOrFail($id);
+
+        return response()->json([
+            'invoice' => $invoice,
+            'items' => $invoice->items,
+        ]);
+    }
+
     public function store(Request $request)
     {
         $user = auth('admin')->user();

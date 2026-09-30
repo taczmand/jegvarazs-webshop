@@ -238,7 +238,6 @@
                             <th>Megnevezés</th>
                             <th class="text-end">Mennyiség</th>
                             <th class="text-center">Mee.</th>
-                            <th class="text-center">SKU</th>
                             <th>Megjegyzés</th>
                             <th></th>
                         </tr>
@@ -269,7 +268,6 @@
                             <th>Megnevezés</th>
                             <th class="text-end">Mennyiség</th>
                             <th class="text-center">Mee.</th>
-                            <th class="text-center">SKU</th>
                             <th>Megjegyzés</th>
                             <th></th>
                         </tr>
@@ -630,7 +628,6 @@
                         name: it.name,
                         quantity: it.quantity,
                         unit: it.unit || 'db',
-                        sku: it.sku || '',
                         note: it.note || '',
                     });
                 });
@@ -773,9 +770,6 @@
                             <td class="text-center" style="width: 70px;">
                                 <input type="text" class="form-control form-control-sm text-center item-unit" value="${escapeHtml(item.unit || 'db')}">
                             </td>
-                            <td class="text-center" style="width: 110px;">
-                                <input type="text" class="form-control form-control-sm text-center item-sku" value="${escapeHtml(item.sku || '')}">
-                            </td>
                             <td>
                                 <input type="text" class="form-control form-control-sm item-note" value="${escapeHtml(item.note || '')}">
                             </td>
@@ -801,7 +795,6 @@
                     name: product.title,
                     quantity: 1,
                     unit: unitAbbrev || 'db',
-                    sku: '',
                     note: '',
                 };
 
@@ -868,7 +861,7 @@
                 }, 250);
             });
 
-            $('#delivery_note_items_table').on('input', '.item-qty, .item-unit, .item-sku, .item-note', function () {
+            $('#delivery_note_items_table').on('input', '.item-qty, .item-unit, .item-note', function () {
                 const tr = $(this).closest('tr');
                 const idx = Number(tr.data('idx'));
                 const item = items[idx];
@@ -876,7 +869,6 @@
 
                 item.quantity = Number(tr.find('.item-qty').val()) || 0;
                 item.unit = String(tr.find('.item-unit').val() || '').trim();
-                item.sku = String(tr.find('.item-sku').val() || '').trim();
                 item.note = String(tr.find('.item-note').val() || '').trim();
 
                 syncItemsJson();

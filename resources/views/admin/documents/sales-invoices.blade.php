@@ -570,36 +570,122 @@
 
                 resetForm('Kimenő számla szerkesztése');
 
-                const row_data = $('#adminTable').DataTable().row($(this).parents('tr')).data();
-                $('#invoice_id').val(row_data.id);
-                $('#company_id').val(row_data.company_id || defaultCompanyId);
-                $('#invoice_number').val(row_data.invoice_number);
-                $('#partner_name').val(row_data.partner_name);
-                $('#issued_at').val(todayDate());
-                $('#fulfilled_at').val(todayDate());
-                $('#due_at').val(addDays(todayDate(), 8));
-                $('#currency').val(row_data.currency || 'HUF');
-                $('#gross_total').val(row_data.gross_total);
-                $('#status').val(row_data.status || 'draft');
-                $('#payment_status').val(row_data.payment_status || 'unpaid');
-
-                const pdfPath = row_data.pdf_path;
-                if (pdfPath) {
-                    const src = String(pdfPath).startsWith('http')
-                        ? String(pdfPath)
-                        : (String(pdfPath).startsWith('/') ? String(pdfPath) : `${window.appConfig.APP_URL}${String(pdfPath)}`);
-                    $('#sales_invoice_preview_iframe').attr('src', src);
-                } else {
-                    resetPreview();
+                const btnInvoiceId = String($(this).data('id') || '').trim();
+                const tableApi = $('#adminTable').DataTable();
+                let rowData = null;
+                try {
+                    let $tr = $(this).closest('tr');
+                    if ($tr.hasClass('child')) {
+                        $tr = $tr.prev();
+                    }
+                    rowData = tableApi.row($tr).data() || null;
+                } catch (e) {
+                    rowData = null;
                 }
 
-                items.splice(0, items.length);
-                renderItems();
-                syncItemsJson();
-                $('#product_search').val('');
-                $('#product_search_results').empty();
+                const invoiceId = btnInvoiceId !== '' ? btnInvoiceId : String(rowData?.id || '').trim();
+                if (!invoiceId) {
+                    showToast('Nem található a bizonylat azonosítója.', 'danger');
+                    return;
+                }
 
-                modal.show();
+                try {
+                    const resp = await fetch(`{{ route('admin.documents.sales-invoices.show', ['id' => '__ID__']) }}`.replace('__ID__', String(invoiceId)), {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                        }
+                    });
+
+                    if (!resp.ok) {
+                        let msg = 'Hiba történt a számla betöltésekor.';
+                        try {
+                            const json = await resp.json();
+                            if (json?.message) msg = json.message;
+                        } catch (e) {}
+                        throw new Error(msg);
+                    }
+
+                    const json = await resp.json();
+                    const invoice = json?.invoice || {};
+                    const invoiceItems = Array.isArray(json?.items) ? json.items : [];
+
+                    $('#invoice_id').val(invoice.id || invoiceId);
+
+                    $('#company_id').val(invoice.company_id || defaultCompanyId);
+                    $('#invoice_number').val(invoice.invoice_number || '');
+
+                    $('#partner_name').val(invoice.partner_name || '');
+                    $('#partner_tax_number').val(invoice.partner_tax_number || '');
+                    $('#partner_country').val(invoice.partner_country || 'HU');
+                    $('#partner_zip_code').val(invoice.partner_zip_code || '');
+                    $('#partner_city').val(invoice.partner_city || '');
+                    $('#partner_address_line').val(invoice.partner_address_line || '');
+                    $('#partner_email').val(invoice.partner_email || '');
+                    $('#partner_phone').val(invoice.partner_phone || '');
+
+                    $('#payment_method').val(invoice.payment_method || 'bank_transfer');
+
+                    $('#issued_at').val(invoice.issued_at || todayDate());
+                    $('#fulfilled_at').val(invoice.fulfilled_at || todayDate());
+                    $('#due_at').val(invoice.due_at || addDays(todayDate(), 8));
+
+                    $('#currency').val(invoice.currency || 'HUF');
+                    if ($('#prices_include_vat').length) {
+                        $('#prices_include_vat').prop('checked', Boolean(invoice.prices_include_vat));
+                    }
+
+                    $('#status').val(invoice.status || 'draft');
+                    $('#payment_status').val(invoice.payment_status || 'unpaid');
+
+                    $('#note').val(invoice.note || '');
+                    $('#note_for_document').val(invoice.note_for_document || '');
+
+                    const pdfPath = invoice.pdf_path;
+                    if (pdfPath) {
+                        const src = String(pdfPath).startsWith('http')
+                            ? String(pdfPath)
+                            : (String(pdfPath).startsWith('/') ? String(pdfPath) : `${window.appConfig.APP_URL}${String(pdfPath)}`);
+                        $('#sales_invoice_preview_iframe').attr('src', src);
+                    } else {
+                        resetPreview();
+                    }
+
+                    items.splice(0, items.length);
+                    invoiceItems.forEach(it => {
+                        const warehouseId = it.warehouse_id ?? null;
+                        const wh = warehouseId ? warehouses.find(w => String(w.id) === String(warehouseId)) : null;
+                        const item = {
+                            product_id: it.product_id ?? null,
+                            warehouse_id: warehouseId,
+                            warehouse_name: wh?.name ?? '',
+                            name: it.name ?? '',
+                            quantity: Number(it.quantity ?? 0),
+                            qty_step: 1,
+                            unit_abbreviation: it.unit ?? '',
+                            discount_percent: Number(it.discount_percent ?? 0),
+                            vat_percent: Number(it.vat_percent ?? 0),
+                            unit_net_price: Number(it.unit_net_price ?? 0),
+                            unit_gross_price: Number(it.unit_gross_price ?? 0),
+                            net_total: Number(it.net_total ?? 0),
+                            vat_total: Number(it.vat_total ?? 0),
+                            gross_total: Number(it.gross_total ?? 0),
+                        };
+
+                        recalcRow(item);
+                        items.push(item);
+                    });
+
+                    renderItems();
+                    syncItemsJson();
+                    $('#product_search').val('');
+                    $('#product_search_results').empty();
+
+                    modal.show();
+                } catch (e) {
+                    showToast(e?.message || 'Hiba!', 'danger');
+                }
             });
 
             modalDOM.addEventListener('hidden.bs.modal', function () {
@@ -683,6 +769,7 @@
                             showToast('Számla kiállítva.', 'success');
                             table.ajax.reload(null, false);
                             modal.hide();
+
                         }).catch((err) => {
                             showToast(err?.message || 'Hiba!', 'danger');
                             table.ajax.reload(null, false);
@@ -1213,7 +1300,9 @@
                 $('#due_at').val(addDays(todayDate(), 8));
                 $('#status').val('draft');
                 $('#payment_status').val('unpaid');
-                $('#prices_include_vat').prop('checked', true);
+                if ($('#prices_include_vat').length) {
+                    $('#prices_include_vat').prop('checked', true);
+                }
 
                 resetPreview();
 
