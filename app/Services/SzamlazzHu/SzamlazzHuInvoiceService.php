@@ -9,12 +9,32 @@ use Illuminate\Support\Facades\Storage;
 use SzamlaAgent\SzamlaAgentAPI;
 use SzamlaAgent\Buyer;
 use SzamlaAgent\Document\Invoice\Invoice;
+use SzamlaAgent\Document\Invoice\ReverseInvoice;
 use SzamlaAgent\Item\InvoiceItem;
 use SzamlaAgent\Log as SzamlazzLog;
 use SzamlaAgent\Seller;
 
 class SzamlazzHuInvoiceService implements InvoiceServiceInterface
 {
+    private function extractInvoiceNumberFromResult(object $result): ?string
+    {
+        try {
+            if (method_exists($result, 'getInvoiceNumber')) {
+                $n = (string) $result->getInvoiceNumber();
+                return trim($n) !== '' ? trim($n) : null;
+            }
+
+            if (method_exists($result, 'getDocumentNumber')) {
+                $n = (string) $result->getDocumentNumber();
+                return trim($n) !== '' ? trim($n) : null;
+            }
+        } catch (\Throwable $e) {
+            return null;
+        }
+
+        return null;
+    }
+
     private function prepareAgentDirs(SzamlaAgentAPI $agent): void
     {
         try {
@@ -329,6 +349,275 @@ class SzamlazzHuInvoiceService implements InvoiceServiceInterface
             return (string) Storage::disk('local')->get($selected['file']);
         } catch (\Throwable $e) {
             throw new \RuntimeException('Számlázz.hu PDF beolvasása sikertelen: ' . $e->getMessage());
+        }
+    }
+
+    public function createInvoicePdfWithNumber(InvoiceData $data, bool $preview = true): array
+    {
+        $apiKey = trim((string) ($data->agentKey ?? ''));
+        if ($apiKey === '') {
+            throw new \RuntimeException('Hiányzik a számlázó API kulcs (cég szinten).');
+        }
+
+        if (method_exists(SzamlaAgentAPI::class, 'create')) {
+            try {
+                $agent = SzamlaAgentAPI::create($apiKey, true, SzamlazzLog::LOG_LEVEL_OFF);
+            } catch (\Throwable $e) {
+                $agent = SzamlaAgentAPI::create($apiKey);
+            }
+        } else {
+            $agent = new SzamlaAgentAPI($apiKey);
+        }
+
+        $pdfDirRel = 'szamlazzhu/pdf';
+        $beforeTs = time();
+
+        $this->prepareAgentDirs($agent);
+
+        $buyer = new Buyer(
+            $data->customer->name,
+            $data->customer->zip,
+            $data->customer->city,
+            $data->customer->address
+        );
+
+        if ($data->customer->taxNumber) {
+            $buyer->setTaxNumber(
+                $data->customer->taxNumber
+            );
+        }
+
+        $invoice = new Invoice(Invoice::INVOICE_TYPE_P_INVOICE);
+        $invoice->setBuyer($buyer);
+
+        $headerComment = isset($data->noteForDocument) ? trim((string) $data->noteForDocument) : '';
+        if ($headerComment !== '') {
+            try {
+                if (method_exists($invoice, 'getHeader')) {
+                    $header = $invoice->getHeader();
+                    if ($header && method_exists($header, 'setComment')) {
+                        $header->setComment($headerComment);
+                    }
+                }
+            } catch (\Throwable $e) {
+                // ignore
+            }
+        }
+
+        if ($preview) {
+            try {
+                if (method_exists($invoice, 'getHeader')) {
+                    $header = $invoice->getHeader();
+                    if ($header && method_exists($header, 'setPreviewPdf')) {
+                        $header->setPreviewPdf(true);
+                    }
+                }
+            } catch (\Throwable $e) {
+                // ignore
+            }
+        }
+
+        foreach ($data->items as $itemData) {
+            if (!$itemData instanceof ItemData) {
+                continue;
+            }
+
+            $item = new InvoiceItem($itemData->name, $itemData->unitPrice);
+            $item->setQuantity($itemData->quantity);
+            if (method_exists($item, 'setQuantityUnit')) {
+                $item->setQuantityUnit($itemData->unit);
+            } elseif (method_exists($item, 'setUnit')) {
+                $item->setUnit($itemData->unit);
+            }
+
+            $netUnitPrice = (float) $itemData->unitPrice;
+            $netPrice = $netUnitPrice * (float) $itemData->quantity;
+            $vatPercent = (float) $itemData->vatPercent;
+            $vatAmount = $netPrice * ($vatPercent / 100);
+            $grossAmount = $netPrice + $vatAmount;
+
+            if (method_exists($item, 'setNetUnitPrice')) {
+                $item->setNetUnitPrice($netUnitPrice);
+            }
+            if (method_exists($item, 'setNetPrice')) {
+                $item->setNetPrice($netPrice);
+            }
+            if (method_exists($item, 'setVatAmount')) {
+                $item->setVatAmount($vatAmount);
+            }
+            if (method_exists($item, 'setGrossAmount')) {
+                $item->setGrossAmount($grossAmount);
+            }
+
+            if (method_exists($item, 'setVat')) {
+                $item->setVat((string) $itemData->vatPercent);
+            } elseif (method_exists($item, 'setVatPercent')) {
+                $item->setVatPercent((string) $itemData->vatPercent);
+            }
+
+            $invoice->addItem($item);
+        }
+
+        $result = $agent->generateInvoice($invoice);
+
+        if (!$result->isSuccess()) {
+            throw new \RuntimeException(
+                $result->getErrorMessage()
+            );
+        }
+
+        $invoiceNumber = $this->extractInvoiceNumberFromResult($result);
+
+        try {
+            foreach (['getPdfFile', 'getPdf', 'getPdfData', 'getPdfContent', 'getPDF'] as $method) {
+                if (method_exists($result, $method)) {
+                    $pdf = $result->{$method}();
+                    if (is_string($pdf) && $pdf !== '') {
+                        return [
+                            'pdf' => $pdf,
+                            'invoice_number' => $invoiceNumber,
+                        ];
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+            // ignore
+        }
+
+        try {
+            $files = Storage::disk('local')->files($pdfDirRel);
+            $candidates = collect($files)
+                ->filter(fn($f) => str_ends_with(strtolower($f), '.pdf'))
+                ->map(function ($f) {
+                    return [
+                        'file' => $f,
+                        'ts' => Storage::disk('local')->lastModified($f),
+                    ];
+                })
+                ->sortByDesc('ts')
+                ->values();
+
+            $selected = $candidates->first(function ($row) use ($beforeTs) {
+                return (int) ($row['ts'] ?? 0) >= ($beforeTs - 2);
+            }) ?? $candidates->first();
+
+            if (!$selected || empty($selected['file'])) {
+                throw new \RuntimeException('Számlázz.hu PDF nem található a generálás után.');
+            }
+
+            return [
+                'pdf' => (string) Storage::disk('local')->get($selected['file']),
+                'invoice_number' => $invoiceNumber,
+            ];
+        } catch (\Throwable $e) {
+            throw new \RuntimeException('Számlázz.hu PDF beolvasása sikertelen: ' . $e->getMessage());
+        }
+    }
+
+    public function createReverseInvoicePdfWithNumber(string $invoiceNumber, string $agentKey): array
+    {
+        $apiKey = trim((string) $agentKey);
+        if ($apiKey === '') {
+            throw new \RuntimeException('Hiányzik a számlázó API kulcs (cég szinten).');
+        }
+
+        $invoiceNumber = trim((string) $invoiceNumber);
+        if ($invoiceNumber === '') {
+            throw new \RuntimeException('Hiányzik az eredeti számlaszám a sztornózáshoz.');
+        }
+
+        if (method_exists(SzamlaAgentAPI::class, 'create')) {
+            try {
+                $agent = SzamlaAgentAPI::create($apiKey, true, SzamlazzLog::LOG_LEVEL_OFF);
+            } catch (\Throwable $e) {
+                $agent = SzamlaAgentAPI::create($apiKey);
+            }
+        } else {
+            $agent = new SzamlaAgentAPI($apiKey);
+        }
+
+        $beforeTs = time();
+        $pdfDirRel = 'szamlazzhu/pdf';
+
+        $this->prepareAgentDirs($agent);
+
+        $reverse = new ReverseInvoice();
+        try {
+            if (method_exists($reverse, 'getHeader')) {
+                $header = $reverse->getHeader();
+                if ($header && method_exists($header, 'setInvoiceNumber')) {
+                    $header->setInvoiceNumber($invoiceNumber);
+                }
+                if ($header && method_exists($header, 'setOriginalInvoiceNumber')) {
+                    $header->setOriginalInvoiceNumber($invoiceNumber);
+                }
+            }
+        } catch (\Throwable $e) {
+            // ignore
+        }
+
+        $result = null;
+        foreach (['generateReverseInvoice', 'generateStornoInvoice', 'generateReverse', 'generateStorno'] as $method) {
+            if (method_exists($agent, $method)) {
+                $result = $agent->{$method}($reverse);
+                break;
+            }
+        }
+
+        if (!$result) {
+            throw new \RuntimeException('Számlázz.hu reverse/stornó API metódus nem elérhető a használt SDK verzióban.');
+        }
+
+        if (method_exists($result, 'isSuccess') && !$result->isSuccess()) {
+            $msg = method_exists($result, 'getErrorMessage') ? (string) $result->getErrorMessage() : 'Sztornó sikertelen.';
+            throw new \RuntimeException($msg);
+        }
+
+        $stornoNumber = $this->extractInvoiceNumberFromResult($result);
+
+        try {
+            foreach (['getPdfFile', 'getPdf', 'getPdfData', 'getPdfContent', 'getPDF'] as $method) {
+                if (method_exists($result, $method)) {
+                    $pdf = $result->{$method}();
+                    if (is_string($pdf) && $pdf !== '') {
+                        return [
+                            'pdf' => $pdf,
+                            'invoice_number' => $stornoNumber,
+                        ];
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+            // ignore
+        }
+
+        try {
+            $files = Storage::disk('local')->files($pdfDirRel);
+            $candidates = collect($files)
+                ->filter(fn($f) => str_ends_with(strtolower($f), '.pdf'))
+                ->map(function ($f) {
+                    return [
+                        'file' => $f,
+                        'ts' => Storage::disk('local')->lastModified($f),
+                    ];
+                })
+                ->sortByDesc('ts')
+                ->values();
+
+            $selected = $candidates->first(function ($row) use ($beforeTs) {
+                return (int) ($row['ts'] ?? 0) >= ($beforeTs - 2);
+            }) ?? $candidates->first();
+
+            if (!$selected || empty($selected['file'])) {
+                throw new \RuntimeException('Számlázz.hu sztornó PDF nem található a generálás után.');
+            }
+
+            return [
+                'pdf' => (string) Storage::disk('local')->get($selected['file']),
+                'invoice_number' => $stornoNumber,
+            ];
+        } catch (\Throwable $e) {
+            throw new \RuntimeException('Számlázz.hu sztornó PDF beolvasása sikertelen: ' . $e->getMessage());
         }
     }
 }

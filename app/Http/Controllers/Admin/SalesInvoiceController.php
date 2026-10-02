@@ -8,11 +8,13 @@ use App\Models\SalesInvoice;
 use App\Models\SalesInvoiceItem;
 use App\Models\Warehouse;
 use App\Services\InvoiceServiceInterface;
+use App\Services\SzamlazzHu\SzamlazzHuInvoiceService;
 use App\Services\SzamlazzHu\Dto\CustomerData;
 use App\Services\SzamlazzHu\Dto\InvoiceData;
 use App\Services\SzamlazzHu\Dto\ItemData;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Yajra\DataTables\Facades\DataTables;
@@ -61,27 +63,87 @@ class SalesInvoiceController extends Controller
             'id',
             'company_id',
             'invoice_number',
+            'invoice_type',
             'partner_name',
+            'payment_method',
             'issued_at',
             'due_at',
             'currency',
             'gross_total',
             'status',
             'payment_status',
+            'note',
             'pdf_path',
             'created_at as created',
             'updated_at as updated',
         ]);
 
         return DataTables::of($invoices)
+            ->addColumn('payment_method', function ($invoice) {
+                $translations = [
+                    'bank_transfer'   => 'átutalás',
+                    'cash'   => 'készpénz',
+                    'credtit_card' => 'bankkártya'
+                ];
+                return $translations[$invoice->payment_method] ?? ucfirst($invoice->payment_method);
+            })
+            ->addColumn('status', function ($invoice) {
+                $translations = [
+                    'draft'   => 'Piszkozat',
+                    'issued'   => 'Kiállítva',
+                    'cancelled' => 'Érvénytelenítve'
+                ];
+                return $translations[$invoice->status] ?? ucfirst($invoice->status);
+            })
+            ->addColumn('payment_status', function ($invoice) {
+                $translations = [
+                    'unpaid'   => 'Nincs kifizetve',
+                    'paid'   => 'Kifizetve',
+                    'partially_paid'   => 'Részben van kifizetve',
+                    'overdue' => 'Lejárt'
+                ];
+                return $translations[$invoice->payment_status] ?? ucfirst($invoice->payment_status);
+            })
+            ->addColumn('invoice_type', function ($invoice) {
+                $translations = [
+                    'storno'   => 'Sztornó',
+                    'normal'   => 'Papír',
+                    'electronic' => 'E-számla'
+                ];
+                return $translations[$invoice->invoice_type] ?? ucfirst($invoice->invoice_type);
+            })
             ->addColumn('action', function ($invoice) {
                 $user = auth('admin')->user();
                 $buttons = '';
 
-                if ($user && $user->can('edit-sales-invoice')) {
+                if (!empty($invoice->pdf_path) && $user && $user->can('view-sales-invoices')) {
+                    $buttons .= '
+                        <button class="btn btn-sm btn-outline-secondary pdf" data-id="' . $invoice->id . '" title="PDF megnyitása">
+                            <i class="fas fa-file-pdf"></i>
+                        </button>
+                    ';
+
+                    if ($invoice->status === 'issued' && $user->can('edit-sales-invoice')) {
+                        $buttons .= '
+                            <button class="btn btn-sm btn-outline-danger storno" data-id="' . $invoice->id . '" title="Érvénytelenít">
+                                <i class="fas fa-ban"></i>
+                            </button>
+                        ';
+                    }
+                }
+
+                if ($invoice->status === 'draft' && $user && $user->can('edit-sales-invoice')) {
                     $buttons .= '
                         <button class="btn btn-sm btn-primary edit" data-id="' . $invoice->id . '" title="Szerkesztés">
                             <i class="fas fa-edit"></i>
+                        </button>
+                    ';
+                }
+
+                if ($invoice->status === 'issued' && $user && $user->can('edit-sales-invoice')) {
+                    $buttons .= '
+                        <button class="btn btn-sm btn-outline-primary view" data-id="' . $invoice->id . '" title="Adatok megtekintése">
+                            <i class="fas fa-eye"></i>
                         </button>
                     ';
                 }
@@ -99,6 +161,178 @@ class SalesInvoiceController extends Controller
             })
             ->rawColumns(['action'])
             ->make(true);
+    }
+
+    public function storno(int $id, InvoiceServiceInterface $invoiceService)
+    {
+        $user = auth('admin')->user();
+        if (!$user || !$user->can('edit-sales-invoice')) {
+            return response()->json(['message' => 'Nincs jogosultságod.'], 403);
+        }
+
+        $invoice = SalesInvoice::query()->with(['items'])->findOrFail($id);
+        if ((string) $invoice->status !== 'issued') {
+            return response()->json(['message' => 'Csak kiállított számla sztornózható.'], 422);
+        }
+
+        if ((string) $invoice->status === 'cancelled') {
+            return response()->json(['message' => 'A számla már sztornózva van.'], 422);
+        }
+
+        $company = null;
+        if (!empty($invoice->company_id)) {
+            $company = Company::query()->where('status', 'active')->find((int) $invoice->company_id);
+        }
+        if (!$company) {
+            return response()->json(['message' => 'A számlához nincs érvényes cég rendelve.'], 422);
+        }
+
+        if (!is_string($company->billing_provider_api_key ?? null) || trim((string) $company->billing_provider_api_key) === '') {
+            return response()->json(['message' => 'A számlához tartozó céghez nincs beállítva API kulcs.'], 422);
+        }
+
+        $originalNumber = trim((string) $invoice->invoice_number);
+        if ($originalNumber === '' || str_starts_with($originalNumber, 'DRAFT-')) {
+            return response()->json(['message' => 'Hiányzik az eredeti számlaszám, sztornó nem indítható.'], 422);
+        }
+
+        try {
+            $result = $invoiceService->createReverseInvoicePdfWithNumber(
+                $originalNumber,
+                (string) $company->billing_provider_api_key,
+            );
+
+            $pdfBytes = (string) ($result['pdf'] ?? '');
+            $stornoNumber = isset($result['invoice_number']) ? trim((string) $result['invoice_number']) : '';
+            if ($pdfBytes === '') {
+                throw new \RuntimeException('Számlázz.hu sztornó PDF generálása sikertelen.');
+            }
+
+            $month = now()->format('Y-m');
+            $dir = 'szamlazzhu/kimeno-storno/' . $month;
+            $fileName = 'kimeno-szamla-storno-' . $invoice->id . '.pdf';
+            $relativePath = $dir . '/' . $fileName;
+
+            $absoluteDir = Storage::disk('local')->path($dir);
+            if (!is_dir($absoluteDir)) {
+                File::makeDirectory($absoluteDir, 0775, true);
+            }
+            Storage::disk('local')->makeDirectory($dir);
+
+            Storage::disk('local')->put($relativePath, $pdfBytes);
+
+            DB::transaction(function () use ($invoice, $relativePath, $stornoNumber) {
+                $invoice = SalesInvoice::query()->with(['items'])->lockForUpdate()->findOrFail($invoice->id);
+
+                if ((string) $invoice->status === 'cancelled') {
+                    return;
+                }
+
+                $this->restoreStockForCancelledSalesInvoice($invoice);
+
+                SalesInvoice::create([
+                    'company_id' => $invoice->company_id,
+                    'invoice_number' => $stornoNumber,
+                    'invoice_type' => 'storno',
+                    'status' => 'issued',
+                    'payment_status' => $invoice->payment_status,
+                    'partner_name' => $invoice->partner_name,
+                    'partner_tax_number' => $invoice->partner_tax_number,
+                    'partner_vat_number' => $invoice->partner_vat_number,
+                    'partner_country' => $invoice->partner_country,
+                    'partner_zip_code' => $invoice->partner_zip_code,
+                    'partner_city' => $invoice->partner_city,
+                    'partner_address_line' => $invoice->partner_address_line,
+                    'partner_email' => $invoice->partner_email,
+                    'partner_phone' => $invoice->partner_phone,
+                    'company_name' => $invoice->company_name,
+                    'company_tax_number' => $invoice->company_tax_number,
+                    'company_country' => $invoice->company_country,
+                    'company_zip_code' => $invoice->company_zip_code,
+                    'company_city' => $invoice->company_city,
+                    'company_address_line' => $invoice->company_address_line,
+                    'company_email' => $invoice->company_email,
+                    'company_phone' => $invoice->company_phone,
+                    'company_bank_account' => $invoice->company_bank_account,
+                    'payment_method' => $invoice->payment_method,
+                    'payment_reference' => $invoice->payment_reference,
+                    'issued_at' => $invoice->issued_at,
+                    'fulfilled_at' => $invoice->fulfilled_at,
+                    'due_at' => $invoice->due_at,
+                    'settled_at' => $invoice->settled_at,
+                    'currency' => $invoice->currency,
+                    'exchange_rate' => $invoice->exchange_rate,
+                    'prices_include_vat' => $invoice->prices_include_vat,
+                    'net_total' => $invoice->net_total,
+                    'vat_total' => $invoice->vat_total,
+                    'gross_total' => $invoice->gross_total,
+                    'paid_amount' => $invoice->paid_amount,
+                    'outstanding_amount' => $invoice->outstanding_amount,
+                    'rounding_amount' => $invoice->rounding_amount,
+                    'related_order_id' => $invoice->related_order_id,
+                    'related_contract_id' => $invoice->related_contract_id,
+                    'storno_of_sales_invoice_id' => $invoice->id,
+                    'external_provider' => $invoice->external_provider,
+                    'external_id' => $invoice->external_id,
+                    'pdf_path' => $relativePath,
+                    'note' => 'Érvénytelenített számla: '.$invoice->invoice_number
+                ]);
+
+                $invoice->update([
+                    'status' => 'cancelled'
+                ]);
+            });
+
+            return response()->json([
+                'message' => 'Sztornó sikeres.',
+            ], 200);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'message' => $e->getMessage(),
+                'exception' => get_class($e),
+            ], 502);
+        }
+    }
+
+    public function pdf(int $id)
+    {
+        $user = auth('admin')->user();
+        if (!$user || !$user->can('view-sales-invoices')) {
+            abort(403);
+        }
+
+        $invoice = SalesInvoice::query()->findOrFail($id);
+        $path = (string) ($invoice->pdf_path ?? '');
+        if ($path === '') {
+            abort(404);
+        }
+
+        $disk = Storage::disk('local');
+        $candidatePaths = [$path];
+        if (str_starts_with($path, 'private/')) {
+            $candidatePaths[] = ltrim(substr($path, strlen('private/')), '/');
+        }
+
+        $resolved = null;
+        foreach ($candidatePaths as $candidate) {
+            if ($candidate === '') {
+                continue;
+            }
+
+            if ($disk->exists($candidate)) {
+                $resolved = $disk->path($candidate);
+                break;
+            }
+        }
+
+        if (!$resolved || !file_exists($resolved)) {
+            abort(404);
+        }
+
+        return response()->file($resolved, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="kimeno-szamla-' . $invoice->id . '.pdf"',
+        ]);
     }
 
     public function show(int $id)
@@ -533,14 +767,69 @@ class SalesInvoiceController extends Controller
         );
 
         try {
-            $pdfBytes = $invoiceService->createInvoicePdf($invoiceData, false);
+            $providerInvoiceNumber = null;
+            $pdfBytes = null;
+
+            if ($invoiceService instanceof SzamlazzHuInvoiceService && method_exists($invoiceService, 'createInvoicePdfWithNumber')) {
+                $result = $invoiceService->createInvoicePdfWithNumber($invoiceData, false);
+                $pdfBytes = (string) ($result['pdf'] ?? '');
+                $providerInvoiceNumber = isset($result['invoice_number']) ? (string) $result['invoice_number'] : null;
+                $providerInvoiceNumber = $providerInvoiceNumber !== null ? trim($providerInvoiceNumber) : null;
+                if ($providerInvoiceNumber === '') {
+                    $providerInvoiceNumber = null;
+                }
+            } else {
+                $pdfBytes = $invoiceService->createInvoicePdf($invoiceData, false);
+            }
+
+            if (!is_string($pdfBytes) || $pdfBytes === '') {
+                throw new \RuntimeException('Számlázz.hu PDF generálása sikertelen.');
+            }
 
             $month = now()->format('Y-m');
-            $dir = 'private/szamlazzhu/kimeno/' . $month;
+            $dir = 'szamlazzhu/kimeno/' . $month;
             $fileName = 'kimeno-szamla-' . $invoice->id . '.pdf';
             $relativePath = $dir . '/' . $fileName;
 
-            Storage::disk('local')->put($relativePath, $pdfBytes);
+            $absoluteDir = Storage::disk('local')->path($dir);
+            if (!is_dir($absoluteDir)) {
+                File::makeDirectory($absoluteDir, 0775, true);
+            }
+
+            Storage::disk('local')->makeDirectory($dir);
+
+            $oldPath = (string) ($invoice->pdf_path ?? '');
+            if ($oldPath !== '' && $oldPath !== $relativePath && Storage::disk('local')->exists($oldPath)) {
+                Storage::disk('local')->delete($oldPath);
+            }
+
+            $written = Storage::disk('local')->put($relativePath, $pdfBytes);
+            if ($written !== true) {
+                throw new \RuntimeException('A PDF mentése sikertelen (Storage::put false).');
+            }
+
+            $resolvedPath = Storage::disk('local')->path($relativePath);
+            $exists = Storage::disk('local')->exists($relativePath);
+            $fsExists = is_string($resolvedPath) && $resolvedPath !== '' ? file_exists($resolvedPath) : false;
+            $size = $fsExists ? (int) @filesize($resolvedPath) : 0;
+
+            logger()->info('SalesInvoice PDF save result', [
+                'invoice_id' => $invoice->id,
+                'relative_path' => $relativePath,
+                'resolved_path' => $resolvedPath,
+                'storage_exists' => $exists,
+                'fs_exists' => $fsExists,
+                'filesize' => $size,
+                'bytes_len' => strlen($pdfBytes),
+            ]);
+
+            if (!$exists || !$fsExists) {
+                throw new \RuntimeException('A PDF mentése sikertelen (a fájl nem található mentés után). Útvonal: ' . $resolvedPath);
+            }
+
+            if ($size <= 0) {
+                throw new \RuntimeException('A PDF mentése sikertelen (0 bájtos fájl). Útvonal: ' . $resolvedPath);
+            }
 
             if ($invoice->stock_deducted_at === null) {
                 DB::transaction(function () use ($invoice) {
@@ -553,6 +842,7 @@ class SalesInvoiceController extends Controller
 
             $invoice->update([
                 'pdf_path' => $relativePath,
+                'invoice_number' => $providerInvoiceNumber ?: $invoice->invoice_number,
                 'status' => 'issued',
                 'stock_deducted_at' => $invoice->stock_deducted_at ?: now(),
             ]);
@@ -680,5 +970,44 @@ class SalesInvoiceController extends Controller
         $invoice->update([
             'stock_deducted_at' => now(),
         ]);
+    }
+
+    private function restoreStockForCancelledSalesInvoice(SalesInvoice $invoice): void
+    {
+        $items = SalesInvoiceItem::query()->where('sales_invoice_id', $invoice->id)->get();
+        if ($items->isEmpty()) {
+            return;
+        }
+
+        foreach ($items as $item) {
+            if (!$item->product_id) {
+                continue;
+            }
+
+            $warehouseId = (int) ($item->warehouse_id ?? 0);
+            if ($warehouseId <= 0) {
+                throw new \RuntimeException('Készlet visszaállításhoz hiányzik a raktár a számla tételben.');
+            }
+
+            $currentQty = (float) (DB::table('product_stocks')
+                ->where('warehouse_id', '=', $warehouseId)
+                ->where('product_id', '=', (int) $item->product_id)
+                ->lockForUpdate()
+                ->value('quantity') ?? 0);
+
+            $add = (float) ($item->quantity ?? 0);
+            $newQty = $currentQty + $add;
+
+            DB::table('product_stocks')->updateOrInsert(
+                [
+                    'warehouse_id' => $warehouseId,
+                    'product_id' => (int) $item->product_id,
+                ],
+                [
+                    'quantity' => $newQty,
+                    'updated_at' => now(),
+                ]
+            );
+        }
     }
 }

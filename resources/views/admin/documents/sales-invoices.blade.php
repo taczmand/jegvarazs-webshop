@@ -3,7 +3,7 @@
 @section('content')
 
 
-    <div class="container p-0">
+    <div class="container-fluid px-0">
 
         <div class="d-flex justify-content-between align-items-center mb-3 pb-2">
             <h2 class="color-dark-blue mb-0">Ügyvitel / Bizonylatok / Kimenő számlák</h2>
@@ -34,24 +34,33 @@
                     </div>
 
                     <div class="filter-group flex-grow-1 flex-md-shrink-0">
-                        <select class="form-select filter-input" data-column="8">
-                            <option value="">Állapot (összes)</option>
-                            <option value="draft">draft</option>
-                            <option value="issued">issued</option>
-                            <option value="sent">sent</option>
-                            <option value="cancelled">cancelled</option>
+                        <select class="form-select filter-input" data-column="10">
+                            <option value="">Fizetés (összes)</option>
+                            <option value="unpaid">Nincs kifizetve</option>
+                            <option value="partially_paid">Részben van kifizetve</option>
+                            <option value="paid">Kifizetve</option>
+                            <option value="overdue">Lejárt</option>
                         </select>
                     </div>
 
                     <div class="filter-group flex-grow-1 flex-md-shrink-0">
                         <select class="form-select filter-input" data-column="9">
-                            <option value="">Fizetés (összes)</option>
-                            <option value="unpaid">unpaid</option>
-                            <option value="partially_paid">partially_paid</option>
-                            <option value="paid">paid</option>
-                            <option value="overdue">overdue</option>
+                            <option value="">Állapot (összes)</option>
+                            <option value="draft">Piszkozat</option>
+                            <option value="issued">Kiállítva</option>
+                            <option value="cancelled">Érvénytelenítve</option>
                         </select>
                     </div>
+
+                    <div class="filter-group flex-grow-1 flex-md-shrink-0">
+                        <select class="form-select filter-input" data-column="11">
+                            <option value="">Típus (összes)</option>
+                            <option value="storno">Sztornó</option>
+                            <option value="normal">Papír</option>
+                            <option value="electronic">E-számla</option>
+                        </select>
+                    </div>
+
                 </div>
 
                 <table class="table table-bordered display responsive nowrap" id="adminTable" style="width:100%">
@@ -60,6 +69,7 @@
                         <th>ID</th>
                         <th data-priority="1">Számlaszám</th>
                         <th>Partner</th>
+                        <th>Fiz.mód</th>
                         <th>Kelt</th>
                         <th>Határidő</th>
                         <th>Pénznem</th>
@@ -67,6 +77,8 @@
                         <th>Létrehozva</th>
                         <th>Állapot</th>
                         <th>Fizetés</th>
+                        <th>Típus</th>
+                        <th>Megj.</th>
                         <th data-priority="2">Műveletek</th>
                     </tr>
                     </thead>
@@ -177,8 +189,8 @@
                         <div class="col-12 col-md-4">
                             <label for="invoice_type" class="form-label">Számla típusa</label>
                             <select class="form-select" id="invoice_type" name="invoice_type" required>
-                                <option>Papír</option>
-                                <option>Elektronikus számla</option>
+                                <option value="normal">Papír</option>
+                                <option value="electronic">Elektronikus számla</option>
                             </select>
                         </div>
                     </div>
@@ -268,7 +280,7 @@
                 <div class="modal-body p-0" style="flex: 1 1 auto;">
                     <iframe id="sales_invoice_preview_iframe" title="PDF előnézet" style="width: 100%; height: 100%; border: 0; display:block;"></iframe>
                 </div>
-                <div class="modal-footer">
+                <div class="modal-footer" id="salesInvoicePreviewModalFooter">
                     <button type="button" class="btn btn-success" id="createSalesInvoice">
                         Számla létrehozása
                     </button>
@@ -302,6 +314,13 @@
 
         $(document).ready(function() {
 
+            const previewModalFooter = document.getElementById('salesInvoicePreviewModalFooter');
+
+            function setPreviewModalFooterVisible(isVisible) {
+                if (!previewModalFooter) return;
+                previewModalFooter.style.display = isVisible ? '' : 'none';
+            }
+
             if (previewModalDOM) {
                 previewModalDOM.addEventListener('shown.bs.modal', function () {
                     if (modalDOM) {
@@ -314,8 +333,62 @@
                         modalDOM.style.visibility = '';
                     }
                     resetPreview();
+                    setPreviewModalFooterVisible(true);
                 });
             }
+
+            $('#adminTable').on('click', '.pdf', async function () {
+                const invoiceId = String($(this).data('id') || '').trim();
+                if (!invoiceId) {
+                    showToast('Nem található a bizonylat azonosítója.', 'danger');
+                    return;
+                }
+
+                const src = `{{ route('admin.documents.sales-invoices.pdf', ['id' => '__ID__']) }}`.replace('__ID__', String(invoiceId));
+                $('#sales_invoice_preview_iframe').attr('src', src);
+                setPreviewModalFooterVisible(false);
+                if (previewModal) previewModal.show();
+            });
+
+            $('#adminTable').on('click', '.storno', async function () {
+                const invoiceId = String($(this).data('id') || '').trim();
+                if (!invoiceId) {
+                    showToast('Nem található a bizonylat azonosítója.', 'danger');
+                    return;
+                }
+
+                if (!confirm('Biztosan sztornózod ezt a számlát?')) {
+                    return;
+                }
+
+                try {
+                    const url = `{{ route('admin.documents.sales-invoices.storno', ['id' => '__ID__']) }}`.replace('__ID__', String(invoiceId));
+                    const resp = await fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': csrfToken,
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                        },
+                    });
+
+                    if (!resp.ok) {
+                        let msg = 'Hiba történt a sztornózáskor.';
+                        try {
+                            const json = await resp.json();
+                            if (json?.message) msg = json.message;
+                        } catch (e) {}
+                        throw new Error(msg);
+                    }
+
+                    const json = await resp.json().catch(() => ({}));
+                    showToast(json?.message || 'Sztornó sikeres.', 'success');
+                    table.ajax.reload(null, false);
+                    if (previewModal) previewModal.hide();
+                } catch (e) {
+                    showToast(e?.message || 'Hiba!', 'danger');
+                }
+            });
 
             function escapeHtml(value) {
                 if (value === null || value === undefined) return '';
@@ -332,6 +405,7 @@
             }
 
             async function loadInvoicePdfPreview() {
+                setPreviewModalFooterVisible(true);
                 const previewBtn = document.getElementById('previewSalesInvoice');
                 if (!previewBtn) return;
                 const originalText = previewBtn ? previewBtn.innerHTML : null;
@@ -534,6 +608,7 @@
                     { data: 'id' },
                     { data: 'invoice_number' },
                     { data: 'partner_name' },
+                    { data: 'payment_method' },
                     { data: 'issued_at' },
                     { data: 'due_at' },
                     { data: 'currency' },
@@ -541,6 +616,8 @@
                     { data: 'created' },
                     { data: 'status' },
                     { data: 'payment_status' },
+                    { data: 'invoice_type' },
+                    { data: 'note' },
                     { data: 'action', orderable: false, searchable: false }
                 ],
             });
@@ -644,9 +721,7 @@
 
                     const pdfPath = invoice.pdf_path;
                     if (pdfPath) {
-                        const src = String(pdfPath).startsWith('http')
-                            ? String(pdfPath)
-                            : (String(pdfPath).startsWith('/') ? String(pdfPath) : `${window.appConfig.APP_URL}${String(pdfPath)}`);
+                        const src = `{{ route('admin.documents.sales-invoices.pdf', ['id' => '__ID__']) }}`.replace('__ID__', String(invoiceId));
                         $('#sales_invoice_preview_iframe').attr('src', src);
                     } else {
                         resetPreview();
@@ -708,11 +783,15 @@
                 saveBtn.html('Létrehozás...').prop('disabled', true);
 
                 const saveDraftBtn = $('.saveDraftSalesInvoice');
+                const originalSaveDraftButtonHtml = saveDraftBtn.length ? saveDraftBtn.html() : null;
                 if (saveDraftBtn.length) saveDraftBtn.prop('disabled', true);
 
                 const previewBtn = $('#previewSalesInvoice');
                 const originalPreviewButtonHtml = previewBtn.length ? previewBtn.html() : null;
                 if (previewBtn.length) previewBtn.prop('disabled', true);
+
+                const cancelBtn = $('#salesInvoicePreviewModalFooter button[data-bs-dismiss="modal"]');
+                if (cancelBtn.length) cancelBtn.prop('disabled', true);
 
                 //const invoiceId = $('#invoice_id').val();
 
@@ -769,6 +848,7 @@
                             showToast('Számla kiállítva.', 'success');
                             table.ajax.reload(null, false);
                             modal.hide();
+                            if (previewModal) previewModal.hide();
 
                         }).catch((err) => {
                             showToast(err?.message || 'Hiba!', 'danger');
@@ -776,7 +856,8 @@
                         }).finally(() => {
                             saveBtn.html(originalSaveButtonHtml).prop('disabled', false);
                             if (previewBtn.length) previewBtn.html(originalPreviewButtonHtml).prop('disabled', false);
-                            if (saveDraftBtn.length) saveDraftBtn.html(originalPreviewButtonHtml).prop('disabled', false);
+                            if (saveDraftBtn.length) saveDraftBtn.html(originalSaveDraftButtonHtml).prop('disabled', false);
+                            if (cancelBtn.length) cancelBtn.prop('disabled', false);
                         });
                     },
                     error(xhr) {
@@ -791,6 +872,7 @@
                         saveBtn.html(originalSaveButtonHtml).prop('disabled', false);
                         if (previewBtn.length) previewBtn.html(originalPreviewButtonHtml).prop('disabled', false);
                         if (saveDraftBtn.length) saveDraftBtn.html(originalSaveDraftButtonHtml).prop('disabled', false);
+                        if (cancelBtn.length) cancelBtn.prop('disabled', false);
                     },
                     complete: () => {}
                 });
