@@ -17,7 +17,7 @@
         table { width: 100%; border-collapse: collapse; }
         th, td { border: 1px solid #cbd5e1; padding: 6px 8px; }
         th { background: #cfe0ff; text-align: left; }
-        .text-right { text-align: right; }
+        .text-right { text-align: right; white-space: nowrap; }
         .small { font-size: 10px; }
         .mb-8 { margin-bottom: 8px; }
         .mb-12 { margin-bottom: 12px; }

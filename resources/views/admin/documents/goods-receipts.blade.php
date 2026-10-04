@@ -348,12 +348,27 @@
                 return { net, gross };
             }
 
+            function getQtyStep(row) {
+                const pack = Number(row.unit_qty || 0);
+                if (Number.isFinite(pack) && pack > 0) return pack;
+                return 1;
+            }
+
+            function normalizeQtyToStep(qty, step) {
+                const q = Number(qty || 0);
+                const s = Number(step || 1);
+                if (!Number.isFinite(q) || !Number.isFinite(s) || s <= 0) return 0;
+                return Math.round(q / s) * s;
+            }
+
             function renderItems() {
                 const $tbody = $('#items_table tbody');
                 $tbody.empty();
 
                 items.forEach((row, idx) => {
                     const { net, gross } = calcRow(row);
+                    const qtyStep = getQtyStep(row);
+                    const qtyVal = (row.quantity ?? 1);
 
                     $tbody.append(`
                         <tr data-idx="${idx}">
@@ -361,7 +376,7 @@
                                 <div class="fw-semibold">${escapeHtml(row.name || '')}</div>
                             </td>
                             <td class="text-end">
-                                <input type="number" step="0.001" class="form-control form-control-sm item-qty" value="${escapeHtml(row.quantity ?? 1)}">
+                                <input type="number" step="${escapeHtml(qtyStep)}" min="0" class="form-control form-control-sm item-qty" value="${escapeHtml(qtyVal)}">
                             </td>
                             <td>
                                 <input type="text" class="form-control form-control-sm item-unit" value="${escapeHtml(row.unit || 'db')}">
@@ -437,7 +452,19 @@
                 const idx = Number($tr.data('idx'));
                 if (!Number.isFinite(idx) || !items[idx]) return;
 
-                items[idx].quantity = Number($tr.find('.item-qty').val() || 0);
+                const $qty = $tr.find('.item-qty');
+                const qtyStep = getQtyStep(items[idx]);
+                let qty = Number($qty.val() || 0);
+
+                if (qtyStep !== 1) {
+                    const normalized = normalizeQtyToStep(qty, qtyStep);
+                    if (Number.isFinite(normalized) && normalized !== qty) {
+                        qty = normalized;
+                        $qty.val(String(qty));
+                    }
+                }
+
+                items[idx].quantity = qty;
                 items[idx].unit = String($tr.find('.item-unit').val() || 'db');
                 items[idx].unit_net_price = Number($tr.find('.item-unit-net').val() || 0);
                 items[idx].vat_percent = Number($tr.find('.item-vat').val() || 0);
@@ -485,7 +512,8 @@
                                     <button type="button" class="list-group-item list-group-item-action product-result"
                                         data-id="${escapeHtml(p.id)}"
                                         data-name="${escapeHtml(p.title)}"
-                                        data-unit="${escapeHtml(p.unit_abbreviation || p.unit_name || 'db')}">
+                                        data-unit="${escapeHtml(p.unit_abbreviation || p.unit_name || 'db')}"
+                                        data-unit-qty="${escapeHtml(p.unit_qty || '')}">
                                         <div class="fw-semibold">${escapeHtml(p.title)}</div>
                                         <div class="small text-muted">${unitText}</div>
                                     </button>
@@ -502,6 +530,7 @@
                     product_id: $btn.data('id'),
                     name: $btn.data('name'),
                     unit: $btn.data('unit') || 'db',
+                    unit_qty: Number($btn.data('unit-qty') || 0),
                     quantity: 1,
                     unit_net_price: 0,
                     vat_percent: 27,
@@ -962,11 +991,12 @@
                 $('#note').val(receipt.note || '');
 
                 items.splice(0, items.length);
-                receiptItems.forEach(it => {
+                (json?.items || []).forEach(it => {
                     items.push({
                         product_id: it.product_id,
                         name: it.name,
                         unit: it.unit || 'db',
+                        unit_qty: Number(it.unit_qty || 0),
                         quantity: Number(it.quantity || 0),
                         unit_net_price: Number(it.unit_net_price || 0),
                         vat_percent: Number(it.vat_percent || 0),
