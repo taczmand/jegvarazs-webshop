@@ -504,19 +504,19 @@
 
                                     const headerParts = [idNumber, email].filter(Boolean).join(', ');
                                     $list.append(`
-                                        <div class="list-group-item client-search-header">
-                                            <div class="fw-bold">${escapeHtml(name || email || 'N/A')}${headerParts ? ' (' + escapeHtml(headerParts) + ')' : ''}</div>
+                                        <div class="list-group-item py-0 px-1 client-search-header">
+                                            <div class="fw-semibold small">${escapeHtml(name || email || 'N/A')}${headerParts ? ' (' + escapeHtml(headerParts) + ')' : ''}</div>
                                         </div>
                                     `);
 
                                     if (!addresses.length) {
                                         $list.append(`
-                                            <button type="button" class="list-group-item list-group-item-action client-no-address"
+                                            <button type="button" class="list-group-item list-group-item-action py-0 px-1 small client-no-address"
                                                 data-name="${escapeHtml(name)}"
                                                 data-tax="${escapeHtml(idNumber)}"
                                                 data-email="${escapeHtml(email)}"
                                                 data-phone="${escapeHtml(phone)}">
-                                                <div class="fw-bold">Kiválasztás</div>
+                                                <div class="fw-semibold">Kiválasztás</div>
                                                 <div class="small text-muted">Nincs rögzített cím</div>
                                             </button>
                                         `);
@@ -526,7 +526,7 @@
                                     addresses.forEach(a => {
                                         const addrText = `${a?.zip_code || ''} ${a?.city || ''}, ${a?.address_line || ''}`.trim();
                                         $list.append(`
-                                            <button type="button" class="list-group-item list-group-item-action client-address-item"
+                                            <button type="button" class="list-group-item list-group-item-action py-0 px-1 small client-address-item"
                                                 data-name="${escapeHtml(name)}"
                                                 data-tax="${escapeHtml(idNumber)}"
                                                 data-email="${escapeHtml(email)}"
@@ -535,22 +535,22 @@
                                                 data-zip="${escapeHtml(a?.zip_code || '')}"
                                                 data-city="${escapeHtml(a?.city || '')}"
                                                 data-line="${escapeHtml(a?.address_line || '')}">
-                                                <div class="fw-bold">${escapeHtml(addrText || 'Cím nélkül')}${a?.is_default ? ' (alapértelmezett)' : ''}</div>
+                                                <div class="fw-semibold">${escapeHtml(addrText || 'Cím nélkül')}${a?.is_default ? ' (alapértelmezett)' : ''}</div>
                                             </button>
                                         `);
                                     });
                                 });
                             } else {
                                 $list.append(`
-                                    <div class="list-group-item">
+                                    <div class="list-group-item py-0 px-1 small">
                                         <div class="small text-muted">Nincs találat.</div>
                                     </div>
                                 `);
                             }
 
                             $list.append(`
-                                <button type="button" class="list-group-item list-group-item-action client-create client-create-item">
-                                    <div class="fw-bold">Új ügyfél létrehozása</div>
+                                <button type="button" class="list-group-item list-group-item-action py-0 px-1 small client-create client-create-item">
+                                    <div class="fw-semibold">Új ügyfél létrehozása</div>
                                     <div class="small text-muted">Az alábbi mezőkben megadott adatokkal</div>
                                 </button>
                             `);
@@ -561,7 +561,7 @@
                             const $list = $('#partner_client_search_results');
                             $list.empty();
                             $list.append(`
-                                <div class="list-group-item">
+                                <div class="list-group-item py-0 px-1 small">
                                     <div class="small text-muted">A keresés sikertelen volt.</div>
                                 </div>
                             `);
