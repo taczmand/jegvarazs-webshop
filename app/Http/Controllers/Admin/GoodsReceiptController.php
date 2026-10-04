@@ -11,6 +11,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 use Yajra\DataTables\Facades\DataTables;
 
 class GoodsReceiptController extends Controller
@@ -53,25 +54,62 @@ class GoodsReceiptController extends Controller
 
     public function data()
     {
-        $receipts = GoodsReceipt::query()->select([
-            'id',
-            'company_id',
-            'document_number',
-            'supplier_document_number',
-            'partner_name',
-            'received_at',
-            'status',
-            'pdf_path',
-            'created_at as created',
-            'updated_at as updated',
-        ]);
+        $receipts = GoodsReceipt::query()
+            ->from('goods_receipts as gr')
+            ->leftJoin('goods_receipt_items as gri', 'gri.goods_receipt_id', '=', 'gr.id')
+            ->select([
+                'gr.id',
+                'gr.company_id',
+                'gr.document_number',
+                'gr.supplier_document_number',
+                'gr.partner_name',
+                'gr.received_at',
+                'gr.status',
+                'gr.pdf_path',
+                'gr.stock_added_at',
+                'gr.created_at as created',
+                'gr.updated_at as updated',
+            ])
+            ->selectRaw('COALESCE(SUM(ROUND(COALESCE(gri.unit_net_price, 0) * COALESCE(gri.quantity, 0))), 0) as net_total')
+            ->selectRaw('COALESCE(SUM(ROUND(COALESCE(gri.unit_net_price, 0) * COALESCE(gri.quantity, 0) * (COALESCE(gri.vat_percent, 0) / 100))), 0) as vat_total')
+            ->selectRaw('COALESCE(SUM(ROUND(COALESCE(gri.unit_net_price, 0) * COALESCE(gri.quantity, 0) * (1 + (COALESCE(gri.vat_percent, 0) / 100)))), 0) as gross_total')
+            ->groupBy([
+                'gr.id',
+                'gr.company_id',
+                'gr.document_number',
+                'gr.supplier_document_number',
+                'gr.partner_name',
+                'gr.received_at',
+                'gr.status',
+                'gr.pdf_path',
+                'gr.stock_added_at',
+                'gr.created_at',
+                'gr.updated_at',
+            ]);
 
         return DataTables::of($receipts)
+            ->addColumn('net_total', function ($receipt) {
+                return number_format((int) ($receipt->net_total ?? 0), 0, ',', ' ');
+            })
+            ->addColumn('vat_total', function ($receipt) {
+                return number_format((int) ($receipt->vat_total ?? 0), 0, ',', ' ');
+            })
+            ->addColumn('gross_total', function ($receipt) {
+                return number_format((int) ($receipt->gross_total ?? 0), 0, ',', ' ');
+            })
             ->addColumn('action', function ($receipt) {
                 $user = auth('admin')->user();
                 $buttons = '';
 
-                if ($user && $user->can('edit-goods-receipt')) {
+                if (!empty($receipt->pdf_path) && $user && $user->can('view-goods-receipts')) {
+                    $buttons .= '
+                        <button class="btn btn-sm btn-outline-secondary pdf" data-id="' . $receipt->id . '" title="PDF megnyitása">
+                            <i class="fas fa-file-pdf"></i>
+                        </button>
+                    ';
+                }
+
+                if (($receipt->status ?? null) === 'draft' && $user && $user->can('edit-goods-receipt')) {
                     $buttons .= '
                         <button class="btn btn-sm btn-primary edit" data-id="' . $receipt->id . '" title="Szerkesztés">
                             <i class="fas fa-edit"></i>
@@ -88,6 +126,16 @@ class GoodsReceiptController extends Controller
                 }
 
                 return $buttons;
+            })
+            ->addColumn('status', function ($receipt) {
+                $translations = [
+                    'draft'   => 'Piszkozat',
+                    'posted'   => 'Kész'
+                ];
+                return $translations[$receipt->status] ?? ucfirst($receipt->status);
+            })
+            ->editColumn('received_at', function ($receipt) {
+                return $receipt->received_at ? $receipt->received_at->format('Y-m-d') : '';
             })
             ->rawColumns(['action'])
             ->make(true);
@@ -171,12 +219,6 @@ class GoodsReceiptController extends Controller
 
             $this->syncItemsFromJson($receipt->id, (string) $request->input('items_json', '[]'));
 
-            $itemsForPdf = $this->parseItemsForPdf((string) $request->input('items_json', '[]'));
-            $relativePath = $this->generateAndStorePdf($receipt->fresh(), $itemsForPdf);
-            $receipt->update([
-                'pdf_path' => $relativePath,
-            ]);
-
             return $receipt;
         });
 
@@ -256,12 +298,6 @@ class GoodsReceiptController extends Controller
             $receipt->update($validated);
             $this->syncItemsFromJson($receipt->id, (string) $request->input('items_json', '[]'));
 
-            $itemsForPdf = $this->parseItemsForPdf((string) $request->input('items_json', '[]'));
-            $relativePath = $this->generateAndStorePdf($receipt->fresh(), $itemsForPdf);
-            $receipt->update([
-                'pdf_path' => $relativePath,
-            ]);
-
             return $receipt;
         });
 
@@ -299,7 +335,7 @@ class GoodsReceiptController extends Controller
             abort(404);
         }
 
-        $absolute = storage_path('app/' . ltrim($path, '/'));
+        $absolute = storage_path('app/private/' . ltrim($path, '/'));
         if (!file_exists($absolute)) {
             abort(404);
         }
@@ -317,26 +353,58 @@ class GoodsReceiptController extends Controller
             return response()->json(['message' => 'Nincs jogosultságod.'], 403);
         }
 
-        $validated = $request->validate([
-            'company_id' => 'required|integer|exists:companies,id',
-            'warehouse_id' => 'required|integer|exists:warehouses,id',
-            'document_number' => 'nullable|string|max:255',
-            'supplier_document_number' => 'nullable|string|max:255',
+        $validator = Validator::make(
+            $request->all(),
+            [
+                'company_id' => 'required|integer|exists:companies,id',
+                'warehouse_id' => 'required|integer|exists:warehouses,id',
+                'document_number' => 'nullable|string|max:255',
+                'supplier_document_number' => 'nullable|string|max:255',
 
-            'partner_name' => 'required|string|max:255',
-            'partner_tax_number' => 'nullable|string|max:255',
-            'partner_country' => 'nullable|string|max:2',
-            'partner_zip_code' => 'nullable|string|max:255',
-            'partner_city' => 'nullable|string|max:255',
-            'partner_address_line' => 'nullable|string|max:255',
+                'partner_name' => 'required|string|max:255',
+                'partner_tax_number' => 'nullable|string|max:255',
+                'partner_country' => 'nullable|string|max:2',
+                'partner_zip_code' => 'nullable|string|max:255',
+                'partner_city' => 'nullable|string|max:255',
+                'partner_address_line' => 'nullable|string|max:255',
 
-            'received_at' => 'nullable|date',
+                'received_at' => 'nullable|date',
 
-            'note_for_document' => 'nullable|string',
-            'note' => 'nullable|string',
+                'note_for_document' => 'nullable|string',
+                'note' => 'nullable|string',
 
-            'items_json' => 'required|string',
-        ]);
+                'items_json' => 'required|string',
+            ],
+            [
+                'company_id' => 'cég',
+                'warehouse_id' => 'raktár',
+                'document_number' => 'bizonylatszám',
+                'supplier_document_number' => 'szállítói bizonylatszám',
+
+                'partner_name' => 'partner neve',
+                'partner_tax_number' => 'partner adószáma',
+                'partner_country' => 'partner országa',
+                'partner_zip_code' => 'partner irányítószáma',
+                'partner_city' => 'partner települése',
+                'partner_address_line' => 'partner címe',
+
+                'received_at' => 'bevételezés dátuma',
+
+                'note_for_document' => 'bizonylat megjegyzése',
+                'note' => 'megjegyzés',
+
+                'items_json' => 'tételek',
+            ]
+        );
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Validációs hiba.',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        $validated = $validator->validated();
 
         $items = $this->parseItemsForPdf((string) $validated['items_json']);
         if (count($items) === 0) {
@@ -428,10 +496,20 @@ class GoodsReceiptController extends Controller
 
             $validatedForUpdate = $validated;
             unset($validatedForUpdate['warehouse_id']);
+            unset($validatedForUpdate['items_json']);
 
             $company = Company::query()->where('status', 'active')->find($validatedForUpdate['company_id'] ?? null);
             if (!$company) {
                 throw new \RuntimeException('Kérlek válassz egy céget.');
+            }
+
+            $prefix = strtoupper(trim((string) ($company->prefix ?? '')));
+            if ($prefix === '') {
+                $fallback = strtoupper(preg_replace('/[^A-Z0-9]/i', '', (string) ($company->name ?? '')));
+                $prefix = substr($fallback, 0, 6);
+            }
+            if ($prefix === '') {
+                $prefix = 'BEV';
             }
 
             $validatedForUpdate['company_id'] = $company->id;
@@ -459,7 +537,7 @@ class GoodsReceiptController extends Controller
             $bytes = $pdf->output();
 
             $month = now()->format('Y-m');
-            $dir = 'private/goods-receipts/' . $month;
+            $dir = 'goods-receipts/' . $month;
             $fileName = 'bevetelezes-' . $receipt->id . '.pdf';
             $relativePath = $dir . '/' . $fileName;
 
@@ -474,6 +552,12 @@ class GoodsReceiptController extends Controller
                 'status' => 'posted',
                 'stock_added_at' => $receipt->stock_added_at ?: now(),
             ]);
+
+            if ($receipt->document_number === null || $receipt->document_number === '' || str_starts_with((string) $receipt->document_number, 'DRAFT-')) {
+                $receipt->update([
+                    'document_number' => $prefix . '-' . $receipt->id,
+                ]);
+            }
 
             return $bytes;
         });
@@ -495,13 +579,50 @@ class GoodsReceiptController extends Controller
 
         $receipt = GoodsReceipt::query()->with(['items'])->findOrFail($id);
 
-        if ($receipt->stock_added_at !== null) {
-            return response()->json([
-                'message' => 'A könyvelt (készletet növelő) bevételezés nem törölhető.',
-            ], 422);
-        }
-
         DB::transaction(function () use ($receipt) {
+            $receipt->refresh();
+
+            if ($receipt->stock_added_at !== null) {
+                $warehouseId = (int) ($receipt->warehouse_id ?? 0);
+                if ($warehouseId <= 0) {
+                    throw new \RuntimeException('Hiányzó raktár a törléshez.');
+                }
+
+                $items = GoodsReceiptItem::query()->where('goods_receipt_id', $receipt->id)->get();
+                $productIds = $items->pluck('product_id')->filter()->unique()->values()->all();
+
+                if (count($productIds) > 0) {
+                    $stocks = DB::table('product_stocks')
+                        ->where('warehouse_id', '=', $warehouseId)
+                        ->whereIn('product_id', $productIds)
+                        ->lockForUpdate()
+                        ->get(['product_id', 'quantity']);
+
+                    $byProductId = $stocks->keyBy('product_id');
+
+                    foreach ($items as $item) {
+                        if (!$item->product_id) {
+                            continue;
+                        }
+
+                        $currentQty = (float) (($byProductId[$item->product_id]->quantity ?? 0) ?? 0);
+                        $sub = (float) ($item->quantity ?? 0);
+                        $newQty = $currentQty - $sub;
+
+                        DB::table('product_stocks')->updateOrInsert(
+                            [
+                                'warehouse_id' => $warehouseId,
+                                'product_id' => (int) $item->product_id,
+                            ],
+                            [
+                                'quantity' => $newQty,
+                                'updated_at' => now(),
+                            ]
+                        );
+                    }
+                }
+            }
+
             $path = (string) ($receipt->pdf_path ?? '');
             if ($path !== '' && Storage::disk('local')->exists($path)) {
                 Storage::disk('local')->delete($path);
@@ -684,7 +805,7 @@ class GoodsReceiptController extends Controller
         $bytes = $pdf->output();
 
         $month = now()->format('Y-m');
-        $dir = 'private/goods-receipts/' . $month;
+        $dir = 'goods-receipts/' . $month;
         $fileName = 'bevetelezes-' . $receipt->id . '.pdf';
         $relativePath = $dir . '/' . $fileName;
 

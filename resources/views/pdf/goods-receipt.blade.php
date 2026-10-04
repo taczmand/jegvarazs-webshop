@@ -122,9 +122,5 @@
     </table>
 </div>
 
-@if(($goods_receipt->note ?? '') !== '')
-    <div class="mb-8">{!! nl2br(e($goods_receipt->note)) !!}</div>
-@endif
-
 </body>
 </html>

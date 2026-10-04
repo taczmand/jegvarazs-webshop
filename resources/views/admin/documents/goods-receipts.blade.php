@@ -3,7 +3,7 @@
 @section('content')
 
 
-    <div class="container p-0">
+    <div class="container-fluid px-0">
 
         <div class="d-flex justify-content-between align-items-center mb-3 pb-2">
             <h2 class="color-dark-blue mb-0">Ügyvitel / Bizonylatok / Bevételezések</h2>
@@ -34,11 +34,10 @@
                     </div>
 
                     <div class="filter-group flex-grow-1 flex-md-shrink-0">
-                        <select class="form-select filter-input" data-column="5">
+                        <select class="form-select filter-input" data-column="8">
                             <option value="">Állapot (összes)</option>
-                            <option value="draft">draft</option>
-                            <option value="posted">posted</option>
-                            <option value="cancelled">cancelled</option>
+                            <option value="draft">Piszkozat</option>
+                            <option value="posted">Kész</option>
                         </select>
                     </div>
                 </div>
@@ -51,6 +50,9 @@
                         <th>Szállítói bizonylat</th>
                         <th>Partner</th>
                         <th>Bevételezés dátuma</th>
+                        <th>Nettó</th>
+                        <th>ÁFA</th>
+                        <th>Bruttó</th>
                         <th>Állapot</th>
                         <th data-priority="2">Műveletek</th>
                     </tr>
@@ -66,9 +68,10 @@
     </div>
 
 
-    <x-admin.document-modal id="goodsReceiptModal" title="Bevételezés" form-id="goodsReceiptForm" save-button-id="saveGoodsReceipt" pane-left="40%" pane-mid="60%">
+    <x-admin.document-modal id="goodsReceiptModal" title="Bevételezés" form-id="goodsReceiptForm" save-button-id="saveDraftGoodsReceipt" pane-left="40%" pane-mid="60%">
         <x-slot:left>
             <input type="hidden" id="goods_receipt_id" name="id">
+            <input type="hidden" id="goods_receipt_status" name="status" value="">
 
             <fieldset class="admin-fieldset mb-3">
                 <legend class="admin-fieldset__legend">Kiállító adatai</legend>
@@ -100,7 +103,7 @@
 
                 <div class="mb-2">
                     <label for="received_at" class="form-label">Bevételezés dátuma</label>
-                    <input type="date" class="form-control" id="received_at" name="received_at" max="2099-12-31">
+                    <input type="datetime-local" class="form-control" id="received_at" name="received_at" max="2099-12-31T23:59">
                 </div>
             </fieldset>
 
@@ -205,7 +208,7 @@
             </fieldset>
         </x-slot:middle>
 
-        <x-slot:right>
+        <!--<x-slot:right>
             <div class="d-flex flex-column h-100" style="min-height: 0;">
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <div class="fw-semibold">PDF előnézet</div>
@@ -218,23 +221,38 @@
                     <button type="button" class="btn btn-primary w-100" id="issueGoodsReceiptPdf">PDF kiállítás + készlet növelés</button>
                 </div>
             </div>
-        </x-slot:right>
+        </x-slot:right>-->
 
         <x-slot:footer>
-            <button type="button" class="btn btn-outline-secondary" id="openGoodsReceiptPdf" style="display:none;">Megnyitás PDF</button>
+            <!--<button type="button" class="btn btn-outline-secondary" id="openGoodsReceiptPdf" style="display:none;">Megnyitás PDF</button>-->
+            <button type="button" class="btn btn-outline-primary" id="previewGoodsReceipt">Előnézet</button>
+            <button type="button" class="btn btn-primary saveDraftGoodsReceipt">Piszkozat mentése</button>
         </x-slot:footer>
     </x-admin.document-modal>
 
 
-    <div class="modal fade" id="goodsReceiptPreviewModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-xl modal-dialog-centered" style="max-width: 95vw;">
-            <div class="modal-content">
+    <div class="modal fade" id="goodsReceiptPreviewModal" tabindex="-1" aria-hidden="true" style="z-index: 2000;">
+        <div class="modal-dialog modal-fullscreen m-0 p-0">
+            <div class="modal-content" style="height: 100vh; border-radius: 0; display: flex; flex-direction: column;">
                 <div class="modal-header">
                     <h5 class="modal-title">Bevételezés PDF előnézet</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Bezárás"></button>
                 </div>
-                <div class="modal-body" style="height: 80vh;">
-                    <iframe id="goods_receipt_preview_iframe_modal" src="about:blank" style="width:100%; height:100%; border:0;"></iframe>
+                <div class="modal-body p-0" style="flex: 1 1 auto;">
+                    <iframe id="goods_receipt_preview_iframe_modal" src="about:blank" style="width: 100%; height: 100%; border: 0; display:block;"></iframe>
+                </div>
+                <div class="modal-footer" id="goodsReceiptPreviewModalFooter">
+                    <button type="button" class="btn btn-success" id="createGoodsReceipt">
+                        Bizonylat létrehozása
+                    </button>
+
+                    <button type="button" class="btn btn-primary saveDraftGoodsReceipt">
+                        Piszkozat mentése
+                    </button>
+
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        Mégse
+                    </button>
                 </div>
             </div>
         </div>
@@ -274,9 +292,40 @@
                 return `${d.getFullYear()}-${m}-${day}`;
             }
 
+            function nowDateTimeLocal() {
+                const d = new Date();
+                const m = String(d.getMonth() + 1).padStart(2, '0');
+                const day = String(d.getDate()).padStart(2, '0');
+                const hh = String(d.getHours()).padStart(2, '0');
+                const mm = String(d.getMinutes()).padStart(2, '0');
+                return `${d.getFullYear()}-${m}-${day}T${hh}:${mm}`;
+            }
+
+            function setPreviewModalFooterVisible(isVisible = true) {
+                const footer = document.getElementById('goodsReceiptPreviewModalFooter');
+                if (!footer) return;
+                footer.style.display = isVisible ? '' : 'none';
+            }
+
             function resetPreview() {
                 $('#goods_receipt_preview_iframe').attr('src', 'about:blank');
                 $('#goods_receipt_preview_iframe_modal').attr('src', 'about:blank');
+            }
+
+            if (previewModalDOM) {
+                previewModalDOM.addEventListener('shown.bs.modal', function () {
+                    if (modalDOM) {
+                        modalDOM.style.visibility = 'hidden';
+                    }
+                });
+
+                previewModalDOM.addEventListener('hidden.bs.modal', function () {
+                    if (modalDOM) {
+                        modalDOM.style.visibility = '';
+                    }
+                    resetPreview();
+                    setPreviewModalFooterVisible(true);
+                });
             }
 
             const items = [];
@@ -323,8 +372,8 @@
                             <td class="text-end">
                                 <input type="number" step="1" class="form-control form-control-sm item-vat" value="${escapeHtml(row.vat_percent ?? 0)}">
                             </td>
-                            <td class="text-end">${fmtMoney(net)}</td>
-                            <td class="text-end">${fmtMoney(gross)}</td>
+                            <td class="text-end item-net-cell">${fmtMoney(net)}</td>
+                            <td class="text-end item-gross-cell">${fmtMoney(gross)}</td>
                             <td class="text-end">
                                 <button type="button" class="btn btn-sm btn-outline-danger item-remove">×</button>
                             </td>
@@ -343,6 +392,7 @@
                 $('#goodsReceiptForm')[0].reset();
                 $('#goodsReceiptModalLabel').text(title);
                 $('#goods_receipt_id').val('');
+                $('#goods_receipt_status').val('');
 
                 if (defaultCompanyId) {
                     $('#company_id').val(defaultCompanyId);
@@ -352,7 +402,7 @@
                     $('#warehouse_id').val(warehouses[0].id);
                 }
 
-                $('#received_at').val(todayDate());
+                $('#received_at').val(nowDateTimeLocal());
 
                 $('#partner_name').val('');
                 $('#partner_tax_number').val('');
@@ -392,7 +442,10 @@
                 items[idx].unit_net_price = Number($tr.find('.item-unit-net').val() || 0);
                 items[idx].vat_percent = Number($tr.find('.item-vat').val() || 0);
 
-                renderItems();
+                const { net, gross } = calcRow(items[idx]);
+                $tr.find('.item-net-cell').text(fmtMoney(net));
+                $tr.find('.item-gross-cell').text(fmtMoney(gross));
+                syncItemsJson();
             });
 
             $('#items_table').on('click', '.item-remove', function () {
@@ -431,9 +484,9 @@
                                 container.append(`
                                     <button type="button" class="list-group-item list-group-item-action product-result"
                                         data-id="${escapeHtml(p.id)}"
-                                        data-name="${escapeHtml(p.name)}"
+                                        data-name="${escapeHtml(p.title)}"
                                         data-unit="${escapeHtml(p.unit_abbreviation || p.unit_name || 'db')}">
-                                        <div class="fw-semibold">${escapeHtml(p.name)}</div>
+                                        <div class="fw-semibold">${escapeHtml(p.title)}</div>
                                         <div class="small text-muted">${unitText}</div>
                                     </button>
                                 `);
@@ -462,14 +515,14 @@
                 const previewBtn = document.getElementById('previewGoodsReceipt');
                 if (!previewBtn) return;
                 const originalText = previewBtn ? previewBtn.innerHTML : null;
-                const saveBtn = document.getElementById('saveGoodsReceipt');
-                const saveBtnWasDisabled = saveBtn ? saveBtn.disabled : false;
+                const saveDraftBtn = document.getElementsByClassName('saveDraftGoodsReceipt');
+                const saveDraftBtnWasDisabled = saveDraftBtn ? saveDraftBtn.disabled : false;
                 if (previewBtn) {
                     previewBtn.disabled = true;
                     previewBtn.innerHTML = 'Betöltés...';
                 }
-                if (saveBtn) {
-                    saveBtn.disabled = true;
+                if (saveDraftBtn) {
+                    saveDraftBtn.disabled = true;
                 }
 
                 try {
@@ -506,15 +559,130 @@
                         previewBtn.disabled = false;
                         if (originalText !== null) previewBtn.innerHTML = originalText;
                     }
-                    if (saveBtn) {
-                        saveBtn.disabled = saveBtnWasDisabled;
+                    if (saveDraftBtn) {
+                        saveDraftBtn.disabled = saveDraftBtnWasDisabled;
                     }
                 }
             }
 
-            $('#previewGoodsReceipt').on('click', function () {
+            $(document).on('click', '#previewGoodsReceipt', function () {
                 loadGoodsReceiptPdfPreview();
             });
+
+            $('#adminTable').on('click', '.pdf', function () {
+                const row_data = $('#adminTable').DataTable().row($(this).parents('tr')).data();
+                const id = row_data?.id;
+                if (!id) return;
+                const src = `{{ url('/admin/bizonylatok/bevetelezesek') }}/${id}/pdf`;
+                $('#goods_receipt_preview_iframe_modal').attr('src', src);
+                setPreviewModalFooterVisible(false);
+                if (previewModal) previewModal.show();
+            });
+
+            $('#createGoodsReceipt').on('click', async function (e) {
+                e.preventDefault();
+
+                syncItemsJson();
+
+                const btn = this;
+                const originalText = btn.innerHTML;
+                btn.disabled = true;
+                btn.innerHTML = 'Létrehozás...';
+
+                const saveDraftBtns = $('.saveDraftGoodsReceipt');
+                const originalSaveDraftHtml = saveDraftBtns.length ? saveDraftBtns.html() : null;
+                if (saveDraftBtns.length) saveDraftBtns.prop('disabled', true);
+
+                const previewBtn = $('#previewGoodsReceipt');
+                const originalPreviewHtml = previewBtn.length ? previewBtn.html() : null;
+                if (previewBtn.length) previewBtn.prop('disabled', true);
+
+                const cancelBtn = $('#goodsReceiptPreviewModalFooter button[data-bs-dismiss="modal"]');
+                if (cancelBtn.length) cancelBtn.prop('disabled', true);
+
+                try {
+                    const id = String($('#goods_receipt_id').val() || '').trim();
+                    const isEdit = !!id;
+
+                    $('#goods_receipt_status').val('draft');
+
+                    const url = isEdit
+                        ? `{{ url('/admin/bizonylatok/bevetelezesek') }}/${id}`
+                        : `{{ url('/admin/bizonylatok/bevetelezesek') }}`;
+                    const method = isEdit ? 'PUT' : 'POST';
+
+                    const saveResp = await fetch(url, {
+                        method,
+                        headers: {
+                            'X-CSRF-TOKEN': csrfToken,
+                            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                            'Accept': 'application/json',
+                        },
+                        body: $('#goodsReceiptForm').serialize(),
+                    });
+
+                    if (!saveResp.ok) {
+                        let msg = 'Hiba történt a mentés során.';
+                        try {
+                            const json = await saveResp.json();
+                            if (json?.message) msg = json.message;
+                            if (json?.errors) msg = Object.values(json.errors).flat().join(' ');
+                        } catch (e) {}
+                        throw new Error(msg);
+                    }
+
+                    const saveJson = await saveResp.json();
+                    const savedId = saveJson?.goods_receipt?.id;
+                    if (!savedId) {
+                        throw new Error('Sikeres mentés, de hiányzik a bizonylat azonosítója.');
+                    }
+                    $('#goods_receipt_id').val(savedId);
+
+                    const form = document.getElementById('goodsReceiptForm');
+                    const formData = new FormData(form);
+
+                    const issueResp = await fetch(`{{ url('/admin/bizonylatok/bevetelezesek') }}/${savedId}/issue-pdf`, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': csrfToken,
+                        },
+                        body: formData,
+                    });
+
+                    if (!issueResp.ok) {
+                        let msg = 'Hiba történt a bizonylat létrehozásakor.';
+                        try {
+                            const json = await issueResp.json();
+                            if (json?.message) msg = json.message;
+                        } catch (e) {}
+                        throw new Error(msg);
+                    }
+
+                    showToast('Bizonylat létrehozva.', 'success');
+                    $('#adminTable').DataTable().ajax.reload(null, false);
+                    modal.hide();
+                    if (previewModal) previewModal.hide();
+                } catch (e) {
+                    showToast(e?.message || 'Hiba!', 'danger');
+                    $('#adminTable').DataTable().ajax.reload(null, false);
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = originalText;
+
+                    if (previewBtn.length) {
+                        previewBtn.prop('disabled', false);
+                        if (originalPreviewHtml !== null) previewBtn.html(originalPreviewHtml);
+                    }
+
+                    if (saveDraftBtns.length) {
+                        saveDraftBtns.prop('disabled', false);
+                        if (originalSaveDraftHtml !== null) saveDraftBtns.html(originalSaveDraftHtml);
+                    }
+
+                    if (cancelBtn.length) cancelBtn.prop('disabled', false);
+                }
+            });
+
 
             $('#issueGoodsReceiptPdf').on('click', async function () {
                 const id = String($('#goods_receipt_id').val() || '').trim();
@@ -657,6 +825,13 @@
                                 `);
                             }
 
+                            $list.append(`
+                                <button type="button" class="list-group-item list-group-item-action client-create client-create-item">
+                                    <div class="fw-bold">Új ügyfél létrehozása</div>
+                                    <div class="small text-muted">Az alábbi mezőkben megadott adatokkal</div>
+                                </button>
+                            `);
+
                             $list.show();
                         },
                         error: function () {
@@ -706,6 +881,10 @@
                 }, 0);
             });
 
+            $('#partner_client_search_results').on('click', '.client-create', function () {
+                clearPartnerClientResults();
+            });
+
             const table = $('#adminTable').DataTable({
                 language: {
                     url: '/lang/datatables/hu.json'
@@ -720,6 +899,9 @@
                     { data: 'supplier_document_number' },
                     { data: 'partner_name' },
                     { data: 'received_at' },
+                    { data: 'net_total' },
+                    { data: 'vat_total' },
+                    { data: 'gross_total' },
                     { data: 'status' },
                     { data: 'action', orderable: false, searchable: false },
                 ],
@@ -744,10 +926,28 @@
                 const receiptItems = json?.items || [];
 
                 $('#goods_receipt_id').val(receipt.id);
+                $('#goods_receipt_status').val(receipt.status || '');
                 $('#company_id').val(receipt.company_id || defaultCompanyId);
                 $('#warehouse_id').val(receipt.warehouse_id || ($('#warehouse_id').val() || (warehouses[0]?.id ?? '')));
                 $('#supplier_document_number').val(receipt.supplier_document_number || '');
-                $('#received_at').val(receipt.received_at || todayDate());
+                if (receipt.received_at) {
+                    try {
+                        const d = new Date(receipt.received_at);
+                        if (!isNaN(d.getTime())) {
+                            const m = String(d.getMonth() + 1).padStart(2, '0');
+                            const day = String(d.getDate()).padStart(2, '0');
+                            const hh = String(d.getHours()).padStart(2, '0');
+                            const mm = String(d.getMinutes()).padStart(2, '0');
+                            $('#received_at').val(`${d.getFullYear()}-${m}-${day}T${hh}:${mm}`);
+                        } else {
+                            $('#received_at').val(nowDateTimeLocal());
+                        }
+                    } catch (e) {
+                        $('#received_at').val(nowDateTimeLocal());
+                    }
+                } else {
+                    $('#received_at').val(nowDateTimeLocal());
+                }
 
                 $('#partner_name').val(receipt.partner_name || '');
                 $('#partner_tax_number').val(receipt.partner_tax_number || '');
@@ -810,6 +1010,12 @@
                 });
             });
 
+            $('.saveDraftGoodsReceipt').on('click', function (e) {
+                e.preventDefault();
+                $('#goods_receipt_status').val('draft');
+                $('#goodsReceiptForm').trigger('submit');
+            });
+
             $('#goodsReceiptForm').on('submit', function (e) {
                 e.preventDefault();
 
@@ -824,13 +1030,18 @@
 
                 const method = isEdit ? 'PUT' : 'POST';
 
-                const $btn = $('#saveGoodsReceipt');
-                const originalText = $btn.html();
-                $btn.prop('disabled', true).html('Mentés...');
+                const $btn = $('.saveDraftGoodsReceipt');
+                const originalText = $btn.length ? $btn.html() : null;
+                if ($btn.length) {
+                    $btn.prop('disabled', true).html('Mentés...');
+                }
 
                 $.ajax({
                     url,
                     type: method,
+                    headers: {
+                        'X-CSRF-TOKEN': csrfToken,
+                    },
                     data: $(this).serialize(),
                     success: function (resp) {
                         showToast(resp?.message || 'Sikeres mentés!', 'success');
@@ -856,7 +1067,12 @@
                         showToast(xhr?.responseJSON?.message || 'Hiba történt.', 'danger');
                     },
                     complete: function () {
-                        $btn.prop('disabled', false).html(originalText);
+                        if ($btn.length) {
+                            $btn.prop('disabled', false);
+                            if (originalText !== null) {
+                                $btn.html(originalText);
+                            }
+                        }
                     }
                 });
             });
