@@ -54,25 +54,60 @@ class DeliveryNoteController extends Controller
 
     public function data()
     {
-        $notes = DeliveryNote::query()->select([
-            'id',
-            'company_id',
-            'document_number',
-            'partner_name',
-            'issued_at',
-            'delivered_at',
-            'status',
-            'pdf_path',
-            'created_at as created',
-            'updated_at as updated',
-        ]);
+        $notes = DeliveryNote::query()
+            ->from('delivery_notes as dn')
+            ->leftJoin('delivery_note_items as dni', 'dni.delivery_note_id', '=', 'dn.id')
+            ->select([
+                'dn.id',
+                'dn.company_id',
+                'dn.document_number',
+                'dn.partner_name',
+                'dn.issued_at',
+                'dn.delivered_at',
+                'dn.status',
+                'dn.pdf_path',
+                'dn.created_at as created',
+                'dn.updated_at as updated',
+            ])
+            ->selectRaw('COALESCE(SUM(ROUND(COALESCE(dni.net_price, 0) * COALESCE(dni.quantity, 0))), 0) as net_total')
+            ->selectRaw('COALESCE(SUM(ROUND(COALESCE(dni.net_price, 0) * COALESCE(dni.quantity, 0) * (COALESCE(dni.vat_percent, 0) / 100))), 0) as vat_total')
+            ->selectRaw('COALESCE(SUM(ROUND(COALESCE(dni.gross_price, 0) * COALESCE(dni.quantity, 0))), 0) as gross_total')
+            ->groupBy([
+                'dn.id',
+                'dn.company_id',
+                'dn.document_number',
+                'dn.partner_name',
+                'dn.issued_at',
+                'dn.delivered_at',
+                'dn.status',
+                'dn.pdf_path',
+                'dn.created_at',
+                'dn.updated_at',
+            ]);
 
         return DataTables::of($notes)
+            ->addColumn('net_total', function ($note) {
+                return number_format((int) ($note->net_total ?? 0), 0, ',', ' ');
+            })
+            ->addColumn('vat_total', function ($note) {
+                return number_format((int) ($note->vat_total ?? 0), 0, ',', ' ');
+            })
+            ->addColumn('gross_total', function ($note) {
+                return number_format((int) ($note->gross_total ?? 0), 0, ',', ' ');
+            })
             ->addColumn('action', function ($note) {
                 $user = auth('admin')->user();
                 $buttons = '';
 
-                if ($user && $user->can('edit-delivery-note')) {
+                if (!empty($note->pdf_path) && $user && $user->can('view-delivery-notes')) {
+                    $buttons .= '
+                        <button class="btn btn-sm btn-outline-secondary pdf" data-id="' . $note->id . '" title="PDF megnyitása">
+                            <i class="fas fa-file-pdf"></i>
+                        </button>
+                    ';
+                }
+
+                if (($note->status ?? null) === 'draft' && $user && $user->can('edit-delivery-note')) {
                     $buttons .= '
                         <button class="btn btn-sm btn-primary edit" data-id="' . $note->id . '" title="Szerkesztés">
                             <i class="fas fa-edit"></i>
@@ -89,6 +124,16 @@ class DeliveryNoteController extends Controller
                 }
 
                 return $buttons;
+            })
+            ->addColumn('status', function ($delivery) {
+                $translations = [
+                    'draft'   => 'Piszkozat',
+                    'issued'   => 'Kész'
+                ];
+                return $translations[$delivery->status] ?? ucfirst($delivery->status);
+            })
+            ->editColumn('issued_at', function ($delivery) {
+                return $delivery->issued_at ? $delivery->issued_at->format('Y-m-d') : '';
             })
             ->rawColumns(['action'])
             ->make(true);
@@ -109,7 +154,6 @@ class DeliveryNoteController extends Controller
             'partnerable_id' => 'nullable|integer',
 
             'document_number' => 'nullable|string|max:255|unique:delivery_notes,document_number',
-            'status' => 'nullable|string|max:50',
 
             'partner_name' => 'required|string|max:255',
             'partner_tax_number' => 'nullable|string|max:255',
@@ -168,6 +212,7 @@ class DeliveryNoteController extends Controller
 
         $payload = array_merge([
             'status' => 'draft',
+            'warehouse_id' => $warehouseId,
         ], $validated);
 
         $note = DB::transaction(function () use ($payload, $request, $warehouseId) {
@@ -183,12 +228,6 @@ class DeliveryNoteController extends Controller
             }
 
             $this->syncItemsFromJson($note->id, (string) $request->input('items_json', '[]'));
-
-            $itemsForPdf = $this->parseItemsForPdf((string) $request->input('items_json', '[]'));
-            $relativePath = $this->generateAndStorePdf($note->fresh(), $warehouseId, $itemsForPdf);
-            $note->update([
-                'pdf_path' => $relativePath,
-            ]);
 
             return $note;
         });
@@ -216,7 +255,6 @@ class DeliveryNoteController extends Controller
             'partnerable_id' => 'nullable|integer',
 
             'document_number' => 'nullable|string|max:255|unique:delivery_notes,document_number,' . $note->id,
-            'status' => 'nullable|string|max:50',
 
             'partner_name' => 'required|string|max:255',
             'partner_tax_number' => 'nullable|string|max:255',
@@ -280,14 +318,10 @@ class DeliveryNoteController extends Controller
                 unset($validated['document_number']);
             }
 
+            $validated['warehouse_id'] = $warehouseId;
+
             $note->update($validated);
             $this->syncItemsFromJson($note->id, (string) $request->input('items_json', '[]'));
-
-            $itemsForPdf = $this->parseItemsForPdf((string) $request->input('items_json', '[]'));
-            $relativePath = $this->generateAndStorePdf($note->fresh(), $warehouseId, $itemsForPdf);
-            $note->update([
-                'pdf_path' => $relativePath,
-            ]);
 
             return $note;
         });
@@ -326,7 +360,7 @@ class DeliveryNoteController extends Controller
             abort(404);
         }
 
-        $absolute = storage_path('app/' . ltrim($path, '/'));
+        $absolute = storage_path('app/private/' . ltrim($path, '/'));
         if (!file_exists($absolute)) {
             abort(404);
         }
@@ -370,7 +404,7 @@ class DeliveryNoteController extends Controller
             'note_for_document' => 'nullable|string',
             'note' => 'nullable|string',
             'items_json' => 'required|string',
-            'company_site_id' => 'required|integer|exists:company_sites,id',
+            'company_site_id' => 'nullable|integer|exists:company_sites,id',
         ]);
 
         $items = $this->parseItemsForPdf((string) $validated['items_json']);
@@ -472,10 +506,20 @@ class DeliveryNoteController extends Controller
 
             $validatedForUpdate = $validated;
             unset($validatedForUpdate['warehouse_id']);
+            unset($validatedForUpdate['items_json']);
 
             $company = Company::query()->where('status', 'active')->find($validatedForUpdate['company_id'] ?? null);
             if (!$company) {
                 throw new \RuntimeException('Kérlek válassz egy céget.');
+            }
+
+            $prefix = strtoupper(trim((string) ($company->prefix ?? '')));
+            if ($prefix === '') {
+                $fallback = strtoupper(preg_replace('/[^A-Z0-9]/i', '', (string) ($company->name ?? '')));
+                $prefix = substr($fallback, 0, 6);
+            }
+            if ($prefix === '') {
+                $prefix = 'SZL';
             }
 
             $validatedForUpdate['company_id'] = $company->id;
@@ -489,6 +533,8 @@ class DeliveryNoteController extends Controller
             $validatedForUpdate['company_phone'] = $company->phone;
             $validatedForUpdate['company_bank_account'] = $company->bank_account;
 
+            $validatedForUpdate['warehouse_id'] = $warehouseId;
+
             $note->update($validatedForUpdate);
             $this->syncItemsFromJson($note->id, (string) $validated['items_json']);
 
@@ -501,7 +547,7 @@ class DeliveryNoteController extends Controller
             $bytes = $pdf->output();
 
             $month = now()->format('Y-m');
-            $dir = 'private/delivery-notes/' . $month;
+            $dir = 'delivery-notes/' . $month;
             $fileName = 'szallitolevel-' . $note->id . '.pdf';
             $relativePath = $dir . '/' . $fileName;
 
@@ -516,6 +562,12 @@ class DeliveryNoteController extends Controller
                 'status' => 'issued',
                 'stock_deducted_at' => $note->stock_deducted_at ?: now(),
             ]);
+
+            if ($note->document_number === null || $note->document_number === '' || str_starts_with((string) $note->document_number, 'DRAFT-')) {
+                $note->update([
+                    'document_number' => $prefix . '-' . $note->id,
+                ]);
+            }
 
             return $bytes;
         });
@@ -537,16 +589,53 @@ class DeliveryNoteController extends Controller
 
         $note = DeliveryNote::query()->with(['items'])->findOrFail($id);
 
-        if ($note->stock_deducted_at !== null) {
-            return response()->json([
-                'message' => 'A kiállított (készletet csökkentő) szállítólevél nem törölhető.',
-            ], 422);
-        }
-
         DB::transaction(function () use ($note) {
+            $note->refresh();
+
             $path = (string) ($note->pdf_path ?? '');
             if ($path !== '' && Storage::disk('local')->exists($path)) {
                 Storage::disk('local')->delete($path);
+            }
+
+            if ($note->stock_deducted_at !== null) {
+                $warehouseId = (int) ($note->warehouse_id ?? 0);
+                if ($warehouseId <= 0) {
+                    throw new \RuntimeException('Hiányzó raktár a készlet visszaadáshoz.');
+                }
+
+                $items = DeliveryNoteItem::query()->where('delivery_note_id', $note->id)->get();
+                $productIds = $items->pluck('product_id')->filter()->unique()->values()->all();
+
+                if (count($productIds) > 0) {
+                    $stocks = DB::table('product_stocks')
+                        ->where('warehouse_id', '=', $warehouseId)
+                        ->whereIn('product_id', $productIds)
+                        ->lockForUpdate()
+                        ->get(['product_id', 'quantity']);
+
+                    $byProductId = $stocks->keyBy('product_id');
+
+                    foreach ($items as $item) {
+                        if (!$item->product_id) {
+                            continue;
+                        }
+
+                        $currentQty = (float) (($byProductId[$item->product_id]->quantity ?? 0) ?? 0);
+                        $addBack = (float) ($item->quantity ?? 0);
+                        $newQty = $currentQty + $addBack;
+
+                        DB::table('product_stocks')->updateOrInsert(
+                            [
+                                'warehouse_id' => $warehouseId,
+                                'product_id' => (int) $item->product_id,
+                            ],
+                            [
+                                'quantity' => $newQty,
+                                'updated_at' => now(),
+                            ]
+                        );
+                    }
+                }
             }
 
             $note->items()->delete();
@@ -579,6 +668,21 @@ class DeliveryNoteController extends Controller
                 $quantity = 1;
             }
 
+            $netPrice = $row['net_price'] ?? null;
+            if ($netPrice !== null && $netPrice !== '' && !is_numeric($netPrice)) {
+                $netPrice = null;
+            }
+
+            $vatPercent = $row['vat_percent'] ?? null;
+            if ($vatPercent !== null && $vatPercent !== '' && !is_numeric($vatPercent)) {
+                $vatPercent = null;
+            }
+
+            $grossPrice = $row['gross_price'] ?? null;
+            if ($grossPrice !== null && $grossPrice !== '' && !is_numeric($grossPrice)) {
+                $grossPrice = null;
+            }
+
             DeliveryNoteItem::create([
                 'delivery_note_id' => $deliveryNoteId,
                 'product_id' => $productId !== null ? (int) $productId : null,
@@ -587,6 +691,9 @@ class DeliveryNoteController extends Controller
                 'sku' => isset($row['sku']) ? (string) $row['sku'] : null,
                 'unit' => isset($row['unit']) ? (string) $row['unit'] : null,
                 'quantity' => (float) $quantity,
+                'net_price' => $netPrice !== null ? (float) $netPrice : null,
+                'vat_percent' => $vatPercent !== null ? (float) $vatPercent : null,
+                'gross_price' => $grossPrice !== null ? (float) $grossPrice : null,
                 'note' => isset($row['note']) ? (string) $row['note'] : null,
             ]);
 
@@ -617,6 +724,9 @@ class DeliveryNoteController extends Controller
                 'sku' => (string) ($row['sku'] ?? ''),
                 'unit' => (string) ($row['unit'] ?? 'db'),
                 'quantity' => $qty,
+                'net_price' => isset($row['net_price']) && is_numeric($row['net_price']) ? (float) $row['net_price'] : null,
+                'vat_percent' => isset($row['vat_percent']) && is_numeric($row['vat_percent']) ? (float) $row['vat_percent'] : null,
+                'gross_price' => isset($row['gross_price']) && is_numeric($row['gross_price']) ? (float) $row['gross_price'] : null,
                 'note' => (string) ($row['note'] ?? ''),
             ];
         }
@@ -695,7 +805,7 @@ class DeliveryNoteController extends Controller
         $bytes = $pdf->output();
 
         $month = now()->format('Y-m');
-        $dir = 'private/delivery-notes/' . $month;
+        $dir = 'delivery-notes/' . $month;
         $fileName = 'szallitolevel-' . $note->id . '.pdf';
         $relativePath = $dir . '/' . $fileName;
 

@@ -18,6 +18,7 @@
         th, td { border: 1px solid #cbd5e1; padding: 6px 8px; }
         th { background: #cfe0ff; text-align: left; }
         .text-right { text-align: right; }
+        .nowrap { white-space: nowrap; }
         .small { font-size: 10px; }
         .mb-8 { margin-bottom: 8px; }
         .mb-12 { margin-bottom: 12px; }
@@ -73,14 +74,39 @@
     <table>
         <thead>
         <tr>
-            <th style="width: 55%;">Megnevezés</th>
-            <th style="width: 15%;" class="text-right">Mennyiség</th>
-            <th style="width: 10%;">Mee.</th>
-            <th style="width: 20%;">SKU</th>
+            <th style="width: 42%;">Megnevezés</th>
+            <th style="width: 10%;" class="text-right">Mennyiség</th>
+            <th style="width: 8%;">Mee.</th>
+            <th style="width: 13%;" class="text-right">Nettó</th>
+            <th style="width: 7%;" class="text-right">ÁFA</th>
+            <th style="width: 13%;" class="text-right">Bruttó</th>
         </tr>
         </thead>
         <tbody>
+        @php
+            $sumNet = 0;
+            $sumVat = 0;
+            $sumGross = 0;
+        @endphp
         @foreach(($items ?? []) as $it)
+            @php
+                $qty = (float) ($it['quantity'] ?? 0);
+                $netUnit = $it['net_price'] !== null ? (float) $it['net_price'] : null;
+                $vatPercent = $it['vat_percent'] !== null ? (float) $it['vat_percent'] : null;
+                $grossUnit = $it['gross_price'] !== null ? (float) $it['gross_price'] : null;
+
+                $netLine = $netUnit !== null ? $netUnit * $qty : null;
+                $grossLine = $grossUnit !== null ? $grossUnit * $qty : null;
+                $vatLine = ($netLine !== null && $vatPercent !== null) ? ($netLine * ($vatPercent / 100)) : null;
+
+                if ($netLine !== null && $vatLine !== null) {
+                    $sumNet += $netLine;
+                    $sumVat += $vatLine;
+                    $sumGross += ($netLine + $vatLine);
+                } elseif ($grossLine !== null) {
+                    $sumGross += $grossLine;
+                }
+            @endphp
             <tr>
                 <td>
                     <div style="font-weight:600;">{{ $it['name'] ?? '' }}</div>
@@ -88,18 +114,37 @@
                         <div class="muted small">{{ $it['note'] }}</div>
                     @endif
                 </td>
-                <td class="text-right">{{ rtrim(rtrim(number_format((float) ($it['quantity'] ?? 0), 3, '.', ''), '0'), '.') }}</td>
+                <td class="text-right nowrap">{{ rtrim(rtrim(number_format((float) ($it['quantity'] ?? 0), 3, '.', ''), '0'), '.') }}</td>
                 <td>{{ $it['unit'] ?? 'db' }}</td>
-                <td>{{ $it['sku'] ?? '' }}</td>
+                <td class="text-right nowrap">
+                    @if($netUnit !== null)
+                        {{ number_format($netUnit, 2, ',', ' ') }} Ft
+                    @endif
+                </td>
+                <td class="text-right nowrap">
+                    @if($vatPercent !== null)
+                        {{ rtrim(rtrim(number_format($vatPercent, 2, '.', ''), '0'), '.') }}%
+                    @endif
+                </td>
+                <td class="text-right nowrap">
+                    @if($grossUnit !== null)
+                        {{ number_format($grossUnit, 2, ',', ' ') }} Ft
+                    @endif
+                </td>
             </tr>
         @endforeach
         </tbody>
+        <tfoot>
+        <tr>
+            <th colspan="3" class="text-right">Összesen</th>
+            <th class="text-right nowrap">{{ number_format((float) $sumNet, 2, ',', ' ') }} Ft</th>
+            <th class="text-right nowrap">{{ number_format((float) $sumVat, 2, ',', ' ') }} Ft</th>
+            <th class="text-right nowrap">{{ number_format((float) $sumGross, 2, ',', ' ') }} Ft</th>
+        </tr>
+        </tfoot>
     </table>
 </div>
 
-@if(($delivery_note->note ?? '') !== '')
-    <div class="mb-8">{!! nl2br(e($delivery_note->note)) !!}</div>
-@endif
 
 </body>
 </html>
