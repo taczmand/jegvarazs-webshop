@@ -24,6 +24,10 @@
         .mb-12 { margin-bottom: 12px; }
         .mb-16 { margin-bottom: 16px; }
         .bar { background: #cfe0ff; border: 1px solid #cbd5e1; padding: 4px 8px; font-weight: 700; font-size: 11px; }
+        .footer { position: fixed; left: 0; right: 0; bottom: 0; }
+        .signature-wrap { margin-top: 14px; }
+        .signature-line { border-top: 1px dotted #111827; height: 1px; }
+        .signature-label { text-align: center; margin-top: 6px; }
     </style>
 </head>
 <body>
@@ -145,6 +149,18 @@
     </table>
 </div>
 
+<div class="footer">
+    <div class="grid signature-wrap">
+        <div class="col col-50" style="padding-right:12px;">
+            <div class="signature-line"></div>
+            <div class="signature-label small muted">Átadó aláírás</div>
+        </div>
+        <div class="col col-50" style="padding-left:12px;">
+            <div class="signature-line"></div>
+            <div class="signature-label small muted">Átvevő aláírás</div>
+        </div>
+    </div>
+</div>
 
 </body>
 </html>
