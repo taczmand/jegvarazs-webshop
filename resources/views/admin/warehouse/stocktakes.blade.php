@@ -243,10 +243,8 @@
 
                 const right = document.createElement('div');
                 right.className = 'd-flex align-items-center gap-2';
-
-                const stockPlaceholder = `${formatQty(p.current_stock)}`;
                 right.innerHTML = `
-                    <input type="number" step="0.001" class="form-control form-control-sm stocktake-count" style="width: 160px;" placeholder="${escapeHtml(stockPlaceholder)}" value="${escapeHtml(p.counted_quantity ?? '')}">
+                    <input type="number" step="0.001" class="form-control form-control-sm stocktake-count" style="width: 160px;" value="${escapeHtml(p.counted_quantity ?? '')}">
                 `;
 
                 row.appendChild(left);
