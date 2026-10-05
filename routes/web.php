@@ -344,6 +344,7 @@ Route::get('/automatizacio/jogosultsagok/szinkron', function (Request $request, 
             Route::get('/bizonylatok/kimeno-szamlak/{id}', [SalesInvoiceController::class, 'show'])->name('documents.sales-invoices.show');
             Route::get('/bizonylatok/kimeno-szamlak/{id}/pdf', [SalesInvoiceController::class, 'pdf'])->name('documents.sales-invoices.pdf');
             Route::post('/bizonylatok/kimeno-szamlak/{id}/storno', [SalesInvoiceController::class, 'storno'])->name('documents.sales-invoices.storno');
+            Route::post('/bizonylatok/kimeno-szamlak/{id}/create-correction', [SalesInvoiceController::class, 'createCorrection'])->name('documents.sales-invoices.create-correction');
             Route::post('/bizonylatok/kimeno-szamlak', [SalesInvoiceController::class, 'store'])->name('documents.sales-invoices.store');
             Route::post('/bizonylatok/kimeno-szamlak/preview-invoice-pdf', [SalesInvoiceController::class, 'previewInvoicePdf'])->name('documents.sales-invoices.preview-invoice-pdf');
             Route::post('/bizonylatok/kimeno-szamlak/{id}/issue-invoice-pdf', [SalesInvoiceController::class, 'issueInvoicePdf'])->name('documents.sales-invoices.issue-invoice-pdf');

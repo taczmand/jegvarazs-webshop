@@ -108,7 +108,8 @@ class SalesInvoiceController extends Controller
                 $translations = [
                     'storno'   => 'Sztornó',
                     'normal'   => 'Papír',
-                    'electronic' => 'E-számla'
+                    'electronic' => 'E-számla',
+                    'correction' => 'Helyesbítő',
                 ];
                 return $translations[$invoice->invoice_type] ?? ucfirst($invoice->invoice_type);
             })
@@ -129,6 +130,13 @@ class SalesInvoiceController extends Controller
                                 <i class="fas fa-ban"></i>
                             </button>
                         ';
+                        if ($invoice->invoice_type === 'normal') {
+                            $buttons .= '
+                                <button class="btn btn-sm btn-outline-primary correction" data-id="' . $invoice->id . '" title="Helyesbítő számla">
+                                    <i class="fas fa-file-invoice"></i>
+                                </button>
+                            ';
+                        }
                     }
                 }
 
@@ -140,13 +148,13 @@ class SalesInvoiceController extends Controller
                     ';
                 }
 
-                if ($invoice->status === 'issued' && $user && $user->can('edit-sales-invoice')) {
+                /*if ($invoice->status === 'issued' && $user && $user->can('edit-sales-invoice')) {
                     $buttons .= '
                         <button class="btn btn-sm btn-outline-primary view" data-id="' . $invoice->id . '" title="Adatok megtekintése">
                             <i class="fas fa-eye"></i>
                         </button>
                     ';
-                }
+                }*/
 
                 return $buttons;
             })
@@ -161,6 +169,90 @@ class SalesInvoiceController extends Controller
             })
             ->rawColumns(['action'])
             ->make(true);
+    }
+
+    public function createCorrection(int $id)
+    {
+        $user = auth('admin')->user();
+        if (!$user || !$user->can('edit-sales-invoice')) {
+            return response()->json(['message' => 'Nincs jogosultságod.'], 403);
+        }
+
+        $original = SalesInvoice::query()->with(['items'])->findOrFail($id);
+        if ((string) $original->status !== 'issued') {
+            return response()->json(['message' => 'Csak kiállított számlából készíthető helyesbítő számla.'], 422);
+        }
+
+        $correction = DB::transaction(function () use ($original) {
+            $payload = $original->getAttributes();
+
+            unset(
+                $payload['id'],
+                $payload['created_at'],
+                $payload['updated_at'],
+                $payload['items'],
+                $payload['pdf_path'],
+                $payload['external_id'],
+                $payload['invoice_number'],
+                $payload['stock_deducted_at']
+            );
+
+            $payload['status'] = 'draft';
+            $payload['payment_status'] = 'unpaid';
+            $payload['invoice_type'] = 'correction';
+            $payload['issued_at'] = null;
+            $payload['fulfilled_at'] = null;
+            $payload['due_at'] = null;
+            $payload['settled_at'] = null;
+            $payload['correction_of_sales_invoice_id'] = $original->id;
+            $payload['storno_of_sales_invoice_id'] = null;
+            $payload['note'] = 'Helyesbítő számla ehhez: ' . (string) ($original->invoice_number ?? '');
+
+            $correction = SalesInvoice::create(array_merge([
+                'invoice_number' => 'DRAFT-' . uniqid(),
+            ], $payload));
+
+            if (str_starts_with((string) $correction->invoice_number, 'DRAFT-')) {
+                $correction->update([
+                    'invoice_number' => 'DRAFT-' . $correction->id,
+                ]);
+            }
+
+            foreach ($original->items as $it) {
+                $qty = (float) ($it->quantity ?? 0);
+                $negQty = $qty === 0.0 ? 0.0 : (-1 * abs($qty));
+
+                SalesInvoiceItem::create([
+                    'sales_invoice_id' => $correction->id,
+                    'product_id' => $it->product_id,
+                    'warehouse_id' => $it->warehouse_id,
+                    'sort_order' => (int) ($it->sort_order ?? 0),
+                    'name' => (string) ($it->name ?? ''),
+                    'sku' => $it->sku,
+                    'unit' => $it->unit,
+                    'quantity' => $negQty,
+                    'discount_percent' => $it->discount_percent,
+                    'discount_amount' => $it->discount_amount,
+                    'vat_percent' => $it->vat_percent,
+                    'vat_code' => $it->vat_code,
+                    'unit_net_price' => $it->unit_net_price,
+                    'unit_gross_price' => $it->unit_gross_price,
+                    'net_total' => $it->net_total !== null ? (int) (-1 * abs((int) $it->net_total)) : null,
+                    'vat_total' => $it->vat_total !== null ? (int) (-1 * abs((int) $it->vat_total)) : null,
+                    'gross_total' => $it->gross_total !== null ? (int) (-1 * abs((int) $it->gross_total)) : null,
+                    'note' => $it->note,
+                ]);
+            }
+
+            $this->recalculateTotals($correction);
+
+            return $correction;
+        });
+
+        return response()->json([
+            'message' => 'Helyesbítő számla létrehozva.',
+            'invoice' => $correction,
+        ], 200);
     }
 
     public function storno(int $id, InvoiceServiceInterface $invoiceService)
@@ -363,6 +455,7 @@ class SalesInvoiceController extends Controller
             'invoice_type' => 'nullable|string|max:255',
             'status' => 'nullable|string|max:50',
             'payment_status' => 'nullable|string|max:50',
+            'correction_of_sales_invoice_id' => 'nullable|integer|exists:sales_invoices,id',
 
             'partner_name' => 'required|string|max:255',
             'partner_tax_number' => 'nullable|string|max:255',
@@ -470,6 +563,7 @@ class SalesInvoiceController extends Controller
             'invoice_type' => 'nullable|string|max:255',
             'status' => 'nullable|string|max:50',
             'payment_status' => 'nullable|string|max:50',
+            'correction_of_sales_invoice_id' => 'nullable|integer|exists:sales_invoices,id',
 
             'partner_name' => 'required|string|max:255',
             'partner_tax_number' => 'nullable|string|max:255',
@@ -623,7 +717,7 @@ class SalesInvoiceController extends Controller
             $vatPercent = (int) round((float) ($row['vat_percent'] ?? 0));
             $unit = (string) ($row['unit_abbreviation'] ?? 'db');
 
-            if (trim($name) === '' || $qty <= 0) {
+            if (trim($name) === '' || $qty == 0) {
                 continue;
             }
 
@@ -662,7 +756,43 @@ class SalesInvoiceController extends Controller
         );
 
         try {
-            $pdfBytes = $invoiceService->createInvoicePdf($invoiceData, true);
+            $invoiceId = $request->input('invoice_id', $request->input('id'));
+            $invoice = null;
+            if (is_numeric($invoiceId)) {
+                $invoice = SalesInvoice::query()->find((int) $invoiceId);
+            }
+
+            $isCorrection = false;
+            $correctionOfId = null;
+
+            if ($invoice && (string) $invoice->invoice_type === 'correction') {
+                $isCorrection = true;
+                $correctionOfId = $invoice->correction_of_sales_invoice_id;
+            } else {
+                $isCorrection = trim((string) $request->input('invoice_type')) === 'correction';
+                $correctionOfId = $request->input('correction_of_sales_invoice_id');
+            }
+
+            if ($isCorrection) {
+                $originalNumber = null;
+                if (is_numeric($correctionOfId)) {
+                    $originalNumber = SalesInvoice::query()->whereKey((int) $correctionOfId)->value('invoice_number');
+                    $originalNumber = is_string($originalNumber) ? trim($originalNumber) : null;
+                }
+
+                if (!$originalNumber || $originalNumber === '' || str_starts_with($originalNumber, 'DRAFT-')) {
+                    return response()->json(['message' => 'Hiányzik az eredeti számlaszám, helyesbítő előnézet nem indítható.'], 422);
+                }
+
+                if ($invoiceService instanceof SzamlazzHuInvoiceService && method_exists($invoiceService, 'createCorrectiveInvoicePdfWithNumber')) {
+                    $result = $invoiceService->createCorrectiveInvoicePdfWithNumber($invoiceData, $originalNumber, true);
+                    $pdfBytes = (string) ($result['pdf'] ?? '');
+                } else {
+                    return response()->json(['message' => 'A helyesbítő számla generálása nem támogatott a beállított számlázó szolgáltatóval.'], 422);
+                }
+            } else {
+                $pdfBytes = $invoiceService->createInvoicePdf($invoiceData, true);
+            }
 
             return response($pdfBytes, 200, [
                 'Content-Type' => 'application/pdf',
@@ -728,7 +858,7 @@ class SalesInvoiceController extends Controller
             $vatPercent = (int) round((float) ($row['vat_percent'] ?? 0));
             $unit = (string) ($row['unit_abbreviation'] ?? 'db');
 
-            if (trim($name) === '' || $qty <= 0) {
+            if (trim($name) === '' || $qty == 0) {
                 continue;
             }
 
@@ -769,17 +899,44 @@ class SalesInvoiceController extends Controller
         try {
             $providerInvoiceNumber = null;
             $pdfBytes = null;
+            $isCorrection = (string) ($invoice->invoice_type ?? '') === 'correction';
+            $originalInvoiceNumber = null;
+            if ($isCorrection && !empty($invoice->correction_of_sales_invoice_id)) {
+                $originalInvoiceNumber = SalesInvoice::query()->whereKey((int) $invoice->correction_of_sales_invoice_id)->value('invoice_number');
+                $originalInvoiceNumber = is_string($originalInvoiceNumber) ? trim($originalInvoiceNumber) : null;
+                if ($originalInvoiceNumber === '' || (is_string($originalInvoiceNumber) && str_starts_with($originalInvoiceNumber, 'DRAFT-'))) {
+                    $originalInvoiceNumber = null;
+                }
+            }
 
-            if ($invoiceService instanceof SzamlazzHuInvoiceService && method_exists($invoiceService, 'createInvoicePdfWithNumber')) {
-                $result = $invoiceService->createInvoicePdfWithNumber($invoiceData, false);
-                $pdfBytes = (string) ($result['pdf'] ?? '');
-                $providerInvoiceNumber = isset($result['invoice_number']) ? (string) $result['invoice_number'] : null;
-                $providerInvoiceNumber = $providerInvoiceNumber !== null ? trim($providerInvoiceNumber) : null;
-                if ($providerInvoiceNumber === '') {
-                    $providerInvoiceNumber = null;
+            if ($invoiceService instanceof SzamlazzHuInvoiceService) {
+                if ($isCorrection) {
+                    if (!$originalInvoiceNumber) {
+                        return response()->json(['message' => 'Hiányzik az eredeti számlaszám, helyesbítő számla nem állítható ki.'], 422);
+                    }
+                    if (!method_exists($invoiceService, 'createCorrectiveInvoicePdfWithNumber')) {
+                        return response()->json(['message' => 'A helyesbítő számla generálása nem támogatott a használt Számlázz.hu SDK verzióval.'], 422);
+                    }
+
+                    $result = $invoiceService->createCorrectiveInvoicePdfWithNumber($invoiceData, $originalInvoiceNumber, false);
+                    $pdfBytes = (string) ($result['pdf'] ?? '');
+                    $providerInvoiceNumber = isset($result['invoice_number']) ? (string) $result['invoice_number'] : null;
+                } else {
+                    if (method_exists($invoiceService, 'createInvoicePdfWithNumber')) {
+                        $result = $invoiceService->createInvoicePdfWithNumber($invoiceData, false);
+                        $pdfBytes = (string) ($result['pdf'] ?? '');
+                        $providerInvoiceNumber = isset($result['invoice_number']) ? (string) $result['invoice_number'] : null;
+                    } else {
+                        $pdfBytes = $invoiceService->createInvoicePdf($invoiceData, false);
+                    }
                 }
             } else {
                 $pdfBytes = $invoiceService->createInvoicePdf($invoiceData, false);
+            }
+
+            $providerInvoiceNumber = $providerInvoiceNumber !== null ? trim($providerInvoiceNumber) : null;
+            if ($providerInvoiceNumber === '') {
+                $providerInvoiceNumber = null;
             }
 
             if (!is_string($pdfBytes) || $pdfBytes === '') {
@@ -787,8 +944,8 @@ class SalesInvoiceController extends Controller
             }
 
             $month = now()->format('Y-m');
-            $dir = 'szamlazzhu/kimeno/' . $month;
-            $fileName = 'kimeno-szamla-' . $invoice->id . '.pdf';
+            $dir = ($isCorrection ? 'szamlazzhu/kimeno-helyesbito/' : 'szamlazzhu/kimeno/') . $month;
+            $fileName = ($isCorrection ? 'kimeno-szamla-helyesbito-' : 'kimeno-szamla-') . $invoice->id . '.pdf';
             $relativePath = $dir . '/' . $fileName;
 
             $absoluteDir = Storage::disk('local')->path($dir);

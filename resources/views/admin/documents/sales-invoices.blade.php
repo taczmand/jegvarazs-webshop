@@ -58,6 +58,7 @@
                             <option value="storno">Sztornó</option>
                             <option value="normal">Papír</option>
                             <option value="electronic">E-számla</option>
+                            <option value="correction">Helyesbítő</option>
                         </select>
                     </div>
 
@@ -96,6 +97,7 @@
     <x-admin.document-modal id="salesInvoiceModal" title="Kimenő számla" form-id="salesInvoiceForm" save-button-id="saveDraftSalesInvoice" pane-left="40%" pane-mid="60%">
         <x-slot:left>
             <input type="hidden" id="invoice_id" name="id">
+            <input type="hidden" id="correction_of_sales_invoice_id" name="correction_of_sales_invoice_id">
 
             <fieldset class="admin-fieldset mb-3">
                 <legend class="admin-fieldset__legend">Számla kiállító adatai</legend>
@@ -191,6 +193,7 @@
                             <select class="form-select" id="invoice_type" name="invoice_type" required>
                                 <option value="normal">Papír</option>
                                 <option value="electronic">Elektronikus számla</option>
+                                <option value="correction">Helyesbítő</option>
                             </select>
                         </div>
                     </div>
@@ -385,6 +388,114 @@
                     showToast(json?.message || 'Sztornó sikeres.', 'success');
                     table.ajax.reload(null, false);
                     if (previewModal) previewModal.hide();
+                } catch (e) {
+                    showToast(e?.message || 'Hiba!', 'danger');
+                }
+            });
+
+            $('#adminTable').on('click', '.correction', async function () {
+                const originalId = String($(this).data('id') || '').trim();
+                if (!originalId) {
+                    showToast('Nem található a bizonylat azonosítója.', 'danger');
+                    return;
+                }
+
+                resetForm('Helyesbítő számla');
+
+                try {
+                    const resp = await fetch(`{{ route('admin.documents.sales-invoices.show', ['id' => '__ID__']) }}`.replace('__ID__', String(originalId)), {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                        }
+                    });
+
+                    if (!resp.ok) {
+                        let msg = 'Hiba történt a számla betöltésekor.';
+                        try {
+                            const json = await resp.json();
+                            if (json?.message) msg = json.message;
+                        } catch (e) {}
+                        throw new Error(msg);
+                    }
+
+                    const json = await resp.json();
+                    const invoice = json?.invoice || {};
+                    const invoiceItems = Array.isArray(json?.items) ? json.items : [];
+
+                    $('#invoice_id').val('');
+                    $('#correction_of_sales_invoice_id').val(invoice.id || originalId);
+
+                    $('#company_id').val(invoice.company_id || defaultCompanyId);
+                    $('#invoice_number').val('');
+
+                    $('#partner_name').val(invoice.partner_name || '');
+                    $('#partner_tax_number').val(invoice.partner_tax_number || '');
+                    $('#partner_country').val(invoice.partner_country || 'HU');
+                    $('#partner_zip_code').val(invoice.partner_zip_code || '');
+                    $('#partner_city').val(invoice.partner_city || '');
+                    $('#partner_address_line').val(invoice.partner_address_line || '');
+                    $('#partner_email').val(invoice.partner_email || '');
+                    $('#partner_phone').val(invoice.partner_phone || '');
+
+                    $('#payment_method').val(invoice.payment_method || 'bank_transfer');
+                    if ($('#invoice_type').length) {
+                        $('#invoice_type').val('correction');
+                    }
+
+                    $('#issued_at').val(todayDate());
+                    $('#fulfilled_at').val(todayDate());
+                    $('#due_at').val(addDays(todayDate(), 8));
+
+                    $('#currency').val(invoice.currency || 'HUF');
+                    if ($('#prices_include_vat').length) {
+                        $('#prices_include_vat').prop('checked', Boolean(invoice.prices_include_vat));
+                    }
+
+                    $('#status').val('draft');
+                    $('#payment_status').val('unpaid');
+
+                    const originalNumber = String(invoice.invoice_number || '').trim();
+                    $('#note').val(originalNumber ? `Helyesbítő számla ehhez: ${originalNumber}` : '');
+                    $('#note_for_document').val(invoice.note_for_document || '');
+
+                    resetPreview();
+
+                    items.splice(0, items.length);
+                    invoiceItems.forEach(it => {
+                        const warehouseId = it.warehouse_id ?? null;
+                        const wh = warehouseId ? warehouses.find(w => String(w.id) === String(warehouseId)) : null;
+                        const qty = Number(it.quantity ?? 0);
+                        const negQty = qty === 0 ? 0 : (-1 * Math.abs(qty));
+
+                        const item = {
+                            product_id: it.product_id ?? null,
+                            warehouse_id: warehouseId,
+                            warehouse_name: wh?.name ?? '',
+                            name: it.name ?? '',
+                            quantity: negQty,
+                            qty_step: 1,
+                            unit_abbreviation: it.unit ?? '',
+                            discount_percent: Number(it.discount_percent ?? 0),
+                            vat_percent: Number(it.vat_percent ?? 0),
+                            unit_net_price: Number(it.unit_net_price ?? 0),
+                            unit_gross_price: Number(it.unit_gross_price ?? 0),
+                            net_total: Number(it.net_total ?? 0),
+                            vat_total: Number(it.vat_total ?? 0),
+                            gross_total: Number(it.gross_total ?? 0),
+                        };
+
+                        recalcRow(item);
+                        items.push(item);
+                    });
+
+                    renderItems();
+                    syncItemsJson();
+                    $('#product_search').val('');
+                    $('#product_search_results').empty();
+
+                    modal.show();
                 } catch (e) {
                     showToast(e?.message || 'Hiba!', 'danger');
                 }
@@ -696,6 +807,7 @@
                     const invoiceItems = Array.isArray(json?.items) ? json.items : [];
 
                     $('#invoice_id').val(invoice.id || invoiceId);
+                    $('#correction_of_sales_invoice_id').val(invoice.correction_of_sales_invoice_id || '');
 
                     $('#company_id').val(invoice.company_id || defaultCompanyId);
                     $('#invoice_number').val(invoice.invoice_number || '');
@@ -710,6 +822,10 @@
                     $('#partner_phone').val(invoice.partner_phone || '');
 
                     $('#payment_method').val(invoice.payment_method || 'bank_transfer');
+
+                    if ($('#invoice_type').length) {
+                        $('#invoice_type').val(invoice.invoice_type || 'normal');
+                    }
 
                     $('#issued_at').val(invoice.issued_at || todayDate());
                     $('#fulfilled_at').val(invoice.fulfilled_at || todayDate());
@@ -1377,6 +1493,7 @@
                 $('#salesInvoiceForm')[0].reset();
                 $('#salesInvoiceModalLabel').text(title);
                 $('#invoice_id').val('');
+                $('#correction_of_sales_invoice_id').val('');
 
                 if (defaultCompanyId) {
                     $('#company_id').val(defaultCompanyId);
