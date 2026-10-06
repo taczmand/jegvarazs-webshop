@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\Stocktake;
 use App\Models\StocktakeItem;
+use App\Models\User;
 use App\Models\Warehouse;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
@@ -90,7 +91,7 @@ class StocktakeController extends Controller
 
                 $isOpen = (string) ($row->status ?? '') === 'open';
 
-                if ($isOpen && $user && $user->can('edit-stocktake')) {
+                if ($isOpen && $user && ($user->can('edit-stocktake') || $user->can('review-stocktake') || $user->can('close-stocktake'))) {
                     $buttons .= '
                         <button class="btn btn-sm btn-primary edit" data-id="' . $row->id . '" title="Szerkesztés">
                             <i class="fas fa-edit"></i>
@@ -163,21 +164,79 @@ class StocktakeController extends Controller
     public function products(Request $request, ?int $id = null)
     {
         $user = auth('admin')->user();
-        if (!$user || (!$user->can('view-stocktakes') && !$user->can('create-stocktake') && !$user->can('edit-stocktake'))) {
+        if (!$user || (!$user->can('view-stocktakes') && !$user->can('create-stocktake') && !$user->can('edit-stocktake') && !$user->can('review-stocktake') && !$user->can('close-stocktake'))) {
             return response()->json(['message' => 'Nincs jogosultságod.'], 403);
         }
 
-        $validated = $request->validate([
-            'warehouse_id' => 'required|integer|exists:warehouses,id',
-        ]);
+        $warehouseId = null;
+        if ($id) {
+            $stocktake = Stocktake::query()->findOrFail($id);
+            $warehouseId = (int) ($stocktake->warehouse_id ?? 0);
+        }
 
-        $warehouseId = (int) $validated['warehouse_id'];
+        if ($id && $user->can('review-stocktake') && !$user->can('edit-stocktake')) {
+            if (!$warehouseId || $warehouseId <= 0) {
+                return response()->json(['message' => 'Hiányzó raktár.'], 422);
+            }
+
+            $items = StocktakeItem::query()
+                ->where('stocktake_id', $id)
+                ->whereNotNull('counted_quantity')
+                ->with([
+                    'product' => function ($q) {
+                        $q->with(['category', 'unit']);
+                    },
+                ])
+                ->get();
+
+            $productIds = $items->pluck('product_id')->filter()->unique()->values()->all();
+            $currentByProduct = collect();
+            if (count($productIds) > 0) {
+                $currentByProduct = DB::table('product_stocks')
+                    ->where('warehouse_id', '=', $warehouseId)
+                    ->whereIn('product_id', $productIds)
+                    ->get(['product_id', 'quantity'])
+                    ->keyBy('product_id');
+            }
+
+            $payload = $items->map(function ($it) use ($currentByProduct) {
+                $p = $it->product;
+
+                $current = 0;
+                if (!empty($it->product_id)) {
+                    $current = (float) (($currentByProduct[(int) $it->product_id]->quantity ?? 0) ?? 0);
+                }
+
+                return [
+                    'product_id' => (int) ($it->product_id ?? 0),
+                    'title' => (string) ($p?->title ?? ''),
+                    'category_title' => (string) ($p?->category?->title ?? 'Egyéb'),
+                    'unit' => (string) ($p?->unit?->abbreviation ?? $p?->unit?->name ?? 'db'),
+                    'current_stock' => $current,
+                    'expected_quantity' => (float) ($it->expected_quantity ?? 0),
+                    'counted_quantity' => $it->counted_quantity,
+                    'difference_quantity' => (float) ($it->difference_quantity ?? 0),
+                ];
+            })->values();
+
+            return response()->json([
+                'products' => $payload,
+                'warehouse_id' => $warehouseId,
+            ]);
+        }
+
+        if (!$warehouseId) {
+            $validated = $request->validate([
+                'warehouse_id' => 'required|integer|exists:warehouses,id',
+            ]);
+            $warehouseId = (int) $validated['warehouse_id'];
+        }
 
         $existingByProduct = collect();
         if ($id) {
             $existingByProduct = StocktakeItem::query()
                 ->where('stocktake_id', $id)
-                ->get(['product_id', 'counted_quantity'])
+                ->get(['product_id', 'expected_quantity', 'counted_quantity', 'difference_quantity', 'counted_by_user_id'])
                 ->keyBy('product_id');
         }
 
@@ -208,6 +267,9 @@ class StocktakeController extends Controller
                 'unit' => (string) ($p->unit?->abbreviation ?? $p->unit?->name ?? 'db'),
                 'current_stock' => (float) ($p->current_stock ?? 0),
                 'counted_quantity' => $existing ? $existing->counted_quantity : null,
+                'expected_quantity' => $existing ? (float) ($existing->expected_quantity ?? 0) : null,
+                'difference_quantity' => $existing ? (float) ($existing->difference_quantity ?? 0) : null,
+                'counted_by_user_id' => $existing ? (int) ($existing->counted_by_user_id ?? 0) : null,
             ];
         })->values();
 
@@ -235,6 +297,9 @@ class StocktakeController extends Controller
             $payload['started_at_time'] = now();
 
             $closingNow = (($payload['status'] ?? null) === 'closed');
+            if ($closingNow && !$user->can('close-stocktake')) {
+                throw new \RuntimeException('Nincs jogosultságod a leltár lezárásához.');
+            }
             if ($closingNow) {
                 $payload['closed_at'] = $payload['closed_at'] ?? now()->toDateString();
                 $payload['closed_at_time'] = $payload['closed_at_time'] ?? now();
@@ -271,7 +336,7 @@ class StocktakeController extends Controller
     public function update(Request $request, int $id)
     {
         $user = auth('admin')->user();
-        if (!$user || !$user->can('edit-stocktake')) {
+        if (!$user || (!$user->can('edit-stocktake') && !$user->can('create-stocktake') && !$user->can('review-stocktake') && !$user->can('close-stocktake'))) {
             return response()->json(['message' => 'Nincs jogosultságod szerkeszteni.'], 403);
         }
 
@@ -290,10 +355,15 @@ class StocktakeController extends Controller
             $itemsJson = (string) ($payload['items_json'] ?? '[]');
             unset($payload['items_json']);
 
+            unset($payload['warehouse_id']);
+
             unset($payload['started_at']);
             unset($payload['started_at_time']);
 
             $closingNow = $wasOpen && (($payload['status'] ?? null) === 'closed');
+            if ($closingNow && !$user->can('close-stocktake')) {
+                throw new \RuntimeException('Nincs jogosultságod a leltár lezárásához.');
+            }
             if (($payload['status'] ?? null) === 'closed') {
                 $payload['closed_at'] = $payload['closed_at'] ?? now()->toDateString();
                 $payload['closed_at_time'] = $payload['closed_at_time'] ?? now();
@@ -464,10 +534,20 @@ class StocktakeController extends Controller
             ->where('stocktake_id', $stocktake->id)
             ->whereNotNull('counted_quantity')
             ->where('difference_quantity', '!=', 0)
-            ->get(['product_id', 'expected_quantity', 'counted_quantity', 'difference_quantity']);
+            ->get(['product_id', 'expected_quantity', 'counted_quantity', 'difference_quantity', 'counted_by_user_id']);
 
         $itemsByProduct = $changedItems->keyBy('product_id');
         $productIds = $changedItems->pluck('product_id')->filter()->unique()->values()->all();
+
+        $countedByIds = $changedItems->pluck('counted_by_user_id')->filter()->unique()->values()->all();
+        $countedByNames = User::query()
+            ->whereIn('id', $countedByIds)
+            ->pluck('name', 'id');
+
+        $closedByName = null;
+        if (!empty($stocktake->closed_by_user_id)) {
+            $closedByName = User::query()->where('id', (int) $stocktake->closed_by_user_id)->value('name');
+        }
 
         $productsById = Product::query()
             ->with(['category', 'unit'])
@@ -483,13 +563,17 @@ class StocktakeController extends Controller
             return rtrim(rtrim(number_format($n, 3, '.', ''), '0'), '.');
         };
 
-        $rows = collect($productIds)->map(function ($productId) use ($productsById, $itemsByProduct, $fmt) {
+        $rows = collect($productIds)->map(function ($productId) use ($productsById, $itemsByProduct, $countedByNames, $fmt) {
             $p = $productsById->get($productId);
             $item = $itemsByProduct->get($productId);
 
             $expected = $item ? (float) ($item->expected_quantity ?? 0) : 0.0;
             $counted = $item ? (float) ($item->counted_quantity ?? 0) : null;
             $diff = $item ? (float) ($item->difference_quantity ?? 0) : null;
+            $countedBy = null;
+            if ($item && !empty($item->counted_by_user_id)) {
+                $countedBy = $countedByNames->get((int) $item->counted_by_user_id);
+            }
 
             return [
                 'product_id' => (int) $productId,
@@ -499,6 +583,7 @@ class StocktakeController extends Controller
                 'expected_quantity' => $fmt($expected),
                 'counted_quantity' => $fmt($counted),
                 'difference_quantity' => $fmt($diff),
+                'counted_by' => (string) ($countedBy ?? ''),
             ];
         })->values();
 
@@ -506,6 +591,7 @@ class StocktakeController extends Controller
             'stocktake' => $stocktake,
             'warehouse' => $warehouse,
             'rows' => $rows,
+            'closed_by_name' => $closedByName,
         ]);
 
         $bytes = $pdf->output();

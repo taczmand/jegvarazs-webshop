@@ -170,6 +170,8 @@ class PermissionSeeder extends Seeder
             ['id' => 161, 'name' => 'create-stocktake', 'label' => 'Leltár létrehozása', 'group' => 'Raktározás'],
             ['id' => 162, 'name' => 'edit-stocktake', 'label' => 'Leltár szerkesztése', 'group' => 'Raktározás'],
             ['id' => 163, 'name' => 'delete-stocktake', 'label' => 'Leltár törlése', 'group' => 'Raktározás'],
+            ['id' => 179, 'name' => 'review-stocktake', 'label' => 'Leltár eltérések megtekintése és ellenőrzése', 'group' => 'Raktározás'],
+            ['id' => 180, 'name' => 'close-stocktake', 'label' => 'Leltár lezárása (készlet módosítás)', 'group' => 'Raktározás'],
 
             ['id' => 164, 'name' => 'view-documents', 'label' => 'Dokumentumok megtekintése', 'group' => 'Ügyviteli folyamatok'],
             ['id' => 165, 'name' => 'create-documents', 'label' => 'Dokumentum létrehozása', 'group' => 'Ügyviteli folyamatok'],

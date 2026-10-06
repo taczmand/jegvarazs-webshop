@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class StocktakeItem extends Model
 {
@@ -17,4 +18,9 @@ class StocktakeItem extends Model
         'difference_quantity' => 'float',
         'counted_at' => 'datetime',
     ];
+
+    public function countedByUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'counted_by_user_id');
+    }
 }

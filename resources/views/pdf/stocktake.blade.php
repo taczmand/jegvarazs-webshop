@@ -29,11 +29,12 @@
 <table>
     <thead>
     <tr>
-        <th style="width: 44%">Termék</th>
-        <th style="width: 14%">Elvárt</th>
-        <th style="width: 14%">Leltár</th>
-        <th style="width: 14%">Eltérés</th>
-        <th style="width: 14%">ME</th>
+        <th style="width: 40%">Termék</th>
+        <th style="width: 12%">Elvárt</th>
+        <th style="width: 12%">Leltár</th>
+        <th style="width: 12%">Eltérés</th>
+        <th style="width: 12%">Mentette</th>
+        <th style="width: 12%">ME</th>
     </tr>
     </thead>
     <tbody>
@@ -42,7 +43,7 @@
         @if($currentCat !== ($r['category_title'] ?? ''))
             @php($currentCat = ($r['category_title'] ?? ''))
             <tr>
-                <td class="cat" colspan="5">{{ $currentCat !== '' ? $currentCat : 'Egyéb' }}</td>
+                <td class="cat" colspan="6">{{ $currentCat !== '' ? $currentCat : 'Egyéb' }}</td>
             </tr>
         @endif
         <tr>
@@ -50,11 +51,16 @@
             <td class="right">{{ $r['expected_quantity'] ?? '' }}</td>
             <td class="right">{{ $r['counted_quantity'] ?? '' }}</td>
             <td class="right">{{ $r['difference_quantity'] ?? '' }}</td>
+            <td>{{ $r['counted_by'] ?? '' }}</td>
             <td>{{ $r['unit'] ?? '' }}</td>
         </tr>
     @endforeach
     </tbody>
 </table>
+
+@if(!empty($closed_by_name))
+    <div class="muted small" style="margin-top: 12px;">Lezárta: {{ $closed_by_name }}{{ $stocktake->closed_at_time ? ' (' . $stocktake->closed_at_time->format('Y-m-d H:i') . ')' : '' }}</div>
+@endif
 
 </body>
 </html>

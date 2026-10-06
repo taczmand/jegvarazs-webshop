@@ -76,7 +76,8 @@
 
                 <div class="mb-2">
                     <label for="warehouse_id" class="form-label">Raktár*</label>
-                    <select class="form-select" id="warehouse_id" name="warehouse_id" required>
+                    <input type="hidden" id="warehouse_id_hidden" name="warehouse_id" value="">
+                    <select class="form-select" id="warehouse_id" name="warehouse_id_select" required>
                         @foreach(($warehouses ?? []) as $w)
                             <option value="{{ $w->id }}">{{ $w->name }}</option>
                         @endforeach
@@ -126,6 +127,7 @@
         </x-slot:middle>
 
         <x-slot:footer>
+            <button type="submit" class="btn btn-primary" id="saveStocktake">Mentés</button>
             <button type="button" class="btn btn-outline-primary" id="saveAndCloseStocktake">Mentés és lezárás</button>
         </x-slot:footer>
 
@@ -137,6 +139,8 @@
     <script type="module">
         const warehouses = @json($warehouses ?? []);
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        const canReviewStocktake = @json((bool) (auth('admin')->user()?->can('review-stocktake')));
+        const canCloseStocktake = @json((bool) (auth('admin')->user()?->can('close-stocktake')));
 
         const modalDOM = document.getElementById('stocktakeModal');
         const modal = new bootstrap.Modal(modalDOM);
@@ -176,6 +180,13 @@
             return opt ? String(opt.textContent || '').trim() : '';
         }
 
+        function syncWarehouseHidden() {
+            const select = document.getElementById('warehouse_id');
+            const hidden = document.getElementById('warehouse_id_hidden');
+            if (!select || !hidden) return;
+            hidden.value = String(select.value || '').trim();
+        }
+
         function formatQty(v) {
             const n = Number(v);
             if (!Number.isFinite(n)) return '0';
@@ -205,6 +216,16 @@
                 out.push({ product_id: Number(productId), counted_quantity: qty });
             });
             document.getElementById('items_json').value = JSON.stringify(out);
+
+            const id = String(document.getElementById('stocktake_id').value || '').trim();
+            const warehouseSelect = document.getElementById('warehouse_id');
+            if (warehouseSelect) {
+                if (id) {
+                    warehouseSelect.disabled = true;
+                } else {
+                    warehouseSelect.disabled = out.length > 0;
+                }
+            }
         }
 
         function renderProducts(products) {
@@ -234,6 +255,8 @@
                 row.className = 'd-flex align-items-center justify-content-between gap-2 py-2 border-bottom stocktake-row';
                 row.dataset.productId = String(p.product_id);
                 row.dataset.productTitle = String(p.title || '').toLowerCase();
+                row.dataset.currentStock = String(p.current_stock ?? '0');
+                row.dataset.baseDifference = String(p.difference_quantity ?? '0');
 
                 const left = document.createElement('div');
                 left.className = 'flex-grow-1';
@@ -244,6 +267,8 @@
                 const right = document.createElement('div');
                 right.className = 'd-flex align-items-center gap-2';
                 right.innerHTML = `
+                    ${canReviewStocktake ? `<div class="text-muted small" style="min-width: 110px; text-align:right;">Aktuális: ${escapeHtml(formatQty(p.current_stock ?? ''))}</div>` : ''}
+                    ${canReviewStocktake ? `<div class="small stocktake-diff" style="min-width: 130px; text-align:right; font-weight:600;">Különbség: ${escapeHtml(formatQty(p.difference_quantity ?? 0))}</div>` : ''}
                     <input type="number" step="0.001" class="form-control form-control-sm stocktake-count" style="width: 160px;" value="${escapeHtml(p.counted_quantity ?? '')}">
                 `;
 
@@ -312,9 +337,13 @@
             document.getElementById('stocktake_id').value = '';
             document.getElementById('status').value = 'open';
 
+            document.getElementById('warehouse_id').disabled = false;
+
             if (warehouses.length) {
                 document.getElementById('warehouse_id').value = warehouses[0].id;
             }
+
+            syncWarehouseHidden();
 
             const whName = getSelectedWarehouseName();
             const nameSuggested = `Leltár - ${whName ? whName + ' - ' : ''}${nowDateTime()}`;
@@ -374,6 +403,7 @@
             });
 
             $('#warehouse_id').on('change', async function () {
+                syncWarehouseHidden();
                 const id = String($('#stocktake_id').val() || '').trim();
                 try {
                     await loadProductsForStocktake(id ? id : null);
@@ -395,6 +425,22 @@
                 const v = String(this.value ?? '').trim();
                 itemsByProductId.set(pid, v);
                 syncItemsJson();
+
+                if (canReviewStocktake) {
+                    const current = Number(row.dataset.currentStock ?? 0);
+                    const baseDiff = Number(row.dataset.baseDifference ?? 0);
+                    const counted = v === '' ? null : Number(v);
+                    let computed = null;
+                    if (counted !== null && Number.isFinite(counted)) {
+                        const cur = Number.isFinite(current) ? current : 0;
+                        computed = counted - cur;
+                    }
+                    const diffEl = row.querySelector('.stocktake-diff');
+                    if (diffEl) {
+                        const fallback = Number.isFinite(baseDiff) ? baseDiff : 0;
+                        diffEl.textContent = `Különbség: ${computed === null ? formatQty(fallback) : formatQty(computed)}`;
+                    }
+                }
             });
 
             $('#adminTable').on('click', '.edit', async function () {
@@ -418,6 +464,8 @@
                     const st = json?.stocktake;
 
                     $('#warehouse_id').val(st.warehouse_id || (warehouses[0]?.id ?? ''));
+                    syncWarehouseHidden();
+                    document.getElementById('warehouse_id').disabled = true;
                     $('#name').val(st.name || '');
                     $('#status').val(st.status || 'open');
                     $('#note').val(st.note || '');
@@ -506,9 +554,20 @@
                 });
             });
 
+            modalDOM.addEventListener('show.bs.modal', function () {
+                const closeBtn = document.getElementById('saveAndCloseStocktake');
+                if (closeBtn) {
+                    closeBtn.style.display = canCloseStocktake ? '' : 'none';
+                }
+            });
+
             $('#saveAndCloseStocktake').on('click', function () {
-                $('#status').val('closed');
-                $('#stocktakeForm').trigger('submit');
+                if (!canCloseStocktake) {
+                    alert('Nincs jogosultságod a leltár lezárásához.');
+                    return;
+                }
+                document.getElementById('status').value = 'closed';
+                $('#saveStocktake').trigger('click');
             });
         });
 
