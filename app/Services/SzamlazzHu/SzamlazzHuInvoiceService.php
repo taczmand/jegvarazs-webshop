@@ -5,6 +5,7 @@ namespace App\Services\SzamlazzHu;
 use App\Services\InvoiceServiceInterface;
 use App\Services\SzamlazzHu\Dto\InvoiceData;
 use App\Services\SzamlazzHu\Dto\ItemData;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use SzamlaAgent\SzamlaAgentAPI;
 use SzamlaAgent\Buyer;
@@ -13,9 +14,41 @@ use SzamlaAgent\Document\Invoice\ReverseInvoice;
 use SzamlaAgent\Item\InvoiceItem;
 use SzamlaAgent\Log as SzamlazzLog;
 use SzamlaAgent\Seller;
+use SzamlaAgent\SzamlaAgentUtil;
 
 class SzamlazzHuInvoiceService implements InvoiceServiceInterface
 {
+    private function applyInvoicePrefix(object $invoice, ?string $prefix): void
+    {
+        $prefix = is_string($prefix) ? trim($prefix) : '';
+        if ($prefix === '') {
+            return;
+        }
+
+        try {
+            if (method_exists($invoice, 'getHeader')) {
+                $header = $invoice->getHeader();
+                if (is_object($header)) {
+                    foreach (['setPrefix', 'setInvoicePrefix', 'setInvoiceNumberPrefix', 'setDocumentPrefix', 'setDocPrefix'] as $method) {
+                        if (method_exists($header, $method)) {
+                            $header->{$method}($prefix);
+                            return;
+                        }
+                    }
+                }
+            }
+
+            foreach (['setPrefix', 'setInvoicePrefix', 'setInvoiceNumberPrefix', 'setDocumentPrefix', 'setDocPrefix'] as $method) {
+                if (method_exists($invoice, $method)) {
+                    $invoice->{$method}($prefix);
+                    return;
+                }
+            }
+        } catch (\Throwable $e) {
+            // ignore
+        }
+    }
+
     private function extractCorrectivedNumberFromResult(object $result): ?string
     {
         try {
@@ -140,64 +173,14 @@ class SzamlazzHuInvoiceService implements InvoiceServiceInterface
 
         $invoice->setBuyer($buyer);
 
+        $this->applyInvoicePrefix($invoice, $data->invoicePrefix ?? null);
+
         $header = $invoice->getHeader();
 
         $header->setCorrectivedNumber($originalInvoiceNumber);
         $header->setCorrective(true);
 
         $invoice->setHeader($header);
-
-        $invoiceSettersUsed = [];
-        $headerSettersUsed = [];
-
-        /*foreach (['setCorrectivedNumber', 'setCorrectiveNumber', 'setCorrectiveInvoiceNumber', 'setCorrectionInvoiceNumber', 'setOriginalInvoiceNumber', 'setOriginalInvoice', 'setCorrectedInvoiceNumber', 'setCorrectedNumber', 'setInvoiceNumberToCorrect'] as $method) {
-            if (method_exists($invoice->getHeader(), $method)) {
-                $invoice->getHeader()->setCorrectivedNumber($originalInvoiceNumber);
-                $invoiceSettersUsed[] = $method;
-            }
-        }
-
-        $header = null;
-        if (method_exists($invoice, 'getHeader')) {
-            $header = $invoice->getHeader();
-        }
-
-
-
-        if ($header) {
-            foreach (['setCorrectivedNumber', 'setCorrectiveNumber', 'setCorrectiveInvoiceNumber', 'setCorrectionInvoiceNumber', 'setOriginalInvoiceNumber', 'setOriginalInvoice', 'setCorrectedInvoiceNumber', 'setCorrectedNumber', 'setInvoiceNumberToCorrect'] as $method) {
-                if (method_exists($header, $method)) {
-                    $header->{$method}($originalInvoiceNumber);
-                    $headerSettersUsed[] = $method;
-                }
-            }
-
-            if (method_exists($invoice, 'setHeader')) {
-                $invoice->setHeader($header);
-            }
-        }
-
-        if (method_exists($invoice, 'setCorrective')) {
-            $invoice->setCorrective(true);
-        }
-        if ($header && method_exists($header, 'setCorrective')) {
-            $header->setCorrective(true);
-
-            if (method_exists($invoice, 'setHeader')) {
-                $invoice->setHeader($header);
-            }
-        }
-
-        if (!$invoiceSettersUsed && !$headerSettersUsed) {
-            $invoiceMethods = array_filter(get_class_methods($invoice) ?: [], fn ($m) => stripos($m, 'correct') !== false || stripos($m, 'origin') !== false || stripos($m, 'invoice') !== false);
-            $headerMethods = $header ? array_filter(get_class_methods($header) ?: [], fn ($m) => stripos($m, 'correct') !== false || stripos($m, 'origin') !== false || stripos($m, 'invoice') !== false) : [];
-
-            throw new \RuntimeException(
-                'Számlázz.hu helyesbítő számlához nem található setter az eredeti számlaszám beállításához. '
-                . 'Invoice class: ' . get_class($invoice) . ' (methods: ' . implode(', ', $invoiceMethods) . '). '
-                . ($header ? ('Header class: ' . get_class($header) . ' (methods: ' . implode(', ', $headerMethods) . ').') : 'Header: N/A')
-            );
-        }*/
 
         $headerComment = isset($data->noteForDocument) ? trim((string) $data->noteForDocument) : '';
         if ($headerComment !== '') {
@@ -341,7 +324,7 @@ class SzamlazzHuInvoiceService implements InvoiceServiceInterface
             return [
                 'pdf' => (string) Storage::disk('local')->get($selected['file']),
                 'invoice_number' => $invoiceNumber,
-                'correctived_number' => $correctivedNumber,
+                'correctived_number' => $originalInvoiceNumber,
             ];
         } catch (\Throwable $e) {
             throw new \RuntimeException('Számlázz.hu PDF beolvasása sikertelen: ' . $e->getMessage());
@@ -433,6 +416,8 @@ class SzamlazzHuInvoiceService implements InvoiceServiceInterface
 
         $invoice = new Invoice(Invoice::INVOICE_TYPE_P_INVOICE);
         $invoice->setBuyer($buyer);
+        //$invoice->getHeader()->setPrefix('JB');
+        $this->applyInvoicePrefix($invoice, $data->invoicePrefix ?? null);
 
         $headerComment = isset($data->noteForDocument) ? trim((string) $data->noteForDocument) : '';
         if ($headerComment !== '') {
@@ -491,6 +476,10 @@ class SzamlazzHuInvoiceService implements InvoiceServiceInterface
             $invoice->addItem($item);
         }
 
+        //SzamlaAgentUtil::setBasePath(storage_path('app/private/szamlazzhu'));
+        //$agent->setXmlFileSave(true);
+        //$agent->setRequestXmlFileSave(true);
+
         $result = $agent->generateInvoice($invoice);
 
         if (!$result->isSuccess()) {
@@ -547,6 +536,8 @@ class SzamlazzHuInvoiceService implements InvoiceServiceInterface
 
         $invoice = new Invoice(Invoice::INVOICE_TYPE_P_INVOICE);
         $invoice->setBuyer($buyer);
+
+        $this->applyInvoicePrefix($invoice, $data->invoicePrefix ?? null);
 
         $headerComment = isset($data->noteForDocument) ? trim((string) $data->noteForDocument) : '';
         if ($headerComment !== '') {
@@ -615,6 +606,9 @@ class SzamlazzHuInvoiceService implements InvoiceServiceInterface
 
             $invoice->addItem($item);
         }
+        /*SzamlaAgentUtil::setBasePath(storage_path('app/private/szamlazzhu'));
+        $agent->setXmlFileSave(true);
+        $agent->setRequestXmlFileSave(true);*/
 
         $result = $agent->generateInvoice($invoice);
 
@@ -703,6 +697,8 @@ class SzamlazzHuInvoiceService implements InvoiceServiceInterface
         $invoice = new Invoice(Invoice::INVOICE_TYPE_P_INVOICE);
         $invoice->setBuyer($buyer);
 
+        $this->applyInvoicePrefix($invoice, $data->invoicePrefix ?? null);
+
         $headerComment = isset($data->noteForDocument) ? trim((string) $data->noteForDocument) : '';
         if ($headerComment !== '') {
             try {
@@ -771,18 +767,16 @@ class SzamlazzHuInvoiceService implements InvoiceServiceInterface
             $invoice->addItem($item);
         }
 
+        /*SzamlaAgentUtil::setBasePath(storage_path('app/private/szamlazzhu'));
+        $agent->setXmlFileSave(true);
+        $agent->setRequestXmlFileSave(true);*/
+
         $result = $agent->generateInvoice($invoice);
 
         if (!$result->isSuccess()) {
             throw new \RuntimeException(
                 $result->getErrorMessage()
             );
-        }
-
-        $correctivedNumber = $this->extractCorrectivedNumberFromResult($result);
-
-        if (!$correctivedNumber) {
-            throw new \RuntimeException('Számlázz.hu helyesbítő számlához az eredeti számlaszám nem olvasható ki a válaszból (correctivedNumber).');
         }
 
         $invoiceNumber = $this->extractInvoiceNumberFromResult($result);
@@ -795,7 +789,6 @@ class SzamlazzHuInvoiceService implements InvoiceServiceInterface
                         return [
                             'pdf' => $pdf,
                             'invoice_number' => $invoiceNumber,
-                            'correctived_number' => $correctivedNumber,
                         ];
                     }
                 }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Company;
+use App\Models\CompanyInvoicePrefix;
 use App\Models\SalesInvoice;
 use App\Models\SalesInvoiceItem;
 use App\Models\Warehouse;
@@ -43,6 +44,19 @@ class SalesInvoiceController extends Controller
 
         $defaultCompanyId = optional($companies->firstWhere('is_default', true))->id;
 
+        $companyInvoicePrefixes = CompanyInvoicePrefix::query()
+            ->where('is_active', true)
+            ->orderBy('company_id')
+            ->orderByDesc('is_default')
+            ->orderBy('prefix')
+            ->get([
+                'id',
+                'company_id',
+                'prefix',
+                'is_default',
+                'is_active',
+            ]);
+
         $warehouses = Warehouse::query()
             ->orderBy('name')
             ->get([
@@ -53,6 +67,7 @@ class SalesInvoiceController extends Controller
         return view('admin.documents.sales-invoices', [
             'companies' => $companies,
             'defaultCompanyId' => $defaultCompanyId,
+            'companyInvoicePrefixes' => $companyInvoicePrefixes,
             'warehouses' => $warehouses,
         ]);
     }
@@ -451,6 +466,7 @@ class SalesInvoiceController extends Controller
 
         $validated = $request->validate([
             'company_id' => 'required|integer|exists:companies,id',
+            'company_invoice_prefix_id' => 'nullable|integer|exists:company_invoice_prefixes,id',
             'invoice_number' => 'nullable|string|max:255|unique:sales_invoices,invoice_number',
             'invoice_type' => 'nullable|string|max:255',
             'status' => 'nullable|string|max:50',
@@ -505,6 +521,22 @@ class SalesInvoiceController extends Controller
             return response()->json(['message' => 'Kérlek válassz egy céget.'], 422);
         }
 
+        $prefixId = $validated['company_invoice_prefix_id'] ?? null;
+        $prefix = null;
+        if ($prefixId !== null) {
+            $prefixModel = CompanyInvoicePrefix::query()
+                ->whereKey((int) $prefixId)
+                ->where('company_id', (int) $company->id)
+                ->where('is_active', true)
+                ->first();
+
+            if (!$prefixModel) {
+                return response()->json(['message' => 'A kiválasztott számla előtag nem érvényes ehhez a céghez.'], 422);
+            }
+
+            $prefix = (string) $prefixModel->prefix;
+        }
+
         $payload = array_merge([
             'status' => 'draft',
             'payment_status' => 'unpaid',
@@ -522,6 +554,9 @@ class SalesInvoiceController extends Controller
         $payload['company_email'] = $company->email;
         $payload['company_phone'] = $company->phone;
         $payload['company_bank_account'] = $company->bank_account;
+
+        $payload['company_invoice_prefix_id'] = $prefixId;
+        $payload['company_invoice_prefix'] = $prefix;
 
         $invoice = DB::transaction(function () use ($payload, $request) {
             $invoiceNumber = trim((string) ($payload['invoice_number'] ?? ''));
@@ -559,6 +594,7 @@ class SalesInvoiceController extends Controller
 
         $validated = $request->validate([
             'company_id' => 'required|integer|exists:companies,id',
+            'company_invoice_prefix_id' => 'nullable|integer|exists:company_invoice_prefixes,id',
             'invoice_number' => 'nullable|string|max:255|unique:sales_invoices,invoice_number,' . $invoice->id,
             'invoice_type' => 'nullable|string|max:255',
             'status' => 'nullable|string|max:50',
@@ -613,6 +649,22 @@ class SalesInvoiceController extends Controller
             return response()->json(['message' => 'Kérlek válassz egy céget.'], 422);
         }
 
+        $prefixId = $validated['company_invoice_prefix_id'] ?? null;
+        $prefix = null;
+        if ($prefixId !== null) {
+            $prefixModel = CompanyInvoicePrefix::query()
+                ->whereKey((int) $prefixId)
+                ->where('company_id', (int) $company->id)
+                ->where('is_active', true)
+                ->first();
+
+            if (!$prefixModel) {
+                return response()->json(['message' => 'A kiválasztott számla előtag nem érvényes ehhez a céghez.'], 422);
+            }
+
+            $prefix = (string) $prefixModel->prefix;
+        }
+
         $validated['company_id'] = $company->id;
         $validated['company_name'] = $company->name;
         $validated['company_tax_number'] = $company->tax_number;
@@ -623,6 +675,9 @@ class SalesInvoiceController extends Controller
         $validated['company_email'] = $company->email;
         $validated['company_phone'] = $company->phone;
         $validated['company_bank_account'] = $company->bank_account;
+
+        $validated['company_invoice_prefix_id'] = $prefixId;
+        $validated['company_invoice_prefix'] = $prefix;
 
         $invoice = DB::transaction(function () use ($invoice, $validated, $request) {
             $invoiceNumber = trim((string) ($validated['invoice_number'] ?? ''));
@@ -654,6 +709,7 @@ class SalesInvoiceController extends Controller
 
         $validator = Validator::make($request->all(), [
             'company_id' => 'required|integer|exists:companies,id',
+            'company_invoice_prefix_id' => 'nullable|integer|exists:company_invoice_prefixes,id',
             'partner_name' => 'required|string|max:255',
             'partner_tax_number' => 'nullable|string|max:255',
             'partner_country' => 'nullable|string|max:2',
@@ -697,6 +753,20 @@ class SalesInvoiceController extends Controller
 
         if (!is_string($company->billing_provider_api_key ?? null) || trim((string) $company->billing_provider_api_key) === '') {
             return response()->json(['message' => 'A kiválasztott céghez nincs beállítva Számlázz.hu API kulcs.'], 422);
+        }
+
+        $prefixId = $validated['company_invoice_prefix_id'] ?? null;
+        $prefix = null;
+        if ($prefixId !== null) {
+            $prefixModel = CompanyInvoicePrefix::query()
+                ->whereKey((int) $prefixId)
+                ->where('company_id', (int) $company->id)
+                ->where('is_active', true)
+                ->first();
+            if (!$prefixModel) {
+                return response()->json(['message' => 'A kiválasztott számla előtag nem érvényes ehhez a céghez.'], 422);
+            }
+            $prefix = (string) $prefixModel->prefix;
         }
 
         $itemsRaw = json_decode((string) $validated['items_json'], true);
@@ -751,6 +821,7 @@ class SalesInvoiceController extends Controller
             items: $items,
             paymentMethod: (string) $validated['payment_method'],
             noteForDocument: isset($validated['note_for_document']) ? (string) $validated['note_for_document'] : null,
+            invoicePrefix: $prefix,
             currency: (string) ($validated['currency'] ?? 'HUF'),
             agentKey: $company->billing_provider_api_key ? (string) $company->billing_provider_api_key : null,
         );
@@ -879,6 +950,20 @@ class SalesInvoiceController extends Controller
             return response()->json(['message' => 'A tételek érvénytelenek.'], 422);
         }
 
+        $invoicePrefix = null;
+        if (!empty($invoice->company_invoice_prefix)) {
+            $invoicePrefix = trim((string) $invoice->company_invoice_prefix);
+        } elseif (!empty($invoice->company_invoice_prefix_id)) {
+            $invoicePrefix = CompanyInvoicePrefix::query()
+                ->whereKey((int) $invoice->company_invoice_prefix_id)
+                ->where('company_id', (int) $company->id)
+                ->value('prefix');
+            $invoicePrefix = is_string($invoicePrefix) ? trim($invoicePrefix) : null;
+        }
+        if ($invoicePrefix === '') {
+            $invoicePrefix = null;
+        }
+
         $invoiceData = new InvoiceData(
             customer: new CustomerData(
                 name: (string) $validated['partner_name'],
@@ -892,6 +977,7 @@ class SalesInvoiceController extends Controller
             items: $items,
             paymentMethod: (string) $validated['payment_method'],
             noteForDocument: isset($validated['note_for_document']) ? (string) $validated['note_for_document'] : null,
+            invoicePrefix: $invoicePrefix,
             currency: (string) ($validated['currency'] ?? 'HUF'),
             agentKey: $company->billing_provider_api_key ? (string) $company->billing_provider_api_key : null,
         );

@@ -5,7 +5,7 @@ namespace App\Models;
 use App\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
 
-class Company extends Model
+class CompanyInvoicePrefix extends Model
 {
     use LogsActivity;
 
@@ -13,10 +13,11 @@ class Company extends Model
 
     protected $casts = [
         'is_default' => 'boolean',
+        'is_active' => 'boolean',
     ];
 
-    public function invoicePrefixes()
+    public function company()
     {
-        return $this->hasMany(CompanyInvoicePrefix::class);
+        return $this->belongsTo(Company::class);
     }
 }

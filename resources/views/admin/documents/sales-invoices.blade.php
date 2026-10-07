@@ -111,6 +111,13 @@
                     </select>
                 </div>
 
+                <div class="mb-0">
+                    <label for="company_invoice_prefix_id" class="form-label">Számla előtag</label>
+                    <select class="form-select" id="company_invoice_prefix_id" name="company_invoice_prefix_id">
+                        <option value="">(nincs)</option>
+                    </select>
+                </div>
+
 
             </fieldset>
 
@@ -306,6 +313,7 @@
     <script type="module">
 
         const companies = @json($companies ?? []);
+        const companyInvoicePrefixes = @json($companyInvoicePrefixes ?? []);
         const warehouses = @json($warehouses ?? []);
         const defaultCompanyId = @json($defaultCompanyId ?? null);
 
@@ -323,6 +331,39 @@
                 if (!previewModalFooter) return;
                 previewModalFooter.style.display = isVisible ? '' : 'none';
             }
+
+            function populateCompanyPrefixes(companyId, selectedId = '') {
+                const $select = $('#company_invoice_prefix_id');
+                if (!$select.length) return;
+
+                const cid = String(companyId || '').trim();
+                const prefixes = (Array.isArray(companyInvoicePrefixes) ? companyInvoicePrefixes : [])
+                    .filter(p => String(p.company_id || '') === cid && Boolean(p.is_active));
+
+                $select.empty();
+                $select.append(`<option value="">(nincs)</option>`);
+
+                prefixes.forEach(p => {
+                    const id = String(p.id);
+                    const label = String(p.prefix || '');
+                    $select.append(`<option value="${escapeHtml(id)}">${escapeHtml(label)}${p.is_default ? ' (alapértelmezett)' : ''}</option>`);
+                });
+
+                const sel = String(selectedId || '').trim();
+                if (sel !== '') {
+                    $select.val(sel);
+                    return;
+                }
+
+                const def = prefixes.find(p => Boolean(p.is_default));
+                if (def) {
+                    $select.val(String(def.id));
+                }
+            }
+
+            $('#company_id').on('change', function () {
+                populateCompanyPrefixes($(this).val(), '');
+            });
 
             if (previewModalDOM) {
                 previewModalDOM.addEventListener('shown.bs.modal', function () {
@@ -428,6 +469,7 @@
                     $('#correction_of_sales_invoice_id').val(invoice.id || originalId);
 
                     $('#company_id').val(invoice.company_id || defaultCompanyId);
+                    populateCompanyPrefixes(invoice.company_id || defaultCompanyId, invoice.company_invoice_prefix_id || '');
                     $('#invoice_number').val('');
 
                     $('#partner_name').val(invoice.partner_name || '');
@@ -753,6 +795,8 @@
                     $('#company_id').val(companyId);
                 }
 
+                populateCompanyPrefixes($('#company_id').val(), '');
+
 
                 modal.show();
             });
@@ -810,6 +854,7 @@
                     $('#correction_of_sales_invoice_id').val(invoice.correction_of_sales_invoice_id || '');
 
                     $('#company_id').val(invoice.company_id || defaultCompanyId);
+                    populateCompanyPrefixes(invoice.company_id || defaultCompanyId, invoice.company_invoice_prefix_id || '');
                     $('#invoice_number').val(invoice.invoice_number || '');
 
                     $('#partner_name').val(invoice.partner_name || '');
@@ -1498,6 +1543,8 @@
                 if (defaultCompanyId) {
                     $('#company_id').val(defaultCompanyId);
                 }
+
+                populateCompanyPrefixes($('#company_id').val(), '');
 
                 $('#currency').val('HUF');
                 $('#partner_country').val('HU');
