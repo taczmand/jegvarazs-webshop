@@ -7,6 +7,7 @@ use App\Models\Company;
 use App\Models\CompanyInvoicePrefix;
 use App\Models\SalesInvoice;
 use App\Models\SalesInvoiceItem;
+use App\Models\SalesInvoicePayment;
 use App\Models\Warehouse;
 use App\Services\InvoiceServiceInterface;
 use App\Services\SzamlazzHu\SzamlazzHuInvoiceService;
@@ -18,6 +19,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
 use Yajra\DataTables\Facades\DataTables;
 
 class SalesInvoiceController extends Controller
@@ -83,8 +85,8 @@ class SalesInvoiceController extends Controller
             'payment_method',
             'issued_at',
             'due_at',
-            'currency',
             'gross_total',
+            'outstanding_amount',
             'status',
             'payment_status',
             'note',
@@ -128,6 +130,12 @@ class SalesInvoiceController extends Controller
                 ];
                 return $translations[$invoice->invoice_type] ?? ucfirst($invoice->invoice_type);
             })
+            ->editColumn('gross_total', function ($invoice) {
+                return number_format($invoice->gross_total, 0, ',', ' ') . ' Ft';
+            })
+            ->editColumn('outstanding_amount', function ($invoice) {
+                return number_format($invoice->outstanding_amount, 0, ',', ' ') . ' Ft';
+            })
             ->addColumn('action', function ($invoice) {
                 $user = auth('admin')->user();
                 $buttons = '';
@@ -141,17 +149,22 @@ class SalesInvoiceController extends Controller
 
                     if ($invoice->status === 'issued' && $user->can('edit-sales-invoice')) {
                         $buttons .= '
-                            <button class="btn btn-sm btn-outline-danger storno" data-id="' . $invoice->id . '" title="Érvénytelenít">
+                            <button class="btn btn-sm btn-outline-danger storno" data-id="' . $invoice->id . '" title="Érvénytelenítő számla készítése">
                                 <i class="fas fa-ban"></i>
                             </button>
                         ';
                         if ($invoice->invoice_type === 'normal') {
                             $buttons .= '
-                                <button class="btn btn-sm btn-outline-primary correction" data-id="' . $invoice->id . '" title="Helyesbítő számla">
+                                <button class="btn btn-sm btn-outline-primary correction" data-id="' . $invoice->id . '" title="Helyesbítő számla készítése">
                                     <i class="fas fa-file-invoice"></i>
                                 </button>
                             ';
                         }
+                        $buttons .= '
+                            <button class="btn btn-sm btn-outline-secondary finances" data-id="' . $invoice->id . '" title="Pénzügyek">
+                                <i class="fas fa-credit-card"></i>
+                            </button>
+                        ';
                     }
                 }
 
@@ -467,7 +480,7 @@ class SalesInvoiceController extends Controller
         $validated = $request->validate([
             'company_id' => 'required|integer|exists:companies,id',
             'company_invoice_prefix_id' => 'nullable|integer|exists:company_invoice_prefixes,id',
-            'invoice_number' => 'nullable|string|max:255|unique:sales_invoices,invoice_number',
+            'invoice_number' => 'nullable|string|max:255',
             'invoice_type' => 'nullable|string|max:255',
             'status' => 'nullable|string|max:50',
             'payment_status' => 'nullable|string|max:50',
@@ -560,17 +573,49 @@ class SalesInvoiceController extends Controller
 
         $invoice = DB::transaction(function () use ($payload, $request) {
             $invoiceNumber = trim((string) ($payload['invoice_number'] ?? ''));
-            $payload['invoice_number'] = $invoiceNumber !== '' ? $invoiceNumber : 'DRAFT-' . uniqid();
 
-            $invoice = SalesInvoice::create($payload);
+            // Ha nincs számlaszám, generálunk egy új draft számot.
+            if ($invoiceNumber === '') {
+                $payload['invoice_number'] = 'DRAFT-' . uniqid();
 
-            if (str_starts_with((string) $invoice->invoice_number, 'DRAFT-')) {
+                $invoice = SalesInvoice::create($payload);
+
                 $invoice->update([
                     'invoice_number' => 'DRAFT-' . $invoice->id,
                 ]);
+            } elseif (str_starts_with($invoiceNumber, 'DRAFT-')) {
+                // Meglévő draft számla keresése.
+                $invoice = SalesInvoice::query()
+                    ->where('invoice_number', $invoiceNumber)
+                    ->first();
+
+                if (!$invoice) {
+                    throw ValidationException::withMessages([
+                        'invoice_number' => 'A megadott piszkozat számla nem található.',
+                    ]);
+                }
+
+                // Meglévő draft frissítése.
+                $invoice->update($payload);
+            } else {
+                $invoice = SalesInvoice::query()
+                    ->where('invoice_number', $invoiceNumber)
+                    ->first();
+
+                if (!$invoice) {
+                    throw ValidationException::withMessages([
+                        'invoice_number' => 'Ez a számlaszám már létezik.',
+                    ]);
+                } else {
+                    $invoice->update($payload);
+                }
+
             }
 
-            $this->syncItemsFromJson($invoice->id, (string) $request->input('items_json', '[]'));
+            $this->syncItemsFromJson(
+                $invoice->id,
+                (string) $request->input('items_json', '[]')
+            );
 
             $this->recalculateTotals($invoice);
 
@@ -900,6 +945,7 @@ class SalesInvoiceController extends Controller
 
         $validated = $request->validate([
             'partner_name' => 'required|string|max:255',
+            'partner_email' => 'nullable|string|email',
             'partner_tax_number' => 'nullable|string|max:255',
             'partner_country' => 'nullable|string|max:2',
             'partner_zip_code' => 'required|string|max:255',
@@ -909,6 +955,7 @@ class SalesInvoiceController extends Controller
             'currency' => 'nullable|string|size:3',
             'note_for_document' => 'nullable|string',
             'items_json' => 'required|string',
+            'send_email' => 'nullable|integer'
         ]);
 
         $itemsRaw = json_decode((string) $validated['items_json'], true);
@@ -972,7 +1019,8 @@ class SalesInvoiceController extends Controller
                 address: (string) $validated['partner_address_line'],
                 country: (string) ($validated['partner_country'] ?? 'HU'),
                 taxNumber: $validated['partner_tax_number'] ? (string) $validated['partner_tax_number'] : null,
-                email: null,
+                email: (string) ($validated['partner_email'] ?? null),
+                sendEmail: (int) ($validated['send_email'] ?? 0),
             ),
             items: $items,
             paymentMethod: (string) $validated['payment_method'],
@@ -1252,5 +1300,213 @@ class SalesInvoiceController extends Controller
                 ]
             );
         }
+    }
+
+    public function payments($id)
+    {
+        $sales_invoice_payments = SalesInvoicePayment::query()->where('sales_invoice_id', $id)->get();
+        return $sales_invoice_payments;
+    }
+
+    public function addPayment(Request $request, InvoiceServiceInterface $invoiceService)
+    {
+        $user = auth('admin')->user();
+
+        /*if (!$user || !$user->can('update-sales-invoice')) {
+            return response()->json([
+                'message' => 'Nincs jogosultságod a befizetés rögzítéséhez.'
+            ], 403);
+        }*/
+
+        $validated = $request->validate([
+            'sales_invoice_id' => 'required|integer|exists:sales_invoices,id',
+            'paid_at' => 'required|date',
+            'amount' => 'required|numeric|min:0.01',
+            'currency' => 'nullable|string|size:3',
+            'payment_method' => 'nullable|string|max:255',
+            'transaction_id' => 'nullable|string|max:255',
+            'reference' => 'nullable|string|max:255',
+            'note' => 'nullable|string',
+        ]);
+
+        $invoice = SalesInvoice::query()
+            ->findOrFail($validated['sales_invoice_id']);
+
+        $company = null;
+
+        if (!empty($invoice->company_id)) {
+            $company = Company::query()
+                ->where('status', 'active')
+                ->find((int) $invoice->company_id);
+        }
+
+        if (!$company) {
+            return response()->json([
+                'message' => 'A számlához nincs érvényes cég rendelve.'
+            ], 422);
+        }
+
+        // Befizetés előkészítése DB-mentés nélkül
+        $payment = new SalesInvoicePayment([
+            'paid_at' => $validated['paid_at'],
+            'amount' => $validated['amount'],
+            'currency' => $validated['currency'] ?? $invoice->currency ?? 'HUF',
+            'payment_method' => $validated['payment_method'] ?? null,
+            'transaction_id' => $validated['transaction_id'] ?? null,
+            'reference' => $validated['reference'] ?? null,
+            'note' => $validated['note'] ?? null,
+        ]);
+
+        // Először a Számlázz.hu-n rögzítjük a befizetést
+        try {
+            $invoiceService->registerPayment(
+                $invoice,
+                $payment,
+                (string) $company->billing_provider_api_key
+            );
+        } catch (\Throwable $e) {
+            report($e);
+
+            return response()->json([
+                'message' => 'A befizetés Számlázz.hu-n történő rögzítése sikertelen.',
+            ], 502);
+        }
+
+        // Csak sikeres Számlázz.hu válasz után módosítjuk az adatbázist
+        DB::transaction(function () use ($invoice, $payment) {
+            // Számlazárásig vagy más egyidejű befizetésig zároljuk a számlát
+            $lockedInvoice = SalesInvoice::query()
+                ->whereKey($invoice->id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            $lockedInvoice->payments()->save($payment);
+
+            // Összes befizetés újraszámolása
+            $paidAmount = $lockedInvoice->payments()->sum('amount');
+
+            // Hátralék
+            $outstandingAmount = max(
+                0,
+                (float) $lockedInvoice->gross_total - (float) $paidAmount
+            );
+
+            if ($paidAmount <= 0) {
+                $paymentStatus = 'unpaid';
+                $settledAt = null;
+            } elseif ($outstandingAmount <= 0) {
+                $paymentStatus = 'paid';
+                $settledAt = now();
+            } else {
+                $paymentStatus = 'partially_paid';
+                $settledAt = null;
+            }
+
+            $lockedInvoice->update([
+                'paid_amount' => $paidAmount,
+                'outstanding_amount' => $outstandingAmount,
+                'payment_status' => $paymentStatus,
+                'settled_at' => $settledAt,
+            ]);
+        });
+
+        return response()->json($payment->fresh(), 201);
+    }
+
+    public function deletePayment(SalesInvoicePayment $payment, InvoiceServiceInterface $invoiceService) {
+        $user = auth('admin')->user();
+
+        /*if (!$user || !$user->can('update-sales-invoice')) {
+            return response()->json([
+                'message' => 'Nincs jogosultságod a befizetés törléséhez.'
+            ], 403);
+        }*/
+
+        $invoice = $payment->salesInvoice;
+
+        if (!$invoice) {
+            return response()->json([
+                'message' => 'A befizetéshez tartozó számla nem található.'
+            ], 404);
+        }
+
+        // Sajnos nincs lehetőség törölni a szamlazz.hu-n
+        /*$company = null;
+
+        if (!empty($invoice->company_id)) {
+            $company = Company::query()
+                ->where('status', 'active')
+                ->find((int) $invoice->company_id);
+        }
+
+        if (!$company) {
+            return response()->json([
+                'message' => 'A számlához nincs érvényes cég rendelve.'
+            ], 422);
+        }
+
+        // Először a Számlázz.hu-n töröljük a befizetést.
+        try {
+            $invoiceService->deletePayment(
+                $invoice,
+                $payment,
+                (string) $company->billing_provider_api_key
+            );
+        } catch (\Throwable $e) {
+            report($e);
+
+            return response()->json([
+                'message' => 'A befizetés törlése a Számlázz.hu rendszerében sikertelen.',
+            ], 502);
+        }*/
+
+        // Csak sikeres külső törlés után törlünk lokálisan.
+        DB::transaction(function () use ($payment, $invoice) {
+            $lockedInvoice = SalesInvoice::query()
+                ->whereKey($invoice->id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            // Ellenőrizzük, hogy a befizetés még létezik-e.
+            $lockedPayment = $lockedInvoice->payments()
+                ->whereKey($payment->id)
+                ->first();
+
+            if (!$lockedPayment) {
+                return;
+            }
+
+            $lockedPayment->delete();
+
+            // A megmaradt befizetések újraszámolása.
+            $paidAmount = $lockedInvoice->payments()->sum('amount');
+
+            $outstandingAmount = max(
+                0,
+                (float) $lockedInvoice->gross_total - (float) $paidAmount
+            );
+
+            if ($paidAmount <= 0) {
+                $paymentStatus = 'unpaid';
+                $settledAt = null;
+            } elseif ($outstandingAmount <= 0) {
+                $paymentStatus = 'paid';
+                $settledAt = now();
+            } else {
+                $paymentStatus = 'partially_paid';
+                $settledAt = null;
+            }
+
+            $lockedInvoice->update([
+                'paid_amount' => $paidAmount,
+                'outstanding_amount' => $outstandingAmount,
+                'payment_status' => $paymentStatus,
+                'settled_at' => $settledAt,
+            ]);
+        });
+
+        return response()->json([
+            'message' => 'A befizetés sikeresen törölve.'
+        ]);
     }
 }

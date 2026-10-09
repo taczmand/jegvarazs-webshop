@@ -13,14 +13,18 @@ class SalesInvoice extends Model
 
     protected $casts = [
         'prices_include_vat' => 'boolean',
-        'issued_at' => 'date',
-        'fulfilled_at' => 'date',
-        'due_at' => 'date',
+        'issued_at' => 'date:Y-m-d',
+        'fulfilled_at' => 'date:Y-m-d',
+        'due_at' => 'date:Y-m-d',
         'settled_at' => 'datetime',
     ];
 
     public function items()
     {
         return $this->hasMany(SalesInvoiceItem::class);
+    }
+    public function payments()
+    {
+        return $this->hasMany(SalesInvoicePayment::class);
     }
 }

@@ -12,5 +12,6 @@ readonly class CustomerData
         public string $country = 'HU',
         public ?string $taxNumber = null,
         public ?string $email = null,
+        public ?int $sendEmail = null,
     ) {}
 }

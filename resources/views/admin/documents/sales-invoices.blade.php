@@ -2,7 +2,6 @@
 
 @section('content')
 
-
     <div class="container-fluid px-0">
 
         <div class="d-flex justify-content-between align-items-center mb-3 pb-2">
@@ -73,8 +72,8 @@
                         <th>Fiz.mód</th>
                         <th>Kelt</th>
                         <th>Határidő</th>
-                        <th>Pénznem</th>
                         <th>Bruttó</th>
+                        <th>Kintlévőség</th>
                         <th>Létrehozva</th>
                         <th>Állapot</th>
                         <th>Fizetés</th>
@@ -117,6 +116,7 @@
                         <option value="">(nincs)</option>
                     </select>
                 </div>
+                <input type="hidden" id="invoice_number" name="invoice_number" value="">
 
 
             </fieldset>
@@ -165,11 +165,26 @@
                 </div>
 
                 <div class="row g-2 mt-1">
-                    <div class="col-12 col-md-6">
+                    <div class="col-12 col-md-5">
                         <label for="partner_email" class="form-label">E-mail</label>
                         <input type="email" class="form-control" id="partner_email" name="partner_email">
                     </div>
-                    <div class="col-12 col-md-6">
+                    <div class="col-12 col-md-2">
+                        <label for="send_email"
+                               class="form-label"
+                               title="Amennyiben ez be van pipálva, az elkészült számla kiküldésre kerül a partner e-mail címére">
+                            E-mail küldés?
+                        </label>
+
+                        <div class="form-check">
+                            <input type="checkbox"
+                                   class="form-check-input"
+                                   id="send_email"
+                                   name="send_email"
+                                   value="1">
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-5">
                         <label for="partner_phone" class="form-label">Telefon</label>
                         <input type="text" class="form-control" id="partner_phone" name="partner_phone">
                     </div>
@@ -307,6 +322,46 @@
         </div>
     </div>
 
+    <!-- Modális ablak fizetésekre -->
+    <div class="modal fade admin-modal-soft" id="paymentModal" tabindex="-1" aria-labelledby="paymentModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <form id="paymentForm" enctype="multipart/form-data">
+                <div class="modal-content">
+                    <div class="modal-header bg-gradient-custom">
+                        <h5 class="modal-title" id="paymentModalLabel">Pénzügyek</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Bezárás"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" id="sales_invoice_id" name="sales_invoice_id">
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover align-middle mb-0">
+                                <thead>
+                                <tr>
+                                    <th>Dátum</th>
+                                    <th>Összeg</th>
+                                    <th>Fizetési mód</th>
+                                    <th>Tranzakció azonosító</th>
+                                    <th class="text-end">Művelet</th>
+                                </tr>
+                                </thead>
+                                <tbody id="salesPaymentsTableBody">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <small><i>Fizetési tétel törlésére a Szamlazz.hu-n sajnos nincs lehetőség API-n keresztül, így ezt manuálisan kell megtenni. A törlés gombbal csak a rendszer adatbázisából törli az összeget!</i></small>
+                        <button type="button" class="btn btn-success" id="addSalesPayment">
+                            <i class="fas fa-plus"></i>
+                            Új befizetés
+                        </button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Mégse</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
 @endsection
 
 @section('scripts')
@@ -321,6 +376,8 @@
         const modal = new bootstrap.Modal(modalDOM);
         const previewModalDOM = document.getElementById('salesInvoicePreviewModal');
         const previewModal = previewModalDOM ? new bootstrap.Modal(previewModalDOM) : null;
+        const financesModalDOM = document.getElementById('paymentModal');
+        const financesModal = financesModalDOM ? new bootstrap.Modal(financesModalDOM) : null;
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
         $(document).ready(function() {
@@ -442,6 +499,9 @@
                 }
 
                 resetForm('Helyesbítő számla');
+                const saveDraftBtn = document.getElementsByClassName('saveDraftSalesInvoice');
+                saveDraftBtn[0].style.display = 'none';
+
 
                 try {
                     const resp = await fetch(`{{ route('admin.documents.sales-invoices.show', ['id' => '__ID__']) }}`.replace('__ID__', String(originalId)), {
@@ -470,7 +530,7 @@
 
                     $('#company_id').val(invoice.company_id || defaultCompanyId);
                     populateCompanyPrefixes(invoice.company_id || defaultCompanyId, invoice.company_invoice_prefix_id || '');
-                    $('#invoice_number').val('');
+                    $('#invoice_number').val(invoice.invoice_number || '');
 
                     $('#partner_name').val(invoice.partner_name || '');
                     $('#partner_tax_number').val(invoice.partner_tax_number || '');
@@ -561,6 +621,7 @@
                 setPreviewModalFooterVisible(true);
                 const previewBtn = document.getElementById('previewSalesInvoice');
                 if (!previewBtn) return;
+                const correction_of_sales_invoice_id = $('#correction_of_sales_invoice_id').val();
                 const originalText = previewBtn ? previewBtn.innerHTML : null;
                 const saveDraftBtn = document.getElementsByClassName('saveDraftSalesInvoice');
                 const saveDraftBtnWasDisabled = saveDraftBtn ? saveDraftBtn.disabled : false;
@@ -570,6 +631,12 @@
                 }
                 if (saveDraftBtn) {
                     saveDraftBtn.disabled = true;
+                }
+
+                if (correction_of_sales_invoice_id) {
+                    saveDraftBtn[1].style.display = 'none';
+                } else {
+                    saveDraftBtn[1].style.display = 'block';
                 }
 
                 try {
@@ -771,8 +838,8 @@
                     { data: 'payment_method' },
                     { data: 'issued_at' },
                     { data: 'due_at' },
-                    { data: 'currency' },
                     { data: 'gross_total' },
+                    { data: 'outstanding_amount' },
                     { data: 'created' },
                     { data: 'status' },
                     { data: 'payment_status' },
@@ -1052,6 +1119,298 @@
                 saveDraftInvoice();
             });
 
+            $('#adminTable').on('click', '.finances', async function () {
+                const btnInvoiceId = String($(this).data('id') || '').trim();
+                $('#sales_invoice_id').val(btnInvoiceId);
+                const payments = await loadSalesPayments(btnInvoiceId);
+
+                const $tbody = $('#salesPaymentsTableBody');
+                $tbody.empty();
+
+                if (!payments || payments.length === 0) {
+                    $tbody.append(`
+                        <tr>
+                            <td colspan="5" class="text-center text-muted">
+                                Nincs rögzített befizetés.
+                            </td>
+                        </tr>
+                    `);
+                } else {
+                    payments.forEach(payment => {
+                        const paidAt = payment.paid_at
+                            ? new Date(payment.paid_at).toLocaleDateString('hu-HU')
+                            : '';
+
+                        const amount = Number(payment.amount || 0).toLocaleString('hu-HU');
+
+                        $tbody.append(`
+                            <tr>
+                                <td>${paidAt}</td>
+                                <td>${amount} ${payment.currency || ''}</td>
+                                <td>${payment.payment_method || '-'}</td>
+                                <td>${payment.transaction_id || '-'}</td>
+                                <td class="text-end">
+                                    <button
+                                        type="button"
+                                        class="btn btn-sm btn-outline-danger delete-payment"
+                                        data-id="${payment.id}">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        `);
+                    });
+                }
+
+                financesModal.show();
+            });
+
+            async function loadSalesPayments(invoice_id) {
+                let url = `${window.appConfig.APP_URL}admin/bizonylatok/kimeno-szamlak/payments/${invoice_id}`;
+                try {
+                    const response = await fetch(url, {
+                        headers: {
+                            'X-CSRF-TOKEN': csrfToken
+                        }
+                    });
+                    if (!response.ok) {
+                        throw new Error('Hiba a befieztések lekérdezésekor');
+                    }
+                    return await response.json();
+                } catch (error) {
+                    console.error('Lekérdezési hiba:', error);
+                    return [];
+                }
+            }
+
+            $('#addSalesPayment').on('click', function () {
+                const $tbody = $('#salesPaymentsTableBody');
+
+                // Ha már van szerkesztés alatt álló új sor, ne lehessen még egyet hozzáadni
+                if ($tbody.find('.new-payment-row').length) {
+                    return;
+                }
+
+                $tbody.prepend(`
+                    <tr class="new-payment-row">
+                        <td>
+                            <input
+                                type="date"
+                                class="form-control form-control-sm"
+                                id="newPaymentDate"
+                                value="${new Date().toISOString().slice(0, 10)}">
+                        </td>
+
+                        <td>
+                            <input
+                                type="number"
+                                class="form-control form-control-sm"
+                                id="newPaymentAmount"
+                                min="0"
+                                step="1"
+                                placeholder="Összeg">
+                        </td>
+
+                        <td>
+                            <input
+                                type="text"
+                                class="form-control form-control-sm"
+                                id="newPaymentMethod"
+                                placeholder="Fizetési mód">
+                        </td>
+
+                        <td>
+                            <input
+                                type="text"
+                                class="form-control form-control-sm"
+                                id="newPaymentTransactionId"
+                                placeholder="Tranzakció azonosító">
+                        </td>
+
+                        <td class="text-end text-nowrap">
+                            <button
+                                type="button"
+                                class="btn btn-sm btn-success save-payment"
+                                title="Mentés">
+                                <i class="fas fa-check"></i>
+                            </button>
+
+                            <button
+                                type="button"
+                                class="btn btn-sm btn-secondary cancel-new-payment"
+                                title="Mégse">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `);
+
+                $('#newPaymentAmount').trigger('focus');
+            });
+
+            $('#salesPaymentsTableBody').on('click', '.save-payment', async function () {
+                const $row = $(this).closest('tr');
+
+                const paidAt = $row.find('#newPaymentDate').val();
+                const amount = $row.find('#newPaymentAmount').val();
+                const paymentMethod = $row.find('#newPaymentMethod').val();
+                const transactionId = $row.find('#newPaymentTransactionId').val();
+
+                if (!paidAt) {
+                    alert('A dátum megadása kötelező.');
+                    return;
+                }
+
+                if (!amount || Number(amount) <= 0) {
+                    alert('Az összeg megadása kötelező.');
+                    return;
+                }
+
+                let url = `${window.appConfig.APP_URL}admin/bizonylatok/kimeno-szamlak/addpayments`;
+
+                const currentSalesInvoiceId = $('#sales_invoice_id').val();
+
+                try {
+                    const payment = await $.ajax({
+                        url: url,
+                        type: 'POST',
+                        data: {
+                            sales_invoice_id: currentSalesInvoiceId,
+                            paid_at: paidAt,
+                            amount: amount,
+                            currency: 'HUF',
+                            payment_method: paymentMethod || null,
+                            transaction_id: transactionId || null,
+                            _token: $('meta[name="csrf-token"]').attr('content')
+                        }
+                    });
+
+                    $row.replaceWith(`
+                        <tr>
+                            <td>
+                                ${new Date(payment.paid_at).toLocaleDateString('hu-HU')}
+                            </td>
+                            <td>
+                                ${Number(payment.amount).toLocaleString('hu-HU')}
+                                ${payment.currency || ''}
+                            </td>
+                            <td>${payment.payment_method || '-'}</td>
+                            <td>${payment.transaction_id || '-'}</td>
+                            <td class="text-end">
+                                <button
+                                    type="button"
+                                    class="btn btn-sm btn-outline-danger delete-payment"
+                                    data-id="${payment.id}">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `);
+
+                } catch (xhr) {
+                    alert(xhr.responseJSON?.message || 'A befizetés mentése sikertelen.');
+                }
+            });
+
+            $('#salesPaymentsTableBody').on('click', '.delete-payment', async function () {
+                const paymentId = $(this).data('id');
+
+                if (!confirm('Biztosan törölni szeretnéd ezt a befizetést?')) {
+                    return;
+                }
+
+                let url = `${window.appConfig.APP_URL}admin/bizonylatok/kimeno-szamlak/payments/${paymentId}`;
+
+                try {
+                    await $.ajax({
+                        url: url,
+                        type: 'DELETE',
+                        data: {
+                            _token: $('meta[name="csrf-token"]').attr('content')
+                        }
+                    });
+
+                    await refreshSalesPaymentsTable();
+
+                } catch (xhr) {
+                    alert(
+                        xhr.responseJSON?.message ||
+                        'A befizetés törlése sikertelen.'
+                    );
+                }
+            });
+
+            async function refreshSalesPaymentsTable() {
+
+                const currentSalesInvoiceId = $('#sales_invoice_id').val();
+                const $tbody = $('#salesPaymentsTableBody');
+
+                try {
+                    const payments = await loadSalesPayments(currentSalesInvoiceId);
+
+                    $tbody.empty();
+
+                    if (!payments || payments.length === 0) {
+                        $tbody.append(`
+                            <tr>
+                                <td colspan="5" class="text-center text-muted">
+                                    Nincs rögzített befizetés.
+                                </td>
+                            </tr>
+                        `);
+
+                        return;
+                    }
+
+                    payments.forEach(payment => {
+                        const paidAt = payment.paid_at
+                            ? new Date(payment.paid_at).toLocaleDateString('hu-HU')
+                            : '-';
+
+                        const amount = Number(payment.amount || 0).toLocaleString('hu-HU');
+
+                        $tbody.append(`
+                            <tr>
+                                <td>${paidAt}</td>
+
+                                <td>
+                                    ${amount} ${payment.currency || ''}
+                                </td>
+
+                                <td>
+                                    ${payment.payment_method || '-'}
+                                </td>
+
+                                <td>
+                                    ${payment.transaction_id || '-'}
+                                </td>
+
+                                <td class="text-end">
+                                    <button
+                                        type="button"
+                                        class="btn btn-sm btn-outline-danger delete-payment"
+                                        data-id="${payment.id}"
+                                        title="Törlés">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        `);
+                    });
+
+                } catch (xhr) {
+                    $tbody.html(`
+                        <tr>
+                            <td colspan="5" class="text-center text-danger">
+                                A befizetések betöltése sikertelen.
+                            </td>
+                        </tr>
+                    `);
+
+                    console.error('Sales payments load error:', xhr);
+                }
+            }
+
             // Piszkozat mentése (létrehozás vagy frissítés szamlazó nélkül)
             function saveDraftInvoice() {
                 syncItemsJson();
@@ -1103,6 +1462,7 @@
                         showToast('Sikeres mentés!', 'success');
                         table.ajax.reload(null, false);
                         modal.hide();
+                        if (previewModal) previewModal.hide();
                         resetForm(null);
 
                         saveBtn.html(originalSaveButtonHtml).prop('disabled', false);
@@ -1556,6 +1916,7 @@
                 if ($('#prices_include_vat').length) {
                     $('#prices_include_vat').prop('checked', true);
                 }
+                $('#invoice_number').val('');
 
                 resetPreview();
 

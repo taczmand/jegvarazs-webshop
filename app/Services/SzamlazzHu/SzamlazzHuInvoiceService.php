@@ -2,11 +2,16 @@
 
 namespace App\Services\SzamlazzHu;
 
+use App\Models\SalesInvoice;
+use App\Models\SalesInvoicePayment;
 use App\Services\InvoiceServiceInterface;
 use App\Services\SzamlazzHu\Dto\InvoiceData;
 use App\Services\SzamlazzHu\Dto\ItemData;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
+use SzamlaAgent\Creditnote\InvoiceCreditNote;
+use SzamlaAgent\Document\Document;
+use SzamlaAgent\Header\InvoiceHeader;
 use SzamlaAgent\SzamlaAgentAPI;
 use SzamlaAgent\Buyer;
 use SzamlaAgent\Document\Invoice\Invoice;
@@ -685,13 +690,19 @@ class SzamlazzHuInvoiceService implements InvoiceServiceInterface
             $data->customer->name,
             $data->customer->zip,
             $data->customer->city,
-            $data->customer->address
+            $data->customer->address,
+            $data->customer->email
         );
 
         if ($data->customer->taxNumber) {
             $buyer->setTaxNumber(
                 $data->customer->taxNumber
             );
+        }
+
+        if ($data->customer->sendEmail) {
+            $buyer->setEmail($data->customer->email);
+            $buyer->setSendEmail(true);
         }
 
         $invoice = new Invoice(Invoice::INVOICE_TYPE_P_INVOICE);
@@ -933,4 +944,79 @@ class SzamlazzHuInvoiceService implements InvoiceServiceInterface
             throw new \RuntimeException('Számlázz.hu sztornó PDF beolvasása sikertelen: ' . $e->getMessage());
         }
     }
+
+    public function registerPayment(SalesInvoice $invoice, SalesInvoicePayment $payment, string $agentKey): void
+    {
+        $apiKey = trim($agentKey);
+
+        if ($apiKey === '') {
+            throw new \RuntimeException(
+                'Hiányzik a számlázó API kulcs (cég szinten).'
+            );
+        }
+
+        if (empty($invoice->invoice_number)) {
+            throw new \RuntimeException(
+                'A számlához nem tartozik számlaszám.'
+            );
+        }
+
+        if (!$payment->paid_at || (float) $payment->amount <= 0) {
+            throw new \RuntimeException(
+                'A befizetés dátuma vagy összege érvénytelen.'
+            );
+        }
+
+        $agent = SzamlaAgentAPI::create(
+            $apiKey,
+            true,
+            \SzamlaAgent\Log::LOG_LEVEL_OFF
+        );
+
+        $this->prepareAgentDirs($agent);
+
+        $szamla = new Invoice(Invoice::INVOICE_TYPE_E_INVOICE);
+
+        $header = new InvoiceHeader();
+        $header->setInvoiceNumber($invoice->invoice_number);
+
+        $szamla->setHeader($header);
+
+        $creditNote = new InvoiceCreditNote(
+            $payment->paid_at->format('Y-m-d'),
+            (float) $payment->amount,
+            $this->getSzamlazzPaymentMethod($payment->payment_method),
+            $payment->note ?? ''
+        );
+
+        $szamla->addCreditNote($creditNote);
+
+        $result = $agent->payInvoice($szamla);
+
+        if (!$result) {
+            throw new \RuntimeException(
+                'A befizetés rögzítése sikertelen a Számlázz.hu rendszerében.'
+            );
+        }
+    }
+
+    public function deletePayment(SalesInvoice $invoice, SalesInvoicePayment $payment, string $agentKey): void
+    {
+        $apiKey = trim((string) ($data->agentKey ?? ''));
+        if ($apiKey === '') {
+            throw new \RuntimeException('Hiányzik a számlázó API kulcs (cég szinten).');
+        }
+    }
+
+    private function getSzamlazzPaymentMethod(?string $paymentMethod): string
+    {
+        return match (mb_strtolower(trim((string) $paymentMethod))) {
+            'készpénz', 'cash' => Document::PAYMENT_METHOD_CASH,
+            'bankkártya', 'bankkartya', 'bankcard' => Document::PAYMENT_METHOD_BANKCARD,
+            'utánvét', 'utanvet', 'cod' => Document::PAYMENT_METHOD_COD,
+            'átutalás', 'atutalas', 'transfer', '' => Document::PAYMENT_METHOD_TRANSFER,
+            default => Document::PAYMENT_METHOD_TRANSFER,
+        };
+    }
+
 }

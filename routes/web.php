@@ -349,6 +349,9 @@ Route::get('/automatizacio/jogosultsagok/szinkron', function (Request $request, 
             Route::post('/bizonylatok/kimeno-szamlak/preview-invoice-pdf', [SalesInvoiceController::class, 'previewInvoicePdf'])->name('documents.sales-invoices.preview-invoice-pdf');
             Route::post('/bizonylatok/kimeno-szamlak/{id}/issue-invoice-pdf', [SalesInvoiceController::class, 'issueInvoicePdf'])->name('documents.sales-invoices.issue-invoice-pdf');
             Route::put('/bizonylatok/kimeno-szamlak/{id}', [SalesInvoiceController::class, 'update'])->name('documents.sales-invoices.update');
+            Route::get('/bizonylatok/kimeno-szamlak/payments/{id}', [SalesInvoiceController::class, 'payments'])->name('documents.sales-invoices.payments');
+            Route::post('/bizonylatok/kimeno-szamlak/addpayments', [SalesInvoiceController::class, 'addPayment'])->name('documents.sales-invoices.add-payment');
+            Route::delete('/bizonylatok/kimeno-szamlak/payments/{payment}', [SalesInvoiceController::class, 'deletePayment'])->name('documents.sales-invoices.delete-payment');
 
             // Szállítólevelek
             Route::get('/bizonylatok/szallitolevelek', [DeliveryNoteController::class, 'index'])->name('documents.delivery-notes.index');
