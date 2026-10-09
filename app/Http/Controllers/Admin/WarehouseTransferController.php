@@ -99,17 +99,29 @@ class WarehouseTransferController extends Controller
             ]);
 
         return DataTables::of($transfers)
+            ->addColumn('status', function ($transfer) {
+                $translations = [
+                    'stocked'   => 'Átvezetve'
+                ];
+                return $translations[$transfer->status] ?? ucfirst($transfer->status);
+            })
             ->addColumn('action', function ($transfer) {
                 $user = auth('admin')->user();
                 $buttons = '';
 
                 if ($user && $user->can('edit-warehouse-transfer')) {
-                    $buttons .= '
+                    /*$buttons .= '
                         <button class="btn btn-sm btn-primary edit" data-id="' . $transfer->id . '" title="Szerkesztés">
                             <i class="fas fa-edit"></i>
                         </button>
-                    ';
+                    ';*/
                 }
+
+                $buttons .= '
+                        <button class="btn btn-sm btn-outline-secondary pdf" data-id="' . $transfer->id . '" title="PDF megnyitása">
+                            <i class="fas fa-file-pdf"></i>
+                        </button>
+                    ';
 
                 if ($user && $user->can('delete-warehouse-transfer')) {
                     $buttons .= '
@@ -121,65 +133,101 @@ class WarehouseTransferController extends Controller
 
                 return $buttons;
             })
+            ->editColumn('transferred_at', function ($transfer) {
+                return $transfer->transferred_at ? $transfer->transferred_at->format('Y-m-d') : '';
+            })
             ->rawColumns(['action'])
             ->make(true);
     }
 
+
     public function store(Request $request)
     {
         $user = auth('admin')->user();
+
         if (!$user || !$user->can('create-warehouse-transfer')) {
-            return response()->json(['message' => 'Nincs jogosultságod létrehozni.'], 403);
+            return response()->json([
+                'message' => 'Nincs jogosultságod létrehozni.',
+            ], 403);
         }
 
         $validated = $this->validatePayload($request, null);
 
         $fromWarehouseId = (int) ($validated['from_warehouse_id'] ?? 0);
         $toWarehouseId = (int) ($validated['to_warehouse_id'] ?? 0);
+
         if ($fromWarehouseId === $toWarehouseId) {
-            return response()->json(['message' => 'A forrás és cél raktár nem lehet azonos.'], 422);
+            return response()->json([
+                'message' => 'A forrás és cél raktár nem lehet azonos.',
+            ], 422);
         }
 
         $fromWarehouse = Warehouse::query()->find($fromWarehouseId);
         $toWarehouse = Warehouse::query()->find($toWarehouseId);
+
         if (!$fromWarehouse || !$toWarehouse) {
-            return response()->json(['message' => 'Kérlek válassz raktárakat.'], 422);
+            return response()->json([
+                'message' => 'Kérlek válassz raktárakat.',
+            ], 422);
         }
 
+        unset($validated['items_json']);
+
         $payload = array_merge([
-            'status' => 'draft',
+            'status' => 'stocked',
         ], $validated);
 
-        $transfer = DB::transaction(function () use ($payload, $request, $fromWarehouseId) {
-            $number = trim((string) ($payload['document_number'] ?? ''));
-            $payload['document_number'] = $number !== '' ? $number : 'DRAFT-' . uniqid();
+        try {
+            $transfer = DB::transaction(function () use (
+                $payload,
+                $request,
+                $fromWarehouseId,
+                $toWarehouseId
+            ) {
+                $payload['document_number'] = strtoupper(uniqid());
 
-            $transfer = WarehouseTransfer::create($payload);
+                $transfer = WarehouseTransfer::create($payload);
 
-            if (str_starts_with((string) $transfer->document_number, 'DRAFT-')) {
+                $this->syncItemsFromJson(
+                    $transfer->id,
+                    (string) $request->input('items_json', '[]')
+                );
+
+                // Készlet levonása a forrásraktárból,
+                // hozzáadása a célraktárhoz.
+                $this->moveStockForIssuedTransfer(
+                    $transfer,
+                    $fromWarehouseId,
+                    $toWarehouseId
+                );
+
+                $itemsForPdf = $this->parseItemsForPdf(
+                    (string) $request->input('items_json', '[]')
+                );
+
+                $relativePath = $this->generateAndStorePdf(
+                    $transfer->fresh(),
+                    $itemsForPdf
+                );
+
                 $transfer->update([
-                    'document_number' => 'DRAFT-' . $transfer->id,
+                    'pdf_path' => $relativePath,
                 ]);
-            }
 
-            $this->syncItemsFromJson($transfer->id, (string) $request->input('items_json', '[]'));
-
-            $this->ensureEnoughStockForTransfer($transfer->id, $fromWarehouseId);
-
-            $itemsForPdf = $this->parseItemsForPdf((string) $request->input('items_json', '[]'));
-            $relativePath = $this->generateAndStorePdf($transfer->fresh(), $itemsForPdf);
-            $transfer->update([
-                'pdf_path' => $relativePath,
-            ]);
-
-            return $transfer;
-        });
+                return $transfer;
+            });
+        } catch (\RuntimeException $e) {
+            return response()->json([
+                'message' => $e->getMessage(),
+            ], 422);
+        }
 
         return response()->json([
             'message' => 'Sikeres mentés!',
             'warehouse_transfer' => $transfer,
         ], 200);
     }
+
 
     public function update(Request $request, int $id)
     {
@@ -255,11 +303,12 @@ class WarehouseTransferController extends Controller
 
         $transfer = WarehouseTransfer::query()->findOrFail($id);
         $path = (string) ($transfer->pdf_path ?? '');
+
         if ($path === '' || !Storage::disk('local')->exists($path)) {
             abort(404);
         }
 
-        $absolute = storage_path('app/' . ltrim($path, '/'));
+        $absolute = storage_path('app/private/' . ltrim($path, '/'));
         if (!file_exists($absolute)) {
             abort(404);
         }
@@ -391,29 +440,41 @@ class WarehouseTransferController extends Controller
     public function destroy(int $id)
     {
         $user = auth('admin')->user();
+
         if (!$user || !$user->can('delete-warehouse-transfer')) {
-            return response()->json(['message' => 'Nincs jogosultságod törölni.'], 403);
+            return response()->json([
+                'message' => 'Nincs jogosultságod törölni.',
+            ], 403);
         }
 
-        $transfer = WarehouseTransfer::query()->with(['items'])->findOrFail($id);
+        $transfer = WarehouseTransfer::query()
+            ->with(['items'])
+            ->findOrFail($id);
 
-        if ($transfer->stock_moved_at !== null) {
+        try {
+            DB::transaction(function () use ($transfer) {
+                if ($transfer->stock_moved_at !== null) {
+                    $this->reverseStockForIssuedTransfer($transfer);
+                }
+
+                $path = (string) ($transfer->pdf_path ?? '');
+
+                if ($path !== '' && Storage::disk('local')->exists($path)) {
+                    Storage::disk('local')->delete($path);
+                }
+
+                $transfer->items()->delete();
+                $transfer->delete();
+            });
+        } catch (\RuntimeException $e) {
             return response()->json([
-                'message' => 'A könyvelt (készletet átvezető) átvezetés nem törölhető.',
+                'message' => $e->getMessage(),
             ], 422);
         }
 
-        DB::transaction(function () use ($transfer) {
-            $path = (string) ($transfer->pdf_path ?? '');
-            if ($path !== '' && Storage::disk('local')->exists($path)) {
-                Storage::disk('local')->delete($path);
-            }
-
-            $transfer->items()->delete();
-            $transfer->delete();
-        });
-
-        return response()->json(['message' => 'Sikeres törlés!'], 200);
+        return response()->json([
+            'message' => 'Sikeres törlés!',
+        ], 200);
     }
 
     private function validatePayload(Request $request, ?int $transferId = null, bool $requireItemsJson = false): array
@@ -435,7 +496,7 @@ class WarehouseTransferController extends Controller
         ]);
 
         // items_json is not a DB column; it's only used to sync document items.
-        unset($validated['items_json']);
+        //unset($validated['items_json']);
 
         return $validated;
     }
@@ -591,6 +652,143 @@ class WarehouseTransferController extends Controller
         ]);
     }
 
+    private function reverseStockForIssuedTransfer(WarehouseTransfer $transfer): void
+    {
+        $fromWarehouseId = (int) $transfer->from_warehouse_id;
+        $toWarehouseId = (int) $transfer->to_warehouse_id;
+
+        if ($fromWarehouseId <= 0 || $toWarehouseId <= 0) {
+            throw new \RuntimeException('Hiányzó raktár az átvezetés visszavonásához.');
+        }
+
+        if ($fromWarehouseId === $toWarehouseId) {
+            throw new \RuntimeException('A forrás és cél raktár nem lehet azonos.');
+        }
+
+        $items = WarehouseTransferItem::query()
+            ->where('warehouse_transfer_id', $transfer->id)
+            ->get();
+
+        if ($items->isEmpty()) {
+            return;
+        }
+
+        $productIds = $items->pluck('product_id')
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+
+        if (count($productIds) === 0) {
+            return;
+        }
+
+        $fromStocks = DB::table('product_stocks')
+            ->where('warehouse_id', $fromWarehouseId)
+            ->whereIn('product_id', $productIds)
+            ->lockForUpdate()
+            ->get(['product_id', 'quantity']);
+
+        $toStocks = DB::table('product_stocks')
+            ->where('warehouse_id', $toWarehouseId)
+            ->whereIn('product_id', $productIds)
+            ->lockForUpdate()
+            ->get(['product_id', 'quantity']);
+
+        $fromByProduct = $fromStocks->keyBy('product_id');
+        $toByProduct = $toStocks->keyBy('product_id');
+
+        // Először ellenőrizzük az összes tételt,
+        // hogy hiba esetén ne történjen részleges visszaállítás.
+        $quantities = [];
+
+        foreach ($items as $item) {
+            if (!$item->product_id) {
+                continue;
+            }
+
+            $move = (float) ($item->quantity ?? 0);
+
+            if ($move <= 0) {
+                continue;
+            }
+
+            $productId = (int) $item->product_id;
+
+            $fromCurrent = (float) ($fromByProduct[$productId]->quantity ?? 0);
+            $toCurrent = (float) ($toByProduct[$productId]->quantity ?? 0);
+
+            $quantities[] = [
+                'product_id' => $productId,
+                'name' => $item->name,
+                'move' => $move,
+                'from_new' => $fromCurrent + $move,
+                'to_new' => $toCurrent - $move,
+            ];
+
+            // Az ismétlődő terméktételek miatt az ellenőrzéshez
+            // a további tételeknél is figyelembe vesszük a változást.
+            $fromByProduct[$productId]->quantity = $fromCurrent + $move;
+            $toByProduct[$productId]->quantity = $toCurrent - $move;
+        }
+
+        foreach ($quantities as $quantity) {
+            if ($quantity['to_new'] < 0) {
+                throw new \RuntimeException(
+                    'Nincs elegendő készlet a célraktárban a visszavonáshoz: '
+                    . $quantity['name']
+                );
+            }
+        }
+
+        // A végleges mennyiségek termékenkénti összesítése.
+        $totals = [];
+
+        foreach ($quantities as $quantity) {
+            $productId = $quantity['product_id'];
+
+            if (!isset($totals[$productId])) {
+                $totals[$productId] = [
+                    'product_id' => $productId,
+                    'from_delta' => 0,
+                    'to_delta' => 0,
+                ];
+            }
+
+            $totals[$productId]['from_delta'] += $quantity['move'];
+            $totals[$productId]['to_delta'] += $quantity['move'];
+        }
+
+        foreach ($totals as $total) {
+            $productId = $total['product_id'];
+
+            $fromCurrent = (float) ($fromStocks->firstWhere('product_id', $productId)->quantity ?? 0);
+            $toCurrent = (float) ($toStocks->firstWhere('product_id', $productId)->quantity ?? 0);
+
+            DB::table('product_stocks')->updateOrInsert(
+                [
+                    'warehouse_id' => $fromWarehouseId,
+                    'product_id' => $productId,
+                ],
+                [
+                    'quantity' => $fromCurrent + $total['from_delta'],
+                    'updated_at' => now(),
+                ]
+            );
+
+            DB::table('product_stocks')->updateOrInsert(
+                [
+                    'warehouse_id' => $toWarehouseId,
+                    'product_id' => $productId,
+                ],
+                [
+                    'quantity' => $toCurrent - $total['to_delta'],
+                    'updated_at' => now(),
+                ]
+            );
+        }
+    }
+
     private function generateAndStorePdf(WarehouseTransfer $transfer, array $itemsForPdf): string
     {
         $user = auth('admin')->user();
@@ -617,7 +815,7 @@ class WarehouseTransferController extends Controller
         $bytes = $pdf->output();
 
         $month = now()->format('Y-m');
-        $dir = 'private/warehouse-transfers/' . $month;
+        $dir = 'warehouse-transfers/' . $month;
         $fileName = 'raktarkozi-atvezetes-' . $transfer->id . '.pdf';
         $relativePath = $dir . '/' . $fileName;
 

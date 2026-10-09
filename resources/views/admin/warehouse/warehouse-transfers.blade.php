@@ -47,7 +47,6 @@
                         <th>Forrás raktár</th>
                         <th>Cél raktár</th>
                         <th>Átvezetés dátuma</th>
-                        <th>PDF</th>
                         <th>Állapot</th>
                         <th data-priority="2">Műveletek</th>
                     </tr>
@@ -136,21 +135,6 @@
             </fieldset>
         </x-slot:middle>
 
-        <x-slot:right>
-            <div class="d-flex flex-column h-100" style="min-height: 0;">
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <div class="fw-semibold">PDF előnézet</div>
-                    <button type="button" class="btn btn-outline-primary btn-sm" id="previewWarehouseTransfer">Előnézet</button>
-                </div>
-                <div class="border rounded flex-grow-1" style="min-height: 0; overflow: hidden;">
-                    <iframe id="warehouse_transfer_preview_iframe" src="about:blank" style="width:100%; height:100%; border:0;"></iframe>
-                </div>
-                <div class="mt-2">
-                    <button type="button" class="btn btn-primary w-100" id="issueWarehouseTransferPdf">PDF kiállítás + készlet átvezetés</button>
-                </div>
-            </div>
-        </x-slot:right>
-
         <x-slot:footer>
             <button type="button" class="btn btn-outline-primary" id="previewWarehouseTransferFooter">Előnézet</button>
             <button type="button" class="btn btn-outline-secondary" id="openWarehouseTransferPdf" style="display:none;">Megnyitás PDF</button>
@@ -159,14 +143,17 @@
 
 
     <div class="modal fade" id="warehouseTransferPreviewModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-xl modal-dialog-centered" style="max-width: 95vw;">
+        <div class="modal-dialog modal-fullscreen">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">Átvezetés PDF előnézet</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Bezárás"></button>
                 </div>
-                <div class="modal-body" style="height: 80vh;">
-                    <iframe id="warehouse_transfer_preview_iframe_modal" src="about:blank" style="width:100%; height:100%; border:0;"></iframe>
+                <div class="modal-body p-0">
+                    <iframe id="warehouse_transfer_preview_iframe_modal" src="about:blank" style="width:100%; height:100%; border:0; display:block;"></iframe>
+                </div>
+                <div class="modal-footer" id="warehouseTransferPreviewModalFooter">
+                    <button type="button" class="btn btn-primary" id="issueWarehouseTransferPdf">PDF kiállítás + készlet átvezetés</button>
                 </div>
             </div>
         </div>
@@ -186,6 +173,13 @@
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
         $(document).ready(function() {
+
+            const previewModalFooter = document.getElementById('warehouseTransferPreviewModalFooter');
+
+            function setPreviewModalFooterVisible(isVisible) {
+                if (!previewModalFooter) return;
+                previewModalFooter.style.display = isVisible ? '' : 'none';
+            }
 
             function escapeHtml(value) {
                 if (value === null || value === undefined) return '';
@@ -363,7 +357,7 @@
             });
 
             async function loadWarehouseTransferPdfPreview() {
-                const previewBtn = document.getElementById('previewWarehouseTransfer');
+                const previewBtn = document.getElementById('previewWarehouseTransferFooter');
                 if (!previewBtn) return;
 
                 const fromWarehouseId = String($('#from_warehouse_id').val() || '').trim();
@@ -432,12 +426,13 @@
                 loadWarehouseTransferPdfPreview();
             });
 
-            $('#issueWarehouseTransferPdf').on('click', async function () {
-                const id = String($('#warehouse_transfer_id').val() || '').trim();
+            $(document).on('click', '#issueWarehouseTransferPdf', async function () {
+                /*const id = String($('#warehouse_transfer_id').val() || '').trim();
                 if (!id) {
                     showToast('Előbb mentsd el az átvezetést!', 'warning');
                     return;
                 }
+                alert(id);*/
 
                 const fromWarehouseId = String($('#from_warehouse_id').val() || '').trim();
                 const toWarehouseId = String($('#to_warehouse_id').val() || '').trim();
@@ -459,11 +454,11 @@
 
                     let url = '{{ url('/admin/raktarozas/raktarkozi-atvezetesek') }}';
                     let method = 'POST';
-                    if (isEdit) {
+                    /*if (isEdit) {
                         url = `${url}/${id}`;
                         method = 'POST';
                         formData.append('_method', 'PUT');
-                    }
+                    }*/
 
                     const resp = await fetch(url, {
                         method: method,
@@ -491,6 +486,7 @@
                     showToast(json?.message || 'Sikeres mentés!', 'success');
                     $('#adminTable').DataTable().ajax.reload(null, false);
                     modal.hide();
+                    previewModal.hide();
                 } catch (e) {
                     showToast(e?.message || 'Hiba!', 'danger');
                 } finally {
@@ -605,7 +601,7 @@
                     { data: 'from_warehouse', name: 'from_warehouse', orderable: false, searchable: false },
                     { data: 'to_warehouse', name: 'to_warehouse', orderable: false, searchable: false },
                     { data: 'transferred_at', name: 'transferred_at' },
-                    {
+                    /*{
                         data: 'pdf_path',
                         name: 'pdf_path',
                         orderable: false,
@@ -614,7 +610,7 @@
                             if (!data) return '';
                             return `<a href="{{ url('/admin/raktarozas/raktarkozi-atvezetesek') }}/${row.id}/pdf" target="_blank">PDF</a>`;
                         }
-                    },
+                    },*/
                     { data: 'status', name: 'status' },
                     { data: 'action', name: 'action', orderable: false, searchable: false },
                 ],
@@ -649,6 +645,24 @@
                     modal.show();
                 } catch (e) {
                     showToast(e?.message || 'Hiba!', 'danger');
+                }
+            });
+
+            $('#adminTable').on('click', '.pdf', async function () {
+                const transferId = String($(this).data('id') || '').trim();
+                if (!transferId) {
+                    showToast('Nem található a bizonylat azonosítója.', 'danger');
+                    return;
+                }
+
+                const src = `{{ url('/admin/raktarozas/raktarkozi-atvezetesek/__ID__/pdf') }}`
+                    .replace('__ID__', String(transferId));
+
+                $('#warehouse_transfer_preview_iframe_modal').attr('src', src);
+                setPreviewModalFooterVisible(false);
+
+                if (previewModal) {
+                    previewModal.show();
                 }
             });
 
