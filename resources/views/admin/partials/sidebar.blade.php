@@ -44,7 +44,7 @@
 
         $canViewInstallations = (bool) ($adminUser && $adminUser->can('view-installations'));
         $canViewLeadConversion = (bool) ($adminUser && $adminUser->can('view-lead-conversion-report'));
-        $canViewContractProductsReport = (bool) ($adminUser && ($adminUser->can('view-contracts') || $adminUser->can('view-own-contracts')));
+        $canViewContractProductsReport = (bool) ($adminUser && ($adminUser->can('view-contract-products')));
         $canViewWorksheetProductsByWorkerReport = (bool) ($adminUser && $adminUser->can('view-worksheet-products-by-worker-report'));
         $canViewCRMAnalytics = $canViewInstallations || $canViewLeadConversion || $canViewContractProductsReport || $canViewWorksheetProductsByWorkerReport;
 

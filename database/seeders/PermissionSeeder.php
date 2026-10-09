@@ -88,10 +88,10 @@ class PermissionSeeder extends Seeder
             ['id' => 66, 'name' => 'create-appointment', 'label' => 'Időpontfoglalás létrehozása', 'group' => 'Ügyviteli folyamatok'],
             ['id' => 67, 'name' => 'edit-appointment', 'label' => 'Időpontfoglalás szerkesztése', 'group' => 'Ügyviteli folyamatok'],
             ['id' => 68, 'name' => 'delete-appointment', 'label' => 'Időpontfoglalás törlése', 'group' => 'Ügyviteli folyamatok'],
-            ['id' => 69, 'name' => 'view-searched-products', 'label' => 'Keresések megtekintése', 'group' => 'Jelentések'],
-            ['id' => 70, 'name' => 'view-viewed-products', 'label' => 'Megtekintett termékek megtekintése', 'group' => 'Jelentések'],
-            ['id' => 71, 'name' => 'view-admin-logs', 'label' => 'Admin tevékenységek megtekintése', 'group' => 'Jelentések'],
-            ['id' => 72, 'name' => 'view-purchased-products', 'label' => 'Vásárolt termékek megtekintése', 'group' => 'Jelentések'],
+            ['id' => 69, 'name' => 'view-searched-products', 'label' => 'Keresések megtekintése', 'group' => 'Jelentések - Webshop'],
+            ['id' => 70, 'name' => 'view-viewed-products', 'label' => 'Megtekintett termékek megtekintése', 'group' => 'Jelentések - Webshop'],
+            ['id' => 71, 'name' => 'view-admin-logs', 'label' => 'Admin tevékenységek megtekintése', 'group' => 'Jelentések - Általános'],
+            ['id' => 72, 'name' => 'view-purchased-products', 'label' => 'Vásárolt termékek megtekintése', 'group' => 'Jelentések - Webshop'],
             ['id' => 73, 'name' => 'delete-worksheet-image', 'label' => 'Munkalap kép törlése', 'group' => 'Ügyviteli folyamatok'],
             ['id' => 74, 'name' => 'view-employees', 'label' => 'Munkatársak megtekintése', 'group' => 'Tartalomkezelés'],
             ['id' => 75, 'name' => 'edit-employee', 'label' => 'Munkatárs szerkesztése', 'group' => 'Tartalomkezelés'],
@@ -108,12 +108,12 @@ class PermissionSeeder extends Seeder
             ['id' => 86, 'name' => 'view-automated-emails', 'label' => 'E-mail automatizációk megtekintése', 'group' => 'Ügyviteli folyamatok'],
             ['id' => 87, 'name' => 'edit-automated-email', 'label' => 'E-mail automatizáció szerkesztése', 'group' => 'Ügyviteli folyamatok'],
             ['id' => 88, 'name' => 'create-automated-email', 'label' => 'E-mail automatizáció létrehozása', 'group' => 'Ügyviteli folyamatok'],
-            ['id' => 90, 'name' => 'view-installations', 'label' => 'Szerelések megtekintése', 'group' => 'Jelentések'],
-            ['id' => 91, 'name' => 'view-sensor-reports', 'label' => 'Szenzor riportok megtekintése', 'group' => 'Jelentések'],
-            ['id' => 92, 'name' => 'view-laravel-logs', 'label' => 'Laravel logok', 'group' => 'Jelentések'],
+            ['id' => 90, 'name' => 'view-installations', 'label' => 'Szerelések megtekintése', 'group' => 'Jelentések - Ügyviteli'],
+            ['id' => 91, 'name' => 'view-sensor-reports', 'label' => 'Szenzor riportok megtekintése', 'group' => 'Jelentések - Szenzorok'],
+            ['id' => 92, 'name' => 'view-laravel-logs', 'label' => 'Laravel logok', 'group' => 'Jelentések - Általános'],
 
-            ['id' => 126, 'name' => 'view-lead-conversion-report', 'label' => 'Érdeklődő konverzió jelentés megtekintése', 'group' => 'Jelentések'],
-            ['id' => 131, 'name' => 'view-worksheet-products-by-worker-report', 'label' => 'Dolgozók termék db', 'group' => 'Jelentések'],
+            ['id' => 126, 'name' => 'view-lead-conversion-report', 'label' => 'Érdeklődő konverzió jelentés megtekintése', 'group' => 'Jelentések - Ügyviteli'],
+            ['id' => 131, 'name' => 'view-worksheet-products-by-worker-report', 'label' => 'Termékmennyiségek', 'group' => 'Jelentések - Ügyviteli'],
 
             ['id' => 93, 'name' => 'view-clients', 'label' => 'Ügyfelek megtekintése', 'group' => 'Ügyviteli folyamatok'],
             ['id' => 94, 'name' => 'create-client', 'label' => 'Ügyfél létrehozása', 'group' => 'Ügyviteli folyamatok'],
@@ -177,6 +177,7 @@ class PermissionSeeder extends Seeder
             ['id' => 165, 'name' => 'create-documents', 'label' => 'Dokumentum létrehozása', 'group' => 'Ügyviteli folyamatok'],
             ['id' => 166, 'name' => 'edit-documents', 'label' => 'Dokumentum szerkesztése', 'group' => 'Ügyviteli folyamatok'],
             ['id' => 167, 'name' => 'delete-documents', 'label' => 'Dokumentum törlése', 'group' => 'Ügyviteli folyamatok'],
+            ['id' => 168, 'name' => 'view-contract-products', 'label' => 'Szerződések termék db', 'group' => 'Jelentések - Ügyviteli'],
         ];
 
         foreach ($permissions as $perm) {
