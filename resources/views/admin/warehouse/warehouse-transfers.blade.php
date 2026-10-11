@@ -205,11 +205,54 @@
 
             const items = [];
 
+            function clearItemsUiState() {
+                items.splice(0, items.length);
+                renderItems();
+                $('#product_search').val('');
+                $('#product_search_results').empty();
+                resetPreview();
+            }
+
+            function setupWarehouseChangeGuard(selectSelector) {
+                const $select = $(selectSelector);
+                if (!$select.length) return;
+
+                $select.on('focus', function () {
+                    $(this).data('prev-value', String($(this).val() ?? ''));
+                });
+
+                $select.on('change', function () {
+                    const prev = String($(this).data('prev-value') ?? '');
+                    const next = String($(this).val() ?? '');
+
+                    if (items.length > 0) {
+                        const ok = window.confirm('A raktár módosítása törli a már felvitt tételeket. Folytatod?');
+                        if (!ok) {
+                            $(this).val(prev);
+                            return;
+                        }
+                        clearItemsUiState();
+                    } else {
+                        // Tételek nélkül is érvényteleníthetjük az esetleges előnézetet/keresést
+                        $('#product_search_results').empty();
+                        resetPreview();
+                    }
+
+                    $(this).data('prev-value', next);
+                });
+            }
+
             function renderItems() {
                 const $tbody = $('#items_table tbody');
                 $tbody.empty();
 
                 items.forEach((row, idx) => {
+                    const step = (Number.isFinite(Number(row.unit_qty)) && Number(row.unit_qty) > 0)
+                        ? Number(row.unit_qty)
+                        : 1;
+                    const maxAttr = (Number.isFinite(Number(row.available_qty)) && Number(row.available_qty) > 0)
+                        ? `max="${escapeHtml(row.available_qty)}"`
+                        : '';
                     $tbody.append(`
                         <tr data-idx="${idx}">
                             <td>
@@ -217,7 +260,7 @@
                                 <div class="small text-muted">${escapeHtml(row.sku || '')}</div>
                             </td>
                             <td class="text-end">
-                                <input type="number" step="0.001" class="form-control form-control-sm item-qty" value="${escapeHtml(row.quantity ?? 1)}">
+                                <input type="number" step="${escapeHtml(step)}" ${maxAttr} min="0" class="form-control form-control-sm item-qty" value="${escapeHtml(row.quantity ?? 1)}">
                             </td>
                             <td>
                                 <input type="text" class="form-control form-control-sm item-unit" value="${escapeHtml(row.unit || 'db')}">
@@ -246,6 +289,9 @@
                     $('#to_warehouse_id').val(warehouses.length > 1 ? warehouses[1].id : warehouses[0].id);
                 }
 
+                $('#from_warehouse_id').data('prev-value', String($('#from_warehouse_id').val() ?? ''));
+                $('#to_warehouse_id').data('prev-value', String($('#to_warehouse_id').val() ?? ''));
+
                 $('#transferred_at').val(todayDate());
 
                 $('#note_for_document').val('');
@@ -260,6 +306,9 @@
                 $('#product_search_results').empty();
             }
 
+            setupWarehouseChangeGuard('#from_warehouse_id');
+            setupWarehouseChangeGuard('#to_warehouse_id');
+
             $('#addButton').on('click', async function () {
                 resetForm('Új átvezetés');
                 modal.show();
@@ -270,10 +319,19 @@
                 const idx = Number($tr.data('idx'));
                 if (!Number.isFinite(idx) || !items[idx]) return;
 
-                items[idx].quantity = Number($tr.find('.item-qty').val() || 0);
+                const qtyRaw = Number($tr.find('.item-qty').val() || 0);
+                let qty = Number.isFinite(qtyRaw) ? qtyRaw : 0;
+
+                const max = Number(items[idx].available_qty ?? NaN);
+                if (Number.isFinite(max) && max > 0 && qty > max) {
+                    qty = max;
+                    $tr.find('.item-qty').val(String(max));
+                }
+
+                items[idx].quantity = qty;
                 items[idx].unit = String($tr.find('.item-unit').val() || 'db');
 
-                renderItems();
+                syncItemsJson();
             });
 
             $('#items_table').on('click', '.item-remove', function () {
@@ -314,18 +372,24 @@
                                 const unitText = (p.unit_abbreviation || p.unit_name) ? `${escapeHtml(p.unit_abbreviation || p.unit_name)}` : '';
                                 const sku = p.sku ? `SKU: ${escapeHtml(p.sku)}` : '';
                                 const title = p.title || p.name || '';
-                                const qtyLabel = availableQtyRaw === null
-                                    ? 'Készlet: -'
-                                    : `Készlet: ${escapeHtml(String(Number.isFinite(availableQty) ? availableQty : 0).replace(/\.0+$/, ''))}`;
+                                const unitQty = Number(p.unit_qty ?? 0);
+                                const qtyText = availableQtyRaw === null
+                                    ? '-'
+                                    : escapeHtml(String(Number.isFinite(availableQty) ? availableQty : 0).replace(/\.0+$/, ''));
+                                const qtyLabel = `Készlet: ${qtyText}${(availableQtyRaw !== null && unitText) ? ` ${unitText}` : ''}`;
+                                const stockBadge = isOut
+                                    ? `<span class="badge bg-secondary">nincs készleten</span>`
+                                    : `<span class="badge bg-success">készleten</span>`;
                                 container.append(`
-                                    <button type="button" class="list-group-item list-group-item-action product-result" ${isOut ? 'disabled aria-disabled="true"' : ''}
+                                    <button type="button" class="list-group-item list-group-item-action product-result ${!isOut ? 'border border-success-subtle' : ''}" ${isOut ? 'disabled aria-disabled="true"' : ''}
                                         data-id="${escapeHtml(p.id)}"
                                         data-name="${escapeHtml(title)}"
                                         data-sku="${escapeHtml(p.sku || '')}"
                                         data-unit="${escapeHtml(p.unit_abbreviation || p.unit_name || 'db')}"
-                                        data-available-qty="${escapeHtml(availableQty)}">
+                                        data-available-qty="${escapeHtml(availableQty)}"
+                                        data-unit-qty="${escapeHtml(Number.isFinite(unitQty) ? unitQty : 0)}">
                                         <div class="fw-semibold">${escapeHtml(title)}</div>
-                                        <div class="small text-muted">${sku}${sku ? ' | ' : ''}${unitText}${(sku || unitText) ? ' | ' : ''}${qtyLabel}${isOut ? ' | nincs készleten' : ''}</div>
+                                        <div class="small text-muted">${sku}${sku ? ' | ' : ''}<span class="fw-semibold ${!isOut ? 'text-success' : ''}">${qtyLabel}</span> ${stockBadge}</div>
                                     </button>
                                 `);
                             });
@@ -344,12 +408,25 @@
                     showToast('Nincs készleten a forrás raktárban.', 'warning');
                     return;
                 }
+
+                const productId = String($btn.data('id') ?? '').trim();
+                if (productId && items.some(it => String(it.product_id ?? '') === productId)) {
+                    showToast('Ez a termék már szerepel a tételek között.', 'warning');
+                    $('#product_search').val('');
+                    $('#product_search_results').empty();
+                    return;
+                }
+
+                const unitQtyRaw = Number($btn.data('unit-qty') ?? 0);
+                const unitQty = Number.isFinite(unitQtyRaw) && unitQtyRaw > 0 ? unitQtyRaw : null;
                 items.push({
-                    product_id: $btn.data('id'),
+                    product_id: productId,
                     name: $btn.data('name'),
                     sku: $btn.data('sku'),
                     unit: $btn.data('unit') || 'db',
-                    quantity: 1,
+                    quantity: unitQty ?? 1,
+                    available_qty: availableQty,
+                    unit_qty: unitQty,
                 });
                 renderItems();
                 $('#product_search').val('');
@@ -502,6 +579,9 @@
                 $('#transferred_at').val(transfer.transferred_at || '');
                 $('#note_for_document').val(transfer.note_for_document || '');
                 $('#note').val(transfer.note || '');
+
+                $('#from_warehouse_id').data('prev-value', String(transfer.from_warehouse_id || ''));
+                $('#to_warehouse_id').data('prev-value', String(transfer.to_warehouse_id || ''));
 
                 items.splice(0, items.length);
                 (itemsArr || []).forEach(it => {

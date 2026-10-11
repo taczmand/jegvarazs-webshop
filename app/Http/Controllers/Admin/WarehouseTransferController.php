@@ -604,6 +604,16 @@ class WarehouseTransferController extends Controller
         $fromByProduct = $fromStocks->keyBy('product_id');
         $toByProduct = $toStocks->keyBy('product_id');
 
+        $fromSim = $fromStocks
+            ->pluck('quantity', 'product_id')
+            ->map(fn ($q) => (float) $q)
+            ->all();
+
+        $toSim = $toStocks
+            ->pluck('quantity', 'product_id')
+            ->map(fn ($q) => (float) $q)
+            ->all();
+
         foreach ($items as $item) {
             if (!$item->product_id) {
                 continue;
@@ -698,6 +708,16 @@ class WarehouseTransferController extends Controller
         $fromByProduct = $fromStocks->keyBy('product_id');
         $toByProduct = $toStocks->keyBy('product_id');
 
+        $fromSim = $fromStocks
+            ->pluck('quantity', 'product_id')
+            ->map(fn ($q) => (float) $q)
+            ->all();
+
+        $toSim = $toStocks
+            ->pluck('quantity', 'product_id')
+            ->map(fn ($q) => (float) $q)
+            ->all();
+
         // Először ellenőrizzük az összes tételt,
         // hogy hiba esetén ne történjen részleges visszaállítás.
         $quantities = [];
@@ -715,8 +735,8 @@ class WarehouseTransferController extends Controller
 
             $productId = (int) $item->product_id;
 
-            $fromCurrent = (float) ($fromByProduct[$productId]->quantity ?? 0);
-            $toCurrent = (float) ($toByProduct[$productId]->quantity ?? 0);
+            $fromCurrent = (float) ($fromSim[$productId] ?? 0);
+            $toCurrent = (float) ($toSim[$productId] ?? 0);
 
             $quantities[] = [
                 'product_id' => $productId,
@@ -728,8 +748,8 @@ class WarehouseTransferController extends Controller
 
             // Az ismétlődő terméktételek miatt az ellenőrzéshez
             // a további tételeknél is figyelembe vesszük a változást.
-            $fromByProduct[$productId]->quantity = $fromCurrent + $move;
-            $toByProduct[$productId]->quantity = $toCurrent - $move;
+            $fromSim[$productId] = $fromCurrent + $move;
+            $toSim[$productId] = $toCurrent - $move;
         }
 
         foreach ($quantities as $quantity) {
@@ -762,8 +782,8 @@ class WarehouseTransferController extends Controller
         foreach ($totals as $total) {
             $productId = $total['product_id'];
 
-            $fromCurrent = (float) ($fromStocks->firstWhere('product_id', $productId)->quantity ?? 0);
-            $toCurrent = (float) ($toStocks->firstWhere('product_id', $productId)->quantity ?? 0);
+            $fromCurrent = (float) ($fromByProduct[$productId]->quantity ?? 0);
+            $toCurrent = (float) ($toByProduct[$productId]->quantity ?? 0);
 
             DB::table('product_stocks')->updateOrInsert(
                 [
