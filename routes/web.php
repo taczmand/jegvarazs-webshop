@@ -53,6 +53,8 @@ use App\Http\Controllers\Admin\WorksheetController;
 use App\Http\Controllers\Admin\WorksheetProductsByWorkerReportController;
 use App\Http\Controllers\Admin\CashReceiptController;
 use App\Http\Controllers\CartController;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\FacebookWebhookController;
 use App\Http\Controllers\OrderController;
@@ -290,10 +292,72 @@ Route::get('/automatizacio/jogosultsagok/szinkron', function (Request $request, 
             Route::post('/raktarozas/raktarkozi-atvezetesek/{id}/issue-pdf', [WarehouseTransferController::class, 'issuePdf'])->name('warehouse-transfers.issue-pdf');
             Route::delete('/raktarozas/raktarkozi-atvezetesek/{id}', [WarehouseTransferController::class, 'destroy'])->name('warehouse-transfers.destroy');
 
+            Route::get('/dev/stock-set-20', function () {
+                $token = (string) request()->query('token', '');
+                $expectedToken = (string) env('DEV_STOCK_RESET_TOKEN', '');
+
+                if ($expectedToken !== '') {
+                    abort_unless(hash_equals($expectedToken, $token), 403);
+                } else {
+                    abort_unless(app()->environment(['local', 'staging']), 404);
+                }
+
+                $updates = [
+                    'quantity' => 20,
+                    'updated_at' => now(),
+                ];
+
+                if (Schema::hasColumn('product_stocks', 'available_quantity')) {
+                    $updates['available_quantity'] = 20;
+                }
+
+                $now = now();
+                $hasAvailable = Schema::hasColumn('product_stocks', 'available_quantity');
+
+                $warehouseIds = DB::table('warehouses')->orderBy('id')->pluck('id')->all();
+
+                $productIdQuery = DB::table('products')->orderBy('id')->select('id');
+
+                $upsertedRows = 0;
+                foreach ($warehouseIds as $warehouseId) {
+                    $productIdQuery->clone()->chunkById(500, function ($chunk) use ($warehouseId, $hasAvailable, $now, &$upsertedRows) {
+                        $rows = [];
+                        foreach ($chunk as $p) {
+                            $row = [
+                                'warehouse_id' => (int) $warehouseId,
+                                'product_id' => (int) $p->id,
+                                'quantity' => 20,
+                                'updated_at' => $now,
+                                'created_at' => $now,
+                            ];
+                            if ($hasAvailable) {
+                                $row['available_quantity'] = 20;
+                            }
+                            $rows[] = $row;
+                        }
+
+                        if (!empty($rows)) {
+                            DB::table('product_stocks')->upsert(
+                                $rows,
+                                ['warehouse_id', 'product_id'],
+                                array_keys($rows[0])
+                            );
+                            $upsertedRows += count($rows);
+                        }
+                    }, 'id');
+                }
+
+                return response()->json([
+                    'message' => 'OK',
+                    'warehouses' => count($warehouseIds),
+                    'upserted_rows' => $upsertedRows,
+                ]);
+            })->name('dev.stock-set-20');
+
             // Raktározás - Leltár
             Route::get('/raktarozas/leltar', [StocktakeController::class, 'index'])->name('warehouse.stocktakes.index');
             Route::get('/raktarozas/leltar/data', [StocktakeController::class, 'data'])->name('warehouse.stocktakes.data');
-            Route::get('/raktarozas/leltar/products', [StocktakeController::class, 'products'])->name('warehouse.stocktakes.products');
+            Route::post('/raktarozas/leltar', [StocktakeController::class, 'store'])->name('warehouse.stocktakes.store');
             Route::get('/raktarozas/leltar/{id}/products', [StocktakeController::class, 'products'])->name('warehouse.stocktakes.products-for');
             Route::post('/raktarozas/leltar', [StocktakeController::class, 'store'])->name('warehouse.stocktakes.store');
             Route::get('/raktarozas/leltar/{id}', [StocktakeController::class, 'show'])->name('warehouse.stocktakes.show');
