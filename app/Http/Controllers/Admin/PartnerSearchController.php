@@ -87,6 +87,7 @@ class PartnerSearchController extends Controller
                 'source' => 'customer',
                 'id' => $customer->id,
                 'name' => $name,
+                'is_partner' => (bool) ($customer->is_partner ?? false),
                 'id_number' => null,
                 'email' => $customer->email,
                 'phone' => null,

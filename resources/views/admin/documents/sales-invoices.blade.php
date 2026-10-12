@@ -720,12 +720,26 @@
                                     const idNumber = c?.id_number || '';
                                     const email = c?.email || '';
                                     const phone = c?.phone || '';
+                                    const source = c?.source || '';
+                                    const isPartnerCustomer = source === 'customer' && Boolean(c?.is_partner);
                                     const addresses = Array.isArray(c?.addresses) ? c.addresses : [];
 
-                                    const headerParts = [idNumber, email].filter(Boolean).join(', ');
+                                    const sourceLabel = source === 'customer'
+                                        ? 'Vásárló'
+                                        : (source === 'client' ? 'Ügyfél' : source);
+
+                                    const headerParts = [
+                                        sourceLabel,
+                                        idNumber,
+                                        email,
+                                        phone,
+                                    ].filter(Boolean).join(', ');
+                                    const partnerBadge = isPartnerCustomer
+                                        ? '<span class="badge bg-success ms-1">Szerelő</span>'
+                                        : '';
                                     $list.append(`
                                         <div class="list-group-item py-0 px-1 client-search-header">
-                                            <div class="fw-semibold small">${escapeHtml(name || email || 'N/A')}${headerParts ? ' (' + escapeHtml(headerParts) + ')' : ''}</div>
+                                            <div class="fw-semibold small">${escapeHtml(name || email || 'N/A')}${partnerBadge}${headerParts ? ' (' + escapeHtml(headerParts) + ')' : ''}</div>
                                         </div>
                                     `);
 
@@ -803,6 +817,10 @@
                     city: $btn.data('city') || '',
                     line: $btn.data('line') || '',
                 });
+                clearPartnerClientResults();
+            });
+
+            $('#partner_client_search_results').on('click', '.client-create', function () {
                 clearPartnerClientResults();
             });
 
