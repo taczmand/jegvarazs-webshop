@@ -156,7 +156,7 @@ class SimplePayController extends Controller
                 try {
                     Mail::to($order->contact_email)->send(new NewOrder($order, $order_items));
                     if (!app()->environment('local')) {
-                        Mail::to("jegvarazsiroda@gmail.com")->send(new NewOrderToOffice(
+                        Mail::to("jegvarazsnagykerjb@gmail.com")->send(new NewOrderToOffice(
                             $order,
                             $order_items
                         ));

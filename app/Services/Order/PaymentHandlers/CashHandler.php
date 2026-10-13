@@ -17,7 +17,7 @@ class CashHandler implements PaymentHandlerInterface
         ));
 
         if (!app()->environment('local')) {
-            Mail::to("jegvarazsiroda@gmail.com")->send(new NewOrderToOffice(
+            Mail::to("jegvarazsnagykerjb@gmail.com")->send(new NewOrderToOffice(
                 $order,
                 $order_items
             ));
