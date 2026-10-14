@@ -298,7 +298,7 @@
             setProductsLoading(true);
 
             const url = stocktakeId
-                ? `{{ url('/admin/raktarozas/leltar') }}/${stocktakeId}/products?warehouse_id=${encodeURIComponent(warehouseId)}`
+                ? `{{ url('/admin/raktarozas/leltar') }}/${encodeURIComponent(stocktakeId)}/products?warehouse_id=${encodeURIComponent(warehouseId)}`
                 : `{{ url('/admin/raktarozas/leltar/products') }}?warehouse_id=${encodeURIComponent(warehouseId)}`;
 
             try {
