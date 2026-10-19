@@ -717,7 +717,7 @@
                             if (clients.length) {
                                 clients.forEach(c => {
                                     const name = c?.name || '';
-                                    const idNumber = c?.id_number || '';
+                                    const taxNumber = c?.tax_number || '';
                                     const email = c?.email || '';
                                     const phone = c?.phone || '';
                                     const source = c?.source || '';
@@ -730,7 +730,7 @@
 
                                     const headerParts = [
                                         sourceLabel,
-                                        idNumber,
+                                        taxNumber,
                                         email,
                                         phone,
                                     ].filter(Boolean).join(', ');
@@ -747,7 +747,7 @@
                                         $list.append(`
                                             <button type="button" class="list-group-item list-group-item-action py-0 px-1 small client-no-address"
                                                 data-name="${escapeHtml(name)}"
-                                                data-tax="${escapeHtml(idNumber)}"
+                                                data-tax="${escapeHtml(taxNumber)}"
                                                 data-email="${escapeHtml(email)}"
                                                 data-phone="${escapeHtml(phone)}">
                                                 <div class="fw-semibold">Kiválasztás</div>
@@ -762,7 +762,7 @@
                                         $list.append(`
                                             <button type="button" class="list-group-item list-group-item-action py-0 px-1 small client-address-item"
                                                 data-name="${escapeHtml(name)}"
-                                                data-tax="${escapeHtml(idNumber)}"
+                                                data-tax="${escapeHtml(taxNumber)}"
                                                 data-email="${escapeHtml(email)}"
                                                 data-phone="${escapeHtml(phone)}"
                                                 data-country="${escapeHtml(a?.country || 'HU')}"

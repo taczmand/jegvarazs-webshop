@@ -519,7 +519,7 @@
                                     const name = c?.name || '';
                                     const email = c?.email || '';
                                     const phone = c?.phone || '';
-                                    const tax = c?.id_number || '';
+                                    const tax = c?.tax_number || '';
                                     const source = c?.source || '';
                                     const isPartnerCustomer = source === 'customer' && Boolean(c?.is_partner);
                                     const addresses = Array.isArray(c?.addresses) ? c.addresses : [];

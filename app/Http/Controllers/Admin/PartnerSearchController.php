@@ -63,6 +63,7 @@ class PartnerSearchController extends Controller
                 'id' => $client->id,
                 'name' => $client->name,
                 'id_number' => $client->id_number,
+                'tax_number' => null,
                 'email' => $client->email,
                 'phone' => $client->phone,
                 'addresses' => $addresses->map(function ($address) {
@@ -98,6 +99,7 @@ class PartnerSearchController extends Controller
                 'name' => $name,
                 'is_partner' => (bool) ($customer->is_partner ?? false),
                 'id_number' => $taxNumber ?: null,
+                'tax_number' => $taxNumber ?: null,
                 'email' => $customer->email,
                 'phone' => null,
                 'addresses' => $addresses->map(function ($address) {
