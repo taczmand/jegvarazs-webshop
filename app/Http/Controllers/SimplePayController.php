@@ -53,15 +53,15 @@ class SimplePayController extends Controller
 
             switch ($status) {
                 case 'FINISHED':
-                    $order->status = 'paid';
+                    $order->payment_status = 'paid';
                     break;
 
                 case 'PENDING':
-                    $order->status = 'pending';
+                    $order->payment_status = 'pending';
                     break;
 
                 default:
-                    $order->status = 'payment_failed';
+                    $order->payment_status = 'failed';
                     break;
             }
 
@@ -146,6 +146,10 @@ class SimplePayController extends Controller
 
         if ($status === 'SUCCESS') {
             // Sikeres fizetés
+            if ($order->payment_status !== 'paid') {
+                $order->payment_status = 'paid';
+                $order->save();
+            }
             $order_items = $order->items;
 
             $markedAsSent = Order::whereKey($order->id)
@@ -175,7 +179,7 @@ class SimplePayController extends Controller
 
         } elseif ($status === 'FAIL') {
             // Sikertelen fizetés
-            $order->status = 'payment_failed';
+            $order->payment_status = 'failed';
             $order->save();
 
             $order_items = $order->items;
@@ -189,21 +193,21 @@ class SimplePayController extends Controller
 
         } elseif ($status === 'CANCEL') {
             // Felhasználó megszakította
-            $order->status = 'payment_failed';
+            $order->payment_status = 'failed';
             $order->save();
 
             return view('simplepay.cancel', compact('order', 'transaction_id', 'status'));
 
         } elseif ($status === 'TIMEOUT') {
             // Fizetés időtúllépés
-            $order->status = 'payment_failed';
+            $order->payment_status = 'failed';
             $order->save();
 
             return view('simplepay.timeout', compact('order', 'transaction_id', 'status'));
 
         } else {
             // Egyéb, ismeretlen státusz
-            $order->status = 'payment_failed';
+            $order->payment_status = 'failed';
             $order->save();
 
             return view('simplepay.failed', compact('order', 'transaction_id', 'status'));

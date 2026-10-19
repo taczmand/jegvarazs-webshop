@@ -41,12 +41,24 @@
                     </div>
 
                     <div class="filter-group flex-grow-1 flex-md-shrink-0">
-                        <select class="form-select filter-input" data-column="7">
-                            <option value="">Állapot (összes)</option>
+                        <select class="form-select filter-input" data-column="2">
+                            <option value="">Státusz (összes)</option>
                             <option value="pending">Függőben</option>
                             <option value="processing">Feldolgozás alatt</option>
-                            <option value="completed">Befejezve</option>
+                            <option value="completed">Teljesítve</option>
                             <option value="cancelled">Törölve</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group flex-grow-1 flex-md-shrink-0">
+                        <select class="form-select filter-input" data-column="8">
+                            <option value="">Fizetési állapot (összes)</option>
+                            <option value="pending">Függőben</option>
+                            <option value="paid">Fizetve</option>
+                            <option value="failed">Fizetés sikertelen</option>
+                            <option value="refunded">Visszatérítve</option>
+                            <option value="partially_refunded">Részlegesen visszatérítve</option>
+                            <option value="partially_paid">Részösszeg kifizetve</option>
                         </select>
                     </div>
                 </div>
@@ -57,12 +69,13 @@
                     <tr>
                         <th data-priority="1">ID</th>
                         <th>Dátum</th>
+                        <th>Státusz</th>
                         <th data-priority="2">Vásárló</th>
                         <th>Partner?</th>
                         <th>Teljes összeg</th>
                         <th>Fizetés módja</th>
                         <th>Szállítási város</th>
-                        <th>Állapot</th>
+                        <th>Fizetési állapot</th>
                         <th>Termékek száma</th>
                         <th>Látta</th>
                         <th data-priority="3">Műveletek</th>
@@ -171,13 +184,25 @@
                                                 <td><textarea rows="3" id="order_comment" name="order_comment" class="form-control"></textarea></td>
                                             </tr>
                                             <tr>
-                                                <td>Állapot</td>
+                                                <td>Státusz</td>
                                                 <td>
                                                     <select name="status" class="form-select" id="order_status">
                                                         <option value="pending">Függőben</option>
                                                         <option value="processing">Folyamatban</option>
                                                         <option value="completed">Befejezve</option>
                                                         <option value="cancelled">Törölve</option>
+                                                    </select>
+                                            </tr>
+                                            <tr>
+                                                <td>Fizetési állapot</td>
+                                                <td>
+                                                    <select name="payment_status" class="form-select" id="order_payment_status">
+                                                        <option value="pending">Függőben</option>
+                                                        <option value="paid">Fizetve</option>
+                                                        <option value="failed">Fizetés sikertelen</option>
+                                                        <option value="refunded">Visszatérítve</option>
+                                                        <option value="partially_refunded">Részlegesen visszatérítve</option>
+                                                        <option value="partially_paid">Részlegesen kifizetve</option>
                                                     </select>
                                             </tr>
                                         </table>
@@ -412,12 +437,13 @@
                 columns: [
                     {data: 'id'},
                     {data: 'created_at'},
+                    {data: 'status'},
                     {data: 'customer_name'},
                     {data: 'is_partner'},
                     {data: 'total_amount'},
                     {data: 'payment_method'},
                     {data: 'shipping_city'},
-                    {data: 'status'},
+                    {data: 'payment_status'},
                     {data: 'items_count'},
                     {data: 'viewed_by'},
                     {data: 'action', orderable: false, searchable: false}
@@ -521,6 +547,7 @@
                 $('#payment_method').text(order_data.payment_method_label);
                 $('#order_comment').val(order_data.comment || '');
                 $('#order_status').val(order_data.status || 'pending');
+                $('#order_payment_status').val(order_data.payment_status || 'pending');
             }
 
             let createMode = false;

@@ -192,6 +192,7 @@ class OrderController extends Controller
                     'payment_method'      => $request['payment_method'],
                     'comment'             => $request['comment'] ?? null,
                     'status'              => 'pending',
+                    'payment_status'      => 'pending',
                 ]);
 
                 foreach ($cartItems as $item) {

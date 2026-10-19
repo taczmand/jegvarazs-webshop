@@ -30,6 +30,8 @@ class OrderController extends Controller
         }
 
         $data = $request->validate([
+            'status' => 'nullable|string|max:50',
+            'payment_status' => 'string|max:50',
             'customer_id' => 'nullable|integer|exists:customers,id',
             'show_partner_prices' => 'nullable|boolean',
             'payment_method' => 'required|string|max:50',
@@ -166,7 +168,8 @@ class OrderController extends Controller
 
                 'payment_method' => $data['payment_method'],
                 'comment' => $data['comment'] ?? null,
-                'status' => 'pending',
+                'status' => $data['status'] ?? 'pending',
+                'payment_status' => $data['payment_status'] ?? 'pending',
                 'created_at' => $orderDate,
             ]);
 
@@ -229,6 +232,7 @@ class OrderController extends Controller
             'orders.id',
             'orders.payment_method',
             'orders.status',
+            'orders.payment_status',
             'orders.created_at',
             'orders.customer_id',
             'orders.contact_last_name',
@@ -245,6 +249,9 @@ class OrderController extends Controller
             ->of($orders)
             ->orderColumn('status', function ($query, $order) {
                 $query->orderBy('orders.status', $order);
+            })
+            ->orderColumn('payment_status', function ($query, $order) {
+                $query->orderBy('orders.payment_status', $order);
             })
             ->orderColumn('customer_name', function ($query, $order) {
                 $query->orderBy('customers.last_name', $order)
@@ -276,6 +283,11 @@ class OrderController extends Controller
                     $query->where('orders.status', 'like', "%{$keyword}%");
                 }
             })
+            ->filterColumn('payment_status', function ($query, $keyword) {
+                if (!empty($keyword)) {
+                    $query->where('orders.payment_status', '=', $keyword);
+                }
+            })
             ->addColumn('shipping_city', function ($order) {
                 return $order->shipping_city ?? '';
             })
@@ -292,17 +304,74 @@ class OrderController extends Controller
             })
             ->addColumn('status', function ($order) {
                 $translations = [
-                    'paid'   => 'Fizetve',
-                    'pending'   => 'Függőben',
-                    'completed' => 'Teljesítve',
-                    'cancelled' => 'Törölve',
-                    'processing'=> 'Feldolgozás alatt',
-                    'refunded'  => 'Visszatérítve',
-                    'failed'    => 'Sikertelen',
-                    'payment_failed' => 'Fizetés sikertelen',
-                    'timeout' => 'Időtúllépés',
+                    'paid' => ['Fizetve', 'bg-success', 'fas fa-check-circle'],
+                    'pending' => ['Függőben', 'bg-warning text-dark', 'fas fa-clock'],
+                    'completed' => ['Teljesítve', 'bg-success', 'fas fa-box-open'],
+                    'cancelled' => ['Törölve', 'bg-secondary', 'fas fa-ban'],
+                    'processing' => ['Feldolgozás alatt', 'bg-primary', 'fas fa-cog'],
+                    'refunded' => ['Visszatérítve', 'bg-info text-dark', 'fas fa-undo'],
+                    'failed' => ['Sikertelen', 'bg-danger', 'fas fa-times-circle'],
+                    'payment_failed' => ['Fizetés sikertelen', 'bg-danger', 'fas fa-credit-card'],
+                    'timeout' => ['Időtúllépés', 'bg-dark', 'fas fa-hourglass-end'],
                 ];
-                return $translations[$order->status] ?? ucfirst($order->status);
+
+                $status = $translations[$order->status] ?? [
+                    ucfirst($order->status ?? 'Ismeretlen'),
+                    'bg-dark',
+                    'fas fa-question-circle',
+                ];
+
+                return '<span class="badge rounded-circle ' . $status[1] . ' p-2"'
+                    . ' title="' . e($status[0]) . '"'
+                    . ' data-bs-toggle="tooltip"'
+                    . ' aria-label="' . e($status[0]) . '">'
+                    . '<i class="' . $status[2] . '"></i>'
+                    . '</span>';
+            })
+            ->addColumn('payment_status', function ($order) {
+                $translations = [
+                    'pending' => [
+                        'Függőben',
+                        'bg-warning text-dark',
+                        'fas fa-clock',
+                    ],
+                    'paid' => [
+                        'Fizetve',
+                        'bg-success',
+                        'fas fa-check-circle',
+                    ],
+                    'failed' => [
+                        'Sikertelen',
+                        'bg-danger',
+                        'fas fa-times-circle',
+                    ],
+                    'refunded' => [
+                        'Visszatérítve',
+                        'bg-secondary',
+                        'fas fa-undo',
+                    ],
+                    'partially_refunded' => [
+                        'Részlegesen visszatérítve',
+                        'bg-info text-dark',
+                        'fas fa-undo-alt',
+                    ],
+                    'partially_paid' => [
+                        'Részösszeg kifizetve',
+                        'bg-primary',
+                        'fas fa-coins',
+                    ],
+                ];
+
+                $status = $translations[$order->payment_status] ?? [
+                    ucfirst($order->payment_status ?? 'Ismeretlen'),
+                    'bg-dark',
+                    'fas fa-question-circle',
+                ];
+
+                return '<span class="badge rounded-pill ' . $status[1] . ' px-3 py-2">'
+                    . '<i class="' . $status[2] . ' me-1"></i>'
+                    . e($status[0])
+                    . '</span>';
             })
             ->addColumn('total_amount', function ($order) {
                 return $order->items->sum(function ($item) {
@@ -365,7 +434,7 @@ class OrderController extends Controller
                 return $buttons;
             })
             ->setRowClass(fn($order) => $order->viewed_by ? '' : 'fw-bold')
-            ->rawColumns(['action', 'viewed_by'])
+            ->rawColumns(['action', 'viewed_by', 'status', 'payment_status'])
             ->make(true);
     }
 
@@ -401,6 +470,7 @@ class OrderController extends Controller
         $data = $request->validate([
             'show_partner_prices' => 'nullable|boolean',
             'status' => 'nullable|string|max:50',
+            'payment_status' => 'string|max:50',
             'order_comment' => 'nullable|string|max:2000',
             'contact_first_name' => 'nullable|string|max:255',
             'contact_last_name' => 'nullable|string|max:255',
@@ -429,6 +499,7 @@ class OrderController extends Controller
 
         return DB::transaction(function () use ($order, $data, $request) {
             $order->status = $data['status'] ?? $order->status;
+            $order->payment_status = $data['payment_status'] ?? $order->payment_status;
             $order->comment = $data['order_comment'] ?? $order->comment;
             $order->contact_first_name = $data['contact_first_name'] ?? $order->contact_first_name;
             $order->contact_last_name = $data['contact_last_name'] ?? $order->contact_last_name;
