@@ -81,6 +81,15 @@ class PartnerSearchController extends Controller
         $customerPayload = $customers->map(function ($customer) use ($billingAddressesByCustomerId) {
             $addresses = $billingAddressesByCustomerId[$customer->id] ?? collect();
 
+            $taxNumber = $addresses
+                ->pluck('tax_number')
+                ->map(function ($value) {
+                    return trim((string) $value);
+                })
+                ->first(function ($value) {
+                    return $value !== '';
+                });
+
             $name = trim((string) ($customer->last_name . ' ' . $customer->first_name));
 
             return [
@@ -88,7 +97,7 @@ class PartnerSearchController extends Controller
                 'id' => $customer->id,
                 'name' => $name,
                 'is_partner' => (bool) ($customer->is_partner ?? false),
-                'id_number' => null,
+                'id_number' => $taxNumber ?: null,
                 'email' => $customer->email,
                 'phone' => null,
                 'addresses' => $addresses->map(function ($address) {
