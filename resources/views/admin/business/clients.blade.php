@@ -102,7 +102,7 @@
                                 <label for="mothers_name" class="form-label">Anyja neve</label>
                                 <input type="text" class="form-control" id="mothers_name" name="mothers_name">
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-3">
                                 <label for="place_of_birth" class="form-label">Születési hely</label>
                                 <input type="text" class="form-control" id="place_of_birth" name="place_of_birth">
                             </div>
@@ -113,6 +113,10 @@
                             <div class="col-md-3">
                                 <label for="id_number" class="form-label">Személyi szám</label>
                                 <input type="text" class="form-control" id="id_number" name="id_number">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="tax_number" class="form-label">Adószám</label>
+                                <input type="text" class="form-control" id="tax_number" name="tax_number">
                             </div>
                             <div class="col-md-6">
                                 <label for="email" class="form-label">E-mail cím</label>
@@ -506,6 +510,7 @@
                 $('#place_of_birth').val(row_data.place_of_birth);
                 $('#date_of_birth').val(row_data.date_of_birth);
                 $('#id_number').val(row_data.id_number);
+                $('#tax_number').val(row_data.tax_number);
                 $('#email').val(row_data.email);
                 $('#phone').val(row_data.phone);
                 $('#comment').val(row_data.comment);
@@ -905,6 +910,7 @@
                 $('#place_of_birth').val('');
                 $('#date_of_birth').val('');
                 $('#id_number').val('');
+                $('#tax_number').val('');
                 $('#clientRemindersList').empty();
                 $('#clientRemindersEmpty').addClass('d-none');
                 $('#clientRemindersSection').addClass('d-none');
