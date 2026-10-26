@@ -304,15 +304,10 @@ class OrderController extends Controller
             })
             ->addColumn('status', function ($order) {
                 $translations = [
-                    'paid' => ['Fizetve', 'bg-success', 'fas fa-check-circle'],
                     'pending' => ['Függőben', 'bg-warning text-dark', 'fas fa-clock'],
+                    'processing' => ['Feldolgozás alatt', 'bg-primary', 'fas fa-cog'],
                     'completed' => ['Teljesítve', 'bg-success', 'fas fa-box-open'],
                     'cancelled' => ['Törölve', 'bg-secondary', 'fas fa-ban'],
-                    'processing' => ['Feldolgozás alatt', 'bg-primary', 'fas fa-cog'],
-                    'refunded' => ['Visszatérítve', 'bg-info text-dark', 'fas fa-undo'],
-                    'failed' => ['Sikertelen', 'bg-danger', 'fas fa-times-circle'],
-                    'payment_failed' => ['Fizetés sikertelen', 'bg-danger', 'fas fa-credit-card'],
-                    'timeout' => ['Időtúllépés', 'bg-dark', 'fas fa-hourglass-end'],
                 ];
 
                 $status = $translations[$order->status] ?? [

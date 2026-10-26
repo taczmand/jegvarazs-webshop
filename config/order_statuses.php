@@ -31,6 +31,6 @@ return [
         'color' => 'danger',
         'active' => true,
         'description' => 'A rendelést törölték',
-        'match' => fn($order) => $order->status === 'cancelled',
+        'match' => fn($order) => in_array($order->status, ['cancelled', 'canceled'], true),
     ],
 ];

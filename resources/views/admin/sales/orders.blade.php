@@ -28,11 +28,11 @@
                     </div>
 
                     <div class="filter-group flex-grow-1 flex-md-shrink-0">
-                        <input type="text" placeholder="Vásárló" class="filter-input form-control" data-column="2">
+                        <input type="text" placeholder="Vásárló" class="filter-input form-control" data-column="3">
                     </div>
 
                     <div class="filter-group flex-grow-1 flex-md-shrink-0">
-                        <select class="form-select filter-input" data-column="5">
+                        <select class="form-select filter-input" data-column="6">
                             <option value="">Fizetés (összes)</option>
                             @foreach(config('payment_methods') as $method)
                                 <option value="{{ $method['slug'] }}">{{ $method['name'] }}</option>
@@ -582,6 +582,7 @@
                 $('#payment_method').text('');
                 $('#order_comment').val('');
                 $('#order_status').val('pending');
+                $('#order_payment_status').val('pending');
                 $('#payment_method_select').val('cash');
 
                 customerShippingAddresses = [];

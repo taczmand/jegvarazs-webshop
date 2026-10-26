@@ -42,11 +42,22 @@ class Order extends Model
             'pending' => 'Függőben',
             'processing' => 'Feldolgozás alatt',
             'completed' => 'Teljesítve',
+            'cancelled' => 'Törölve',
             'canceled' => 'Törölve',
+            default => ucfirst($this->status ?? ''),
+        };
+    }
+
+    public function getPaymentStatusLabelAttribute()
+    {
+        return match ($this->payment_status) {
+            'pending' => 'Függőben',
             'paid' => 'Fizetve',
-            'payment_failed' => 'Sikertelen fizetés, próbálja újra',
-            'timeout' => 'Időtúllépés',
-            default => ucfirst($this->status),
+            'failed' => 'Fizetés sikertelen',
+            'refunded' => 'Visszatérítve',
+            'partially_refunded' => 'Részlegesen visszatérítve',
+            'partially_paid' => 'Részösszeg kifizetve',
+            default => ucfirst($this->payment_status ?? ''),
         };
     }
 

@@ -29,16 +29,29 @@
         <div class="mb-3">
             <strong>Rendelés ID:</strong> {{ $order->id }} <br>
             <strong>Dátum:</strong> {{ $order->created_at->format('Y-m-d H:i') }} <br>
-            <strong>Státusz:</strong>
+            <strong>Rendelés állapota:</strong>
             @php
                 $statusClass = match($order->status) {
-                    'paid' => 'text-success',
-                    'failed' => 'text-danger',
+                    'completed' => 'text-success',
+                    'processing' => 'text-primary',
                     'pending' => 'text-warning',
+                    'cancelled', 'canceled' => 'text-danger',
                     default => 'text-secondary',
                 };
             @endphp
-            <span class="{{ $statusClass }}">{{ ucfirst($order->status_label) }}</span>
+            <span class="{{ $statusClass }}">{{ $order->status_label }}</span> <br>
+            <strong>Fizetés állapota:</strong>
+            @php
+                $paymentStatusClass = match($order->payment_status) {
+                    'paid' => 'text-success',
+                    'failed' => 'text-danger',
+                    'pending' => 'text-warning',
+                    'refunded', 'partially_refunded' => 'text-info',
+                    'partially_paid' => 'text-primary',
+                    default => 'text-secondary',
+                };
+            @endphp
+            <span class="{{ $paymentStatusClass }}">{{ $order->payment_status_label }}</span>
         </div>
 
         <h4>Rendelés tételei</h4>
@@ -141,7 +154,7 @@
         </table>
 
 
-        @if($order->status === 'payment_failed')
+        @if($order->payment_status === 'failed' && $order->status !== 'cancelled' && $order->status !== 'canceled')
             <div class="mt-4">
                 <a href="{{ route('customer.order.retry_payment', ['id' => $order->id]) }}" class="btn btn-primary">
                     Fizetés újrapróbálása
