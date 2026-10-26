@@ -30,7 +30,8 @@
 
     <div class="section">
         <h2>Rendelés új állapota</h2>
-        <p><strong>{{ $order->status_label }}</strong></p>
+        <p>Rendelés állapota: <strong>{{ $order->status_label }}</strong></p>
+        <p>Fizetés állapota: <strong>{{ $order->payment_status_label }}</strong></p>
     </div>
 
     <div class="section">
