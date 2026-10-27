@@ -63,6 +63,9 @@
         @if(!empty($appointment->appointment_date))
             <p><strong>Dátum:</strong> {{ $appointment->appointment_date }}</p>
         @endif
+        @if(!empty($appointment->appointment_time))
+            <p><strong>Időpont:</strong> {{ $appointment->appointment_time }}</p>
+        @endif
         @if(!empty($appointment->message))
             <p><strong>Megjegyzés:</strong> {{ $appointment->message }}</p>
         @endif
