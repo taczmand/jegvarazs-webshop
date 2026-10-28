@@ -2,6 +2,23 @@
 
 @section('content')
 
+    <style>
+        .stocktake-thumb-wrap { position: relative; flex-shrink: 0; }
+        .stocktake-thumb {
+            width: 36px; height: 36px; object-fit: cover; border-radius: 6px;
+            display: block; transition: transform .15s ease; transform-origin: left center;
+        }
+        .stocktake-thumb-wrap:hover .stocktake-thumb {
+            transform: scale(4.5); z-index: 30; position: relative;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, .35);
+        }
+        .stocktake-thumb-empty {
+            display: flex; align-items: center; justify-content: center;
+            background: #f1f5f9; color: #94a3b8; border-radius: 6px;
+            width: 36px; height: 36px;
+        }
+        .stocktake-thumb-wrap:hover .stocktake-thumb-empty { transform: none; box-shadow: none; }
+    </style>
 
     <div class="container p-0">
 
@@ -283,8 +300,12 @@
                     : (Number.isFinite(baseDiff) ? baseDiff : 0);
 
                 const left = document.createElement('div');
-                left.className = 'flex-grow-1';
+                left.className = 'flex-grow-1 d-flex align-items-center gap-2';
+                const thumbHtml = p.image_url
+                    ? `<img src="${escapeHtml(p.image_url)}" alt="${escapeHtml(p.title || '')}" class="stocktake-thumb" loading="lazy">`
+                    : `<span class="stocktake-thumb-empty"><i class="fa-solid fa-image"></i></span>`;
                 left.innerHTML = `
+                    <span class="stocktake-thumb-wrap">${thumbHtml}</span>
                     <div class="fw-semibold">${escapeHtml(p.title || '')}</div>
                 `;
 

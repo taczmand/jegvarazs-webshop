@@ -184,7 +184,7 @@ class StocktakeController extends Controller
                 ->whereNotNull('counted_quantity')
                 ->with([
                     'product' => function ($q) {
-                        $q->with(['category', 'unit']);
+                        $q->with(['category', 'unit', 'photos']);
                     },
                 ])
                 ->get();
@@ -207,9 +207,12 @@ class StocktakeController extends Controller
                     $current = (float) (($currentByProduct[(int) $it->product_id]->quantity ?? 0) ?? 0);
                 }
 
+                $mainPhoto = $p?->photos?->firstWhere('is_main', true) ?? $p?->photos?->first();
+
                 return [
                     'product_id' => (int) ($it->product_id ?? 0),
                     'title' => (string) ($p?->title ?? ''),
+                    'image_url' => $mainPhoto?->path ? asset('storage/' . ltrim($mainPhoto->path, '/')) : null,
                     'category_title' => (string) ($p?->category?->title ?? 'Egyéb'),
                     'unit' => (string) ($p?->unit?->abbreviation ?? $p?->unit?->name ?? 'db'),
                     'current_stock' => $current,
@@ -241,7 +244,7 @@ class StocktakeController extends Controller
         }
 
         $products = Product::query()
-            ->with(['category', 'unit'])
+            ->with(['category', 'unit', 'photos'])
             ->leftJoin('product_stocks as ps', function ($join) use ($warehouseId) {
                 $join->on('ps.product_id', '=', 'products.id')
                     ->where('ps.warehouse_id', '=', $warehouseId);
@@ -259,10 +262,12 @@ class StocktakeController extends Controller
 
         $payload = $products->map(function ($p) use ($existingByProduct) {
             $existing = $existingByProduct->get($p->id);
+            $mainPhoto = $p->photos->firstWhere('is_main', true) ?? $p->photos->first();
 
             return [
                 'product_id' => (int) $p->id,
                 'title' => (string) ($p->title ?? ''),
+                'image_url' => $mainPhoto?->path ? asset('storage/' . ltrim($mainPhoto->path, '/')) : null,
                 'category_title' => (string) ($p->category?->title ?? 'Egyéb'),
                 'unit' => (string) ($p->unit?->abbreviation ?? $p->unit?->name ?? 'db'),
                 'current_stock' => (float) ($p->current_stock ?? 0),
