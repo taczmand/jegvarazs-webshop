@@ -258,6 +258,17 @@
                 row.dataset.currentStock = String(p.current_stock ?? '0');
                 row.dataset.baseDifference = String(p.difference_quantity ?? '0');
 
+                const countedVal = itemsByProductId.has(p.product_id)
+                    ? itemsByProductId.get(p.product_id)
+                    : (p.counted_quantity ?? '');
+
+                const countedNum = countedVal === '' ? null : Number(countedVal);
+                const currentStock = Number(p.current_stock ?? 0);
+                const baseDiff = Number(p.difference_quantity ?? 0);
+                const diffShown = countedNum !== null && Number.isFinite(countedNum)
+                    ? countedNum - (Number.isFinite(currentStock) ? currentStock : 0)
+                    : (Number.isFinite(baseDiff) ? baseDiff : 0);
+
                 const left = document.createElement('div');
                 left.className = 'flex-grow-1';
                 left.innerHTML = `
@@ -268,8 +279,8 @@
                 right.className = 'd-flex align-items-center gap-2';
                 right.innerHTML = `
                     ${canReviewStocktake ? `<div class="text-muted small" style="min-width: 110px; text-align:right;">Aktuális: ${escapeHtml(formatQty(p.current_stock ?? ''))}</div>` : ''}
-                    ${canReviewStocktake ? `<div class="small stocktake-diff" style="min-width: 130px; text-align:right; font-weight:600;">Különbség: ${escapeHtml(formatQty(p.difference_quantity ?? 0))}</div>` : ''}
-                    <input type="number" step="0.001" class="form-control form-control-sm stocktake-count" style="width: 160px;" value="${escapeHtml(p.counted_quantity ?? '')}">
+                    ${canReviewStocktake ? `<div class="small stocktake-diff" style="min-width: 130px; text-align:right; font-weight:600;">Különbség: ${escapeHtml(formatQty(diffShown))}</div>` : ''}
+                    <input type="number" step="0.001" class="form-control form-control-sm stocktake-count" style="width: 160px;" value="${escapeHtml(countedVal)}">
                 `;
 
                 row.appendChild(left);
