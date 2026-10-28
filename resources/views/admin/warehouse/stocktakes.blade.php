@@ -104,11 +104,17 @@
 
                 <div id="stocktake_filter_bar" class="bg-white" style="position: sticky; top: 0; z-index: 5; padding-bottom: 8px;">
                     <div class="row g-2 align-items-end">
-                        <div class="col-12 col-lg-6">
+                        <div class="col-12 col-lg-5">
                             <label for="product_filter" class="form-label">Terméknév szűrő</label>
                             <input type="text" class="form-control" id="product_filter" placeholder="Kezdj el gépelni...">
                         </div>
-                        <div class="col-12 col-lg-6">
+                        <div class="col-12 col-lg-4">
+                            <label for="category_filter" class="form-label">Kategória szűrő</label>
+                            <select class="form-select" id="category_filter">
+                                <option value="">Összes kategória</option>
+                            </select>
+                        </div>
+                        <div class="col-12 col-lg-3">
                             <div class="small text-muted" id="product_filter_count"></div>
                         </div>
                     </div>
@@ -178,6 +184,13 @@
             const select = document.getElementById('warehouse_id');
             const opt = select?.options?.[select.selectedIndex];
             return opt ? String(opt.textContent || '').trim() : '';
+        }
+
+        let lastSuggestedName = '';
+
+        function suggestedName() {
+            const whName = getSelectedWarehouseName();
+            return `Leltár - ${whName ? whName + ' - ' : ''}${nowDateTime()}`;
         }
 
         function syncWarehouseHidden() {
@@ -292,12 +305,29 @@
             setFilterCount(visibleCount, productsCache.length);
         }
 
+        function rebuildCategoryFilter() {
+            const select = document.getElementById('category_filter');
+            if (!select) return;
+            const prev = select.value;
+            const cats = [...new Set(productsCache.map(p => p.category_title).filter(Boolean))];
+            select.innerHTML = '<option value="">Összes kategória</option>';
+            cats.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c;
+                opt.textContent = c;
+                select.appendChild(opt);
+            });
+            if (cats.includes(prev)) select.value = prev;
+        }
+
         function applyFilter() {
             const q = String(document.getElementById('product_filter').value || '').trim().toLowerCase();
+            const cat = String(document.getElementById('category_filter')?.value || '');
 
-            const filtered = q === ''
-                ? productsCache
-                : productsCache.filter(p => String(p.title || '').toLowerCase().includes(q));
+            const filtered = productsCache.filter(p =>
+                (q === '' || String(p.title || '').toLowerCase().includes(q)) &&
+                (cat === '' || String(p.category_title || '') === cat)
+            );
 
             renderProducts(filtered);
         }
@@ -334,6 +364,7 @@
                     itemsByProductId.set(p.product_id, v === null || v === undefined ? '' : String(v));
                 });
 
+                rebuildCategoryFilter();
                 renderProducts(productsCache);
                 syncItemsJson();
                 applyFilter();
@@ -356,11 +387,12 @@
 
             syncWarehouseHidden();
 
-            const whName = getSelectedWarehouseName();
-            const nameSuggested = `Leltár - ${whName ? whName + ' - ' : ''}${nowDateTime()}`;
-            document.getElementById('name').value = nameSuggested;
+            lastSuggestedName = suggestedName();
+            document.getElementById('name').value = lastSuggestedName;
 
             document.getElementById('product_filter').value = '';
+            const catSelect = document.getElementById('category_filter');
+            if (catSelect) catSelect.innerHTML = '<option value="">Összes kategória</option>';
             document.getElementById('items_json').value = '[]';
 
             itemsByProductId.clear();
@@ -416,6 +448,15 @@
             $('#warehouse_id').on('change', async function () {
                 syncWarehouseHidden();
                 const id = String($('#stocktake_id').val() || '').trim();
+
+                if (!id) {
+                    const nameInput = document.getElementById('name');
+                    if (nameInput && (nameInput.value === '' || nameInput.value === lastSuggestedName)) {
+                        nameInput.value = suggestedName();
+                        lastSuggestedName = nameInput.value;
+                    }
+                }
+
                 try {
                     await loadProductsForStocktake(id ? id : null);
                 } catch (e) {
@@ -424,6 +465,10 @@
             });
 
             $('#product_filter').on('input', function () {
+                applyFilter();
+            });
+
+            $('#category_filter').on('change', function () {
                 applyFilter();
             });
 
