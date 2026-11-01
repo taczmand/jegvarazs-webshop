@@ -48,7 +48,7 @@ class ProductController extends Controller
             ? (int) $warehouseIdRaw
             : null;
 
-        if ($q === '') {
+        if ($q === '' && !$request->boolean('favorites')) {
             return response()->json(['products' => []]);
         }
 
@@ -83,6 +83,9 @@ class ProductController extends Controller
                         '=',
                         is_numeric($q) ? (int) $q : 0
                     );
+            })
+            ->when($request->boolean('favorites'), function ($query) {
+                $query->where('products.favorite', true);
             })
             ->when($warehouseId !== null, function ($query) use ($warehouseId) {
                 $query

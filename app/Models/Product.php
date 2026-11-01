@@ -13,6 +13,7 @@ class Product extends Model
 
     protected $casts = [
         'in_stock' => 'boolean',
+        'favorite' => 'boolean',
     ];
 
     public function quantityDiscounts()

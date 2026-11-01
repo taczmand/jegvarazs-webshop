@@ -19,6 +19,7 @@ return new class extends Migration
             $table->integer('stock')->default(1);
             $table->integer('unit_qty')->default(1);
             $table->enum('status',['active','inactive'])->default('inactive');
+            $table->boolean('favorite')->default(false)->index();
             $table->float('gross_price');
             $table->unsignedBigInteger('tax_id');
             $table->unsignedBigInteger('cat_id')->nullable();

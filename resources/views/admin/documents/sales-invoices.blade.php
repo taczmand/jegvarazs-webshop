@@ -288,6 +288,7 @@
                 <div class="mb-2">
                     <label for="product_search" class="form-label">Új tétel rögzítése</label>
                     <input type="text" class="form-control form-control-sm" id="product_search" placeholder="Kezdj el gépelni..." style="font-size: 0.85rem;">
+                    <div id="favorite_products" class="d-flex flex-wrap gap-1 mt-1"></div>
                 </div>
 
                 <div class="list-group mb-3" id="product_search_results" style="max-height: 240px; overflow:auto; font-size: 0.85rem;"></div>
@@ -1607,16 +1608,12 @@
                 tbody.empty();
 
                 items.forEach((item, idx) => {
-                    const hasInstallation = String(item.name ?? '').trim().toUpperCase().endsWith(INSTALLATION_SUFFIX);
                     const row = $(
                         `<tr data-idx="${idx}">
                             <td style="min-width: 320px;">
                                 <input type="text" class="form-control form-control-sm item-name" value="${escapeHtml(item.name)}">
                                 <input type="text" class="form-control form-control-sm item-note mt-1" placeholder="Megjegyzés" value="${escapeHtml(item.note ?? '')}" style="font-size: 0.78rem;">
-                                <div class="form-check mt-1" style="font-size: 0.78rem;">
-                                    <input type="checkbox" class="form-check-input item-installation"${hasInstallation ? ' checked' : ''}>
-                                    <label class="form-check-label">Beszereléssel együtt</label>
-                                </div>
+                                <button type="button" class="item-installation-add btn btn-link btn-sm p-0 mt-1 d-none" style="font-size: 0.75rem;">+ BESZERELÉSSEL EGYÜTT</button>
                             </td>
                             <td>
                                 <div>${escapeHtml(item.warehouse_name || '—')}</div>
@@ -1705,6 +1702,33 @@
             }
 
             let searchTimeout = null;
+
+            (function loadFavoriteProducts() {
+                $.ajax({
+                    url: `${window.appConfig.APP_URL}admin/termekek/search?favorites=1`,
+                    method: 'GET',
+                    success: function (resp) {
+                        const favorites = resp?.products ?? [];
+                        const container = $('#favorite_products');
+                        container.empty();
+
+                        favorites.forEach(p => {
+                            const btn = $(
+                                `<button type="button" class="btn btn-outline-secondary text-dark" style="font-size: 0.7rem; padding: 0.05rem 0.45rem; line-height: 1.4;">${escapeHtml(p.title)}</button>`
+                            );
+
+                            btn.on('click', function () {
+                                $('#product_search')
+                                    .val(p.title)
+                                    .trigger('input')
+                                    .trigger('focus');
+                            });
+
+                            container.append(btn);
+                        });
+                    }
+                });
+            })();
 
             $('#product_search').on('input', function () {
                 const q = $(this).val().trim();
@@ -1875,7 +1899,7 @@
                 }, 250);
             });
 
-            $('#invoice_items_table').on('input change', '.item-qty, .item-unit, .item-discount, .item-vat-key, .item-name, .item-unit-abbr, .item-note, .item-installation', function () {
+            $('#invoice_items_table').on('input change', '.item-qty, .item-unit, .item-discount, .item-vat-key, .item-name, .item-unit-abbr, .item-note', function () {
                 const tr = $(this).closest('tr');
                 const idx = Number(tr.data('idx'));
                 const item = items[idx];
@@ -1902,19 +1926,13 @@
                 item.discount_percent = Number.isFinite(discount) ? discount : 0;
                 item.vat_percent = Number.isFinite(vat) ? vat : 0;
                 item.vat_code = String(tr.find('.item-vat-key option:selected').attr('data-tax-name') ?? '');
-                const installationOn = tr.find('.item-installation').is(':checked');
-                let itemName = String(name ?? '').trim();
-                if (installationOn && !itemName.toUpperCase().endsWith(INSTALLATION_SUFFIX)) {
-                    itemName = `${itemName} ${INSTALLATION_SUFFIX}`.trim();
-                    if ($(this).is('.item-installation')) {
-                        tr.find('.item-name').val(itemName);
-                    }
-                }
-                if (!installationOn && $(this).is('.item-installation') && itemName.toUpperCase().endsWith(INSTALLATION_SUFFIX)) {
-                    itemName = itemName.replace(new RegExp(`\\s*${INSTALLATION_SUFFIX}$`, 'i'), '').trim();
-                    tr.find('.item-name').val(itemName);
-                }
+                const itemName = String(name ?? '').trim();
                 item.name = itemName || item.name;
+
+                // „BESZERELÉSSEL EGYÜTT” felirat felajánlása gépelés közben
+                const nameHasSuffix = String(item.name).trim().toUpperCase().endsWith(INSTALLATION_SUFFIX);
+                tr.find('.item-installation-add').toggleClass('d-none', itemName === '' || nameHasSuffix);
+
                 item.unit_abbreviation = String(unitAbbr ?? '').trim();
                 item.note = String(tr.find('.item-note').val() ?? '');
                 recalcRow(item);
@@ -1922,6 +1940,23 @@
                 tr.find('.item-vat').text(`${formatMoney(item.vat_total)} Ft`);
                 tr.find('.item-gross').text(`${formatMoney(item.gross_total)} Ft`);
                 syncItemsJson();
+            });
+
+            $('#invoice_items_table').on('click', '.item-installation-add', function () {
+                const tr = $(this).closest('tr');
+                const idx = Number(tr.data('idx'));
+                const item = items[idx];
+                if (!item) return;
+
+                const nameInput = tr.find('.item-name');
+                const current = String(nameInput.val() ?? '').trim();
+                if (current !== '' && !current.toUpperCase().endsWith(INSTALLATION_SUFFIX)) {
+                    const newName = `${current} ${INSTALLATION_SUFFIX}`;
+                    nameInput.val(newName);
+                    item.name = newName;
+                    syncItemsJson();
+                }
+                $(this).addClass('d-none');
             });
 
             $('#invoice_items_table').on('click', '.item-remove', function () {

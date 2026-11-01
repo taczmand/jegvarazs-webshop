@@ -156,6 +156,10 @@
                                             <input type="hidden" name="stock_tracking" value="0">
                                             <input type="checkbox" name="stock_tracking" id="stock_tracking" class="form-check-input ml-3" value="1" checked>
                                             <label for="stock_tracking" class="form-check-label ml-4">Készletkezelés?</label>
+
+                                            <input type="hidden" name="favorite" value="0">
+                                            <input type="checkbox" name="favorite" id="favorite" class="form-check-input ml-3" value="1">
+                                            <label for="favorite" class="form-check-label ml-4">Kedvenc</label>
                                         </div>
                                         <div class="mb-3">
                                             <label class="form-label">Mértékegység</label>
@@ -709,6 +713,7 @@
                     $('#stock').val(product.stock);
                     $('#in_stock').prop('checked', product.in_stock === undefined ? true : !!product.in_stock);
                     $('#stock_tracking').prop('checked', product.stock_tracking === undefined ? true : !!product.stock_tracking);
+                    $('#favorite').prop('checked', !!product.favorite);
                     $('#unit_qty').val(product.unit_qty);
                     $('#status').val(product.status);
                     $('#is_offerable').prop('checked', product.is_offerable);
@@ -1366,6 +1371,7 @@
 
                 $('#in_stock').prop('checked', true);
                 $('#stock_tracking').prop('checked', true);
+                $('#favorite').prop('checked', false);
 
                 currentQuantityDiscounts = [];
                 renderQuantityDiscounts([]);
