@@ -287,8 +287,12 @@
 
                 <div class="mb-2">
                     <label for="product_search" class="form-label">Új tétel rögzítése</label>
-                    <input type="text" class="form-control form-control-sm" id="product_search" placeholder="Kezdj el gépelni..." style="font-size: 0.85rem;">
-                    <div id="favorite_products" class="d-flex flex-wrap gap-1 mt-1"></div>
+                    <div class="d-flex gap-2">
+                        <select class="form-select form-select-sm" id="favorite_products" style="font-size: 0.85rem; flex: 0 0 20%;">
+                            <option value="">Kedvencek…</option>
+                        </select>
+                        <input type="text" class="form-control form-control-sm" id="product_search" placeholder="Kezdj el gépelni..." style="font-size: 0.85rem; flex: 1;">
+                    </div>
                 </div>
 
                 <div class="list-group mb-3" id="product_search_results" style="max-height: 240px; overflow:auto; font-size: 0.85rem;"></div>
@@ -1709,26 +1713,25 @@
                     method: 'GET',
                     success: function (resp) {
                         const favorites = resp?.products ?? [];
-                        const container = $('#favorite_products');
-                        container.empty();
+                        const select = $('#favorite_products');
+
+                        select.find('option:not(:first)').remove();
 
                         favorites.forEach(p => {
-                            const btn = $(
-                                `<button type="button" class="btn btn-outline-secondary text-dark" style="font-size: 0.7rem; padding: 0.05rem 0.45rem; line-height: 1.4;">${escapeHtml(p.title)}</button>`
+                            select.append(
+                                `<option value="${p.id}">${escapeHtml(p.title)}</option>`
                             );
-
-                            btn.on('click', function () {
-                                $('#product_search')
-                                    .val(p.title)
-                                    .trigger('input')
-                                    .trigger('focus');
-                            });
-
-                            container.append(btn);
                         });
                     }
                 });
             })();
+
+            $('#favorite_products').on('change', function () {
+                if (!$(this).val()) return;
+                const title = $(this).find('option:selected').text();
+                $('#product_search').val(title).trigger('input').trigger('focus');
+                $(this).val('');
+            });
 
             $('#product_search').on('input', function () {
                 const q = $(this).val().trim();
