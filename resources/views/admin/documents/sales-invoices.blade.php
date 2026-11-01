@@ -2,6 +2,33 @@
 
 @section('content')
 
+    <style>
+        #invoice_items_table {
+            border-collapse: separate;
+            border-spacing: 0 8px;
+        }
+        #invoice_items_table td,
+        #invoice_items_table th {
+            border: none !important;
+        }
+        #invoice_items_table tbody tr td {
+            background: #f4f5f7;
+            padding-top: 6px;
+            padding-bottom: 6px;
+            vertical-align: middle;
+        }
+        #invoice_items_table tbody tr td:first-child {
+            border-radius: 8px 0 0 8px;
+        }
+        #invoice_items_table tbody tr td:last-child {
+            border-radius: 0 8px 8px 0;
+        }
+        #invoice_items_table tbody tr td .form-control,
+        #invoice_items_table tbody tr td .form-select {
+            background: #fff;
+        }
+    </style>
+
     <div class="container-fluid px-0">
 
         <div class="d-flex justify-content-between align-items-center mb-3 pb-2">
@@ -93,7 +120,7 @@
     </div>
 
 
-    <x-admin.document-modal id="salesInvoiceModal" title="Kimenő számla" form-id="salesInvoiceForm" save-button-id="saveDraftSalesInvoice" pane-left="40%" pane-mid="60%">
+    <x-admin.document-modal id="salesInvoiceModal" title="Kimenő számla" form-id="salesInvoiceForm" save-button-id="saveDraftSalesInvoice" pane-left="25%" pane-mid="75%">
         <x-slot:left>
             <input type="hidden" id="invoice_id" name="id">
             <input type="hidden" id="correction_of_sales_invoice_id" name="correction_of_sales_invoice_id">
@@ -139,7 +166,7 @@
                 </div>
 
                 <div class="row g-2 mt-1">
-                    <div class="col-12">
+                    <div class="col-12 col-md-4">
                         <label for="partner_country" class="form-label">Ország</label>
                         <select class="form-select" id="partner_country" name="partner_country" required>
                             @foreach(config('countries') as $code => $name)
@@ -147,10 +174,7 @@
                             @endforeach
                         </select>
                     </div>
-                </div>
-                <div class="row g-2 mt-1">
-
-                    <div class="col-12 col-md-3">
+                    <div class="col-12 col-md-4">
                         <label for="partner_zip_code" class="form-label">Irányítószám</label>
                         <input type="text" class="form-control" id="partner_zip_code" name="partner_zip_code">
                     </div>
@@ -158,18 +182,20 @@
                         <label for="partner_city" class="form-label">Város</label>
                         <input type="text" class="form-control" id="partner_city" name="partner_city">
                     </div>
-                    <div class="col-12 col-md-5">
+                </div>
+                <div class="row g-2 mt-1">
+                    <div class="col-12">
                         <label for="partner_address_line" class="form-label">Cím</label>
                         <input type="text" class="form-control" id="partner_address_line" name="partner_address_line">
                     </div>
                 </div>
 
                 <div class="row g-2 mt-1">
-                    <div class="col-12 col-md-5">
+                    <div class="col-12 col-md-8">
                         <label for="partner_email" class="form-label">E-mail</label>
                         <input type="email" class="form-control" id="partner_email" name="partner_email">
                     </div>
-                    <div class="col-12 col-md-2">
+                    <div class="col-12 col-md-4">
                         <label for="send_email"
                                class="form-label"
                                title="Amennyiben ez be van pipálva, az elkészült számla kiküldésre kerül a partner e-mail címére">
@@ -184,7 +210,9 @@
                                    value="1">
                         </div>
                     </div>
-                    <div class="col-12 col-md-5">
+                </div>
+                <div class="row g-2 mt-1">
+                    <div class="col-12">
                         <label for="partner_phone" class="form-label">Telefon</label>
                         <input type="text" class="form-control" id="partner_phone" name="partner_phone">
                     </div>
@@ -258,14 +286,14 @@
                 <legend class="admin-fieldset__legend">Tételek</legend>
 
                 <div class="mb-2">
-                    <label for="product_search" class="form-label">Termék keresés</label>
+                    <label for="product_search" class="form-label">Új tétel rögzítése</label>
                     <input type="text" class="form-control form-control-sm" id="product_search" placeholder="Kezdj el gépelni..." style="font-size: 0.85rem;">
                 </div>
 
                 <div class="list-group mb-3" id="product_search_results" style="max-height: 240px; overflow:auto; font-size: 0.85rem;"></div>
 
                 <div class="table-responsive" style="overflow-x:auto;">
-                    <table class="table table-sm table-bordered align-middle" id="invoice_items_table" style="font-size: 0.85rem; min-width: 1100px;">
+                    <table class="table table-sm align-middle" id="invoice_items_table" style="font-size: 0.85rem; min-width: 1100px;">
                         <thead>
                         <tr>
                             <th>Megnevezés</th>
@@ -273,8 +301,8 @@
                             <th class="text-end">Mennyiség</th>
                             <th class="text-center">Mee.</th>
                             <th class="text-end">Kedvezmény</th>
-                            <th class="text-end">Egységár</th>
-                            <th class="text-end">ÁFA%</th>
+                            <th class="text-end">Bruttó egységár</th>
+                            <th>Áfakulcs</th>
                             <th class="text-end">Nettó</th>
                             <th class="text-end">ÁFA</th>
                             <th class="text-end">Bruttó</th>
@@ -370,6 +398,7 @@
         const companies = @json($companies ?? []);
         const companyInvoicePrefixes = @json($companyInvoicePrefixes ?? []);
         const warehouses = @json($warehouses ?? []);
+        const taxCategories = @json($taxCategories ?? []);
         const defaultCompanyId = @json($defaultCompanyId ?? null);
 
         const modalDOM = document.getElementById('salesInvoiceModal');
@@ -548,7 +577,7 @@
 
                     $('#issued_at').val(todayDate());
                     $('#fulfilled_at').val(todayDate());
-                    $('#due_at').val(addDays(todayDate(), 8));
+                    $('#due_at').val(dueDateForPaymentMethod(invoice.payment_method || 'bank_transfer', todayDate()));
 
                     $('#currency').val(invoice.currency || 'HUF');
                     if ($('#prices_include_vat').length) {
@@ -959,7 +988,7 @@
 
                     $('#issued_at').val(invoice.issued_at || todayDate());
                     $('#fulfilled_at').val(invoice.fulfilled_at || todayDate());
-                    $('#due_at').val(invoice.due_at || addDays(todayDate(), 8));
+                    $('#due_at').val(invoice.due_at || dueDateForPaymentMethod(invoice.payment_method || 'bank_transfer', todayDate()));
 
                     $('#currency').val(invoice.currency || 'HUF');
                     if ($('#prices_include_vat').length) {
@@ -1518,6 +1547,27 @@
                 return String(Math.round(n * 100) / 100);
             }
 
+            function vatOptionsHtml(selectedValue) {
+                const sel = Number(selectedValue);
+                const selNum = Number.isFinite(sel) ? sel : 0;
+                let found = false;
+
+                let html = taxCategories.map(t => {
+                    const v = Number(t.tax_value);
+                    const isSel = Math.abs(v - selNum) < 0.0001;
+                    if (isSel) found = true;
+                    const name = String(t.tax_name ?? '').trim();
+                    const label = `${Math.round(v)}%` + (name !== '' ? ` (${escapeHtml(name)})` : '');
+                    return `<option value="${escapeHtml(String(t.tax_value))}"${isSel ? ' selected' : ''}>${label}</option>`;
+                }).join('');
+
+                if (!found) {
+                    html += `<option value="${selNum}" selected>${formatPercent(selNum)}%</option>`;
+                }
+
+                return html;
+            }
+
             function recalcRow(item) {
                 const qty = Number(item.quantity);
                 const unitGross = Number(item.unit_gross_price);
@@ -1546,37 +1596,37 @@
                 items.forEach((item, idx) => {
                     const row = $(
                         `<tr data-idx="${idx}">
-                            <td>
-                                <div class="fw-semibold">${item.name}</div>
+                            <td style="min-width: 320px;">
+                                <input type="text" class="form-control form-control-sm item-name" value="${escapeHtml(item.name)}">
                             </td>
                             <td>
                                 <div>${item.warehouse_name}</div>
                             </td>
-                            <td style="width: 120px;">
+                            <td style="width: 90px;">
                                 <input type="number" min="${item.qty_step ?? 1}" step="${item.qty_step ?? 1}" class="form-control form-control-sm text-end item-qty" value="${item.quantity}">
                             </td>
-                            <td class="text-center" style="width: 70px;">
-                                <span class="text-muted">${item.unit_abbreviation ?? ''}</span>
-                            </td>
-                            <td style="width: 120px;">
-                                <input type="number" step="0.01" class="form-control form-control-sm text-end item-discount" value="${formatPercent(item.discount_percent)}">
-                            </td>
-                            <td style="width: 140px;">
-                                <input type="number" step="1" class="form-control form-control-sm text-end item-unit" value="${formatMoney(item.unit_gross_price)}">
+                            <td class="text-center" style="width: 60px;">
+                                <input type="text" class="form-control form-control-sm text-center item-unit-abbr" value="${escapeHtml(item.unit_abbreviation ?? '')}">
                             </td>
                             <td style="width: 90px;">
-                                <input type="number" step="0.01" class="form-control form-control-sm text-end item-vat" value="${formatPercent(item.vat_percent)}">
+                                <input type="number" step="0.01" class="form-control form-control-sm text-end item-discount" value="${formatPercent(item.discount_percent)}">
                             </td>
-                            <td class="text-end" style="width: 120px;">
-                                <span class="item-net">${formatMoney(item.net_total)}</span>
+                            <td style="width: 110px;">
+                                <input type="number" step="1" class="form-control form-control-sm text-end item-unit" value="${formatMoney(item.unit_gross_price)}">
                             </td>
-                            <td class="text-end" style="width: 120px;">
-                                <span class="item-vat">${formatMoney(item.vat_total)}</span>
+                            <td style="width: 100px;">
+                                <select class="form-select form-select-sm item-vat-key">${vatOptionsHtml(item.vat_percent)}</select>
                             </td>
-                            <td class="text-end" style="width: 120px;">
-                                <span class="item-gross">${formatMoney(item.gross_total)}</span>
+                            <td class="text-end" style="width: 95px;">
+                                <span class="item-net">${formatMoney(item.net_total)} Ft</span>
                             </td>
-                            <td class="text-center" style="width: 44px;">
+                            <td class="text-end" style="width: 95px;">
+                                <span class="item-vat">${formatMoney(item.vat_total)} Ft</span>
+                            </td>
+                            <td class="text-end" style="width: 100px;">
+                                <span class="item-gross">${formatMoney(item.gross_total)} Ft</span>
+                            </td>
+                            <td class="text-center" style="width: 40px;">
                                 <button type="button" class="btn btn-sm btn-outline-danger item-remove" title="Tétel törlése">&times;</button>
                             </td>
                         </tr>`
@@ -1686,13 +1736,7 @@
                                 </div>
                             </div>
 
-                            <div class="mt-2">
-                                <div class="small text-muted mb-1">
-                                    Raktárak:
-                                </div>
-
-                                <div class="d-flex flex-wrap gap-1 product-warehouses">
-                                </div>
+                            <div class="d-flex flex-wrap gap-1 mt-1 product-warehouses">
                             </div>
                         </div>`
                                 );
@@ -1723,11 +1767,8 @@
                                     const warehouseButton = $(
                                         `<button
                                 type="button"
-                                class="btn btn-sm ${
-                                            isAvailable
-                                                ? 'btn-outline-primary'
-                                                : 'btn-outline-secondary'
-                                        }"
+                                class="btn btn-outline-secondary ${isAvailable ? 'text-dark' : ''}"
+                                style="font-size: 0.7rem; padding: 0.05rem 0.45rem; line-height: 1.4;"
                                 ${
                                             !isAvailable
                                                 ? 'disabled aria-disabled="true"'
@@ -1735,7 +1776,7 @@
                                         }
                             >
                                 ${escapeHtml(warehouse.name)}
-                                <span class="ms-1">
+                                <span class="ms-1 text-muted">
                                     (${escapeHtml(quantityText)})
                                 </span>
                             </button>`
@@ -1777,7 +1818,7 @@
                 }, 250);
             });
 
-            $('#invoice_items_table').on('input', '.item-qty, .item-unit, .item-discount, .item-vat', function () {
+            $('#invoice_items_table').on('input change', '.item-qty, .item-unit, .item-discount, .item-vat-key, .item-name, .item-unit-abbr', function () {
                 const tr = $(this).closest('tr');
                 const idx = Number(tr.data('idx'));
                 const item = items[idx];
@@ -1787,7 +1828,9 @@
                 const qtyRaw = Number(qtyInput.val());
                 const unit = Number(tr.find('.item-unit').val());
                 const discount = Number(tr.find('.item-discount').val());
-                const vat = Number(tr.find('.item-vat').val());
+                const vat = Number(tr.find('.item-vat-key').val());
+                const name = tr.find('.item-name').val();
+                const unitAbbr = tr.find('.item-unit-abbr').val();
 
                 const minQty = Number(item.qty_step);
                 const min = Number.isFinite(minQty) && minQty > 1 ? minQty : 1;
@@ -1801,10 +1844,12 @@
                 item.unit_gross_price = Number.isFinite(unit) ? unit : 0;
                 item.discount_percent = Number.isFinite(discount) ? discount : 0;
                 item.vat_percent = Number.isFinite(vat) ? vat : 0;
+                item.name = String(name ?? '').trim() || item.name;
+                item.unit_abbreviation = String(unitAbbr ?? '').trim();
                 recalcRow(item);
-                tr.find('.item-net').text(formatMoney(item.net_total));
-                tr.find('.item-vat').text(formatMoney(item.vat_total));
-                tr.find('.item-gross').text(formatMoney(item.gross_total));
+                tr.find('.item-net').text(`${formatMoney(item.net_total)} Ft`);
+                tr.find('.item-vat').text(`${formatMoney(item.vat_total)} Ft`);
+                tr.find('.item-gross').text(`${formatMoney(item.gross_total)} Ft`);
                 syncItemsJson();
             });
 
@@ -1823,7 +1868,7 @@
 
                 const leftHandle = split.querySelector('[data-resizer="left"]');
                 const rightHandle = split.querySelector('[data-resizer="right"]');
-                if (!leftHandle || !rightHandle) return;
+                if (!leftHandle && !rightHandle) return;
 
                 function pxToPercent(px) {
                     const w = split.getBoundingClientRect().width || 1;
@@ -1890,8 +1935,8 @@
                     window.addEventListener('mouseup', onUp);
                 }
 
-                leftHandle.addEventListener('mousedown', (e) => startDrag('left', e));
-                rightHandle.addEventListener('mousedown', (e) => startDrag('right', e));
+                if (leftHandle) leftHandle.addEventListener('mousedown', (e) => startDrag('left', e));
+                if (rightHandle) rightHandle.addEventListener('mousedown', (e) => startDrag('right', e));
             })();
 
             function todayDate() {
@@ -1912,6 +1957,15 @@
                 return `${yyyy}-${mm}-${dd}`;
             }
 
+            function dueDateForPaymentMethod(paymentMethod, baseDate) {
+                const base = baseDate || todayDate();
+                return String(paymentMethod) === 'cash' ? base : addDays(base, 8);
+            }
+
+            $(document).on('change', '#payment_method', function () {
+                $('#due_at').val(dueDateForPaymentMethod($(this).val(), todayDate()));
+            });
+
             function resetForm(title = null) {
                 $('#salesInvoiceForm')[0].reset();
                 $('#salesInvoiceModalLabel').text(title);
@@ -1928,7 +1982,7 @@
                 $('#partner_country').val('HU');
                 $('#issued_at').val(todayDate());
                 $('#fulfilled_at').val(todayDate());
-                $('#due_at').val(addDays(todayDate(), 8));
+                $('#due_at').val(dueDateForPaymentMethod($('#payment_method').val(), todayDate()));
                 $('#status').val('draft');
                 $('#payment_status').val('unpaid');
                 if ($('#prices_include_vat').length) {

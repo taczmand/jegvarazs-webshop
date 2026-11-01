@@ -8,6 +8,7 @@ use App\Models\CompanyInvoicePrefix;
 use App\Models\SalesInvoice;
 use App\Models\SalesInvoiceItem;
 use App\Models\SalesInvoicePayment;
+use App\Models\TaxCategory;
 use App\Models\Warehouse;
 use App\Services\InvoiceServiceInterface;
 use App\Services\SzamlazzHu\SzamlazzHuInvoiceService;
@@ -66,11 +67,20 @@ class SalesInvoiceController extends Controller
                 'name',
             ]);
 
+        $taxCategories = TaxCategory::query()
+            ->orderBy('tax_value')
+            ->get([
+                'id',
+                'tax_name',
+                'tax_value',
+            ]);
+
         return view('admin.documents.sales-invoices', [
             'companies' => $companies,
             'defaultCompanyId' => $defaultCompanyId,
             'companyInvoicePrefixes' => $companyInvoicePrefixes,
             'warehouses' => $warehouses,
+            'taxCategories' => $taxCategories,
         ]);
     }
 
