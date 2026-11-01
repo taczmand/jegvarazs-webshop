@@ -300,7 +300,7 @@
                             <th>Raktár</th>
                             <th class="text-end">Mennyiség</th>
                             <th class="text-center">Mee.</th>
-                            <th class="text-end">Kedvezmény</th>
+                            <th class="text-end">Kedvezmény%</th>
                             <th class="text-end">Bruttó egységár</th>
                             <th>Áfakulcs</th>
                             <th class="text-end">Nettó</th>
@@ -610,11 +610,13 @@
                             unit_abbreviation: it.unit ?? '',
                             discount_percent: Number(it.discount_percent ?? 0),
                             vat_percent: Number(it.vat_percent ?? 0),
+                            vat_code: it.vat_code || taxNameForValue(Number(it.vat_percent ?? 0)),
                             unit_net_price: Number(it.unit_net_price ?? 0),
                             unit_gross_price: Number(it.unit_gross_price ?? 0),
                             net_total: Number(it.net_total ?? 0),
                             vat_total: Number(it.vat_total ?? 0),
                             gross_total: Number(it.gross_total ?? 0),
+                            note: it.note ?? '',
                         };
 
                         recalcRow(item);
@@ -1023,11 +1025,13 @@
                             unit_abbreviation: it.unit ?? '',
                             discount_percent: Number(it.discount_percent ?? 0),
                             vat_percent: Number(it.vat_percent ?? 0),
+                            vat_code: it.vat_code || taxNameForValue(Number(it.vat_percent ?? 0)),
                             unit_net_price: Number(it.unit_net_price ?? 0),
                             unit_gross_price: Number(it.unit_gross_price ?? 0),
                             net_total: Number(it.net_total ?? 0),
                             vat_total: Number(it.vat_total ?? 0),
                             gross_total: Number(it.gross_total ?? 0),
+                            note: it.note ?? '',
                         };
 
                         recalcRow(item);
@@ -1558,7 +1562,7 @@
                     if (isSel) found = true;
                     const name = String(t.tax_name ?? '').trim();
                     const label = `${Math.round(v)}%` + (name !== '' ? ` (${escapeHtml(name)})` : '');
-                    return `<option value="${escapeHtml(String(t.tax_value))}"${isSel ? ' selected' : ''}>${label}</option>`;
+                    return `<option value="${escapeHtml(String(t.tax_value))}" data-tax-name="${escapeHtml(name)}"${isSel ? ' selected' : ''}>${label}</option>`;
                 }).join('');
 
                 if (!found) {
@@ -1566,6 +1570,13 @@
                 }
 
                 return html;
+            }
+
+            function taxNameForValue(v) {
+                const num = Number(v);
+                if (!Number.isFinite(num)) return '';
+                const t = taxCategories.find(tc => Math.abs(Number(tc.tax_value) - num) < 0.0001);
+                return t ? String(t.tax_name ?? '').trim() : '';
             }
 
             function recalcRow(item) {
@@ -1589,18 +1600,26 @@
                 item.gross_total = Math.round(discountedUnitGross * q);
             }
 
+            const INSTALLATION_SUFFIX = 'BESZERELÉSSEL EGYÜTT';
+
             function renderItems() {
                 const tbody = $('#invoice_items_table tbody');
                 tbody.empty();
 
                 items.forEach((item, idx) => {
+                    const hasInstallation = String(item.name ?? '').trim().toUpperCase().endsWith(INSTALLATION_SUFFIX);
                     const row = $(
                         `<tr data-idx="${idx}">
                             <td style="min-width: 320px;">
                                 <input type="text" class="form-control form-control-sm item-name" value="${escapeHtml(item.name)}">
+                                <input type="text" class="form-control form-control-sm item-note mt-1" placeholder="Megjegyzés" value="${escapeHtml(item.note ?? '')}" style="font-size: 0.78rem;">
+                                <div class="form-check mt-1" style="font-size: 0.78rem;">
+                                    <input type="checkbox" class="form-check-input item-installation"${hasInstallation ? ' checked' : ''}>
+                                    <label class="form-check-label">Beszereléssel együtt</label>
+                                </div>
                             </td>
                             <td>
-                                <div>${item.warehouse_name}</div>
+                                <div>${escapeHtml(item.warehouse_name || '—')}</div>
                             </td>
                             <td style="width: 90px;">
                                 <input type="number" min="${item.qty_step ?? 1}" step="${item.qty_step ?? 1}" class="form-control form-control-sm text-end item-qty" value="${item.quantity}">
@@ -1670,11 +1689,13 @@
                     unit_abbreviation: unitAbbrev,
                     discount_percent: 0,
                     vat_percent: vatPercent,
+                    vat_code: taxNameForValue(vatPercent),
                     unit_net_price: 0,
                     unit_gross_price: Math.round(Number(unitPrice) || 0),
                     net_total: 0,
                     vat_total: 0,
                     gross_total: 0,
+                    note: '',
                 };
 
                 recalcRow(item);
@@ -1744,15 +1765,50 @@
                                 const warehousesContainer =
                                     productItem.find('.product-warehouses');
 
-                                if (warehouses.length === 0) {
-                                    warehousesContainer.append(
-                                        `<span class="badge text-bg-secondary">
+                                const isStockTracked =
+                                    p.stock_tracking !== false &&
+                                    p.stock_tracking !== 0 &&
+                                    p.stock_tracking !== '0';
+
+                                if (!isStockTracked) {
+                                    const addButton = $(
+                                        `<button
+                                type="button"
+                                class="btn btn-outline-secondary text-dark"
+                                style="font-size: 0.7rem; padding: 0.05rem 0.45rem; line-height: 1.4;"
+                            >
+                                Hozzáadás
+                            </button>`
+                                    );
+
+                                    addButton.on('click', function (e) {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+
+                                        /* Nem követett készletű termék: raktár nélkül megy be. */
+                                        addProductAsItem({
+                                            ...p,
+                                            warehouse_id: null,
+                                            warehouse_name: '',
+                                            available_quantity: null,
+                                        });
+
+                                        $('#product_search').val('');
+                                        $('#product_search_results').empty();
+                                        $('#product_search').trigger('focus');
+                                    });
+
+                                    warehousesContainer.append(addButton);
+                                } else {
+                                    if (warehouses.length === 0) {
+                                        warehousesContainer.append(
+                                            `<span class="badge text-bg-secondary">
                                 nincs készletinformáció
                             </span>`
-                                    );
-                                }
+                                        );
+                                    }
 
-                                warehouses.forEach(warehouse => {
+                                    warehouses.forEach(warehouse => {
                                     const quantity = Number(warehouse.quantity ?? 0);
 
                                     const isAvailable =
@@ -1804,8 +1860,9 @@
                                         });
                                     }
 
-                                    warehousesContainer.append(warehouseButton);
-                                });
+                                        warehousesContainer.append(warehouseButton);
+                                    });
+                                }
 
                                 container.append(productItem);
                             });
@@ -1818,7 +1875,7 @@
                 }, 250);
             });
 
-            $('#invoice_items_table').on('input change', '.item-qty, .item-unit, .item-discount, .item-vat-key, .item-name, .item-unit-abbr', function () {
+            $('#invoice_items_table').on('input change', '.item-qty, .item-unit, .item-discount, .item-vat-key, .item-name, .item-unit-abbr, .item-note, .item-installation', function () {
                 const tr = $(this).closest('tr');
                 const idx = Number(tr.data('idx'));
                 const item = items[idx];
@@ -1844,8 +1901,22 @@
                 item.unit_gross_price = Number.isFinite(unit) ? unit : 0;
                 item.discount_percent = Number.isFinite(discount) ? discount : 0;
                 item.vat_percent = Number.isFinite(vat) ? vat : 0;
-                item.name = String(name ?? '').trim() || item.name;
+                item.vat_code = String(tr.find('.item-vat-key option:selected').attr('data-tax-name') ?? '');
+                const installationOn = tr.find('.item-installation').is(':checked');
+                let itemName = String(name ?? '').trim();
+                if (installationOn && !itemName.toUpperCase().endsWith(INSTALLATION_SUFFIX)) {
+                    itemName = `${itemName} ${INSTALLATION_SUFFIX}`.trim();
+                    if ($(this).is('.item-installation')) {
+                        tr.find('.item-name').val(itemName);
+                    }
+                }
+                if (!installationOn && $(this).is('.item-installation') && itemName.toUpperCase().endsWith(INSTALLATION_SUFFIX)) {
+                    itemName = itemName.replace(new RegExp(`\\s*${INSTALLATION_SUFFIX}$`, 'i'), '').trim();
+                    tr.find('.item-name').val(itemName);
+                }
+                item.name = itemName || item.name;
                 item.unit_abbreviation = String(unitAbbr ?? '').trim();
+                item.note = String(tr.find('.item-note').val() ?? '');
                 recalcRow(item);
                 tr.find('.item-net').text(`${formatMoney(item.net_total)} Ft`);
                 tr.find('.item-vat').text(`${formatMoney(item.vat_total)} Ft`);

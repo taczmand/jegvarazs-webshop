@@ -10,5 +10,7 @@ readonly class ItemData
         public float $unitPrice,
         public int $vatPercent,
         public string $unit = 'db',
+        public ?string $comment = null,
+        public ?string $vatCode = null,
     ) {}
 }

@@ -231,6 +231,11 @@ class SzamlazzHuInvoiceService implements InvoiceServiceInterface
                 $item->setUnit($itemData->unit);
             }
 
+            $itemComment = trim((string) ($itemData->comment ?? ''));
+            if ($itemComment !== '') {
+                $item->setComment($itemComment);
+            }
+
             $netUnitPrice = (float) $itemData->unitPrice;
             $netPrice = $netUnitPrice * (float) $itemData->quantity;
             $vatPercent = (float) $itemData->vatPercent;
@@ -251,10 +256,11 @@ class SzamlazzHuInvoiceService implements InvoiceServiceInterface
                 $item->setGrossAmount($grossAmount);
             }
 
+            $vatValue = self::normalizeVatValue($itemData->vatCode ?? '', (float) $itemData->vatPercent);
             if (method_exists($item, 'setVat')) {
-                $item->setVat((string) $itemData->vatPercent);
+                $item->setVat($vatValue);
             } elseif (method_exists($item, 'setVatPercent')) {
-                $item->setVatPercent((string) $itemData->vatPercent);
+                $item->setVatPercent($vatValue);
             }
 
             $invoice->addItem($item);
@@ -451,6 +457,11 @@ class SzamlazzHuInvoiceService implements InvoiceServiceInterface
                 $item->setUnit($itemData->unit);
             }
 
+            $itemComment = trim((string) ($itemData->comment ?? ''));
+            if ($itemComment !== '') {
+                $item->setComment($itemComment);
+            }
+
             // Some API versions require explicit net/gross/vat values.
             $netUnitPrice = (float) $itemData->unitPrice;
             $netPrice = $netUnitPrice * (float) $itemData->quantity;
@@ -472,10 +483,11 @@ class SzamlazzHuInvoiceService implements InvoiceServiceInterface
             }
 
             // VAT setter differs by package version.
+            $vatValue = self::normalizeVatValue($itemData->vatCode ?? '', (float) $itemData->vatPercent);
             if (method_exists($item, 'setVat')) {
-                $item->setVat((string) $itemData->vatPercent);
+                $item->setVat($vatValue);
             } elseif (method_exists($item, 'setVatPercent')) {
-                $item->setVatPercent((string) $itemData->vatPercent);
+                $item->setVatPercent($vatValue);
             }
 
             $invoice->addItem($item);
@@ -584,6 +596,11 @@ class SzamlazzHuInvoiceService implements InvoiceServiceInterface
                 $item->setUnit($itemData->unit);
             }
 
+            $itemComment = trim((string) ($itemData->comment ?? ''));
+            if ($itemComment !== '') {
+                $item->setComment($itemComment);
+            }
+
             $netUnitPrice = (float) $itemData->unitPrice;
             $netPrice = $netUnitPrice * (float) $itemData->quantity;
             $vatPercent = (float) $itemData->vatPercent;
@@ -603,10 +620,11 @@ class SzamlazzHuInvoiceService implements InvoiceServiceInterface
                 $item->setGrossAmount($grossAmount);
             }
 
+            $vatValue = self::normalizeVatValue($itemData->vatCode ?? '', (float) $itemData->vatPercent);
             if (method_exists($item, 'setVat')) {
-                $item->setVat((string) $itemData->vatPercent);
+                $item->setVat($vatValue);
             } elseif (method_exists($item, 'setVatPercent')) {
-                $item->setVatPercent((string) $itemData->vatPercent);
+                $item->setVatPercent($vatValue);
             }
 
             $invoice->addItem($item);
@@ -750,6 +768,11 @@ class SzamlazzHuInvoiceService implements InvoiceServiceInterface
                 $item->setUnit($itemData->unit);
             }
 
+            $itemComment = trim((string) ($itemData->comment ?? ''));
+            if ($itemComment !== '') {
+                $item->setComment($itemComment);
+            }
+
             $netUnitPrice = (float) $itemData->unitPrice;
             $netPrice = $netUnitPrice * (float) $itemData->quantity;
             $vatPercent = (float) $itemData->vatPercent;
@@ -769,10 +792,11 @@ class SzamlazzHuInvoiceService implements InvoiceServiceInterface
                 $item->setGrossAmount($grossAmount);
             }
 
+            $vatValue = self::normalizeVatValue($itemData->vatCode ?? '', (float) $itemData->vatPercent);
             if (method_exists($item, 'setVat')) {
-                $item->setVat((string) $itemData->vatPercent);
+                $item->setVat($vatValue);
             } elseif (method_exists($item, 'setVatPercent')) {
-                $item->setVatPercent((string) $itemData->vatPercent);
+                $item->setVatPercent($vatValue);
             }
 
             $invoice->addItem($item);
@@ -1019,4 +1043,41 @@ class SzamlazzHuInvoiceService implements InvoiceServiceInterface
         };
     }
 
+    /**
+     * A tétel adókulcsát a Számlázz.hu által elfogadott formára alakítja.
+     * Elfogadott speciális kódok átmennek változatlanul; numerikus megnevezés
+     * (pl. "27", "27%", "5,5%") és minden más esetben a számérték megy.
+     */
+    private static function normalizeVatValue(?string $vatCode, float $vatPercent): string
+    {
+        $specialCodes = [
+            'ÁKK', 'AKK', 'K.AFA', 'F.AFA', 'MAA', 'EUK', 'EU', 'AAM', 'TAM',
+            'TAHK', 'EUT', 'EUKT', 'HO', 'EUE', 'EUFADE', 'EUFAD37', 'ATK',
+            'NAM', 'EAM', 'KBAUK', 'KBAET',
+        ];
+
+        $code = mb_strtoupper(trim((string) $vatCode));
+        if ($code !== '' && in_array($code, $specialCodes, true)) {
+            return $code;
+        }
+
+        $numeric = trim((string) $vatCode);
+        if ($numeric !== '' && preg_match('/^\d+([.,]\d+)?\s*%?$/u', $numeric)) {
+            $value = (float) str_replace(',', '.', str_replace('%', '', $numeric));
+            return self::formatVatNumber($value);
+        }
+
+        return self::formatVatNumber($vatPercent);
+    }
+
+    private static function formatVatNumber(float $vatPercent): string
+    {
+        if (abs($vatPercent - round($vatPercent)) < 0.0001) {
+            return (string) (int) round($vatPercent);
+        }
+
+        // Tizedes értéknél a Számlázz.hu magyar formátumot vár: "5,5%".
+        $formatted = rtrim(rtrim(number_format($vatPercent, 2, '.', ''), '0'), '.');
+        return str_replace('.', ',', $formatted) . '%';
+    }
 }

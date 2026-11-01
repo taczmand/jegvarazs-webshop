@@ -73,6 +73,7 @@ class ProductController extends Controller
                 'products.tax_id',
                 'products.unit_qty',
                 'products.unit_id',
+                'products.stock_tracking',
             ])
             ->where(function ($query) use ($q) {
                 $query
@@ -247,6 +248,7 @@ class ProductController extends Controller
                     'warehouses' => $warehouseStocks,
 
                     'tax_value' => $p->taxCategory?->tax_value,
+                    'stock_tracking' => (bool) ($p->stock_tracking ?? true),
                     'unit_qty' => $p->unit_qty,
                     'unit_name' => $p->unit?->name,
                     'unit_abbreviation' => $p->unit?->abbreviation,

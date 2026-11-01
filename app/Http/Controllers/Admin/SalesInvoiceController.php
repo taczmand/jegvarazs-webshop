@@ -841,6 +841,7 @@ class SalesInvoiceController extends Controller
             $discount = (float) ($row['discount_percent'] ?? 0);
             $vatPercent = (int) round((float) ($row['vat_percent'] ?? 0));
             $unit = (string) ($row['unit_abbreviation'] ?? 'db');
+            $vatCode = trim((string) ($row['vat_code'] ?? ''));
 
             if (trim($name) === '' || $qty == 0) {
                 continue;
@@ -856,6 +857,8 @@ class SalesInvoiceController extends Controller
                 unitPrice: (float) $netUnit,
                 vatPercent: max(0, $vatPercent),
                 unit: trim($unit) !== '' ? $unit : 'db',
+                comment: isset($row['note']) ? trim((string) $row['note']) : null,
+                vatCode: $vatCode !== '' ? $vatCode : null,
             );
         }
 
@@ -985,6 +988,7 @@ class SalesInvoiceController extends Controller
             $discount = (float) ($row['discount_percent'] ?? 0);
             $vatPercent = (int) round((float) ($row['vat_percent'] ?? 0));
             $unit = (string) ($row['unit_abbreviation'] ?? 'db');
+            $vatCode = trim((string) ($row['vat_code'] ?? ''));
 
             if (trim($name) === '' || $qty == 0) {
                 continue;
@@ -1000,6 +1004,8 @@ class SalesInvoiceController extends Controller
                 unitPrice: (float) $netUnit,
                 vatPercent: max(0, $vatPercent),
                 unit: trim($unit) !== '' ? $unit : 'db',
+                comment: isset($row['note']) ? trim((string) $row['note']) : null,
+                vatCode: $vatCode !== '' ? $vatCode : null,
             );
         }
 
@@ -1204,9 +1210,17 @@ class SalesInvoiceController extends Controller
                 'warehouse_id' => $warehouseId !== null ? (int) $warehouseId : null,
                 'sort_order' => $sort,
                 'name' => (string) ($row['name'] ?? ''),
+                'unit' => isset($row['unit_abbreviation']) ? (string) $row['unit_abbreviation'] : null,
                 'quantity' => (float) $quantity,
+                'discount_percent' => is_numeric($row['discount_percent'] ?? null) ? (float) $row['discount_percent'] : null,
+                'vat_percent' => is_numeric($row['vat_percent'] ?? null) ? (int) round((float) $row['vat_percent']) : null,
+                'vat_code' => isset($row['vat_code']) && trim((string) $row['vat_code']) !== '' ? trim((string) $row['vat_code']) : null,
+                'unit_net_price' => is_numeric($row['unit_net_price'] ?? null) ? (int) round((float) $row['unit_net_price']) : null,
                 'unit_gross_price' => (int) round((float) $unitGross),
+                'net_total' => is_numeric($row['net_total'] ?? null) ? (int) round((float) $row['net_total']) : null,
+                'vat_total' => is_numeric($row['vat_total'] ?? null) ? (int) round((float) $row['vat_total']) : null,
                 'gross_total' => $grossTotal !== null ? (int) round((float) $grossTotal) : null,
+                'note' => isset($row['note']) ? (string) $row['note'] : null,
             ]);
 
             $sort++;
@@ -1238,8 +1252,15 @@ class SalesInvoiceController extends Controller
             return;
         }
 
+        $trackedIds = $this->stockTrackedProductIds($items->pluck('product_id')->all());
+
         foreach ($items as $item) {
             if (!$item->product_id) {
+                continue;
+            }
+
+            // Nem követett készletű termék: nincs raktárkészlet-mozgás.
+            if (!$trackedIds->has((int) $item->product_id)) {
                 continue;
             }
 
@@ -1273,6 +1294,21 @@ class SalesInvoiceController extends Controller
         ]);
     }
 
+    private function stockTrackedProductIds(array $productIds): \Illuminate\Support\Collection
+    {
+        $productIds = array_values(array_unique(array_filter(array_map('intval', $productIds))));
+
+        if (empty($productIds)) {
+            return collect();
+        }
+
+        return DB::table('products')
+            ->whereIn('id', $productIds)
+            ->where('stock_tracking', 1)
+            ->pluck('id')
+            ->flip();
+    }
+
     private function restoreStockForCancelledSalesInvoice(SalesInvoice $invoice): void
     {
         $items = SalesInvoiceItem::query()->where('sales_invoice_id', $invoice->id)->get();
@@ -1280,8 +1316,15 @@ class SalesInvoiceController extends Controller
             return;
         }
 
+        $trackedIds = $this->stockTrackedProductIds($items->pluck('product_id')->all());
+
         foreach ($items as $item) {
             if (!$item->product_id) {
+                continue;
+            }
+
+            // Nem követett készletű termék: nincs raktárkészlet-mozgás.
+            if (!$trackedIds->has((int) $item->product_id)) {
                 continue;
             }
 
