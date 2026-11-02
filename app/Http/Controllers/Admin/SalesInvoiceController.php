@@ -852,7 +852,11 @@ class SalesInvoiceController extends Controller
 
             $discountedGrossUnit = $grossUnit * (1 - ($discount / 100));
             $div = 1 + (max(0, $vatPercent) / 100);
-            $netUnit = $div > 0 ? ($discountedGrossUnit / $div) : $discountedGrossUnit;
+            $exactNetUnit = $div > 0 ? ($discountedGrossUnit / $div) : $discountedGrossUnit;
+            $netUnit = round($exactNetUnit * 2) / 2;
+
+            $netTotal = round($exactNetUnit * $qty);
+            $grossTotal = round($discountedGrossUnit * $qty);
 
             $items[] = new ItemData(
                 name: $name,
@@ -862,6 +866,8 @@ class SalesInvoiceController extends Controller
                 unit: trim($unit) !== '' ? $unit : 'db',
                 comment: isset($row['note']) ? trim((string) $row['note']) : null,
                 vatCode: $vatCode !== '' ? $vatCode : null,
+                netTotal: (float) $netTotal,
+                grossTotal: (float) $grossTotal,
             );
         }
 
@@ -1005,7 +1011,11 @@ class SalesInvoiceController extends Controller
 
             $discountedGrossUnit = $grossUnit * (1 - ($discount / 100));
             $div = 1 + (max(0, $vatPercent) / 100);
-            $netUnit = $div > 0 ? ($discountedGrossUnit / $div) : $discountedGrossUnit;
+            $exactNetUnit = $div > 0 ? ($discountedGrossUnit / $div) : $discountedGrossUnit;
+            $netUnit = round($exactNetUnit * 2) / 2;
+
+            $netTotal = round($exactNetUnit * $qty);
+            $grossTotal = round($discountedGrossUnit * $qty);
 
             $items[] = new ItemData(
                 name: $name,
@@ -1015,6 +1025,8 @@ class SalesInvoiceController extends Controller
                 unit: trim($unit) !== '' ? $unit : 'db',
                 comment: isset($row['note']) ? trim((string) $row['note']) : null,
                 vatCode: $vatCode !== '' ? $vatCode : null,
+                netTotal: (float) $netTotal,
+                grossTotal: (float) $grossTotal,
             );
         }
 

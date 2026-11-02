@@ -12,5 +12,7 @@ readonly class ItemData
         public string $unit = 'db',
         public ?string $comment = null,
         public ?string $vatCode = null,
+        public ?float $netTotal = null,
+        public ?float $grossTotal = null,
     ) {}
 }

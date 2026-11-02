@@ -239,10 +239,14 @@ class SzamlazzHuInvoiceService implements InvoiceServiceInterface
             }
 
             $netUnitPrice = (float) $itemData->unitPrice;
-            $netPrice = $netUnitPrice * (float) $itemData->quantity;
+            $netPrice = $itemData->netTotal !== null
+                ? (float) $itemData->netTotal
+                : $netUnitPrice * (float) $itemData->quantity;
             $vatPercent = (float) $itemData->vatPercent;
-            $vatAmount = $netPrice * ($vatPercent / 100);
-            $grossAmount = $netPrice + $vatAmount;
+            $grossAmount = $itemData->grossTotal !== null
+                ? (float) $itemData->grossTotal
+                : $netPrice * (1 + $vatPercent / 100);
+            $vatAmount = $grossAmount - $netPrice;
             $correctionToPay += $grossAmount;
 
             if (method_exists($item, 'setNetUnitPrice')) {
@@ -468,10 +472,14 @@ class SzamlazzHuInvoiceService implements InvoiceServiceInterface
 
             // Some API versions require explicit net/gross/vat values.
             $netUnitPrice = (float) $itemData->unitPrice;
-            $netPrice = $netUnitPrice * (float) $itemData->quantity;
+            $netPrice = $itemData->netTotal !== null
+                ? (float) $itemData->netTotal
+                : $netUnitPrice * (float) $itemData->quantity;
             $vatPercent = (float) $itemData->vatPercent;
-            $vatAmount = $netPrice * ($vatPercent / 100);
-            $grossAmount = $netPrice + $vatAmount;
+            $grossAmount = $itemData->grossTotal !== null
+                ? (float) $itemData->grossTotal
+                : $netPrice * (1 + $vatPercent / 100);
+            $vatAmount = $grossAmount - $netPrice;
 
             if (method_exists($item, 'setNetUnitPrice')) {
                 $item->setNetUnitPrice($netUnitPrice);
@@ -608,10 +616,14 @@ class SzamlazzHuInvoiceService implements InvoiceServiceInterface
             }
 
             $netUnitPrice = (float) $itemData->unitPrice;
-            $netPrice = $netUnitPrice * (float) $itemData->quantity;
+            $netPrice = $itemData->netTotal !== null
+                ? (float) $itemData->netTotal
+                : $netUnitPrice * (float) $itemData->quantity;
             $vatPercent = (float) $itemData->vatPercent;
-            $vatAmount = $netPrice * ($vatPercent / 100);
-            $grossAmount = $netPrice + $vatAmount;
+            $grossAmount = $itemData->grossTotal !== null
+                ? (float) $itemData->grossTotal
+                : $netPrice * (1 + $vatPercent / 100);
+            $vatAmount = $grossAmount - $netPrice;
 
             if (method_exists($item, 'setNetUnitPrice')) {
                 $item->setNetUnitPrice($netUnitPrice);
@@ -782,10 +794,14 @@ class SzamlazzHuInvoiceService implements InvoiceServiceInterface
             }
 
             $netUnitPrice = (float) $itemData->unitPrice;
-            $netPrice = $netUnitPrice * (float) $itemData->quantity;
+            $netPrice = $itemData->netTotal !== null
+                ? (float) $itemData->netTotal
+                : $netUnitPrice * (float) $itemData->quantity;
             $vatPercent = (float) $itemData->vatPercent;
-            $vatAmount = $netPrice * ($vatPercent / 100);
-            $grossAmount = $netPrice + $vatAmount;
+            $grossAmount = $itemData->grossTotal !== null
+                ? (float) $itemData->grossTotal
+                : $netPrice * (1 + $vatPercent / 100);
+            $vatAmount = $grossAmount - $netPrice;
 
             if (method_exists($item, 'setNetUnitPrice')) {
                 $item->setNetUnitPrice($netUnitPrice);
