@@ -12,5 +12,8 @@ readonly class InvoiceData
         public ?string $invoicePrefix = null,
         public string $currency = 'HUF',
         public ?string $agentKey = null,
+        public ?string $issuedAt = null,
+        public ?string $fulfilledAt = null,
+        public ?string $dueAt = null,
     ) {}
 }

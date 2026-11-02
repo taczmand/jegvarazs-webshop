@@ -772,6 +772,9 @@ class SalesInvoiceController extends Controller
             'partner_city' => 'required|string|max:255',
             'partner_address_line' => 'required|string|max:255',
             'payment_method' => 'required|string|max:255',
+            'issued_at' => 'nullable|date',
+            'fulfilled_at' => 'nullable|date',
+            'due_at' => 'nullable|date',
             'currency' => 'nullable|string|size:3',
             'note_for_document' => 'nullable|string',
             'items_json' => 'required|string',
@@ -882,6 +885,9 @@ class SalesInvoiceController extends Controller
             invoicePrefix: $prefix,
             currency: (string) ($validated['currency'] ?? 'HUF'),
             agentKey: $company->billing_provider_api_key ? (string) $company->billing_provider_api_key : null,
+            issuedAt: isset($validated['issued_at']) ? (string) $validated['issued_at'] : null,
+            fulfilledAt: isset($validated['fulfilled_at']) ? (string) $validated['fulfilled_at'] : null,
+            dueAt: isset($validated['due_at']) ? (string) $validated['due_at'] : null,
         );
 
         try {
@@ -965,6 +971,9 @@ class SalesInvoiceController extends Controller
             'partner_city' => 'required|string|max:255',
             'partner_address_line' => 'required|string|max:255',
             'payment_method' => 'required|string|max:255',
+            'issued_at' => 'nullable|date',
+            'fulfilled_at' => 'nullable|date',
+            'due_at' => 'nullable|date',
             'currency' => 'nullable|string|size:3',
             'note_for_document' => 'nullable|string',
             'items_json' => 'required|string',
@@ -1044,6 +1053,9 @@ class SalesInvoiceController extends Controller
             invoicePrefix: $invoicePrefix,
             currency: (string) ($validated['currency'] ?? 'HUF'),
             agentKey: $company->billing_provider_api_key ? (string) $company->billing_provider_api_key : null,
+            issuedAt: isset($validated['issued_at']) ? (string) $validated['issued_at'] : ($invoice->issued_at ? $invoice->issued_at->format('Y-m-d') : null),
+            fulfilledAt: isset($validated['fulfilled_at']) ? (string) $validated['fulfilled_at'] : ($invoice->fulfilled_at ? $invoice->fulfilled_at->format('Y-m-d') : null),
+            dueAt: isset($validated['due_at']) ? (string) $validated['due_at'] : ($invoice->due_at ? $invoice->due_at->format('Y-m-d') : null),
         );
 
         try {

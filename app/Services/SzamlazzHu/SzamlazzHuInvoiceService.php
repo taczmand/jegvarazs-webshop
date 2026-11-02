@@ -180,6 +180,8 @@ class SzamlazzHuInvoiceService implements InvoiceServiceInterface
 
         $this->applyInvoicePrefix($invoice, $data->invoicePrefix ?? null);
 
+        $this->applyInvoiceHeaderDetails($invoice, $data);
+
         $header = $invoice->getHeader();
 
         $header->setCorrectivedNumber($originalInvoiceNumber);
@@ -430,6 +432,8 @@ class SzamlazzHuInvoiceService implements InvoiceServiceInterface
         //$invoice->getHeader()->setPrefix('JB');
         $this->applyInvoicePrefix($invoice, $data->invoicePrefix ?? null);
 
+        $this->applyInvoiceHeaderDetails($invoice, $data);
+
         $headerComment = isset($data->noteForDocument) ? trim((string) $data->noteForDocument) : '';
         if ($headerComment !== '') {
             try {
@@ -555,6 +559,8 @@ class SzamlazzHuInvoiceService implements InvoiceServiceInterface
         $invoice->setBuyer($buyer);
 
         $this->applyInvoicePrefix($invoice, $data->invoicePrefix ?? null);
+
+        $this->applyInvoiceHeaderDetails($invoice, $data);
 
         $headerComment = isset($data->noteForDocument) ? trim((string) $data->noteForDocument) : '';
         if ($headerComment !== '') {
@@ -727,6 +733,8 @@ class SzamlazzHuInvoiceService implements InvoiceServiceInterface
         $invoice->setBuyer($buyer);
 
         $this->applyInvoicePrefix($invoice, $data->invoicePrefix ?? null);
+
+        $this->applyInvoiceHeaderDetails($invoice, $data);
 
         $headerComment = isset($data->noteForDocument) ? trim((string) $data->noteForDocument) : '';
         if ($headerComment !== '') {
@@ -1032,13 +1040,65 @@ class SzamlazzHuInvoiceService implements InvoiceServiceInterface
         }
     }
 
+    /**
+     * Fizetési mód és dátumok átadása a Számlázz.hu számla fejlécének.
+     */
+    private function applyInvoiceHeaderDetails(object $invoice, InvoiceData $data): void
+    {
+        try {
+            $header = method_exists($invoice, 'getHeader') ? $invoice->getHeader() : null;
+            if (!is_object($header)) {
+                return;
+            }
+
+            if (method_exists($header, 'setPaymentMethod')) {
+                $header->setPaymentMethod($this->getSzamlazzPaymentMethod($data->paymentMethod ?? null));
+            }
+
+            $issuedAt = $this->toDateString($data->issuedAt ?? null);
+            if ($issuedAt !== null && method_exists($header, 'setInvoiceDate')) {
+                $header->setInvoiceDate($issuedAt);
+            }
+
+            $fulfilledAt = $this->toDateString($data->fulfilledAt ?? null);
+            if ($fulfilledAt !== null && method_exists($header, 'setFulfillment')) {
+                $header->setFulfillment($fulfilledAt);
+            }
+
+            $dueAt = $this->toDateString($data->dueAt ?? null);
+            if ($dueAt !== null && method_exists($header, 'setPaymentDue')) {
+                $header->setPaymentDue($dueAt);
+            }
+        } catch (\Throwable $e) {
+            // ignore
+        }
+    }
+
+    private function toDateString($value): ?string
+    {
+        if ($value instanceof \DateTimeInterface) {
+            return $value->format('Y-m-d');
+        }
+
+        $value = trim((string) ($value ?? ''));
+        if ($value === '') {
+            return null;
+        }
+
+        try {
+            return (new \DateTimeImmutable($value))->format('Y-m-d');
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
+
     private function getSzamlazzPaymentMethod(?string $paymentMethod): string
     {
         return match (mb_strtolower(trim((string) $paymentMethod))) {
-            'készpénz', 'cash' => Document::PAYMENT_METHOD_CASH,
-            'bankkártya', 'bankkartya', 'bankcard' => Document::PAYMENT_METHOD_BANKCARD,
-            'utánvét', 'utanvet', 'cod' => Document::PAYMENT_METHOD_COD,
-            'átutalás', 'atutalas', 'transfer', '' => Document::PAYMENT_METHOD_TRANSFER,
+            'készpénz', 'keszpenz', 'cash' => Document::PAYMENT_METHOD_CASH,
+            'bankkártya', 'bankkartya', 'bankcard', 'credit_card', 'simplepay' => Document::PAYMENT_METHOD_BANKCARD,
+            'utánvét', 'utanvet', 'cod' => Document::PAYMENT_METHOD_CASH_ON_DELIVERY,
+            'átutalás', 'atutalas', 'bank_transfer', 'transfer', '' => Document::PAYMENT_METHOD_TRANSFER,
             default => Document::PAYMENT_METHOD_TRANSFER,
         };
     }

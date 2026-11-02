@@ -1550,6 +1550,12 @@
                 return String(Math.round(n));
             }
 
+            function formatGroupedMoney(value) {
+                const n = Number(value);
+                if (!Number.isFinite(n)) return '0';
+                return Math.round(n).toLocaleString('hu-HU');
+            }
+
             function formatPercent(value) {
                 const n = Number(value);
                 if (!Number.isFinite(n)) return '0';
@@ -1638,13 +1644,13 @@
                                 <select class="form-select form-select-sm item-vat-key">${vatOptionsHtml(item.vat_percent)}</select>
                             </td>
                             <td class="text-end" style="width: 95px;">
-                                <span class="item-net">${formatMoney(item.net_total)} Ft</span>
+                                <span class="item-net">${formatGroupedMoney(item.net_total)} Ft</span>
                             </td>
                             <td class="text-end" style="width: 95px;">
-                                <span class="item-vat">${formatMoney(item.vat_total)} Ft</span>
+                                <span class="item-vat">${formatGroupedMoney(item.vat_total)} Ft</span>
                             </td>
                             <td class="text-end" style="width: 100px;">
-                                <span class="item-gross">${formatMoney(item.gross_total)} Ft</span>
+                                <span class="item-gross">${formatGroupedMoney(item.gross_total)} Ft</span>
                             </td>
                             <td class="text-center" style="width: 40px;">
                                 <button type="button" class="btn btn-sm btn-outline-danger item-remove" title="Tétel törlése">&times;</button>
@@ -1939,9 +1945,9 @@
                 item.unit_abbreviation = String(unitAbbr ?? '').trim();
                 item.note = String(tr.find('.item-note').val() ?? '');
                 recalcRow(item);
-                tr.find('.item-net').text(`${formatMoney(item.net_total)} Ft`);
-                tr.find('.item-vat').text(`${formatMoney(item.vat_total)} Ft`);
-                tr.find('.item-gross').text(`${formatMoney(item.gross_total)} Ft`);
+                tr.find('.item-net').text(`${formatGroupedMoney(item.net_total)} Ft`);
+                tr.find('.item-vat').text(`${formatGroupedMoney(item.vat_total)} Ft`);
+                tr.find('.item-gross').text(`${formatGroupedMoney(item.gross_total)} Ft`);
                 syncItemsJson();
             });
 
