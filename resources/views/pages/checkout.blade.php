@@ -15,6 +15,40 @@
     ]
     ])
 
+    <style>
+        /* Nagyobb, mobilon is könnyen pipálható checkbox/rádió gombok */
+        .checkout__input__checkbox label .checkmark {
+            width: 26px;
+            height: 26px;
+            top: 0;
+            border-radius: 6px;
+        }
+        .checkout__input__checkbox label .checkmark:after {
+            left: 5px;
+            top: 4px;
+            width: 14px;
+            height: 11px;
+            border-width: 4px 4px 0 0;
+        }
+        .order-condition-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+        #order_condition {
+            position: static;
+            width: 24px;
+            height: 24px;
+            margin: 2px 0 0 0;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        .order-condition-label {
+            cursor: pointer;
+            flex: 1;
+        }
+    </style>
+
     @php
         $customer = auth('customer')->user();
     @endphp
@@ -440,8 +474,10 @@
                                     <div class="checkout__order_shipping">Szállítás <span id="shipping_cost_display">{{ number_format(0, 0, ',', ' ') }} Ft</span></div>
                                     <div class="checkout__order__total">Összesen <span id="total_item_amount_display">{{ number_format($total_item_amount, 0, ',', ' ') }} Ft</span></div>
 
-                                    <input type="checkbox" id="order_condition" name="order_condition" class="form-check-input">
-                                    <label class="order-condition-label"  for="order_condition">Tudomásul veszem és elfogadom a rendeléssel járó fizetési kötelezettséget, valamint az <a target="_blank" href="{{ route('simplepay.adattovabbitasi_nyilatkozat') }}"><strong>adatkezelési nyilatkozatot</strong></a></label>
+                                    <div class="order-condition-row">
+                                        <input type="checkbox" id="order_condition" name="order_condition" class="form-check-input">
+                                        <label class="order-condition-label"  for="order_condition">Tudomásul veszem és elfogadom a rendeléssel járó fizetési kötelezettséget, valamint az <a target="_blank" href="{{ route('simplepay.adattovabbitasi_nyilatkozat') }}"><strong>adatkezelési nyilatkozatot</strong></a></label>
+                                    </div>
 
                                     <button type="submit" class="site-btn">Megrendelés</button>
                                 @else
