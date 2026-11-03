@@ -1605,7 +1605,7 @@
                 const unitNet = vat > 0 ? (discountedUnitGross / (1 + vat / 100)) : discountedUnitGross;
                 const unitVat = discountedUnitGross - unitNet;
 
-                item.unit_net_price = Math.round(unitNet * 2) / 2;
+                item.unit_net_price = Math.round(unitNet);
                 item.net_total = Math.round(unitNet * q);
                 item.gross_total = Math.round(discountedUnitGross * q);
                 item.vat_total = item.gross_total - item.net_total;

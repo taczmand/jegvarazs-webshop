@@ -853,7 +853,7 @@ class SalesInvoiceController extends Controller
             $discountedGrossUnit = $grossUnit * (1 - ($discount / 100));
             $div = 1 + (max(0, $vatPercent) / 100);
             $exactNetUnit = $div > 0 ? ($discountedGrossUnit / $div) : $discountedGrossUnit;
-            $netUnit = round($exactNetUnit * 2) / 2;
+            $netUnit = round($exactNetUnit);
 
             $netTotal = round($exactNetUnit * $qty);
             $grossTotal = round($discountedGrossUnit * $qty);
@@ -1012,7 +1012,7 @@ class SalesInvoiceController extends Controller
             $discountedGrossUnit = $grossUnit * (1 - ($discount / 100));
             $div = 1 + (max(0, $vatPercent) / 100);
             $exactNetUnit = $div > 0 ? ($discountedGrossUnit / $div) : $discountedGrossUnit;
-            $netUnit = round($exactNetUnit * 2) / 2;
+            $netUnit = round($exactNetUnit);
 
             $netTotal = round($exactNetUnit * $qty);
             $grossTotal = round($discountedGrossUnit * $qty);
