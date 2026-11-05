@@ -979,6 +979,19 @@
                     })
                         .done(() => doSubmit())
                         .fail((xhr) => {
+                            const errors = xhr.responseJSON?.errors || {};
+                            const errorKeys = Object.keys(errors);
+                            const isEmailTakenOnly = xhr.status === 422
+                                && errorKeys.length === 1
+                                && errorKeys[0] === 'email';
+
+                            // Ha csak az e-mail ütközik másik ügyféllel vagy önmagával, az ügyfél frissítését kihagyjuk,
+                            // de a szerződés mentése ettől még mehet tovább (a szerződés megőrzi a saját e-mail mezőjét).
+                            if (isEmailTakenOnly) {
+                                doSubmit();
+                                return;
+                            }
+
                             let msg = 'Hiba az ügyfél adatainak mentésekor!';
                             if (xhr.responseJSON?.errors) {
                                 msg = Object.values(xhr.responseJSON.errors).flat().join(' ');
