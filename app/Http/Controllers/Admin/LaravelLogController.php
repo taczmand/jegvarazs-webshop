@@ -10,7 +10,7 @@ class LaravelLogController extends Controller
 {
     public function index(Request $request)
     {
-        abort_unless(auth('admin')->user() && auth('admin')->user()->can('view-admin-logs'), 403);
+        abort_unless(auth('admin')->user() && auth('admin')->user()->can('view-laravel-logs'), 403);
 
         $logsDir = storage_path('logs');
 

@@ -7,7 +7,7 @@
         </div>
 
         <div class="rounded-xl bg-white shadow-lg p-4">
-            @if(auth('admin')->user()->can('view-contracts') || auth('admin')->user()->can('view-own-contracts'))
+            @if(auth('admin')->user()->can('view-contract-products'))
                 <div class="row g-3 align-items-end mb-3">
                     <div class="col-12 col-md-3">
                         <label for="yearSelect" class="form-label">Év</label>

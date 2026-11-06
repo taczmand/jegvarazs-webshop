@@ -18,22 +18,35 @@
 
         $canViewBlogs = (bool) ($adminUser && $adminUser->can('view-blogs'));
         $canViewSettings = (bool) ($adminUser && $adminUser->can('view-settings'));
+        $canViewDownloads = (bool) ($adminUser && $adminUser->can('view-downloads'));
+        $canViewRegulations = (bool) ($adminUser && $adminUser->can('view-regulations'));
+        $canViewSites = (bool) ($adminUser && $adminUser->can('view-sites'));
         $canViewCompanies = (bool) ($adminUser && $adminUser->can('view-companies'));
-        $canViewCMS = $canViewBlogs || $canViewSettings || $canViewCompanies;
+        $canViewEmployees = (bool) ($adminUser && $adminUser->can('view-employees'));
+        $canViewMediaSettings = (bool) ($adminUser && $adminUser->can('view-media-settings'));
+        $canViewCMS = $canViewBlogs || $canViewDownloads || $canViewRegulations || $canViewSites || $canViewCompanies || $canViewEmployees || $canViewMediaSettings;
 
         $canViewOffers = (bool) ($adminUser && $adminUser->can('view-offers'));
-        $canViewContracts = (bool) ($adminUser && $adminUser->can('view-contracts'));
+        $canViewContracts = (bool) ($adminUser && ($adminUser->can('view-contracts') || $adminUser->can('view-own-contracts')));
         $canViewAppointments = (bool) ($adminUser && $adminUser->can('view-appointments'));
         $canViewWorksheets = (bool) ($adminUser && $adminUser->can('view-worksheets'));
         $canViewCashReceipts = (bool) ($adminUser && $adminUser->can('view-cash-receipts'));
         $canViewLeads = (bool) ($adminUser && $adminUser->can('view-leads'));
         $canViewClients = (bool) ($adminUser && $adminUser->can('view-clients'));
-        $canViewWarehouses = (bool) ($adminUser && $adminUser->can('view-warehouses'));
-        $canViewWarehouseTransfers = (bool) ($adminUser && $adminUser->can('view-warehouse-transfers'));
         $canViewAutomatedEmails = (bool) ($adminUser && $adminUser->can('view-automated-emails'));
         $canViewBulkEmails = (bool) ($adminUser && $adminUser->can('view-bulk-emails'));
         $canViewDocuments = (bool) ($adminUser && $adminUser->can('view-documents'));
-        $canViewBusiness = $canViewOffers || $canViewContracts || $canViewAppointments || $canViewWorksheets || $canViewCashReceipts || $canViewLeads || $canViewClients || $canViewWarehouses || $canViewWarehouseTransfers || $canViewAutomatedEmails || $canViewBulkEmails || $canViewDocuments;
+        $canViewBusiness = $canViewOffers || $canViewContracts || $canViewAppointments || $canViewWorksheets || $canViewCashReceipts || $canViewLeads || $canViewClients || $canViewAutomatedEmails || $canViewBulkEmails || $canViewDocuments;
+
+        $canViewSalesInvoices = (bool) ($adminUser && $adminUser->can('view-sales-invoices'));
+        $canViewDeliveryNotes = (bool) ($adminUser && $adminUser->can('view-delivery-notes'));
+        $canViewGoodsReceipts = (bool) ($adminUser && $adminUser->can('view-goods-receipts'));
+        $canViewBusinessDocuments = $canViewSalesInvoices || $canViewDeliveryNotes || $canViewGoodsReceipts;
+
+        $canViewWarehouses = (bool) ($adminUser && $adminUser->can('view-warehouses'));
+        $canViewWarehouseTransfers = (bool) ($adminUser && $adminUser->can('view-warehouse-transfers'));
+        $canViewStocktakes = (bool) ($adminUser && $adminUser->can('view-stocktakes'));
+        $canViewWarehouseSection = $canViewWarehouses || $canViewWarehouseTransfers || $canViewStocktakes;
 
         $canViewVehicles = (bool) ($adminUser && $adminUser->can('view-vehicles'));
 
@@ -48,8 +61,15 @@
         $canViewWorksheetProductsByWorkerReport = (bool) ($adminUser && $adminUser->can('view-worksheet-products-by-worker-report'));
         $canViewCRMAnalytics = $canViewInstallations || $canViewLeadConversion || $canViewContractProductsReport || $canViewWorksheetProductsByWorkerReport;
 
+        $canViewTaxes = (bool) ($adminUser && $adminUser->can('view-taxes'));
+        $canViewUnits = (bool) ($adminUser && $adminUser->can('view-units'));
+        $canViewUsers = (bool) ($adminUser && $adminUser->can('view-users'));
+        $canViewWebshopSettings = $canViewSettings || $canViewTaxes || $canViewUnits;
+        $canViewSystemSettings = $canViewSettings || $canViewUsers;
+
         $canViewAdminLogs = (bool) ($adminUser && $adminUser->can('view-admin-logs'));
-        $canViewSystemAnalytics = $canViewAdminLogs;
+        $canViewLaravelLogs = (bool) ($adminUser && $adminUser->can('view-laravel-logs'));
+        $canViewSystemAnalytics = $canViewAdminLogs || $canViewLaravelLogs;
     @endphp
 
     <!-- Sidebar - Brand -->
@@ -145,14 +165,22 @@
                     @if($canViewBlogs)
                         <a class="collapse-item" href="{{ route('admin.blog.index') }}">Blog bejegyzések</a>
                     @endif
-                    @if($canViewSettings)
+                    @if($canViewDownloads)
                         <a class="collapse-item" href="{{ route('admin.settings.downloads.index') }}">Letöltések</a>
+                    @endif
+                    @if($canViewRegulations)
                         <a class="collapse-item" href="{{ route('admin.settings.regulations.index') }}">Szabályzatok</a>
+                    @endif
+                    @if($canViewSites)
                         <a class="collapse-item" href="{{ route('admin.settings.sites.index') }}">Telephelyek</a>
-                        @if($canViewCompanies)
-                            <a class="collapse-item" href="{{ route('admin.settings.companies.index') }}">Cégek</a>
-                        @endif
+                    @endif
+                    @if($canViewCompanies)
+                        <a class="collapse-item" href="{{ route('admin.settings.companies.index') }}">Cégek</a>
+                    @endif
+                    @if($canViewEmployees)
                         <a class="collapse-item" href="{{ route('admin.settings.employees.index') }}">Munkatársak</a>
+                    @endif
+                    @if($canViewMediaSettings)
                         <a class="collapse-item" href="{{ route('admin.settings.media.index') }}">Média</a>
                     @endif
                 </div>
@@ -208,38 +236,32 @@
                 </div>
             </div>
         </li>
+    @endif
 
-        @php
-            $canViewBusinessDocuments = (bool) ($adminUser && (
-                $adminUser->can('view-sales-invoices') ||
-                $adminUser->can('view-delivery-notes') ||
-                $adminUser->can('view-goods-receipts')
-            ));
-        @endphp
-
-        @if($canViewBusinessDocuments)
-            <li class="nav-item">
-                <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseBusinessDocuments" aria-expanded="false">
-                    <i class="fa-solid fa-file-invoice"></i>
-                    <span>Bizonylatok</span>
-                </a>
-                <div id="collapseBusinessDocuments" class="collapse" data-bs-parent="#accordionSidebar">
-                    <div class="bg-white py-2 collapse-inner rounded">
-                        @if($adminUser && $adminUser->can('view-sales-invoices'))
-                            <a class="collapse-item" href="{{ route('admin.documents.sales-invoices.index') }}">Kimenő számlák</a>
-                        @endif
-                        <a class="collapse-item" href="#">Bejövő számlák</a>
-                        @if($adminUser && $adminUser->can('view-delivery-notes'))
-                            <a class="collapse-item" href="{{ route('admin.documents.delivery-notes.index') }}">Szállítólevelek</a>
-                        @endif
-                        @if($adminUser && $adminUser->can('view-goods-receipts'))
-                            <a class="collapse-item" href="{{ route('admin.documents.goods-receipts.index') }}">Bevételezések</a>
-                        @endif
-                    </div>
+    @if($canViewBusinessDocuments)
+        <li class="nav-item">
+            <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseBusinessDocuments" aria-expanded="false">
+                <i class="fa-solid fa-file-invoice"></i>
+                <span>Bizonylatok</span>
+            </a>
+            <div id="collapseBusinessDocuments" class="collapse" data-bs-parent="#accordionSidebar">
+                <div class="bg-white py-2 collapse-inner rounded">
+                    @if($canViewSalesInvoices)
+                        <a class="collapse-item" href="{{ route('admin.documents.sales-invoices.index') }}">Kimenő számlák</a>
+                    @endif
+                    <a class="collapse-item" href="#">Bejövő számlák</a>
+                    @if($canViewDeliveryNotes)
+                        <a class="collapse-item" href="{{ route('admin.documents.delivery-notes.index') }}">Szállítólevelek</a>
+                    @endif
+                    @if($canViewGoodsReceipts)
+                        <a class="collapse-item" href="{{ route('admin.documents.goods-receipts.index') }}">Bevételezések</a>
+                    @endif
                 </div>
-            </li>
-        @endif
+            </div>
+        </li>
+    @endif
 
+    @if($canViewWarehouseSection)
         <li class="nav-item">
             <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseWarehouse" aria-expanded="false">
                 <i class="fa-solid fa-warehouse"></i>
@@ -250,10 +272,10 @@
                     @if($canViewWarehouses)
                         <a class="collapse-item" href="{{ route('admin.warehouses.index') }}">Raktárak</a>
                     @endif
-                    @if($adminUser && $adminUser->can('view-warehouse-transfers'))
+                    @if($canViewWarehouseTransfers)
                         <a class="collapse-item" href="{{ route('admin.warehouse-transfers.index') }}">Raktárközi átvezetés</a>
                     @endif
-                    @if($adminUser && $adminUser->can('view-stocktakes'))
+                    @if($canViewStocktakes)
                         <a class="collapse-item" href="{{ route('admin.warehouse.stocktakes.index') }}">Leltár</a>
                     @endif
                 </div>
@@ -276,7 +298,7 @@
         Beállítások
     </div>
 
-    @if($canViewSettings)
+    @if($canViewWebshopSettings)
         <li class="nav-item">
             <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseWebshopSettings" aria-expanded="false">
                 <i class="fa-solid fa-gears"></i>
@@ -284,16 +306,24 @@
             </a>
             <div id="collapseWebshopSettings" class="collapse" data-bs-parent="#accordionSidebar">
                 <div class="bg-white py-2 collapse-inner rounded">
-                    <a class="collapse-item" href="{{ route('admin.shipping-methods.index') }}">Szállítási módok</a>
-                    <a class="collapse-item" href="{{ route('admin.payment-methods.index') }}">Fizetési módok</a>
-                    <a class="collapse-item" href="{{ route('admin.stock-statuses.index') }}">Raktári állapotok</a>
-                    <a class="collapse-item" href="{{ route('admin.order-statuses.index') }}">Rendelési állapotok</a>
-                    <a class="collapse-item" href="{{ route('admin.tax-categories.index') }}">Adó osztályok</a>
-                    <a class="collapse-item" href="{{ route('admin.units.index') }}">Mértékegységek</a>
+                    @if($canViewSettings)
+                        <a class="collapse-item" href="{{ route('admin.shipping-methods.index') }}">Szállítási módok</a>
+                        <a class="collapse-item" href="{{ route('admin.payment-methods.index') }}">Fizetési módok</a>
+                        <a class="collapse-item" href="{{ route('admin.stock-statuses.index') }}">Raktári állapotok</a>
+                        <a class="collapse-item" href="{{ route('admin.order-statuses.index') }}">Rendelési állapotok</a>
+                    @endif
+                    @if($canViewTaxes)
+                        <a class="collapse-item" href="{{ route('admin.tax-categories.index') }}">Adó osztályok</a>
+                    @endif
+                    @if($canViewUnits)
+                        <a class="collapse-item" href="{{ route('admin.units.index') }}">Mértékegységek</a>
+                    @endif
                 </div>
             </div>
         </li>
+    @endif
 
+    @if($canViewSystemSettings)
         <li class="nav-item">
             <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseSystemSettings" aria-expanded="false">
                 <i class="fa-solid fa-screwdriver-wrench"></i>
@@ -301,8 +331,12 @@
             </a>
             <div id="collapseSystemSettings" class="collapse" data-bs-parent="#accordionSidebar">
                 <div class="bg-white py-2 collapse-inner rounded">
-                    <a class="collapse-item" href="{{ route('admin.settings.general.index') }}">Általános</a>
-                    <a class="collapse-item" href="{{ route('admin.settings.users.index') }}">Felhasználók</a>
+                    @if($canViewSettings)
+                        <a class="collapse-item" href="{{ route('admin.settings.general.index') }}">Általános</a>
+                    @endif
+                    @if($canViewUsers)
+                        <a class="collapse-item" href="{{ route('admin.settings.users.index') }}">Felhasználók</a>
+                    @endif
                 </div>
             </div>
         </li>
@@ -390,6 +424,8 @@
                 <div class="bg-white py-2 collapse-inner rounded">
                     @if($canViewAdminLogs)
                         <a class="collapse-item" href="{{ route('admin.stats.admin_logs') }}">Admin tevékenységek</a>
+                    @endif
+                    @if($canViewLaravelLogs)
                         <a class="collapse-item" href="{{ route('admin.stats.laravel_logs') }}">Laravel logok</a>
                     @endif
                 </div>

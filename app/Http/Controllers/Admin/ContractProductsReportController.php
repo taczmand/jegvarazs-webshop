@@ -12,7 +12,7 @@ class ContractProductsReportController extends Controller
     public function index(Request $request)
     {
         $user = auth('admin')->user();
-        if (!$user || (!$user->can('view-contracts') && !$user->can('view-own-contracts'))) {
+        if (!$user || !$user->can('view-contract-products')) {
             abort(403);
         }
 
@@ -23,7 +23,7 @@ class ContractProductsReportController extends Controller
             ->distinct()
             ->orderByDesc('year');
 
-        if ($user->can('view-own-contracts')) {
+        if ($user->can('view-own-contracts') && !$user->can('view-contracts')) {
             $yearsQuery->where('created_by', $user->id);
         }
 
@@ -42,7 +42,7 @@ class ContractProductsReportController extends Controller
     public function data(Request $request)
     {
         $user = auth('admin')->user();
-        if (!$user || (!$user->can('view-contracts') && !$user->can('view-own-contracts'))) {
+        if (!$user || !$user->can('view-contract-products')) {
             return response()->json(['message' => 'Nincs jogosultságod a jelentés megtekintéséhez.'], 403);
         }
 
@@ -65,7 +65,7 @@ class ContractProductsReportController extends Controller
             ->groupBy(DB::raw('MONTH(contracts.created_at)'), DB::raw('COALESCE(users.id, 0)'), DB::raw('COALESCE(users.name, "Ismeretlen")'))
             ->orderBy('month');
 
-        if ($user->can('view-own-contracts')) {
+        if ($user->can('view-own-contracts') && !$user->can('view-contracts')) {
             $query->where('contracts.created_by', $user->id);
         }
 
