@@ -25,4 +25,9 @@ class SalesInvoiceItem extends Model
     {
         return $this->belongsTo(SalesInvoice::class, 'sales_invoice_id');
     }
+
+    public function product()
+    {
+        return $this->belongsTo(Product::class);
+    }
 }

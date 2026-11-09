@@ -314,11 +314,18 @@ class GoodsReceiptController extends Controller
             return response()->json(['message' => 'Nincs jogosultságod.'], 403);
         }
 
-        $receipt = GoodsReceipt::query()->with(['items'])->findOrFail($id);
+        $receipt = GoodsReceipt::query()->with(['items.product.photos'])->findOrFail($id);
 
         return response()->json([
             'goods_receipt' => $receipt,
-            'items' => $receipt->items,
+            'items' => $receipt->items->map(function ($item) {
+                $photo = $item->product?->photos?->firstWhere('is_main', true)
+                    ?? $item->product?->photos?->first();
+                $item->image_url = $photo?->path
+                    ? asset('storage/' . ltrim($photo->path, '/'))
+                    : null;
+                return $item;
+            }),
         ]);
     }
 

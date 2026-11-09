@@ -2,6 +2,42 @@
 
 @section('content')
 
+    <style>
+        .item-thumb {
+            width: 44px;
+            height: 44px;
+            object-fit: cover;
+            border-radius: 6px;
+            border: 1px solid #dee2e6;
+            background: #fff;
+            flex: 0 0 auto;
+            transition: transform .15s ease;
+            cursor: zoom-in;
+        }
+        .item-thumb:hover {
+            transform: scale(4);
+            transform-origin: left center;
+            position: relative;
+            z-index: 10;
+        }
+        .item-thumb-placeholder {
+            width: 44px;
+            height: 44px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            border: 1px dashed #ced4da;
+            color: #adb5bd;
+            font-size: 1rem;
+            flex: 0 0 auto;
+        }
+        .admin-fieldset__legend {
+            background: #e9ecef;
+            padding: .25rem .75rem;
+            border-radius: .375rem;
+        }
+    </style>
 
     <div class="container-fluid px-0">
 
@@ -373,7 +409,12 @@
                     $tbody.append(`
                         <tr data-idx="${idx}">
                             <td>
-                                <div class="fw-semibold">${escapeHtml(row.name || '')}</div>
+                                <div class="d-flex align-items-center gap-2">
+                                    ${row.image_url
+                                        ? `<img src="${escapeHtml(row.image_url)}" class="item-thumb" alt="">`
+                                        : `<span class="item-thumb-placeholder"><i class="fas fa-image"></i></span>`}
+                                    <div class="fw-semibold">${escapeHtml(row.name || '')}</div>
+                                </div>
                             </td>
                             <td class="text-end">
                                 <input type="number" step="${escapeHtml(qtyStep)}" min="0" class="form-control form-control-sm item-qty" value="${escapeHtml(qtyVal)}">
@@ -518,9 +559,15 @@
                                         data-unit="${escapeHtml(p.unit_abbreviation || p.unit_name || 'db')}"
                                         data-unit-qty="${escapeHtml(p.unit_qty || '')}"
                                         data-price="${escapeHtml(p.effective_gross_price ?? p.gross_price ?? 0)}"
-                                        data-vat="${escapeHtml(p.tax_value ?? '')}">
-                                        <div class="fw-semibold">${escapeHtml(p.title)}</div>
-                                        <div class="small text-muted">${unitText}</div>
+                                        data-vat="${escapeHtml(p.tax_value ?? '')}"
+                                        data-img="${escapeHtml(p.image_url ?? '')}">
+                                        <div class="d-flex align-items-center gap-2">
+                                            ${p.image_url ? `<img src="${escapeHtml(p.image_url)}" class="item-thumb" alt="">` : ''}
+                                            <div>
+                                                <div class="fw-semibold">${escapeHtml(p.title)}</div>
+                                                <div class="small text-muted">${unitText}</div>
+                                            </div>
+                                        </div>
                                     </button>
                                 `);
                             });
@@ -539,6 +586,7 @@
 
                 items.push({
                     product_id: $btn.data('id'),
+                    image_url: $btn.data('img') || null,
                     name: $btn.data('name'),
                     unit: $btn.data('unit') || 'db',
                     unit_qty: Number($btn.data('unit-qty') || 0),
@@ -1027,6 +1075,7 @@
                 (json?.items || []).forEach(it => {
                     items.push({
                         product_id: it.product_id,
+                        image_url: it.image_url ?? null,
                         name: it.name,
                         unit: it.unit || 'db',
                         unit_qty: Number(it.unit_qty || 0),

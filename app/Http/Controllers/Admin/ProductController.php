@@ -237,6 +237,9 @@ class ProductController extends Controller
                     'partner_gross_price' => $p->partner_gross_price,
                     'effective_gross_price' => $effective,
                     'main_photo_path' => $p->main_photo_path,
+                    'image_url' => $p->main_photo_path
+                        ? asset('storage/' . ltrim($p->main_photo_path, '/'))
+                        : null,
 
                     /*
                      * A kiválasztott raktár készlete.

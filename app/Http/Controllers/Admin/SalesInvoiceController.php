@@ -472,11 +472,18 @@ class SalesInvoiceController extends Controller
             return response()->json(['message' => 'Nincs jogosultságod.'], 403);
         }
 
-        $invoice = SalesInvoice::query()->with(['items'])->findOrFail($id);
+        $invoice = SalesInvoice::query()->with(['items.product.photos'])->findOrFail($id);
 
         return response()->json([
             'invoice' => $invoice,
-            'items' => $invoice->items,
+            'items' => $invoice->items->map(function ($item) {
+                $photo = $item->product?->photos?->firstWhere('is_main', true)
+                    ?? $item->product?->photos?->first();
+                $item->image_url = $photo?->path
+                    ? asset('storage/' . ltrim($photo->path, '/'))
+                    : null;
+                return $item;
+            }),
         ]);
     }
 

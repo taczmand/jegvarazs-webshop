@@ -19,4 +19,9 @@ class DeliveryNoteItem extends Model
     {
         return $this->belongsTo(DeliveryNote::class);
     }
+
+    public function product()
+    {
+        return $this->belongsTo(Product::class);
+    }
 }

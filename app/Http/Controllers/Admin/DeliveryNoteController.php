@@ -339,11 +339,18 @@ class DeliveryNoteController extends Controller
             return response()->json(['message' => 'Nincs jogosultságod.'], 403);
         }
 
-        $note = DeliveryNote::query()->with(['items'])->findOrFail($id);
+        $note = DeliveryNote::query()->with(['items.product.photos'])->findOrFail($id);
 
         return response()->json([
             'delivery_note' => $note,
-            'items' => $note->items,
+            'items' => $note->items->map(function ($item) {
+                $photo = $item->product?->photos?->firstWhere('is_main', true)
+                    ?? $item->product?->photos?->first();
+                $item->image_url = $photo?->path
+                    ? asset('storage/' . ltrim($photo->path, '/'))
+                    : null;
+                return $item;
+            }),
         ]);
     }
 

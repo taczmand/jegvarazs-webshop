@@ -27,6 +27,40 @@
         #invoice_items_table tbody tr td .form-select {
             background: #fff;
         }
+        .item-thumb {
+            width: 44px;
+            height: 44px;
+            object-fit: cover;
+            border-radius: 6px;
+            border: 1px solid #dee2e6;
+            background: #fff;
+            flex: 0 0 auto;
+            transition: transform .15s ease;
+            cursor: zoom-in;
+        }
+        .item-thumb:hover {
+            transform: scale(4);
+            transform-origin: left center;
+            position: relative;
+            z-index: 10;
+        }
+        .item-thumb-placeholder {
+            width: 44px;
+            height: 44px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            border: 1px dashed #ced4da;
+            color: #adb5bd;
+            font-size: 1rem;
+            flex: 0 0 auto;
+        }
+        .admin-fieldset__legend {
+            background: #e9ecef;
+            padding: .25rem .75rem;
+            border-radius: .375rem;
+        }
     </style>
 
     <div class="container-fluid px-0">
@@ -191,23 +225,22 @@
                 </div>
 
                 <div class="row g-2 mt-1">
-                    <div class="col-12 col-md-8">
+                    <div class="col-12">
                         <label for="partner_email" class="form-label">E-mail</label>
                         <input type="email" class="form-control" id="partner_email" name="partner_email">
                     </div>
-                    <div class="col-12 col-md-4">
-                        <label for="send_email"
-                               class="form-label"
-                               title="Amennyiben ez be van pipálva, az elkészült számla kiküldésre kerül a partner e-mail címére">
-                            E-mail küldés?
-                        </label>
-
+                    <div class="col-12">
                         <div class="form-check">
                             <input type="checkbox"
                                    class="form-check-input"
                                    id="send_email"
                                    name="send_email"
                                    value="1">
+                            <label for="send_email"
+                                   class="form-check-label"
+                                   title="Amennyiben ez be van pipálva, az elkészült számla kiküldésre kerül a partner e-mail címére">
+                                Számla küldése emailben?
+                            </label>
                         </div>
                     </div>
                 </div>
@@ -249,18 +282,18 @@
                     </div>
 
 
-                    <div class="row g-2 mt-1">
-                        <div class="col-12 col-md-4">
-                            <label for="issued_at" class="form-label">Számla kelte</label>
-                            <input type="date" class="form-control" id="issued_at" name="issued_at" max="2099-12-31" readonly style="pointer-events:none; background-color: #e9ecef;">
+                    <div class="mt-3">
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <label for="issued_at" class="form-label mb-0">Számla kelte</label>
+                            <input type="date" class="form-control form-control-sm ms-auto" id="issued_at" name="issued_at" max="2099-12-31" readonly style="pointer-events:none; background-color: #e9ecef; max-width: 180px;">
                         </div>
-                        <div class="col-12 col-md-4">
-                            <label for="fulfilled_at" class="form-label">Teljesítés dátuma</label>
-                            <input type="date" class="form-control" id="fulfilled_at" name="fulfilled_at" max="2099-12-31">
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <label for="fulfilled_at" class="form-label mb-0">Teljesítés dátuma</label>
+                            <input type="date" class="form-control form-control-sm ms-auto" id="fulfilled_at" name="fulfilled_at" max="2099-12-31" style="max-width: 180px;">
                         </div>
-                        <div class="col-12 col-md-4">
-                            <label for="due_at" class="form-label">Fizetési határidő</label>
-                            <input type="date" class="form-control" id="due_at" name="due_at" max="2099-12-31">
+                        <div class="d-flex align-items-center gap-2">
+                            <label for="due_at" class="form-label mb-0">Fizetési határidő</label>
+                            <input type="date" class="form-control form-control-sm ms-auto" id="due_at" name="due_at" max="2099-12-31" style="max-width: 180px;">
                         </div>
                     </div>
             </fieldset>
@@ -607,6 +640,7 @@
 
                         const item = {
                             product_id: it.product_id ?? null,
+                            image_url: it.image_url ?? null,
                             warehouse_id: warehouseId,
                             warehouse_name: wh?.name ?? '',
                             name: it.name ?? '',
@@ -1036,6 +1070,7 @@
                         const wh = warehouseId ? warehouses.find(w => String(w.id) === String(warehouseId)) : null;
                         const item = {
                             product_id: it.product_id ?? null,
+                            image_url: it.image_url ?? null,
                             warehouse_id: warehouseId,
                             warehouse_name: wh?.name ?? '',
                             name: it.name ?? '',
@@ -1635,9 +1670,16 @@
                     const row = $(
                         `<tr data-idx="${idx}">
                             <td style="min-width: 320px;">
-                                <input type="text" class="form-control form-control-sm item-name" value="${escapeHtml(item.name)}">
-                                <input type="text" class="form-control form-control-sm item-note mt-1" placeholder="Megjegyzés" value="${escapeHtml(item.note ?? '')}" style="font-size: 0.78rem;">
-                                <button type="button" class="item-installation-add btn btn-link btn-sm p-0 mt-1 d-none" style="font-size: 0.75rem;">+ BESZERELÉSSEL EGYÜTT</button>
+                                <div class="d-flex align-items-start gap-2">
+                                    ${item.image_url
+                                        ? `<img src="${escapeHtml(item.image_url)}" class="item-thumb" alt="">`
+                                        : `<span class="item-thumb-placeholder"><i class="fas fa-image"></i></span>`}
+                                    <div class="flex-grow-1" style="min-width: 0;">
+                                        <input type="text" class="form-control form-control-sm item-name" value="${escapeHtml(item.name)}">
+                                        <input type="text" class="form-control form-control-sm item-note mt-1" placeholder="Megjegyzés" value="${escapeHtml(item.note ?? '')}" style="font-size: 0.78rem;">
+                                        <button type="button" class="item-installation-add btn btn-link btn-sm p-0 mt-1 d-none" style="font-size: 0.75rem;">+ BESZERELÉSSEL EGYÜTT</button>
+                                    </div>
+                                </div>
                             </td>
                             <td>
                                 <div>${escapeHtml(item.warehouse_name || '—')}</div>
@@ -1702,6 +1744,7 @@
 
                 const item = {
                     product_id: product.id,
+                    image_url: product.image_url ?? null,
                     warehouse_id: product.warehouse_id,
                     warehouse_name: product.warehouse_name,
                     name: product.title,
@@ -1794,9 +1837,12 @@
                                 const productItem = $(
                                     `<div class="list-group-item">
                             <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <strong>${escapeHtml(p.title)}</strong>
-                                    ${packagingLabel}
+                                <div class="d-flex align-items-center gap-2">
+                                    ${p.image_url ? `<img src="${escapeHtml(p.image_url)}" class="item-thumb" alt="">` : ''}
+                                    <div>
+                                        <strong>${escapeHtml(p.title)}</strong>
+                                        ${packagingLabel}
+                                    </div>
                                 </div>
 
                                 <div class="text-muted">
@@ -2088,7 +2134,7 @@
 
             function dueDateForPaymentMethod(paymentMethod, baseDate) {
                 const base = baseDate || todayDate();
-                return String(paymentMethod) === 'cash' ? base : addDays(base, 8);
+                return ['cash', 'credit_card'].includes(String(paymentMethod)) ? base : addDays(base, 8);
             }
 
             $(document).on('change', '#payment_method', function () {

@@ -2,6 +2,42 @@
 
 @section('content')
 
+    <style>
+        .item-thumb {
+            width: 44px;
+            height: 44px;
+            object-fit: cover;
+            border-radius: 6px;
+            border: 1px solid #dee2e6;
+            background: #fff;
+            flex: 0 0 auto;
+            transition: transform .15s ease;
+            cursor: zoom-in;
+        }
+        .item-thumb:hover {
+            transform: scale(4);
+            transform-origin: left center;
+            position: relative;
+            z-index: 10;
+        }
+        .item-thumb-placeholder {
+            width: 44px;
+            height: 44px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            border: 1px dashed #ced4da;
+            color: #adb5bd;
+            font-size: 1rem;
+            flex: 0 0 auto;
+        }
+        .admin-fieldset__legend {
+            background: #e9ecef;
+            padding: .25rem .75rem;
+            border-radius: .375rem;
+        }
+    </style>
 
     <div class="container-fluid px-0">
 
@@ -863,6 +899,7 @@
                 noteItems.forEach(it => {
                     items.push({
                         product_id: it.product_id,
+                        image_url: it.image_url ?? null,
                         name: it.name,
                         quantity: it.quantity,
                         unit: it.unit || 'db',
@@ -983,7 +1020,12 @@
                     const row = $(
                         `<tr data-idx="${idx}">
                             <td>
-                                <div class="fw-semibold">${escapeHtml(item.name)}</div>
+                                <div class="d-flex align-items-center gap-2">
+                                    ${item.image_url
+                                        ? `<img src="${escapeHtml(item.image_url)}" class="item-thumb" alt="">`
+                                        : `<span class="item-thumb-placeholder"><i class="fas fa-image"></i></span>`}
+                                    <div class="fw-semibold">${escapeHtml(item.name)}</div>
+                                </div>
                             </td>
                             <td style="width: 130px;">
                                 <input type="number" min="0" step="${escapeHtml(qtyStep)}" ${maxAttr} class="form-control form-control-sm text-end item-qty" value="${escapeHtml(item.quantity)}">
@@ -1026,6 +1068,7 @@
 
                 const item = {
                     product_id: product.id,
+                    image_url: product.image_url ?? null,
                     name: product.title,
                     quantity: 1,
                     unit: unitAbbrev || 'db',
@@ -1073,7 +1116,10 @@
                                 const btn = $(
                                     `<button type="button" class="list-group-item list-group-item-action" ${isOut ? 'disabled aria-disabled="true"' : ''}>
                                         <div class="d-flex justify-content-between align-items-center">
-                                            <div><strong>${escapeHtml(p.title)}</strong></div>
+                                            <div class="d-flex align-items-center gap-2">
+                                                ${p.image_url ? `<img src="${escapeHtml(p.image_url)}" class="item-thumb" alt="">` : ''}
+                                                <div><strong>${escapeHtml(p.title)}</strong></div>
+                                            </div>
                                             <div class="text-muted">${unitText}</div>
                                         </div>
                                         <div class="d-flex justify-content-between align-items-center mt-1">
