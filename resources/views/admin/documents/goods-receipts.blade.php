@@ -435,6 +435,9 @@
                 resetPreview();
                 $('#openGoodsReceiptPdf').hide();
 
+                partnerCustomerId = null;
+                selectedPartnerName = '';
+
                 items.splice(0, items.length);
                 renderItems();
                 $('#product_search').val('');
@@ -500,7 +503,7 @@
 
                 searchTimeout = setTimeout(() => {
                     $.ajax({
-                        url: `${window.appConfig.APP_URL}admin/termekek/search?q=${encodeURIComponent(q)}&warehouse_id=${encodeURIComponent(warehouseId)}`,
+                        url: `${window.appConfig.APP_URL}admin/termekek/search?q=${encodeURIComponent(q)}&warehouse_id=${encodeURIComponent(warehouseId)}&show_partner_prices=1${partnerCustomerId ? '&customer_id=' + encodeURIComponent(partnerCustomerId) : ''}`,
                         method: 'GET',
                         success: function (resp) {
                             const results = resp?.products ?? [];
@@ -513,7 +516,9 @@
                                         data-id="${escapeHtml(p.id)}"
                                         data-name="${escapeHtml(p.title)}"
                                         data-unit="${escapeHtml(p.unit_abbreviation || p.unit_name || 'db')}"
-                                        data-unit-qty="${escapeHtml(p.unit_qty || '')}">
+                                        data-unit-qty="${escapeHtml(p.unit_qty || '')}"
+                                        data-price="${escapeHtml(p.effective_gross_price ?? p.gross_price ?? 0)}"
+                                        data-vat="${escapeHtml(p.tax_value ?? '')}">
                                         <div class="fw-semibold">${escapeHtml(p.title)}</div>
                                         <div class="small text-muted">${unitText}</div>
                                     </button>
@@ -526,14 +531,20 @@
 
             $('#product_search_results').on('click', '.product-result', function () {
                 const $btn = $(this);
+
+                const vatRaw = String($btn.data('vat') ?? '');
+                const vatPercent = vatRaw !== '' && Number.isFinite(Number(vatRaw)) ? Number(vatRaw) : 27;
+                const gross = Number($btn.data('price') || 0);
+                const unitNet = vatPercent > 0 ? gross / (1 + vatPercent / 100) : gross;
+
                 items.push({
                     product_id: $btn.data('id'),
                     name: $btn.data('name'),
                     unit: $btn.data('unit') || 'db',
                     unit_qty: Number($btn.data('unit-qty') || 0),
                     quantity: 1,
-                    unit_net_price: 0,
-                    vat_percent: 27,
+                    unit_net_price: Number.isFinite(unitNet) ? Math.round(unitNet) : 0,
+                    vat_percent: vatPercent,
                 });
                 renderItems();
                 $('#product_search').val('');
@@ -764,12 +775,17 @@
             });
 
             let partnerClientSearchDebounce = null;
+            let partnerCustomerId = null;
+            let selectedPartnerName = '';
 
             function clearPartnerClientResults() {
                 $('#partner_client_search_results').hide().empty();
             }
 
-            function fillPartnerFromClient({ name = '', tax = '', email = '', phone = '', country = 'HU', zip = '', city = '', line = '' } = {}) {
+            function fillPartnerFromClient({ name = '', tax = '', email = '', phone = '', country = 'HU', zip = '', city = '', line = '', customerId = null } = {}) {
+                partnerCustomerId = (customerId !== null && customerId !== '') ? Number(customerId) : null;
+                selectedPartnerName = String(name || '').trim();
+
                 $('#partner_name').val(name || '');
                 $('#partner_tax_number').val(tax || '');
                 $('#partner_email').val(email || '');
@@ -781,6 +797,11 @@
             }
 
             $('#partner_name').on('input', function () {
+                if (selectedPartnerName !== '' && ($(this).val() || '').trim() !== selectedPartnerName) {
+                    partnerCustomerId = null;
+                    selectedPartnerName = '';
+                }
+
                 const q = ($(this).val() || '').trim();
                 clearTimeout(partnerClientSearchDebounce);
                 clearPartnerClientResults();
@@ -828,7 +849,8 @@
                                                 data-name="${escapeHtml(name)}"
                                                 data-tax="${escapeHtml(taxNumber)}"
                                                 data-email="${escapeHtml(email)}"
-                                                data-phone="${escapeHtml(phone)}">
+                                                data-phone="${escapeHtml(phone)}"
+                                                data-cid="${isPartnerCustomer ? c.id : ''}">
                                                 <div class="fw-semibold">Cím nélkül</div>
                                                 <div class="small text-muted">Kattints a kiválasztáshoz</div>
                                             </button>
@@ -847,7 +869,8 @@
                                                 data-country="${escapeHtml(a?.country || 'HU')}"
                                                 data-zip="${escapeHtml(a?.zip_code || '')}"
                                                 data-city="${escapeHtml(a?.city || '')}"
-                                                data-line="${escapeHtml(a?.address_line || '')}">
+                                                data-line="${escapeHtml(a?.address_line || '')}"
+                                                data-cid="${isPartnerCustomer ? c.id : ''}">
                                                 <div class="fw-semibold">${escapeHtml(addrText || 'Cím nélkül')}${a?.is_default ? ' (alapértelmezett)' : ''}</div>
                                                 <div class="text-muted" style="font-size: 0.7rem;">${escapeHtml(a?.country || '')}</div>
                                             </button>
@@ -896,6 +919,7 @@
                     zip: $btn.data('zip') || '',
                     city: $btn.data('city') || '',
                     line: $btn.data('line') || '',
+                    customerId: $btn.data('cid') || null,
                 });
                 clearPartnerClientResults();
             });
@@ -911,6 +935,7 @@
                     zip: '',
                     city: '',
                     line: '',
+                    customerId: $btn.data('cid') || null,
                 });
                 clearPartnerClientResults();
                 setTimeout(() => {

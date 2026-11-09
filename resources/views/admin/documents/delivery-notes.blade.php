@@ -475,12 +475,17 @@
             }
 
             let partnerClientSearchDebounce = null;
+            let partnerCustomerId = null;
+            let selectedPartnerName = '';
 
             function clearPartnerClientResults() {
                 $('#partner_client_search_results').hide().empty();
             }
 
-            function fillPartnerFromClient({ name = '', tax = '', email = '', phone = '', country = 'HU', zip = '', city = '', line = '' } = {}) {
+            function fillPartnerFromClient({ name = '', tax = '', email = '', phone = '', country = 'HU', zip = '', city = '', line = '', customerId = null } = {}) {
+                partnerCustomerId = (customerId !== null && customerId !== '') ? Number(customerId) : null;
+                selectedPartnerName = String(name || '').trim();
+
                 $('#partner_name').val(name || '');
                 $('#partner_tax_number').val(tax || '');
                 $('#partner_email').val(email || '');
@@ -497,6 +502,11 @@
             }
 
             $('#partner_name').on('input', function () {
+                if (selectedPartnerName !== '' && ($(this).val() || '').trim() !== selectedPartnerName) {
+                    partnerCustomerId = null;
+                    selectedPartnerName = '';
+                }
+
                 const q = ($(this).val() || '').trim();
                 clearTimeout(partnerClientSearchDebounce);
                 clearPartnerClientResults();
@@ -538,6 +548,21 @@
                                         </div>
                                     `);
 
+                                    if (!addresses.length) {
+                                        $list.append(`
+                                            <button type="button" class="list-group-item list-group-item-action py-0 px-1 small client-no-address"
+                                                data-name="${escapeHtml(name)}"
+                                                data-tax="${escapeHtml(tax)}"
+                                                data-email="${escapeHtml(email)}"
+                                                data-phone="${escapeHtml(phone)}"
+                                                data-cid="${isPartnerCustomer ? c.id : ''}">
+                                                <div class="fw-semibold">Kiválasztás</div>
+                                                <div class="small text-muted">Nincs rögzített cím</div>
+                                            </button>
+                                        `);
+                                        return;
+                                    }
+
                                     addresses.forEach(a => {
                                         const addrText = `${a?.zip_code || ''} ${a?.city || ''}, ${a?.address_line || ''}`.trim();
                                         $list.append(`
@@ -549,7 +574,8 @@
                                                 data-country="${escapeHtml(a?.country || 'HU')}"
                                                 data-zip="${escapeHtml(a?.zip_code || '')}"
                                                 data-city="${escapeHtml(a?.city || '')}"
-                                                data-line="${escapeHtml(a?.address_line || '')}">
+                                                data-line="${escapeHtml(a?.address_line || '')}"
+                                                data-cid="${isPartnerCustomer ? c.id : ''}">
                                                 <div class="fw-semibold">${escapeHtml(addrText || 'Cím nélkül')}${a?.is_default ? ' (alapértelmezett)' : ''}</div>
                                                 <div class="text-muted" style="font-size: 0.7rem;">${escapeHtml(a?.country || '')}</div>
                                             </button>
@@ -598,8 +624,28 @@
                     zip: $btn.data('zip') || '',
                     city: $btn.data('city') || '',
                     line: $btn.data('line') || '',
+                    customerId: $btn.data('cid') || null,
                 });
                 clearPartnerClientResults();
+            });
+
+            $('#partner_client_search_results').on('click', '.client-no-address', function () {
+                const $btn = $(this);
+                fillPartnerFromClient({
+                    name: $btn.data('name') || '',
+                    tax: $btn.data('tax') || '',
+                    email: $btn.data('email') || '',
+                    phone: $btn.data('phone') || '',
+                    country: 'HU',
+                    zip: '',
+                    city: '',
+                    line: '',
+                    customerId: $btn.data('cid') || null,
+                });
+                clearPartnerClientResults();
+                setTimeout(() => {
+                    $('#partner_zip_code').trigger('focus');
+                }, 0);
             });
 
             $('#partner_client_search_results').on('click', '.client-create', function () {
@@ -659,6 +705,9 @@
                 if (warehouses.length) {
                     $('#warehouse_id').val(warehouses[0].id);
                 }
+
+                partnerCustomerId = null;
+                selectedPartnerName = '';
 
                 items.splice(0, items.length);
                 renderItems();
@@ -1010,7 +1059,7 @@
 
                 searchTimeout = setTimeout(() => {
                     $.ajax({
-                        url: `${window.appConfig.APP_URL}admin/termekek/search?q=${encodeURIComponent(q)}&warehouse_id=${encodeURIComponent(warehouseId)}`,
+                        url: `${window.appConfig.APP_URL}admin/termekek/search?q=${encodeURIComponent(q)}&warehouse_id=${encodeURIComponent(warehouseId)}&show_partner_prices=1${partnerCustomerId ? '&customer_id=' + encodeURIComponent(partnerCustomerId) : ''}`,
                         method: 'GET',
                         success: function (resp) {
                             const results = resp?.products ?? [];

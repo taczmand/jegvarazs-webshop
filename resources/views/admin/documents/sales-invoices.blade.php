@@ -715,12 +715,17 @@
             }
 
             let partnerClientSearchDebounce = null;
+            let partnerCustomerId = null;
+            let selectedPartnerName = '';
 
             function clearPartnerClientResults() {
                 $('#partner_client_search_results').hide().empty();
             }
 
-            function fillPartnerFromClient({ name = '', tax = '', email = '', phone = '', country = 'HU', zip = '', city = '', line = '' } = {}) {
+            function fillPartnerFromClient({ name = '', tax = '', email = '', phone = '', country = 'HU', zip = '', city = '', line = '', customerId = null } = {}) {
+                partnerCustomerId = (customerId !== null && customerId !== '') ? Number(customerId) : null;
+                selectedPartnerName = String(name || '').trim();
+
                 $('#partner_name').val(name || '');
                 $('#partner_tax_number').val(tax || '');
                 $('#partner_email').val(email || '');
@@ -733,6 +738,11 @@
             }
 
             $('#partner_name').on('input', function () {
+                if (selectedPartnerName !== '' && ($(this).val() || '').trim() !== selectedPartnerName) {
+                    partnerCustomerId = null;
+                    selectedPartnerName = '';
+                }
+
                 const q = ($(this).val() || '').trim();
                 clearTimeout(partnerClientSearchDebounce);
                 clearPartnerClientResults();
@@ -785,7 +795,8 @@
                                                 data-name="${escapeHtml(name)}"
                                                 data-tax="${escapeHtml(taxNumber)}"
                                                 data-email="${escapeHtml(email)}"
-                                                data-phone="${escapeHtml(phone)}">
+                                                data-phone="${escapeHtml(phone)}"
+                                                data-cid="${isPartnerCustomer ? c.id : ''}">
                                                 <div class="fw-semibold">Kiválasztás</div>
                                                 <div class="small text-muted">Nincs rögzített cím</div>
                                             </button>
@@ -804,7 +815,8 @@
                                                 data-country="${escapeHtml(a?.country || 'HU')}"
                                                 data-zip="${escapeHtml(a?.zip_code || '')}"
                                                 data-city="${escapeHtml(a?.city || '')}"
-                                                data-line="${escapeHtml(a?.address_line || '')}">
+                                                data-line="${escapeHtml(a?.address_line || '')}"
+                                                data-cid="${isPartnerCustomer ? c.id : ''}">
                                                 <div class="fw-semibold">${escapeHtml(addrText || 'Cím nélkül')}${a?.is_default ? ' (alapértelmezett)' : ''}</div>
                                             </button>
                                         `);
@@ -852,6 +864,7 @@
                     zip: $btn.data('zip') || '',
                     city: $btn.data('city') || '',
                     line: $btn.data('line') || '',
+                    customerId: $btn.data('cid') || null,
                 });
                 clearPartnerClientResults();
             });
@@ -871,6 +884,7 @@
                     zip: '',
                     city: '',
                     line: '',
+                    customerId: $btn.data('cid') || null,
                 });
                 clearPartnerClientResults();
                 setTimeout(() => {
@@ -1751,7 +1765,7 @@
 
                 searchTimeout = setTimeout(() => {
                     $.ajax({
-                        url: `${window.appConfig.APP_URL}admin/termekek/search?q=${encodeURIComponent(q)}`,
+                        url: `${window.appConfig.APP_URL}admin/termekek/search?q=${encodeURIComponent(q)}&show_partner_prices=1${partnerCustomerId ? '&customer_id=' + encodeURIComponent(partnerCustomerId) : ''}`,
                         method: 'GET',
 
                         success: function (resp) {
@@ -2106,6 +2120,9 @@
                 $('#invoice_number').val('');
 
                 resetPreview();
+
+                partnerCustomerId = null;
+                selectedPartnerName = '';
 
                 items.splice(0, items.length);
                 renderItems();
