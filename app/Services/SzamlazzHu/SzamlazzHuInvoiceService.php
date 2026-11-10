@@ -369,11 +369,16 @@ class SzamlazzHuInvoiceService implements InvoiceServiceInterface
                 $agent->setPDFDirName($baseDir . DIRECTORY_SEPARATOR . 'pdf');
             }
 
+            // Az XML-t valódi fájlként kell küldeni: Windowson a cURL nem tud
+            // data:// URI-t fájlként megnyitni (a vendor ezt használná, ha a
+            // fájlmentés ki lenne kapcsolva).
+            SzamlaAgentUtil::setBasePath($baseDir);
+
             if (method_exists($agent, 'setXmlFileSave')) {
-                $agent->setXmlFileSave(false);
+                $agent->setXmlFileSave(true);
             }
             if (method_exists($agent, 'setRequestXmlFileSave')) {
-                $agent->setRequestXmlFileSave(false);
+                $agent->setRequestXmlFileSave(true);
             }
             if (method_exists($agent, 'setResponseXmlFileSave')) {
                 $agent->setResponseXmlFileSave(false);
