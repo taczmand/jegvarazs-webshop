@@ -550,6 +550,7 @@ Route::get('/automatizacio/jogosultsagok/szinkron', function (Request $request, 
             Route::get('/ugyfelek', [ClientController::class, 'index'])->name('clients.index');
             Route::get('/ugyfelek/kereses', [ClientController::class, 'search'])->name('clients.search');
             Route::get('/bizonylatok/partner-kereses', [PartnerSearchController::class, 'search'])->name('documents.partner-search');
+            Route::get('/bizonylatok/adozo-kereses', [PartnerSearchController::class, 'taxpayer'])->name('documents.taxpayer-search');
             Route::get('/ugyfelek/check-email', [ClientController::class, 'checkEmail'])->name('clients.check-email');
             Route::get('/ugyfelek/data', [ClientController::class, 'data'])->name('clients.data');
             Route::get('/ugyfelek/{id}/timeline', [ClientController::class, 'timeline'])->name('clients.timeline');

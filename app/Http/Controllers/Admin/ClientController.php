@@ -29,7 +29,10 @@ class ClientController extends Controller
             ->where(function ($query) use ($q) {
                 $query->where('name', 'like', "%{$q}%")
                     ->orWhere('email', 'like', "%{$q}%")
-                    ->orWhere('phone', 'like', "%{$q}%");
+                    ->orWhere('phone', 'like', "%{$q}%")
+                    ->orWhereHas('addresses', function ($inner) use ($q) {
+                        $inner->where('client_name', 'like', "%{$q}%");
+                    });
             })
             ->orderBy('name')
             ->limit(10)
@@ -57,6 +60,7 @@ class ClientController extends Controller
                     return [
                         'id' => $address->id,
                         'is_default' => (bool) $address->is_default,
+                        'client_name' => $address->client_name,
                         'country' => $address->country,
                         'zip_code' => $address->zip_code,
                         'city' => $address->city,
@@ -172,7 +176,6 @@ class ClientController extends Controller
             'place_of_birth',
             'date_of_birth',
             'id_number',
-            'tax_number',
             'email',
             'phone',
             'comment',
@@ -472,7 +475,6 @@ class ClientController extends Controller
             'place_of_birth' => 'nullable|string|max:255',
             'date_of_birth' => 'nullable|date',
             'id_number' => 'nullable|string|max:50',
-            'tax_number' => 'nullable|string|max:50',
             'email' => 'nullable|email|max:255',
             'phone' => 'nullable|string|max:50',
             'comment' => 'nullable|string',
@@ -481,12 +483,14 @@ class ClientController extends Controller
             'address_zip_code' => 'required|string|max:20',
             'address_city' => 'required|string|max:100',
             'address_address_line' => 'required|string|max:255',
+            'address_client_name' => 'nullable|string|max:255',
+            'address_tax_number' => 'nullable|string|max:50',
             'address_comment' => 'nullable|string',
         ]);
 
         try {
             $email = $request->input('email');
-            $email = is_string($email) ? trim($email) : null;
+            $email = is_string($email) ? trim($email) : '';
             $email = $email !== '' ? mb_strtolower($email) : null;
 
             if (!is_null($email)) {
@@ -507,7 +511,6 @@ class ClientController extends Controller
                 'place_of_birth' => $request->input('place_of_birth') ?: null,
                 'date_of_birth' => $request->input('date_of_birth') ?: null,
                 'id_number' => $request->input('id_number') ?: null,
-                'tax_number' => $request->input('tax_number') ?: null,
                 'email' => $email,
                 'phone' => $request->input('phone') ?: null,
                 'comment' => $request->input('comment') ?: null,
@@ -515,6 +518,8 @@ class ClientController extends Controller
 
             ClientAddress::create([
                 'client_id' => $client->id,
+                'client_name' => $request->input('address_client_name') ?: null,
+                'tax_number' => $request->input('address_tax_number') ?: null,
                 'country' => $request->input('address_country') ?: 'HU',
                 'zip_code' => $request->input('address_zip_code') ?: null,
                 'city' => $request->input('address_city') ?: null,
@@ -546,7 +551,6 @@ class ClientController extends Controller
             'place_of_birth' => 'nullable|string|max:255',
             'date_of_birth' => 'nullable|date',
             'id_number' => 'nullable|string|max:50',
-            'tax_number' => 'nullable|string|max:50',
             'email' => 'nullable|email|max:255|unique:clients,email,' . $request->input('id'),
             'phone' => 'nullable|string|max:50',
             'comment' => 'nullable|string',
@@ -556,7 +560,7 @@ class ClientController extends Controller
             $client = Client::findOrFail($request->input('id'));
 
             $email = $request->input('email');
-            $email = is_string($email) ? trim($email) : null;
+            $email = is_string($email) ? trim($email) : '';
             $email = $email !== '' ? mb_strtolower($email) : null;
 
             $client->update([
@@ -565,7 +569,6 @@ class ClientController extends Controller
                 'place_of_birth' => $request->input('place_of_birth') ?: null,
                 'date_of_birth' => $request->input('date_of_birth') ?: null,
                 'id_number' => $request->input('id_number') ?: null,
-                'tax_number' => $request->input('tax_number') ?: null,
                 'email' => $email,
                 'phone' => $request->input('phone') ?: null,
                 'comment' => $request->input('comment') ?: null,
@@ -616,6 +619,8 @@ class ClientController extends Controller
     public function storeAddress(Request $request, $id)
     {
         $request->validate([
+            'client_name' => 'nullable|string|max:255',
+            'tax_number' => 'nullable|string|max:50',
             'country' => 'nullable|string|max:10',
             'zip_code' => 'nullable|string|max:20',
             'city' => 'nullable|string|max:100',
@@ -634,6 +639,8 @@ class ClientController extends Controller
 
             $address = ClientAddress::create([
                 'client_id' => $client->id,
+                'client_name' => $request->input('client_name') ?: null,
+                'tax_number' => $request->input('tax_number') ?: null,
                 'country' => $request->input('country') ?: 'HU',
                 'zip_code' => $request->input('zip_code') ?: null,
                 'city' => $request->input('city') ?: null,
@@ -659,6 +666,8 @@ class ClientController extends Controller
     public function updateAddress(Request $request, $addressId)
     {
         $request->validate([
+            'client_name' => 'nullable|string|max:255',
+            'tax_number' => 'nullable|string|max:50',
             'country' => 'nullable|string|max:10',
             'zip_code' => 'nullable|string|max:20',
             'city' => 'nullable|string|max:100',
@@ -678,6 +687,8 @@ class ClientController extends Controller
             }
 
             $address->update([
+                'client_name' => $request->input('client_name') ?: null,
+                'tax_number' => $request->input('tax_number') ?: null,
                 'country' => $request->input('country') ?: 'HU',
                 'zip_code' => $request->input('zip_code') ?: null,
                 'city' => $request->input('city') ?: null,

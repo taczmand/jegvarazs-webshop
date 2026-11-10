@@ -114,10 +114,6 @@
                                 <label for="id_number" class="form-label">Személyi szám</label>
                                 <input type="text" class="form-control" id="id_number" name="id_number">
                             </div>
-                            <div class="col-md-3">
-                                <label for="tax_number" class="form-label">Adószám</label>
-                                <input type="text" class="form-control" id="tax_number" name="tax_number">
-                            </div>
                             <div class="col-md-6">
                                 <label for="email" class="form-label">E-mail cím</label>
                                 <input type="email" class="form-control" id="email" name="email">
@@ -171,6 +167,8 @@
                                     <thead>
                                     <tr>
                                         <th>Alapértelmezett</th>
+                                        <th>Cégnév</th>
+                                        <th>Adószám</th>
                                         <th>Ország</th>
                                         <th>Irányítószám</th>
                                         <th>Város</th>
@@ -186,6 +184,14 @@
                             <div class="border rounded p-3" id="addressFormWrap" style="display:none;">
                                 <input type="hidden" id="address_id">
                                 <div class="row g-3">
+                                    <div class="col-md-4">
+                                        <label for="address_client_name" class="form-label">Cégnév</label>
+                                        <input type="text" class="form-control" id="address_client_name" name="client_name">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label for="address_tax_number" class="form-label">Adószám</label>
+                                        <input type="text" class="form-control" id="address_tax_number" name="tax_number">
+                                    </div>
                                     <div class="col-md-2">
                                         <label for="address_country" class="form-label">Ország</label>
                                         <select class="form-control w-100" id="address_country" name="address_country">
@@ -510,7 +516,6 @@
                 $('#place_of_birth').val(row_data.place_of_birth);
                 $('#date_of_birth').val(row_data.date_of_birth);
                 $('#id_number').val(row_data.id_number);
-                $('#tax_number').val(row_data.tax_number);
                 $('#email').val(row_data.email);
                 $('#phone').val(row_data.phone);
                 $('#comment').val(row_data.comment);
@@ -679,6 +684,8 @@
 
                 const addressId = $('#address_id').val();
                 const payload = {
+                    client_name: $('#address_client_name').val() || null,
+                    tax_number: $('#address_tax_number').val() || null,
                     country: $('#address_country').val() || 'HU',
                     zip_code: $('#address_zip_code').val() || null,
                     city: $('#address_city').val() || null,
@@ -721,6 +728,8 @@
                 const row = $(this).closest('tr');
                 openAddressForm({
                     id: row.data('id'),
+                    client_name: row.data('client-name'),
+                    tax_number: row.data('tax'),
                     country: row.data('country'),
                     zip_code: row.data('zip'),
                     city: row.data('city'),
@@ -910,7 +919,6 @@
                 $('#place_of_birth').val('');
                 $('#date_of_birth').val('');
                 $('#id_number').val('');
-                $('#tax_number').val('');
                 $('#clientRemindersList').empty();
                 $('#clientRemindersEmpty').addClass('d-none');
                 $('#clientRemindersSection').addClass('d-none');
@@ -1038,15 +1046,17 @@
                 tbody.empty();
 
                 if (!addresses.length) {
-                    tbody.append(`<tr><td colspan="7" class="text-muted">Nincs még cím rögzítve.</td></tr>`);
+                    tbody.append(`<tr><td colspan="9" class="text-muted">Nincs még cím rögzítve.</td></tr>`);
                     return;
                 }
 
                 addresses.forEach(a => {
                     const isDefault = a.is_default ? '<span class="badge bg-success">Igen</span>' : '';
                     tbody.append(`
-                        <tr data-id="${a.id}" data-comment="${escapeHtml(a.comment || '')}" data-country="${escapeHtml(a.country || '')}" data-zip="${escapeHtml(a.zip_code || '')}" data-city="${escapeHtml(a.city || '')}" data-line="${escapeHtml(a.address_line || '')}" data-default="${a.is_default ? 1 : 0}">
+                        <tr data-id="${a.id}" data-comment="${escapeHtml(a.comment || '')}" data-client-name="${escapeHtml(a.client_name || '')}" data-tax="${escapeHtml(a.tax_number || '')}" data-country="${escapeHtml(a.country || '')}" data-zip="${escapeHtml(a.zip_code || '')}" data-city="${escapeHtml(a.city || '')}" data-line="${escapeHtml(a.address_line || '')}" data-default="${a.is_default ? 1 : 0}">
                             <td>${isDefault}</td>
+                            <td>${escapeHtml(a.client_name || '')}</td>
+                            <td>${escapeHtml(a.tax_number || '')}</td>
                             <td>${escapeHtml(a.country || '')}</td>
                             <td>${escapeHtml(a.zip_code || '')}</td>
                             <td>${escapeHtml(a.city || '')}</td>
@@ -1064,6 +1074,8 @@
             function openAddressForm(address = null) {
                 $('#addressFormWrap').show();
                 $('#address_id').val(address?.id || '');
+                $('#address_client_name').val(address?.client_name || '');
+                $('#address_tax_number').val(address?.tax_number || '');
                 $('#address_country').val(address?.country || 'HU');
                 $('#address_zip_code').val(address?.zip_code || '');
                 $('#address_city').val(address?.city || '');
@@ -1081,6 +1093,8 @@
             function closeAddressForm() {
                 $('#addressFormWrap').hide();
                 $('#address_id').val('');
+                $('#address_client_name').val('');
+                $('#address_tax_number').val('');
                 $('#address_country').val('HU');
                 $('#address_zip_code').val('');
                 $('#address_city').val('');

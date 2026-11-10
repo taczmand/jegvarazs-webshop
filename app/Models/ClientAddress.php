@@ -12,6 +12,8 @@ class ClientAddress extends Model
 
     protected $fillable = [
         'client_id',
+        'client_name',
+        'tax_number',
         'country',
         'zip_code',
         'city',

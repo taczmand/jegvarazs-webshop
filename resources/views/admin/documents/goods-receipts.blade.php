@@ -148,11 +148,13 @@
 
                 <div class="row g-2">
                     <div class="col-12">
+                        <button type="button" class="btn btn-outline-primary btn-sm w-100" id="selectPartnerBtn">
+                            <i class="fas fa-user-tag me-1"></i> Partner kiválasztása
+                        </button>
+                    </div>
+                    <div class="col-12">
                         <label for="partner_name" class="form-label">Név*</label>
-                        <div class="position-relative">
-                            <input type="text" class="form-control" id="partner_name" name="partner_name" required autocomplete="off">
-                            <div id="partner_client_search_results" class="list-group w-100 admin-client-search-results" style="z-index: 1100; display:none; max-height: 260px; overflow-y: auto;"></div>
-                        </div>
+                        <input type="text" class="form-control" id="partner_name" name="partner_name" required autocomplete="off">
                     </div>
                     <div class="col-12">
                         <label for="partner_tax_number" class="form-label">Adószám</label>
@@ -294,6 +296,89 @@
         </div>
     </div>
 
+    <!-- Modális ablak partner kiválasztására / létrehozására -->
+    <div class="modal fade admin-modal-soft" id="partnerSelectModal" tabindex="-1" aria-labelledby="partnerSelectModalLabel" aria-hidden="true" style="z-index: 2100;">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-gradient-custom">
+                    <h5 class="modal-title" id="partnerSelectModalLabel">Partner kiválasztása</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Bezárás"></button>
+                </div>
+                <div class="modal-body">
+
+                    <div id="partnerSearchPane">
+                        <div class="mb-2">
+                            <label for="partner_search_input" class="form-label">Keresés (név, e-mail, telefon)</label>
+                            <input type="text" class="form-control" id="partner_search_input" placeholder="Kezdj el gépelni..." autocomplete="off">
+                        </div>
+                        <div id="partner_select_results" style="max-height: 360px; overflow-y: auto;"></div>
+                    </div>
+
+                    <div id="partnerCreatePane" style="display:none;">
+                        <div id="nav_taxpayer_results" class="mb-2"></div>
+                        <form id="partnerCreateForm">
+                            <div class="row g-2">
+                                <div class="col-12">
+                                    <label for="new_client_name" class="form-label">Név*</label>
+                                    <input type="text" class="form-control" id="new_client_name" name="name" required>
+                                </div>
+                                <div class="col-12">
+                                    <label for="new_client_client_name" class="form-label">Cégnév</label>
+                                    <input type="text" class="form-control" id="new_client_client_name" name="address_client_name">
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <label for="new_client_tax_number" class="form-label">Adószám</label>
+                                    <input type="text" class="form-control" id="new_client_tax_number" name="address_tax_number">
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <label for="new_client_phone" class="form-label">Telefon</label>
+                                    <input type="text" class="form-control" id="new_client_phone" name="phone">
+                                </div>
+                                <div class="col-12">
+                                    <label for="new_client_email" class="form-label">E-mail</label>
+                                    <input type="email" class="form-control" id="new_client_email" name="email">
+                                </div>
+                                <div class="col-12 col-md-4">
+                                    <label for="new_client_country" class="form-label">Ország*</label>
+                                    <select class="form-select" id="new_client_country" name="address_country" required>
+                                        @foreach(config('countries') as $code => $name)
+                                            <option value="{{ $code }}" {{ $code === 'HU' ? 'selected' : '' }}>{{ $name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-12 col-md-4">
+                                    <label for="new_client_zip_code" class="form-label">Irányítószám*</label>
+                                    <input type="text" class="form-control" id="new_client_zip_code" name="address_zip_code" required>
+                                </div>
+                                <div class="col-12 col-md-4">
+                                    <label for="new_client_city" class="form-label">Város*</label>
+                                    <input type="text" class="form-control" id="new_client_city" name="address_city" required>
+                                </div>
+                                <div class="col-12">
+                                    <label for="new_client_address_line" class="form-label">Cím*</label>
+                                    <input type="text" class="form-control" id="new_client_address_line" name="address_address_line" required>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" id="partnerCreateBackBtn" style="display:none;">
+                        <i class="fas fa-arrow-left me-1"></i> Vissza a kereséshez
+                    </button>
+                    <button type="button" class="btn btn-success" id="partnerCreateToggleBtn">
+                        <i class="fas fa-plus me-1"></i> Új partner létrehozása
+                    </button>
+                    <button type="button" class="btn btn-primary" id="partnerCreateSaveBtn" style="display:none;">
+                        Partner mentése és kiválasztása
+                    </button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Mégse</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 @endsection
 
 @section('scripts')
@@ -307,6 +392,8 @@
         const modal = new bootstrap.Modal(modalDOM);
         const previewModalDOM = document.getElementById('goodsReceiptPreviewModal');
         const previewModal = previewModalDOM ? new bootstrap.Modal(previewModalDOM) : null;
+        const partnerSelectModalDOM = document.getElementById('partnerSelectModal');
+        const partnerSelectModal = partnerSelectModalDOM ? new bootstrap.Modal(partnerSelectModalDOM) : null;
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
         $(document).ready(function() {
@@ -827,14 +914,15 @@
             let selectedPartnerName = '';
 
             function clearPartnerClientResults() {
-                $('#partner_client_search_results').hide().empty();
+                $('#partner_select_results').empty();
             }
 
-            function fillPartnerFromClient({ name = '', tax = '', email = '', phone = '', country = 'HU', zip = '', city = '', line = '', customerId = null } = {}) {
+            function fillPartnerFromClient({ name = '', clientName = '', tax = '', email = '', phone = '', country = 'HU', zip = '', city = '', line = '', customerId = null } = {}) {
                 partnerCustomerId = (customerId !== null && customerId !== '') ? Number(customerId) : null;
-                selectedPartnerName = String(name || '').trim();
+                const partnerName = String(clientName || '').trim() || String(name || '').trim();
+                selectedPartnerName = partnerName;
 
-                $('#partner_name').val(name || '');
+                $('#partner_name').val(partnerName);
                 $('#partner_tax_number').val(tax || '');
                 $('#partner_email').val(email || '');
                 $('#partner_phone').val(phone || '');
@@ -844,12 +932,50 @@
                 $('#partner_address_line').val(line || '');
             }
 
+            // Ha a felhasználó kézzel módosítja a nevet, a korábban kiválasztott partner
+            // kapcsolat (partner árazás) törlődik.
             $('#partner_name').on('input', function () {
                 if (selectedPartnerName !== '' && ($(this).val() || '').trim() !== selectedPartnerName) {
                     partnerCustomerId = null;
                     selectedPartnerName = '';
                 }
+            });
 
+            function showPartnerCreatePane(show) {
+                $('#partnerSearchPane').toggle(!show);
+                $('#partnerCreatePane').toggle(show);
+                $('#partnerCreateToggleBtn').toggle(!show);
+                $('#partnerCreateSaveBtn').toggle(show);
+                $('#partnerCreateBackBtn').toggle(show);
+            }
+
+            $('#selectPartnerBtn').on('click', function () {
+                showPartnerCreatePane(false);
+                $('#partner_search_input').val('');
+                clearPartnerClientResults();
+                if (partnerSelectModal) partnerSelectModal.show();
+            });
+
+            if (partnerSelectModalDOM) {
+                partnerSelectModalDOM.addEventListener('shown.bs.modal', function () {
+                    const backdrops = document.querySelectorAll('.modal-backdrop');
+                    const lastBackdrop = backdrops.length ? backdrops[backdrops.length - 1] : null;
+                    if (lastBackdrop) {
+                        lastBackdrop.style.zIndex = '2095';
+                    }
+                    $('#partner_search_input').trigger('focus');
+                });
+
+                partnerSelectModalDOM.addEventListener('hidden.bs.modal', function () {
+                    showPartnerCreatePane(false);
+                    $('#partnerCreateForm')[0].reset();
+                    $('#partner_search_input').val('');
+                    clearPartnerClientResults();
+                    clearNavTaxpayerResults();
+                });
+            }
+
+            $('#partner_search_input').on('input', function () {
                 const q = ($(this).val() || '').trim();
                 clearTimeout(partnerClientSearchDebounce);
                 clearPartnerClientResults();
@@ -864,7 +990,7 @@
                         method: 'GET',
                         success: function (response) {
                             const clients = response?.partners || [];
-                            const $list = $('#partner_client_search_results');
+                            const $list = $('#partner_select_results');
                             $list.empty();
 
                             if (clients.length) {
@@ -877,89 +1003,110 @@
                                     const isPartnerCustomer = source === 'customer' && Boolean(c?.is_partner);
                                     const addresses = Array.isArray(c?.addresses) ? c.addresses : [];
 
-                                    const sourceLabel = source === 'customer'
-                                        ? 'Vásárló'
-                                        : (source === 'client' ? 'Ügyfél' : source);
-
-                                    const headerParts = [sourceLabel, taxNumber, email, phone].filter(Boolean).join(', ');
+                                    const isCustomer = source === 'customer';
+                                    const sourceLabel = isCustomer ? 'Vásárló' : 'Ügyfél';
+                                    const sourceBadge = `<span class="badge ${isCustomer ? 'bg-success' : 'bg-primary'} ms-1">${sourceLabel}</span>`;
                                     const partnerBadge = isPartnerCustomer
-                                        ? '<span class="badge bg-success ms-1">Szerelő</span>'
+                                        ? '<span class="badge bg-warning text-dark ms-1">Szerelő</span>'
                                         : '';
-                                    $list.append(`
-                                        <div class="list-group-item py-0 px-1 client-search-header">
-                                            <div class="fw-semibold small">${escapeHtml(name || email || 'N/A')}${partnerBadge}${headerParts ? ' (' + escapeHtml(headerParts) + ')' : ''}</div>
-                                        </div>
-                                    `);
 
+                                    const initials = (name || email || '?')
+                                        .split(' ')
+                                        .filter(Boolean)
+                                        .map(w => w[0])
+                                        .slice(0, 2)
+                                        .join('')
+                                        .toUpperCase();
+                                    const avatarClass = isCustomer ? 'bg-success' : 'bg-primary';
+
+                                    const metaParts = [];
+                                    if (taxNumber) metaParts.push(`<span class="me-3"><i class="fas fa-id-card me-1"></i>${escapeHtml(taxNumber)}</span>`);
+                                    if (email) metaParts.push(`<span class="me-3"><i class="fas fa-envelope me-1"></i>${escapeHtml(email)}</span>`);
+                                    if (phone) metaParts.push(`<span><i class="fas fa-phone me-1"></i>${escapeHtml(phone)}</span>`);
+                                    const metaHtml = metaParts.length
+                                        ? `<div class="small text-muted mt-1">${metaParts.join('')}</div>`
+                                        : '';
+
+                                    let addressesHtml = '';
                                     if (!addresses.length) {
-                                        $list.append(`
-                                            <button type="button" class="list-group-item list-group-item-action py-0 px-1 small client-no-address"
+                                        addressesHtml = `
+                                            <button type="button" class="list-group-item list-group-item-action d-flex align-items-center client-no-address"
                                                 data-name="${escapeHtml(name)}"
                                                 data-tax="${escapeHtml(taxNumber)}"
                                                 data-email="${escapeHtml(email)}"
                                                 data-phone="${escapeHtml(phone)}"
                                                 data-cid="${isPartnerCustomer ? c.id : ''}">
-                                                <div class="fw-semibold">Cím nélkül</div>
-                                                <div class="small text-muted">Kattints a kiválasztáshoz</div>
+                                                <i class="fas fa-check-circle text-primary me-2"></i>
+                                                <span class="small">Kiválasztás — nincs rögzített cím</span>
                                             </button>
-                                        `);
-                                        return;
+                                        `;
+                                    } else {
+                                        addresses.forEach(a => {
+                                            const addrText = `${a?.zip_code || ''} ${a?.city || ''}, ${a?.address_line || ''}`.trim();
+                                            const addrClientName = a?.client_name || '';
+                                            const addrTax = a?.tax_number || taxNumber;
+                                            addressesHtml += `
+                                                <button type="button" class="list-group-item list-group-item-action d-flex align-items-center client-address-item"
+                                                    data-name="${escapeHtml(name)}"
+                                                    data-client-name="${escapeHtml(addrClientName)}"
+                                                    data-tax="${escapeHtml(addrTax)}"
+                                                    data-email="${escapeHtml(email)}"
+                                                    data-phone="${escapeHtml(phone)}"
+                                                    data-country="${escapeHtml(a?.country || 'HU')}"
+                                                    data-zip="${escapeHtml(a?.zip_code || '')}"
+                                                    data-city="${escapeHtml(a?.city || '')}"
+                                                    data-line="${escapeHtml(a?.address_line || '')}"
+                                                    data-cid="${isPartnerCustomer ? c.id : ''}">
+                                                    <i class="fas fa-map-marker-alt text-danger me-2"></i>
+                                                    <span>
+                                                        ${addrClientName ? `<span class="d-block fw-semibold">${escapeHtml(addrClientName)}</span>` : ''}
+                                                        <span class="small ${addrClientName ? 'text-muted' : 'fw-semibold'}">${escapeHtml(addrText || 'Cím nélkül')}${a?.is_default ? ' (alapértelmezett)' : ''}</span>
+                                                        ${addrTax ? `<span class="d-block small text-muted"><i class="fas fa-id-card me-1"></i>${escapeHtml(addrTax)}</span>` : ''}
+                                                    </span>
+                                                </button>
+                                            `;
+                                        });
                                     }
 
-                                    addresses.forEach(a => {
-                                        const addrText = `${a?.zip_code || ''} ${a?.city || ''}, ${a?.address_line || ''}`.trim();
-                                        $list.append(`
-                                            <button type="button" class="list-group-item list-group-item-action py-0 px-1 small client-address-item"
-                                                data-name="${escapeHtml(name)}"
-                                                data-tax="${escapeHtml(taxNumber)}"
-                                                data-email="${escapeHtml(email)}"
-                                                data-phone="${escapeHtml(phone)}"
-                                                data-country="${escapeHtml(a?.country || 'HU')}"
-                                                data-zip="${escapeHtml(a?.zip_code || '')}"
-                                                data-city="${escapeHtml(a?.city || '')}"
-                                                data-line="${escapeHtml(a?.address_line || '')}"
-                                                data-cid="${isPartnerCustomer ? c.id : ''}">
-                                                <div class="fw-semibold">${escapeHtml(addrText || 'Cím nélkül')}${a?.is_default ? ' (alapértelmezett)' : ''}</div>
-                                                <div class="text-muted" style="font-size: 0.7rem;">${escapeHtml(a?.country || '')}</div>
-                                            </button>
-                                        `);
-                                    });
+                                    $list.append(`
+                                        <div class="card partner-card mb-2 shadow-sm">
+                                            <div class="card-body p-2">
+                                                <div class="d-flex align-items-center">
+                                                    <div class="rounded-circle ${avatarClass} text-white d-flex align-items-center justify-content-center fw-bold me-2" style="width:40px;height:40px;flex:0 0 40px;font-size:.9rem;">${escapeHtml(initials)}</div>
+                                                    <div class="flex-grow-1" style="min-width:0;">
+                                                        <div class="fw-bold">${escapeHtml(name || email || 'N/A')}${sourceBadge}${partnerBadge}</div>
+                                                        ${metaHtml}
+                                                    </div>
+                                                </div>
+                                                <div class="list-group list-group-flush mt-2">
+                                                    ${addressesHtml}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    `);
                                 });
                             } else {
                                 $list.append(`
-                                    <div class="list-group-item py-0 px-1 small">
-                                        <div class="small text-muted">Nincs találat.</div>
-                                    </div>
+                                    <div class="py-2 px-1 small text-muted">Nincs találat.</div>
                                 `);
                             }
-
-                            $list.append(`
-                                <button type="button" class="list-group-item list-group-item-action py-0 px-1 small client-create client-create-item">
-                                    <div class="fw-semibold">Új partner létrehozása</div>
-                                    <div class="small text-muted">Az alábbi mezőkben megadott adatokkal</div>
-                                </button>
-                            `);
-
-                            $list.show();
                         },
                         error: function () {
-                            const $list = $('#partner_client_search_results');
+                            const $list = $('#partner_select_results');
                             $list.empty();
                             $list.append(`
-                                <div class="list-group-item py-0 px-1 small">
-                                    <div class="small text-muted">A keresés sikertelen volt.</div>
-                                </div>
+                                <div class="py-2 px-1 small text-muted">A keresés sikertelen volt.</div>
                             `);
-                            $list.show();
                         }
                     });
                 }, 300);
             });
 
-            $('#partner_client_search_results').on('click', '.client-address-item', function () {
+            $('#partner_select_results').on('click', '.client-address-item', function () {
                 const $btn = $(this);
                 fillPartnerFromClient({
                     name: $btn.data('name') || '',
+                    clientName: $btn.data('clientName') || '',
                     tax: $btn.data('tax') || '',
                     email: $btn.data('email') || '',
                     phone: $btn.data('phone') || '',
@@ -969,13 +1116,14 @@
                     line: $btn.data('line') || '',
                     customerId: $btn.data('cid') || null,
                 });
-                clearPartnerClientResults();
+                if (partnerSelectModal) partnerSelectModal.hide();
             });
 
-            $('#partner_client_search_results').on('click', '.client-no-address', function () {
+            $('#partner_select_results').on('click', '.client-no-address', function () {
                 const $btn = $(this);
                 fillPartnerFromClient({
                     name: $btn.data('name') || '',
+                    clientName: $btn.data('clientName') || '',
                     tax: $btn.data('tax') || '',
                     email: $btn.data('email') || '',
                     phone: $btn.data('phone') || '',
@@ -985,14 +1133,192 @@
                     line: '',
                     customerId: $btn.data('cid') || null,
                 });
-                clearPartnerClientResults();
+                if (partnerSelectModal) partnerSelectModal.hide();
                 setTimeout(() => {
                     $('#partner_zip_code').trigger('focus');
                 }, 0);
             });
 
-            $('#partner_client_search_results').on('click', '.client-create', function () {
-                clearPartnerClientResults();
+            $('#partnerCreateToggleBtn').on('click', function () {
+                const q = ($('#partner_search_input').val() || '').trim();
+                if (q !== '' && !$('#new_client_name').val()) {
+                    $('#new_client_name').val(q);
+                }
+                showPartnerCreatePane(true);
+                setTimeout(() => {
+                    $('#new_client_name').trigger('focus');
+                }, 0);
+            });
+
+            $('#partnerCreateBackBtn').on('click', function () {
+                showPartnerCreatePane(false);
+            });
+
+            // --- NAV adózó-kereső (szamlazz.hu) az új partner űrlaphoz ---
+            let navTaxpayerDebounce = null;
+            let navTaxpayerRequestSeq = 0;
+
+            function clearNavTaxpayerResults() {
+                $('#nav_taxpayer_results').empty();
+            }
+
+            function fillPartnerCreateFromTaxpayer(t) {
+                const taxpayerName = t?.name || '';
+                if (taxpayerName) {
+                    $('#new_client_name').val(taxpayerName);
+                    $('#new_client_client_name').val(taxpayerName);
+                }
+                if (t?.tax_number) {
+                    $('#new_client_tax_number').val(t.tax_number);
+                }
+                $('#new_client_country').val(t?.country || 'HU');
+                $('#new_client_zip_code').val(t?.zip_code || '');
+                $('#new_client_city').val(t?.city || '');
+                $('#new_client_address_line').val(t?.address_line || '');
+            }
+
+            function lookupNavTaxpayer() {
+                const seq = ++navTaxpayerRequestSeq;
+                const raw = ($('#new_client_tax_number').val() || '') + ' ' + ($('#new_client_name').val() || '');
+                const digits = raw.replace(/\D/g, '').slice(0, 8);
+
+                if (digits.length !== 8) {
+                    return;
+                }
+
+                const companyId = $('#company_id').val() || '';
+                $.ajax({
+                    url: `${window.appConfig.APP_URL}admin/bizonylatok/adozo-kereses?q=${encodeURIComponent(digits)}&company_id=${encodeURIComponent(companyId)}`,
+                    method: 'GET',
+                    success: function (response) {
+                        if (seq !== navTaxpayerRequestSeq) {
+                            return;
+                        }
+
+                        const $results = $('#nav_taxpayer_results');
+                        $results.empty();
+
+                        if (response?.error) {
+                            $results.append(`<div class="small text-muted"><i class="fas fa-info-circle me-1"></i>${escapeHtml(response.error)}</div>`);
+                            return;
+                        }
+
+                        if (response?.invalid) {
+                            $results.append(`<div class="small text-warning"><i class="fas fa-exclamation-triangle me-1"></i>Érvénytelen adószám a NAV nyilvántartásban.</div>`);
+                            return;
+                        }
+
+                        const taxpayers = response?.taxpayers || [];
+                        if (!taxpayers.length) {
+                            return;
+                        }
+
+                        const $list = $('<div class="list-group"></div>');
+                        taxpayers.forEach(t => {
+                            const addrText = `${t?.zip_code || ''} ${t?.city || ''}, ${t?.address_line || ''}`.trim();
+                            const typeBadge = t?.address_type_label
+                                ? `<span class="badge bg-secondary ms-1">${escapeHtml(t.address_type_label)}</span>`
+                                : '';
+                            const $btn = $(`
+                                <button type="button" class="list-group-item list-group-item-action py-1 px-2 small nav-taxpayer-item">
+                                    <div class="fw-semibold"><i class="fas fa-building me-1 text-primary"></i>${escapeHtml(t?.name || 'N/A')}${typeBadge}</div>
+                                    <div class="text-muted">
+                                        <span class="me-2"><i class="fas fa-id-card me-1"></i>${escapeHtml(t?.tax_number || '')}</span>
+                                        ${addrText ? `<span><i class="fas fa-map-marker-alt me-1"></i>${escapeHtml(addrText)}</span>` : ''}
+                                    </div>
+                                </button>
+                            `);
+                            $btn.on('click', function () {
+                                fillPartnerCreateFromTaxpayer(t);
+                                clearNavTaxpayerResults();
+                            });
+                            $list.append($btn);
+                        });
+                        $results.append($list);
+                    },
+                });
+            }
+
+            function scheduleNavTaxpayerLookup() {
+                clearTimeout(navTaxpayerDebounce);
+                navTaxpayerDebounce = setTimeout(lookupNavTaxpayer, 500);
+            }
+
+            $('#new_client_name').on('input', function () {
+                const digits = ($(this).val() || '').replace(/\D/g, '');
+                if (digits.length >= 8) {
+                    scheduleNavTaxpayerLookup();
+                }
+            });
+
+            $('#new_client_tax_number').on('input', function () {
+                const digits = ($(this).val() || '').replace(/\D/g, '');
+                if (digits.length >= 8) {
+                    scheduleNavTaxpayerLookup();
+                } else {
+                    clearNavTaxpayerResults();
+                }
+            });
+
+            $('#partnerCreateSaveBtn').on('click', async function () {
+                const form = document.getElementById('partnerCreateForm');
+                if (!form) return;
+
+                if (!form.reportValidity()) {
+                    return;
+                }
+
+                const formData = new FormData(form);
+                const saveBtn = $(this);
+                const originalHtml = saveBtn.html();
+                saveBtn.prop('disabled', true).html('Mentés...');
+
+                try {
+                    const resp = await fetch(`${window.appConfig.APP_URL}admin/ugyfelek`, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': csrfToken,
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                        },
+                        body: formData,
+                    });
+
+                    if (!resp.ok) {
+                        let msg = 'Hiba történt a partner mentésekor.';
+                        try {
+                            const json = await resp.json();
+                            if (json?.message) msg = json.message;
+                            if (json?.errors && typeof json.errors === 'object') {
+                                const first = Object.values(json.errors).flat()[0];
+                                if (first) msg = String(first);
+                            }
+                        } catch (e) {}
+                        throw new Error(msg);
+                    }
+
+                    const json = await resp.json().catch(() => ({}));
+                    const client = json?.client || {};
+
+                    fillPartnerFromClient({
+                        name: client.name || formData.get('name') || '',
+                        clientName: formData.get('address_client_name') || '',
+                        tax: formData.get('address_tax_number') || '',
+                        email: client.email || formData.get('email') || '',
+                        phone: client.phone || formData.get('phone') || '',
+                        country: formData.get('address_country') || 'HU',
+                        zip: formData.get('address_zip_code') || '',
+                        city: formData.get('address_city') || '',
+                        line: formData.get('address_address_line') || '',
+                    });
+
+                    showToast(json?.message || 'Partner mentve.', 'success');
+                    if (partnerSelectModal) partnerSelectModal.hide();
+                } catch (e) {
+                    showToast(e?.message || 'Hiba!', 'danger');
+                } finally {
+                    saveBtn.prop('disabled', false).html(originalHtml);
+                }
             });
 
             const table = $('#adminTable').DataTable({
