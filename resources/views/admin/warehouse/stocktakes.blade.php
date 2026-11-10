@@ -122,7 +122,7 @@
                 <div id="stocktake_filter_bar" class="bg-white" style="position: sticky; top: 0; z-index: 5; padding-bottom: 8px;">
                     <div class="row g-2 align-items-end">
                         <div class="col-12 col-lg-5">
-                            <label for="product_filter" class="form-label">Terméknév szűrő</label>
+                            <label for="product_filter" class="form-label">Terméknév / vonalkód szűrő</label>
                             <input type="text" class="form-control" id="product_filter" placeholder="Kezdj el gépelni...">
                         </div>
                         <div class="col-12 col-lg-4">
@@ -306,7 +306,10 @@
                     : `<span class="stocktake-thumb-empty"><i class="fa-solid fa-image"></i></span>`;
                 left.innerHTML = `
                     <span class="stocktake-thumb-wrap">${thumbHtml}</span>
-                    <div class="fw-semibold">${escapeHtml(p.title || '')}</div>
+                    <div>
+                        <div class="fw-semibold">${escapeHtml(p.title || '')}</div>
+                        ${p.barcode ? `<div class="small text-muted"><i class="fa-solid fa-barcode me-1"></i>${escapeHtml(p.barcode)}</div>` : ''}
+                    </div>
                 `;
 
                 const right = document.createElement('div');
@@ -346,7 +349,9 @@
             const cat = String(document.getElementById('category_filter')?.value || '');
 
             const filtered = productsCache.filter(p =>
-                (q === '' || String(p.title || '').toLowerCase().includes(q)) &&
+                (q === ''
+                    || String(p.title || '').toLowerCase().includes(q)
+                    || String(p.barcode || '').toLowerCase().includes(q)) &&
                 (cat === '' || String(p.category_title || '') === cat)
             );
 

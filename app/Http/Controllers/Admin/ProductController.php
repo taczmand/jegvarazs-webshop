@@ -68,6 +68,7 @@ class ProductController extends Controller
             ->select([
                 'products.id',
                 'products.title',
+                'products.barcode',
                 'products.gross_price',
                 'products.partner_gross_price',
                 'products.tax_id',
@@ -78,6 +79,7 @@ class ProductController extends Controller
             ->where(function ($query) use ($q) {
                 $query
                     ->where('products.title', 'like', "%{$q}%")
+                    ->orWhere('products.barcode', '=', $q)
                     ->orWhere(
                         'products.id',
                         '=',
@@ -233,6 +235,7 @@ class ProductController extends Controller
                 return [
                     'id' => $p->id,
                     'title' => $p->title,
+                    'barcode' => $p->barcode,
                     'gross_price' => $p->gross_price,
                     'partner_gross_price' => $p->partner_gross_price,
                     'effective_gross_price' => $effective,
@@ -273,6 +276,7 @@ class ProductController extends Controller
             ->select([
                 'id',
                 'title',
+                'barcode',
                 'stock',
                 'in_stock',
                 'gross_price',

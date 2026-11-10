@@ -136,6 +136,7 @@ class ProductService
             $product = Product::create([
                 'title' => $data['title'],
                 'slug' => Str::slug($data['title']),
+                'barcode' => ($data['barcode'] ?? '') !== '' ? $data['barcode'] : null,
                 'description' => $data['description'] ?? null,
                 'stock' => $data['stock'] ?? 0,
                 'in_stock' => array_key_exists('in_stock', $data) ? (bool) $data['in_stock'] : true,
@@ -272,6 +273,7 @@ class ProductService
             $product->update([
                 'title' => $data['title'],
                 'slug' => Str::slug($data['title']),
+                'barcode' => ($data['barcode'] ?? '') !== '' ? $data['barcode'] : null,
                 'description' => $data['description'] ?? null,
                 'stock' => $data['stock'] ?? 0,
                 'in_stock' => array_key_exists('in_stock', $data) ? (bool) $data['in_stock'] : true,
