@@ -28,7 +28,7 @@
                     </div>
 
                     <div class="filter-group flex-grow-1 flex-md-shrink-0">
-                        <select class="form-select filter-input" data-column="7">
+                        <select class="form-select filter-input" data-column="8">
                             <option value="">Kategória (összes)</option>
                             @foreach($categories as $category)
                                 <option value="{{ $category->id }}">{{ $category->title }}</option>
@@ -37,7 +37,7 @@
                     </div>
 
                     <div class="filter-group flex-grow-1 flex-md-shrink-0">
-                        <select class="form-select filter-input" data-column="8">
+                        <select class="form-select filter-input" data-column="9">
                             <option value="">Állapot (összes)</option>
                             <option value="active">Aktív</option>
                             <option value="inactive">Inaktív</option>
@@ -51,6 +51,7 @@
                         <th>ID</th>
                         <th data-priority="1">Kép</th>
                         <th data-priority="2">Terméknév</th>
+                        <th data-priority="7">Vonalkód</th>
                         <th data-priority="6">Készlet</th>
                         <th data-priority="3">Bruttó ár</th>
                         <th data-priority="4">Partner bruttó ár</th>
@@ -107,6 +108,10 @@
                                         <div class="mb-3">
                                             <label class="form-label">Termék neve*</label>
                                             <input type="text" class="form-control" name="title" id="title" name="title" required>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Vonalkód</label>
+                                            <input type="text" class="form-control" name="barcode" id="barcode" autocomplete="off">
                                         </div>
                                         <div class="mb-3">
                                             <label class="form-label">Kategória*</label>
@@ -392,6 +397,7 @@
         function productFieldLabel(field) {
             const map = {
                 'title': 'Termék neve',
+                'barcode': 'Vonalkód',
                 'gross_price': 'Bruttó ár',
                 'partner_gross_price': 'Partner bruttó ár',
                 'stock': 'Készlet',
@@ -522,6 +528,7 @@
                             return `<span data-bs-toggle="tooltip" data-bs-title="${safeFull}">${safeTruncated}</span>`;
                         }
                     },
+                    { data: 'barcode' },
                     { data: 'stock', className: 'editable', name: 'stock' },
                     { data: 'gross_price', className: 'editable', name: 'gross_price' },
                     { data: 'partner_gross_price', className: 'editable', name: 'partner_gross_price' },
@@ -708,6 +715,7 @@
                     // Alapadatok betöltése
                     $('#product_id').val(product.id);
                     $('#title').val(product.title);
+                    $('#barcode').val(product.barcode);
                     $('#gross_price').val(product.gross_price);
                     $('#partner_gross_price').val(product.partner_gross_price);
                     $('#stock').val(product.stock);

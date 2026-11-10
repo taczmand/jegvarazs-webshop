@@ -212,6 +212,7 @@ class StocktakeController extends Controller
                 return [
                     'product_id' => (int) ($it->product_id ?? 0),
                     'title' => (string) ($p?->title ?? ''),
+                    'barcode' => (string) ($p?->barcode ?? ''),
                     'image_url' => $mainPhoto?->path ? asset('storage/' . ltrim($mainPhoto->path, '/')) : null,
                     'category_title' => (string) ($p?->category?->title ?? 'Egyéb'),
                     'unit' => (string) ($p?->unit?->abbreviation ?? $p?->unit?->name ?? 'db'),
@@ -252,6 +253,7 @@ class StocktakeController extends Controller
             ->addSelect([
                 'products.id',
                 'products.title',
+                'products.barcode',
                 'products.cat_id',
                 'products.unit_id',
                 DB::raw('COALESCE(ps.quantity, 0) as current_stock'),
@@ -267,6 +269,7 @@ class StocktakeController extends Controller
             return [
                 'product_id' => (int) $p->id,
                 'title' => (string) ($p->title ?? ''),
+                'barcode' => (string) ($p->barcode ?? ''),
                 'image_url' => $mainPhoto?->path ? asset('storage/' . ltrim($mainPhoto->path, '/')) : null,
                 'category_title' => (string) ($p->category?->title ?? 'Egyéb'),
                 'unit' => (string) ($p->unit?->abbreviation ?? $p->unit?->name ?? 'db'),
