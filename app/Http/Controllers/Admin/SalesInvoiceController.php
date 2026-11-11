@@ -106,11 +106,32 @@ class SalesInvoiceController extends Controller
         ]);
 
         return DataTables::of($invoices)
+            ->filterColumn('id', function ($query, $keyword) {
+                if (is_numeric($keyword)) {
+                    $query->where('id', '=', $keyword);
+                }
+            })
+            ->filterColumn('status', function ($query, $keyword) {
+                $query->where('status', '=', $keyword);
+            })
+            ->filterColumn('payment_status', function ($query, $keyword) {
+                if ($keyword === 'overdue') {
+                    $query->where('status', '=', 'issued')
+                        ->whereIn('payment_status', ['unpaid', 'partially_paid'])
+                        ->whereDate('due_at', '<', now()->toDateString());
+                    return;
+                }
+                $query->where('payment_status', '=', $keyword);
+            })
+            ->filterColumn('invoice_type', function ($query, $keyword) {
+                $query->where('invoice_type', '=', $keyword);
+            })
             ->addColumn('payment_method', function ($invoice) {
                 $translations = [
                     'bank_transfer'   => 'átutalás',
                     'cash'   => 'készpénz',
-                    'credtit_card' => 'bankkártya'
+                    'cod' => 'utánvét',
+                    'credit_card' => 'bankkártya'
                 ];
                 return $translations[$invoice->payment_method] ?? ucfirst($invoice->payment_method);
             })
@@ -182,6 +203,9 @@ class SalesInvoiceController extends Controller
                     $buttons .= '
                         <button class="btn btn-sm btn-primary edit" data-id="' . $invoice->id . '" title="Szerkesztés">
                             <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-danger delete" data-id="' . $invoice->id . '" title="Törlés">
+                            <i class="fas fa-trash"></i>
                         </button>
                     ';
                 }
@@ -762,6 +786,34 @@ class SalesInvoiceController extends Controller
         ], 200);
     }
 
+    public function destroy(int $id)
+    {
+        $user = auth('admin')->user();
+        if (!$user || !$user->can('edit-sales-invoice')) {
+            return response()->json(['message' => 'Nincs jogosultságod törölni.'], 403);
+        }
+
+        try {
+            DB::transaction(function () use ($id) {
+                $invoice = SalesInvoice::query()->lockForUpdate()->findOrFail($id);
+
+                if ((string) $invoice->status !== 'draft') {
+                    throw new \RuntimeException('Csak piszkozat állapotú számla törölhető.');
+                }
+
+                if ($invoice->stock_deducted_at !== null) {
+                    throw new \RuntimeException('A számlához már történt készletlevonás, ezért nem törölhető.');
+                }
+
+                $invoice->delete();
+            });
+        } catch (\RuntimeException $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
+        }
+
+        return response()->json(['message' => 'Sikeres törlés!'], 200);
+    }
+
     public function previewInvoicePdf(Request $request, InvoiceServiceInterface $invoiceService)
     {
         $user = auth('admin')->user();
@@ -1178,12 +1230,21 @@ class SalesInvoiceController extends Controller
                 });
             }
 
-            $invoice->update([
+            $issueUpdate = [
                 'pdf_path' => $relativePath,
                 'invoice_number' => $providerInvoiceNumber ?: $invoice->invoice_number,
                 'status' => 'issued',
                 'stock_deducted_at' => $invoice->stock_deducted_at ?: now(),
-            ]);
+            ];
+
+            if ((string) $validated['payment_method'] === 'bank_transfer') {
+                $issueUpdate['outstanding_amount'] = max(
+                    0,
+                    (int) $invoice->gross_total - (int) $invoice->paid_amount
+                );
+            }
+
+            $invoice->update($issueUpdate);
 
             return response($pdfBytes, 200, [
                 'Content-Type' => 'application/pdf',

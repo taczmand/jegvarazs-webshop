@@ -749,6 +749,10 @@
                                                     data-zip="${escapeHtml(a?.zip_code || '')}"
                                                     data-city="${escapeHtml(a?.city || '')}"
                                                     data-line="${escapeHtml(a?.address_line || '')}"
+                                                    data-source="${escapeHtml(source)}"
+                                                    data-pid="${escapeHtml(c?.id ?? '')}"
+                                                    data-aid="${escapeHtml(a?.id ?? '')}"
+                                                    data-addr-tax="${escapeHtml(a?.tax_number || '')}"
                                                     data-cid="${isPartnerCustomer ? c.id : ''}">
                                                     <i class="fas fa-map-marker-alt text-danger me-2"></i>
                                                     <span>
@@ -756,6 +760,7 @@
                                                         <span class="small ${addrClientName ? 'text-muted' : 'fw-semibold'}">${escapeHtml(addrText || 'Cím nélkül')}${a?.is_default ? ' (alapértelmezett)' : ''}</span>
                                                         ${addrTax ? `<span class="d-block small text-muted"><i class="fas fa-id-card me-1"></i>${escapeHtml(addrTax)}</span>` : ''}
                                                     </span>
+                                                    <span class="partner-address-edit ms-auto ps-3 text-secondary" role="button" title="Cím szerkesztése"><i class="fas fa-pen"></i></span>
                                                 </button>
                                             `;
                                         });
@@ -773,6 +778,11 @@
                                                 </div>
                                                 <div class="list-group list-group-flush mt-2">
                                                     ${addressesHtml}
+                                                </div>
+                                                <div class="mt-2 partner-address-new-wrap">
+                                                    <button type="button" class="btn btn-sm btn-outline-success partner-address-new" data-source="${escapeHtml(source)}" data-pid="${escapeHtml(c?.id ?? '')}">
+                                                        <i class="fas fa-plus me-1"></i> Új számlázási cím
+                                                    </button>
                                                 </div>
                                             </div>
                                         </div>
@@ -831,6 +841,8 @@
                     $('#partner_zip_code').trigger('focus');
                 }, 0);
             });
+
+            @include('admin.documents.partials.partner-address-editor')
 
             $('#partnerCreateToggleBtn').on('click', function () {
                 const q = ($('#partner_search_input').val() || '').trim();

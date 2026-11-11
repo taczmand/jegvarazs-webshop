@@ -415,6 +415,7 @@ Route::get('/automatizacio/jogosultsagok/szinkron', function (Request $request, 
             Route::post('/bizonylatok/kimeno-szamlak/preview-invoice-pdf', [SalesInvoiceController::class, 'previewInvoicePdf'])->name('documents.sales-invoices.preview-invoice-pdf');
             Route::post('/bizonylatok/kimeno-szamlak/{id}/issue-invoice-pdf', [SalesInvoiceController::class, 'issueInvoicePdf'])->name('documents.sales-invoices.issue-invoice-pdf');
             Route::put('/bizonylatok/kimeno-szamlak/{id}', [SalesInvoiceController::class, 'update'])->name('documents.sales-invoices.update');
+            Route::delete('/bizonylatok/kimeno-szamlak/{id}', [SalesInvoiceController::class, 'destroy'])->name('documents.sales-invoices.destroy');
             Route::get('/bizonylatok/kimeno-szamlak/payments/{id}', [SalesInvoiceController::class, 'payments'])->name('documents.sales-invoices.payments');
             Route::post('/bizonylatok/kimeno-szamlak/addpayments', [SalesInvoiceController::class, 'addPayment'])->name('documents.sales-invoices.add-payment');
             Route::delete('/bizonylatok/kimeno-szamlak/payments/{payment}', [SalesInvoiceController::class, 'deletePayment'])->name('documents.sales-invoices.delete-payment');
@@ -551,6 +552,7 @@ Route::get('/automatizacio/jogosultsagok/szinkron', function (Request $request, 
             Route::get('/ugyfelek/kereses', [ClientController::class, 'search'])->name('clients.search');
             Route::get('/bizonylatok/partner-kereses', [PartnerSearchController::class, 'search'])->name('documents.partner-search');
             Route::get('/bizonylatok/adozo-kereses', [PartnerSearchController::class, 'taxpayer'])->name('documents.taxpayer-search');
+            Route::post('/bizonylatok/partner-cim', [PartnerSearchController::class, 'saveAddress'])->name('documents.partner-address.save');
             Route::get('/ugyfelek/check-email', [ClientController::class, 'checkEmail'])->name('clients.check-email');
             Route::get('/ugyfelek/data', [ClientController::class, 'data'])->name('clients.data');
             Route::get('/ugyfelek/{id}/timeline', [ClientController::class, 'timeline'])->name('clients.timeline');

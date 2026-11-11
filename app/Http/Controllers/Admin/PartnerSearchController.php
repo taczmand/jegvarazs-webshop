@@ -20,13 +20,21 @@ class PartnerSearchController extends Controller
             return response()->json(['partners' => []]);
         }
 
+        $words = preg_split('/\s+/u', $q, -1, PREG_SPLIT_NO_EMPTY);
+
         $clients = Client::query()
-            ->where(function ($query) use ($q) {
-                $query->where('name', 'like', "%{$q}%")
+            ->where(function ($query) use ($q, $words) {
+                $query->where(function ($nameQuery) use ($words) {
+                    foreach ($words as $word) {
+                        $nameQuery->where('name', 'like', "%{$word}%");
+                    }
+                })
                     ->orWhere('email', 'like', "%{$q}%")
                     ->orWhere('phone', 'like', "%{$q}%")
-                    ->orWhereHas('addresses', function ($inner) use ($q) {
-                        $inner->where('client_name', 'like', "%{$q}%");
+                    ->orWhereHas('addresses', function ($inner) use ($words) {
+                        foreach ($words as $word) {
+                            $inner->where('client_name', 'like', "%{$word}%");
+                        }
                     });
             })
             ->orderBy('name')
@@ -34,9 +42,15 @@ class PartnerSearchController extends Controller
             ->get();
 
         $customers = Customer::query()
-            ->where(function ($query) use ($q) {
-                $query->where('first_name', 'like', "%{$q}%")
-                    ->orWhere('last_name', 'like', "%{$q}%")
+            ->where(function ($query) use ($q, $words) {
+                $query->where(function ($nameQuery) use ($words) {
+                    foreach ($words as $word) {
+                        $nameQuery->where(function ($wordQuery) use ($word) {
+                            $wordQuery->where('first_name', 'like', "%{$word}%")
+                                ->orWhere('last_name', 'like', "%{$word}%");
+                        });
+                    }
+                })
                     ->orWhere('email', 'like', "%{$q}%");
             })
             ->orderBy('last_name')
@@ -118,7 +132,7 @@ class PartnerSearchController extends Controller
                     return [
                         'id' => $address->id,
                         'is_default' => false,
-                        'client_name' => $address->is_company ? $address->name : null,
+                        'client_name' => trim((string) $address->name) !== '' ? $address->name : null,
                         'billing_name' => $address->name,
                         'is_company' => (bool) $address->is_company,
                         'tax_number' => $address->tax_number ?: null,
@@ -131,10 +145,19 @@ class PartnerSearchController extends Controller
             ];
         });
 
+        $collator = class_exists(\Collator::class) ? new \Collator('hu_HU') : null;
+
         $payload = $clientPayload
             ->concat($customerPayload)
-            ->sortBy(function ($row) {
-                return mb_strtolower((string) ($row['name'] ?? ''));
+            ->sort(function ($a, $b) use ($collator) {
+                $nameA = trim((string) ($a['name'] ?? ''));
+                $nameB = trim((string) ($b['name'] ?? ''));
+
+                if ($collator) {
+                    return (int) $collator->compare($nameA, $nameB);
+                }
+
+                return strcmp(mb_strtolower($nameA), mb_strtolower($nameB));
             })
             ->values()
             ->take(10)
@@ -143,6 +166,61 @@ class PartnerSearchController extends Controller
         return response()->json([
             'partners' => $payload,
         ]);
+    }
+
+    public function saveAddress(Request $request)
+    {
+        $validated = $request->validate([
+            'source' => 'required|string|in:client,customer',
+            'partner_id' => 'required|integer',
+            'address_id' => 'nullable|integer',
+            'name' => 'nullable|string|max:255',
+            'tax_number' => 'nullable|string|max:50',
+            'country' => 'nullable|string|max:10',
+            'zip_code' => 'required|string|max:20',
+            'city' => 'required|string|max:100',
+            'address_line' => 'required|string|max:255',
+        ]);
+
+        $partnerId = (int) $validated['partner_id'];
+        $addressId = !empty($validated['address_id']) ? (int) $validated['address_id'] : null;
+        $name = trim((string) ($validated['name'] ?? ''));
+        $taxNumber = trim((string) ($validated['tax_number'] ?? ''));
+
+        $data = [
+            'tax_number' => $taxNumber !== '' ? $taxNumber : null,
+            'country' => ($validated['country'] ?? '') ?: 'HU',
+            'zip_code' => $validated['zip_code'],
+            'city' => $validated['city'],
+            'address_line' => $validated['address_line'],
+        ];
+
+        if ($validated['source'] === 'client') {
+            $data['client_name'] = $name !== '' ? $name : null;
+
+            if ($addressId) {
+                $address = ClientAddress::query()->where('client_id', $partnerId)->findOrFail($addressId);
+                $address->update($data);
+            } else {
+                $client = Client::query()->findOrFail($partnerId);
+                $address = ClientAddress::create($data + ['client_id' => $client->id]);
+            }
+        } else {
+            $data['name'] = $name !== '' ? $name : null;
+
+            if ($addressId) {
+                $address = CustomerBillingAddress::query()->where('customer_id', $partnerId)->findOrFail($addressId);
+                $address->update($data);
+            } else {
+                $customer = Customer::query()->findOrFail($partnerId);
+                $address = CustomerBillingAddress::create($data + ['customer_id' => $customer->id]);
+            }
+        }
+
+        return response()->json([
+            'message' => 'Cím sikeresen mentve!',
+            'address' => $address,
+        ], 200);
     }
 
     /**
