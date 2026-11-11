@@ -101,9 +101,21 @@ class SalesInvoiceController extends Controller
             'payment_status',
             'note',
             'pdf_path',
+            'related_order_id',
             'created_at as created',
             'updated_at as updated',
         ]);
+
+        $productSearch = trim((string) request()->input('product_search', ''));
+        if ($productSearch !== '') {
+            $like = '%' . addcslashes($productSearch, '\\%_') . '%';
+            $invoices->whereHas('items', function ($query) use ($like) {
+                $query->where(function ($q) use ($like) {
+                    $q->where('name', 'like', $like)
+                        ->orWhere('sku', 'like', $like);
+                });
+            });
+        }
 
         return DataTables::of($invoices)
             ->filterColumn('id', function ($query, $keyword) {
@@ -230,6 +242,13 @@ class SalesInvoiceController extends Controller
                 return $invoice->created_at ? $invoice->created_at->format('Y-m-d H:i:s') : '';
             })
             ->rawColumns(['action'])
+            ->with('gross_total_sum', function () use ($invoices) {
+                $sumQuery = $invoices->clone()->toBase()->reorder();
+                $sumQuery->limit = null;
+                $sumQuery->offset = null;
+
+                return (int) $sumQuery->sum('gross_total');
+            })
             ->make(true);
     }
 
@@ -526,6 +545,7 @@ class SalesInvoiceController extends Controller
             'status' => 'nullable|string|max:50',
             'payment_status' => 'nullable|string|max:50',
             'correction_of_sales_invoice_id' => 'nullable|integer|exists:sales_invoices,id',
+            'related_order_id' => 'nullable|integer|exists:orders,id',
 
             'partner_name' => 'required|string|max:255',
             'partner_tax_number' => 'nullable|string|max:255',
@@ -686,6 +706,7 @@ class SalesInvoiceController extends Controller
             'status' => 'nullable|string|max:50',
             'payment_status' => 'nullable|string|max:50',
             'correction_of_sales_invoice_id' => 'nullable|integer|exists:sales_invoices,id',
+            'related_order_id' => 'nullable|integer|exists:orders,id',
 
             'partner_name' => 'required|string|max:255',
             'partner_tax_number' => 'nullable|string|max:255',
@@ -891,6 +912,13 @@ class SalesInvoiceController extends Controller
             return response()->json(['message' => 'Nincs tétel a számlában.'], 422);
         }
 
+        foreach ($itemsRaw as $row) {
+            $wid = is_array($row) ? ($row['warehouse_id'] ?? null) : null;
+            if (!is_numeric($wid) || (float) $wid <= 0) {
+                return response()->json(['message' => 'Minden tételnél kötelező raktárat választani.'], 422);
+            }
+        }
+
         $items = [];
         foreach ($itemsRaw as $row) {
             if (!is_array($row)) {
@@ -1048,6 +1076,13 @@ class SalesInvoiceController extends Controller
         $itemsRaw = json_decode((string) $validated['items_json'], true);
         if (!is_array($itemsRaw) || count($itemsRaw) === 0) {
             return response()->json(['message' => 'Nincs tétel a számlában.'], 422);
+        }
+
+        foreach ($itemsRaw as $row) {
+            $wid = is_array($row) ? ($row['warehouse_id'] ?? null) : null;
+            if (!is_numeric($wid) || (float) $wid <= 0) {
+                return response()->json(['message' => 'Minden tételnél kötelező raktárat választani.'], 422);
+            }
         }
 
         $items = [];
@@ -1242,6 +1277,10 @@ class SalesInvoiceController extends Controller
                     0,
                     (int) $invoice->gross_total - (int) $invoice->paid_amount
                 );
+            } elseif (in_array((string) $validated['payment_method'], ['cash', 'credit_card'], true)) {
+                $issueUpdate['payment_status'] = 'paid';
+                $issueUpdate['paid_amount'] = (int) $invoice->gross_total;
+                $issueUpdate['outstanding_amount'] = 0;
             }
 
             $invoice->update($issueUpdate);
@@ -1266,6 +1305,15 @@ class SalesInvoiceController extends Controller
         }
 
         $decoded = array_values(array_filter($decoded, fn ($row) => is_array($row)));
+
+        foreach ($decoded as $row) {
+            $wid = $row['warehouse_id'] ?? null;
+            if (!is_numeric($wid) || (float) $wid <= 0) {
+                throw ValidationException::withMessages([
+                    'items_json' => 'Minden tételnél kötelező a raktár kiválasztása.',
+                ]);
+            }
+        }
 
         SalesInvoiceItem::query()->where('sales_invoice_id', $salesInvoiceId)->delete();
 

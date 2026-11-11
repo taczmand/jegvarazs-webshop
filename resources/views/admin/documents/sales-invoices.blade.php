@@ -94,6 +94,10 @@
                     </div>
 
                     <div class="filter-group flex-grow-1 flex-md-shrink-0">
+                        <input type="text" placeholder="Termék" class="form-control" id="product_filter" autocomplete="off">
+                    </div>
+
+                    <div class="filter-group flex-grow-1 flex-md-shrink-0">
                         <select class="form-select filter-input" data-column="10">
                             <option value="">Fizetés (összes)</option>
                             <option value="unpaid">Nincs kifizetve</option>
@@ -143,6 +147,24 @@
                         <th data-priority="2">Műveletek</th>
                     </tr>
                     </thead>
+                    <tfoot>
+                    <tr>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th class="text-end">Összesen:</th>
+                        <th id="invoices_gross_sum">–</th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                    </tr>
+                    </tfoot>
                 </table>
             @else
                 <div class="alert alert-warning">
@@ -158,6 +180,11 @@
         <x-slot:left>
             <input type="hidden" id="invoice_id" name="id">
             <input type="hidden" id="correction_of_sales_invoice_id" name="correction_of_sales_invoice_id">
+            <input type="hidden" id="related_order_id" name="related_order_id">
+
+            <div class="alert alert-info py-2 px-3 mb-3 small" id="related_order_info" style="display:none;">
+                <i class="fas fa-link me-1"></i> Összekapcsolt rendelés: <strong id="related_order_label"></strong>
+            </div>
 
             <fieldset class="admin-fieldset mb-3">
                 <legend class="admin-fieldset__legend">Számla kiállító adatai</legend>
@@ -681,6 +708,7 @@
 
                     $('#invoice_id').val('');
                     $('#correction_of_sales_invoice_id').val(invoice.id || originalId);
+                    setRelatedOrder(invoice.related_order_id);
 
                     $('#company_id').val(invoice.company_id || defaultCompanyId);
                     populateCompanyPrefixes(invoice.company_id || defaultCompanyId, invoice.company_invoice_prefix_id || '');
@@ -732,7 +760,6 @@
                             warehouse_name: wh?.name ?? '',
                             name: it.name ?? '',
                             quantity: negQty,
-                            qty_step: 1,
                             unit_abbreviation: it.unit ?? '',
                             discount_percent: Number(it.discount_percent ?? 0),
                             vat_percent: Number(it.vat_percent ?? 0),
@@ -798,6 +825,7 @@
 
                 try {
                     syncItemsJson();
+                    if (!validateItemsWarehouses()) return;
                     const form = document.getElementById('salesInvoiceForm');
                     const formData = new FormData(form);
 
@@ -1265,11 +1293,22 @@
                 },
                 processing: true,
                 serverSide: true,
-                ajax: '{{ route('admin.documents.sales-invoices.data') }}',
+                ajax: {
+                    url: '{{ route('admin.documents.sales-invoices.data') }}',
+                    data: function (d) {
+                        d.product_search = ($('#product_filter').val() || '').trim();
+                    }
+                },
                 order: [[0, 'desc']],
                 columns: [
                     { data: 'id' },
-                    { data: 'invoice_number' },
+                    {
+                        data: 'invoice_number',
+                        render: function (data, type, row) {
+                            if (type !== 'display' || !row.related_order_id) return data;
+                            return `${data} <span class="badge bg-info text-dark ms-1" title="Összekapcsolt rendelés"><i class="fas fa-link me-1"></i>#${escapeHtml(row.related_order_id)}</span>`;
+                        }
+                    },
                     { data: 'partner_name' },
                     { data: 'payment_method' },
                     { data: 'issued_at' },
@@ -1285,10 +1324,21 @@
                 ],
             });
 
+            table.on('xhr.dt', function (e, settings, json) {
+                const sum = Number(json?.gross_total_sum);
+                $('#invoices_gross_sum').text(Number.isFinite(sum) ? `${Math.round(sum).toLocaleString('hu-HU')} Ft` : '–');
+            });
+
             $('.filter-input').on('change keyup', function () {
                 var i =$(this).attr('data-column');
                 var v =$(this).val();
                 table.columns(i).search(v).draw();
+            });
+
+            let productFilterDebounce = null;
+            $('#product_filter').on('input', function () {
+                clearTimeout(productFilterDebounce);
+                productFilterDebounce = setTimeout(() => table.draw(), 300);
             });
 
             $('#adminTable').on('click', '.delete', async function () {
@@ -1342,6 +1392,82 @@
                 modal.show();
             });
 
+            // Webshop rendelésből nyitva: /admin/bizonylatok/kimeno-szamlak?order_id=123
+            const orderIdFromUrl = new URLSearchParams(window.location.search).get('order_id');
+            if (orderIdFromUrl) {
+                openInvoiceFromOrder(orderIdFromUrl);
+            }
+
+            async function openInvoiceFromOrder(orderId) {
+                try {
+                    const resp = await fetch(`{{ route('admin.orders.order', ['id' => '__ID__']) }}`.replace('__ID__', String(orderId)), {
+                        headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                    });
+                    if (!resp.ok) throw new Error('Nem sikerült betölteni a rendelést.');
+                    const order = await resp.json();
+
+                    resetForm('Új kimenő számla');
+                    const companyId = defaultCompanyId || $('#company_id').val();
+                    if (companyId) {
+                        $('#company_id').val(companyId);
+                    }
+                    populateCompanyPrefixes($('#company_id').val(), '');
+
+                    setRelatedOrder(order.id || orderId);
+
+                    fillPartnerFromClient({
+                        name: order.billing_name || '',
+                        tax: order.billing_tax_number || '',
+                        email: order.contact_email || '',
+                        phone: order.contact_phone || '',
+                        country: order.billing_country || 'HU',
+                        zip: order.billing_postal_code || '',
+                        city: order.billing_city || '',
+                        line: order.billing_address_line || '',
+                        customerId: order.customer_id || null,
+                    });
+
+                    $('#note').val(`Webshop rendelés #${order.id}`);
+
+                    (Array.isArray(order.items) ? order.items : []).forEach(oi => {
+                        const p = oi.product || {};
+                        const photos = Array.isArray(p.photos) ? p.photos : [];
+                        const mainPhoto = photos.find(ph => ph && ph.is_main) || photos[0] || null;
+                        const vatPercent = Number(oi.tax_value ?? p.tax_value ?? 0);
+
+                        const item = {
+                            product_id: oi.product_id ?? p.id ?? null,
+                            image_url: mainPhoto && mainPhoto.path
+                                ? `${window.appConfig.APP_URL}storage/${String(mainPhoto.path).replace(/^\/+/, '')}`
+                                : null,
+                            warehouse_id: null,
+                            warehouse_name: '',
+                            warehouses: Array.isArray(p.warehouses) ? p.warehouses : [],
+                            name: String(oi.product_name || p.title || ''),
+                            quantity: Number(oi.quantity) || 1,
+                            unit_abbreviation: (p.unit && (p.unit.abbreviation || p.unit.name)) || '',
+                            discount_percent: 0,
+                            vat_percent: Number.isFinite(vatPercent) ? vatPercent : 0,
+                            vat_code: taxNameForValue(vatPercent),
+                            unit_net_price: 0,
+                            unit_gross_price: Math.round(Number(oi.gross_price ?? p.gross_price ?? 0) || 0),
+                            net_total: 0,
+                            vat_total: 0,
+                            gross_total: 0,
+                            note: '',
+                        };
+                        recalcRow(item);
+                        items.push(item);
+                    });
+                    renderItems();
+                    syncItemsJson();
+
+                    modal.show();
+                } catch (e) {
+                    showToast(e?.message || 'Nem sikerült betölteni a rendelést.', 'danger');
+                }
+            }
+
             $('#previewSalesInvoice').on('click', function () {
                 loadInvoicePdfPreview();
             });
@@ -1393,6 +1519,7 @@
 
                     $('#invoice_id').val(invoice.id || invoiceId);
                     $('#correction_of_sales_invoice_id').val(invoice.correction_of_sales_invoice_id || '');
+                    setRelatedOrder(invoice.related_order_id);
 
                     $('#company_id').val(invoice.company_id || defaultCompanyId);
                     populateCompanyPrefixes(invoice.company_id || defaultCompanyId, invoice.company_invoice_prefix_id || '');
@@ -1447,7 +1574,6 @@
                             warehouse_name: wh?.name ?? '',
                             name: it.name ?? '',
                             quantity: Number(it.quantity ?? 0),
-                            qty_step: 1,
                             unit_abbreviation: it.unit ?? '',
                             discount_percent: Number(it.discount_percent ?? 0),
                             vat_percent: Number(it.vat_percent ?? 0),
@@ -1486,6 +1612,7 @@
                 e.preventDefault();
 
                 syncItemsJson();
+                if (!validateItemsWarehouses()) return;
 
                 const formData = new FormData(document.getElementById('salesInvoiceForm'));
                 formData.append('_token', csrfToken);
@@ -1891,6 +2018,7 @@
             // Piszkozat mentése (létrehozás vagy frissítés szamlazó nélkül)
             function saveDraftInvoice() {
                 syncItemsJson();
+                if (!validateItemsWarehouses()) return;
 
                 const formData = new FormData(document.getElementById('salesInvoiceForm'));
                 formData.append('_token', csrfToken);
@@ -2011,6 +2139,36 @@
                 return t ? String(t.tax_name ?? '').trim() : '';
             }
 
+            function warehouseOptionsHtml(item) {
+                const sel = String(item?.warehouse_id ?? '');
+                const hasStockData = Array.isArray(item?.warehouses) && item.warehouses.length > 0;
+                const list = hasStockData ? item.warehouses : (Array.isArray(warehouses) ? warehouses : []);
+                const unitAbbr = String(item?.unit_abbreviation ?? '').trim();
+
+                let html = `<option value="">— raktár —</option>`;
+                list.forEach(w => {
+                    const id = String(w.id ?? '');
+                    const label = String(w.name ?? ('#' + id));
+                    const qty = (w.quantity !== undefined && w.quantity !== null && w.quantity !== '')
+                        ? Number(w.quantity) : null;
+                    const disabled = qty !== null && qty <= 0 && id !== sel;
+                    const qtyLabel = qty !== null
+                        ? ` (${Number(qty)}${unitAbbr !== '' ? ' ' + unitAbbr : ''})`
+                        : '';
+                    html += `<option value="${escapeHtml(id)}"${id === sel ? ' selected' : ''}${disabled ? ' disabled' : ''}>${escapeHtml(label)}${escapeHtml(qtyLabel)}</option>`;
+                });
+                return html;
+            }
+
+            function validateItemsWarehouses() {
+                const missing = items.find(i => !i.warehouse_id);
+                if (missing) {
+                    showToast(`Minden tételnél kötelező raktárat választani${missing.name ? `: ${missing.name}` : ''}.`, 'warning');
+                    return false;
+                }
+                return true;
+            }
+
             function recalcRow(item) {
                 const qty = Number(item.quantity);
                 const unitGross = Number(item.unit_gross_price);
@@ -2053,11 +2211,11 @@
                                     </div>
                                 </div>
                             </td>
-                            <td>
-                                <div>${escapeHtml(item.warehouse_name || '—')}</div>
+                            <td style="min-width: 130px;">
+                                <select class="form-select form-select-sm item-warehouse">${warehouseOptionsHtml(item)}</select>
                             </td>
                             <td style="width: 90px;">
-                                <input type="number" min="${item.qty_step ?? 1}" step="${item.qty_step ?? 1}" class="form-control form-control-sm text-end item-qty" value="${item.quantity}">
+                                <input type="number" min="0" step="any" class="form-control form-control-sm text-end item-qty" value="${item.quantity}">
                             </td>
                             <td class="text-center" style="width: 60px;">
                                 <input type="text" class="form-control form-control-sm text-center item-unit-abbr" value="${escapeHtml(item.unit_abbreviation ?? '')}">
@@ -2097,9 +2255,7 @@
             function addProductAsItem(product) {
                 const existing = items.find(i => i.product_id === product.id);
                 if (existing) {
-                    const step = Number(existing.qty_step);
-                    const add = Number.isFinite(step) && step > 0 ? step : 1;
-                    existing.quantity = Number(existing.quantity) + add;
+                    existing.quantity = Number(existing.quantity) + 1;
                     recalcRow(existing);
                     renderItems();
                     syncItemsJson();
@@ -2109,9 +2265,9 @@
                 const unitPrice = product.effective_gross_price ?? product.gross_price ?? 0;
                 const vatPercent = product.tax_value ?? 0;
                 const unitAbbrev = product.unit_abbreviation ?? '';
-                const qtyStep = (() => {
+                const defaultQty = (() => {
                     const q = Number(product.unit_qty);
-                    return Number.isFinite(q) && q > 1 ? q : 1;
+                    return Number.isFinite(q) && q > 0 ? q : 1;
                 })();
 
                 const item = {
@@ -2119,9 +2275,9 @@
                     image_url: product.image_url ?? null,
                     warehouse_id: product.warehouse_id,
                     warehouse_name: product.warehouse_name,
+                    warehouses: Array.isArray(product.warehouses) ? product.warehouses : [],
                     name: product.title,
-                    quantity: qtyStep,
-                    qty_step: qtyStep,
+                    quantity: defaultQty,
                     unit_abbreviation: unitAbbrev,
                     discount_percent: 0,
                     vat_percent: vatPercent,
@@ -2354,15 +2510,9 @@
                 const name = tr.find('.item-name').val();
                 const unitAbbr = tr.find('.item-unit-abbr').val();
 
-                const minQty = Number(item.qty_step);
-                const min = Number.isFinite(minQty) && minQty > 1 ? minQty : 1;
-                const qty = Number.isFinite(qtyRaw) ? qtyRaw : min;
-                const clampedQty = qty < min ? min : qty;
-                if (clampedQty !== qtyRaw) {
-                    qtyInput.val(clampedQty);
-                }
+                const qty = Number.isFinite(qtyRaw) ? qtyRaw : 1;
 
-                item.quantity = clampedQty;
+                item.quantity = qty;
                 item.unit_gross_price = Number.isFinite(unit) ? unit : 0;
                 item.discount_percent = Number.isFinite(discount) ? discount : 0;
                 item.vat_percent = Number.isFinite(vat) ? vat : 0;
@@ -2406,6 +2556,19 @@
                 if (!Number.isFinite(idx)) return;
                 items.splice(idx, 1);
                 renderItems();
+                syncItemsJson();
+            });
+
+            $('#invoice_items_table').on('change', '.item-warehouse', function () {
+                const tr = $(this).closest('tr');
+                const idx = Number(tr.data('idx'));
+                const item = items[idx];
+                if (!item) return;
+
+                const val = String($(this).val() || '');
+                const wh = (Array.isArray(warehouses) ? warehouses : []).find(w => String(w.id) === val);
+                item.warehouse_id = val === '' ? null : (wh ? wh.id : val);
+                item.warehouse_name = wh ? String(wh.name ?? '') : '';
                 syncItemsJson();
             });
 
@@ -2513,11 +2676,19 @@
                 $('#due_at').val(dueDateForPaymentMethod($(this).val(), todayDate()));
             });
 
+            function setRelatedOrder(orderId) {
+                const id = String(orderId ?? '').trim();
+                $('#related_order_id').val(id);
+                $('#related_order_label').text(id !== '' ? `#${id}` : '');
+                $('#related_order_info').toggle(id !== '');
+            }
+
             function resetForm(title = null) {
                 $('#salesInvoiceForm')[0].reset();
                 $('#salesInvoiceModalLabel').text(title);
                 $('#invoice_id').val('');
                 $('#correction_of_sales_invoice_id').val('');
+                setRelatedOrder('');
 
                 if (defaultCompanyId) {
                     $('#company_id').val(defaultCompanyId);

@@ -471,26 +471,12 @@
                 return { net, gross };
             }
 
-            function getQtyStep(row) {
-                const pack = Number(row.unit_qty || 0);
-                if (Number.isFinite(pack) && pack > 0) return pack;
-                return 1;
-            }
-
-            function normalizeQtyToStep(qty, step) {
-                const q = Number(qty || 0);
-                const s = Number(step || 1);
-                if (!Number.isFinite(q) || !Number.isFinite(s) || s <= 0) return 0;
-                return Math.round(q / s) * s;
-            }
-
             function renderItems() {
                 const $tbody = $('#items_table tbody');
                 $tbody.empty();
 
                 items.forEach((row, idx) => {
                     const { net, gross } = calcRow(row);
-                    const qtyStep = getQtyStep(row);
                     const qtyVal = (row.quantity ?? 1);
 
                     $tbody.append(`
@@ -504,7 +490,7 @@
                                 </div>
                             </td>
                             <td class="text-end">
-                                <input type="number" step="${escapeHtml(qtyStep)}" min="0" class="form-control form-control-sm item-qty" value="${escapeHtml(qtyVal)}">
+                                <input type="number" step="any" min="0" class="form-control form-control-sm item-qty" value="${escapeHtml(qtyVal)}">
                             </td>
                             <td>
                                 <input type="text" class="form-control form-control-sm item-unit" value="${escapeHtml(row.unit || 'db')}">
@@ -583,17 +569,7 @@
                 const idx = Number($tr.data('idx'));
                 if (!Number.isFinite(idx) || !items[idx]) return;
 
-                const $qty = $tr.find('.item-qty');
-                const qtyStep = getQtyStep(items[idx]);
-                let qty = Number($qty.val() || 0);
-
-                if (qtyStep !== 1) {
-                    const normalized = normalizeQtyToStep(qty, qtyStep);
-                    if (Number.isFinite(normalized) && normalized !== qty) {
-                        qty = normalized;
-                        $qty.val(String(qty));
-                    }
-                }
+                const qty = Number($tr.find('.item-qty').val() || 0);
 
                 items[idx].quantity = qty;
                 items[idx].unit = String($tr.find('.item-unit').val() || 'db');
@@ -670,14 +646,16 @@
                 const vatPercent = vatRaw !== '' && Number.isFinite(Number(vatRaw)) ? Number(vatRaw) : 27;
                 const gross = Number($btn.data('price') || 0);
                 const unitNet = vatPercent > 0 ? gross / (1 + vatPercent / 100) : gross;
+                const packQty = Number($btn.data('unit-qty') || 0);
+                const defaultQty = Number.isFinite(packQty) && packQty > 0 ? packQty : 1;
 
                 items.push({
                     product_id: $btn.data('id'),
                     image_url: $btn.data('img') || null,
                     name: $btn.data('name'),
                     unit: $btn.data('unit') || 'db',
-                    unit_qty: Number($btn.data('unit-qty') || 0),
-                    quantity: 1,
+                    unit_qty: packQty,
+                    quantity: defaultQty,
                     unit_net_price: Number.isFinite(unitNet) ? Math.round(unitNet) : 0,
                     vat_percent: vatPercent,
                 });

@@ -1318,25 +1318,11 @@
 
             const items = [];
 
-            function getQtyStep(row) {
-                const pack = Number(row.unit_qty || 0);
-                if (Number.isFinite(pack) && pack > 0) return pack;
-                return 1;
-            }
-
-            function normalizeQtyToStep(qty, step) {
-                const q = Number(qty || 0);
-                const s = Number(step || 1);
-                if (!Number.isFinite(q) || !Number.isFinite(s) || s <= 0) return 0;
-                return Math.round(q / s) * s;
-            }
-
             function renderItems() {
                 const tbody = $('#delivery_note_items_table tbody');
                 tbody.empty();
 
                 items.forEach((item, idx) => {
-                    const qtyStep = getQtyStep(item);
                     const maxQty = Number(item.available_quantity);
                     const maxAttr = Number.isFinite(maxQty) ? `max="${escapeHtml(maxQty)}"` : '';
 
@@ -1366,7 +1352,7 @@
                                 </div>
                             </td>
                             <td style="width: 130px;">
-                                <input type="number" min="0" step="${escapeHtml(qtyStep)}" ${maxAttr} class="form-control form-control-sm text-end item-qty" value="${escapeHtml(item.quantity)}">
+                                <input type="number" min="0" step="any" ${maxAttr} class="form-control form-control-sm text-end item-qty" value="${escapeHtml(item.quantity)}">
                             </td>
                             <td class="text-center" style="width: 70px;">
                                 <input type="text" class="form-control form-control-sm text-center item-unit" value="${escapeHtml(item.unit || 'db')}">
@@ -1403,12 +1389,14 @@
                 const vatPercent = Number(product.tax_value ?? 0);
                 const gross = Number(product.effective_gross_price ?? product.gross_price ?? 0);
                 const net = vatPercent > 0 ? (gross / (1 + vatPercent / 100)) : gross;
+                const packQty = Number(product.unit_qty || 0);
+                const defaultQty = Number.isFinite(packQty) && packQty > 0 ? packQty : 1;
 
                 const item = {
                     product_id: product.id,
                     image_url: product.image_url ?? null,
                     name: product.title,
-                    quantity: 1,
+                    quantity: defaultQty,
                     unit: unitAbbrev || 'db',
                     net_price: Number.isFinite(net) ? Math.round(net * 100) / 100 : null,
                     vat_percent: Number.isFinite(vatPercent) ? vatPercent : null,
@@ -1491,23 +1479,11 @@
                 if (!item) return;
 
                 const $qty = tr.find('.item-qty');
-                const qtyStep = getQtyStep(item);
                 let qty = Number($qty.val()) || 0;
-
-                if (qtyStep !== 1) {
-                    const normalized = normalizeQtyToStep(qty, qtyStep);
-                    if (Number.isFinite(normalized) && normalized !== qty) {
-                        qty = normalized;
-                        $qty.val(String(qty));
-                    }
-                }
 
                 const maxQty = Number(item.available_quantity);
                 if (Number.isFinite(maxQty) && qty > maxQty) {
                     qty = maxQty;
-                    if (qtyStep !== 1) {
-                        qty = normalizeQtyToStep(qty, qtyStep);
-                    }
                     $qty.val(String(qty));
                 }
 

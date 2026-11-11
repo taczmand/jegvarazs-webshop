@@ -10,6 +10,7 @@ use App\Models\OrderHistory;
 use App\Models\OrderItem;
 use App\Models\PartnerProduct;
 use App\Models\Product;
+use App\Models\Warehouse;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -243,7 +244,18 @@ class OrderController extends Controller
             'orders.viewed_by',
             'orders.viewed_at'
         ])->leftJoin('customers', 'orders.customer_id', '=', 'customers.id')
-            ->with('items', 'customer');
+            ->with([
+                'items',
+                'customer',
+                'salesInvoices' => function ($query) {
+                    $query->select(['id', 'related_order_id'])
+                        ->where('status', 'issued')
+                        ->whereNotNull('pdf_path')
+                        ->where('pdf_path', '!=', '')
+                        ->whereNotIn('invoice_type', ['storno', 'correction'])
+                        ->orderByDesc('id');
+                },
+            ]);
 
         return datatables()
             ->of($orders)
@@ -410,6 +422,24 @@ class OrderController extends Controller
                 $user = auth('admin')->user();
                 $buttons = '';
 
+                $issuedInvoice = $order->salesInvoices->first();
+
+                if ($issuedInvoice && $user->can('view-sales-invoices')) {
+                    $pdfUrl = route('admin.documents.sales-invoices.pdf', ['id' => $issuedInvoice->id]);
+                    $buttons .= '
+                        <a class="btn btn-sm btn-outline-secondary" target="_blank" rel="noopener" href="' . $pdfUrl . '" title="Számla megtekintése">
+                            <i class="fas fa-file-pdf"></i>
+                        </a>
+                    ';
+                } elseif (!$issuedInvoice && $user->can('create-sales-invoice')) {
+                    $invoiceUrl = route('admin.documents.sales-invoices.index', ['order_id' => $order->id]);
+                    $buttons .= '
+                        <a class="btn btn-sm btn-outline-success" target="_blank" rel="noopener" href="' . $invoiceUrl . '" title="Kimenő számla készítése">
+                            <i class="fas fa-file-invoice"></i>
+                        </a>
+                    ';
+                }
+
                 if ($user->can('edit-order')) {
                     $buttons .= '
                         <button class="btn btn-sm btn-primary edit" data-id="' . $order->id . '" title="Szerkesztés">
@@ -437,7 +467,30 @@ class OrderController extends Controller
 
     public function show($id)
     {
-        return Order::with(['items.product', 'customer'])->findOrFail($id);
+        $order = Order::with(['items.product.unit', 'items.product.photos', 'customer'])->findOrFail($id);
+
+        $productIds = $order->items->pluck('product_id')->filter()->unique()->values();
+        $warehouses = Warehouse::query()->select(['id', 'name'])->orderBy('name')->get();
+        $stocks = DB::table('product_stocks')
+            ->select(['product_id', 'warehouse_id', 'quantity'])
+            ->whereIn('product_id', $productIds->all())
+            ->get()
+            ->groupBy('product_id');
+
+        foreach ($order->items as $orderItem) {
+            $product = $orderItem->product;
+            if (!$product) {
+                continue;
+            }
+            $stocksByWarehouse = ($stocks->get($product->id) ?? collect())->pluck('quantity', 'warehouse_id');
+            $product->setAttribute('warehouses', $warehouses->map(fn ($w) => [
+                'id' => $w->id,
+                'name' => $w->name,
+                'quantity' => (float) ($stocksByWarehouse->get($w->id) ?? 0),
+            ])->values()->all());
+        }
+
+        return $order;
     }
 
     public function history($id)

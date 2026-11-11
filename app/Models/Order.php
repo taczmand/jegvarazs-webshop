@@ -36,6 +36,10 @@ class Order extends Model
     {
         return $this->hasMany(OrderHistory::class);
     }
+    public function salesInvoices()
+    {
+        return $this->hasMany(SalesInvoice::class, 'related_order_id');
+    }
     public function getStatusLabelAttribute()
     {
         return match ($this->status) {
