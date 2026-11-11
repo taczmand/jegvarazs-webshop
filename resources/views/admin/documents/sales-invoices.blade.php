@@ -156,7 +156,7 @@
                         <th></th>
                         <th class="text-end">Összesen:</th>
                         <th id="invoices_gross_sum">–</th>
-                        <th></th>
+                        <th id="invoices_outstanding_sum">–</th>
                         <th></th>
                         <th></th>
                         <th></th>
@@ -758,6 +758,7 @@
                             image_url: it.image_url ?? null,
                             warehouse_id: warehouseId,
                             warehouse_name: wh?.name ?? '',
+                            stock_tracking: it.product?.stock_tracking !== false && it.product?.stock_tracking !== 0 && it.product?.stock_tracking !== '0',
                             name: it.name ?? '',
                             quantity: negQty,
                             unit_abbreviation: it.unit ?? '',
@@ -1324,9 +1325,15 @@
                 ],
             });
 
-            table.on('xhr.dt', function (e, settings, json) {
-                const sum = Number(json?.gross_total_sum);
-                $('#invoices_gross_sum').text(Number.isFinite(sum) ? `${Math.round(sum).toLocaleString('hu-HU')} Ft` : '–');
+            table.on('draw.dt', function () {
+                const sumColumn = (index) => table.column(index, { page: 'current' }).data().toArray()
+                    .reduce((acc, v) => {
+                        const n = Number(String(v).replace(/[^\d-]/g, ''));
+                        return acc + (Number.isFinite(n) ? n : 0);
+                    }, 0);
+
+                $('#invoices_gross_sum').text(`${Math.round(sumColumn(6)).toLocaleString('hu-HU')} Ft`);
+                $('#invoices_outstanding_sum').text(`${Math.round(sumColumn(7)).toLocaleString('hu-HU')} Ft`);
             });
 
             $('.filter-input').on('change keyup', function () {
@@ -1443,6 +1450,7 @@
                             warehouse_id: null,
                             warehouse_name: '',
                             warehouses: Array.isArray(p.warehouses) ? p.warehouses : [],
+                            stock_tracking: p.stock_tracking !== false && p.stock_tracking !== 0 && p.stock_tracking !== '0',
                             name: String(oi.product_name || p.title || ''),
                             quantity: Number(oi.quantity) || 1,
                             unit_abbreviation: (p.unit && (p.unit.abbreviation || p.unit.name)) || '',
@@ -1572,6 +1580,7 @@
                             image_url: it.image_url ?? null,
                             warehouse_id: warehouseId,
                             warehouse_name: wh?.name ?? '',
+                            stock_tracking: it.product?.stock_tracking !== false && it.product?.stock_tracking !== 0 && it.product?.stock_tracking !== '0',
                             name: it.name ?? '',
                             quantity: Number(it.quantity ?? 0),
                             unit_abbreviation: it.unit ?? '',
@@ -2161,9 +2170,9 @@
             }
 
             function validateItemsWarehouses() {
-                const missing = items.find(i => !i.warehouse_id);
+                const missing = items.find(i => i.stock_tracking !== false && !i.warehouse_id);
                 if (missing) {
-                    showToast(`Minden tételnél kötelező raktárat választani${missing.name ? `: ${missing.name}` : ''}.`, 'warning');
+                    showToast(`A készletkövetett tételeknél kötelező raktárat választani${missing.name ? `: ${missing.name}` : ''}.`, 'warning');
                     return false;
                 }
                 return true;
@@ -2276,6 +2285,7 @@
                     warehouse_id: product.warehouse_id,
                     warehouse_name: product.warehouse_name,
                     warehouses: Array.isArray(product.warehouses) ? product.warehouses : [],
+                    stock_tracking: product.stock_tracking !== false && product.stock_tracking !== 0 && product.stock_tracking !== '0',
                     name: product.title,
                     quantity: defaultQty,
                     unit_abbreviation: unitAbbrev,

@@ -242,13 +242,6 @@ class SalesInvoiceController extends Controller
                 return $invoice->created_at ? $invoice->created_at->format('Y-m-d H:i:s') : '';
             })
             ->rawColumns(['action'])
-            ->with('gross_total_sum', function () use ($invoices) {
-                $sumQuery = $invoices->clone()->toBase()->reorder();
-                $sumQuery->limit = null;
-                $sumQuery->offset = null;
-
-                return (int) $sumQuery->sum('gross_total');
-            })
             ->make(true);
     }
 
@@ -912,11 +905,13 @@ class SalesInvoiceController extends Controller
             return response()->json(['message' => 'Nincs tétel a számlában.'], 422);
         }
 
-        foreach ($itemsRaw as $row) {
-            $wid = is_array($row) ? ($row['warehouse_id'] ?? null) : null;
-            if (!is_numeric($wid) || (float) $wid <= 0) {
-                return response()->json(['message' => 'Minden tételnél kötelező raktárat választani.'], 422);
-            }
+        try {
+            $this->validateItemWarehouses($itemsRaw);
+        } catch (ValidationException $e) {
+            return response()->json([
+                'message' => 'Hiányos vagy hibás adatok.',
+                'errors' => $e->errors(),
+            ], 422);
         }
 
         $items = [];
@@ -1078,11 +1073,13 @@ class SalesInvoiceController extends Controller
             return response()->json(['message' => 'Nincs tétel a számlában.'], 422);
         }
 
-        foreach ($itemsRaw as $row) {
-            $wid = is_array($row) ? ($row['warehouse_id'] ?? null) : null;
-            if (!is_numeric($wid) || (float) $wid <= 0) {
-                return response()->json(['message' => 'Minden tételnél kötelező raktárat választani.'], 422);
-            }
+        try {
+            $this->validateItemWarehouses($itemsRaw);
+        } catch (ValidationException $e) {
+            return response()->json([
+                'message' => 'Hiányos vagy hibás adatok.',
+                'errors' => $e->errors(),
+            ], 422);
         }
 
         $items = [];
@@ -1306,14 +1303,7 @@ class SalesInvoiceController extends Controller
 
         $decoded = array_values(array_filter($decoded, fn ($row) => is_array($row)));
 
-        foreach ($decoded as $row) {
-            $wid = $row['warehouse_id'] ?? null;
-            if (!is_numeric($wid) || (float) $wid <= 0) {
-                throw ValidationException::withMessages([
-                    'items_json' => 'Minden tételnél kötelező a raktár kiválasztása.',
-                ]);
-            }
-        }
+        $this->validateItemWarehouses($decoded);
 
         SalesInvoiceItem::query()->where('sales_invoice_id', $salesInvoiceId)->delete();
 
@@ -1432,6 +1422,39 @@ class SalesInvoiceController extends Controller
         $invoice->update([
             'stock_deducted_at' => now(),
         ]);
+    }
+
+    private function validateItemWarehouses(array $itemsRaw): void
+    {
+        $productIds = [];
+        foreach ($itemsRaw as $row) {
+            $pid = is_array($row) ? ($row['product_id'] ?? null) : null;
+            if (is_numeric($pid)) {
+                $productIds[] = (int) $pid;
+            }
+        }
+
+        $trackedIds = $this->stockTrackedProductIds($productIds);
+
+        foreach ($itemsRaw as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+
+            // Termékhez nem tartozó (kézi) tételnél továbbra is kötelező a raktár.
+            $pid = $row['product_id'] ?? null;
+            $isTracked = !is_numeric($pid) || $trackedIds->has((int) $pid);
+            if (!$isTracked) {
+                continue;
+            }
+
+            $wid = $row['warehouse_id'] ?? null;
+            if (!is_numeric($wid) || (float) $wid <= 0) {
+                throw ValidationException::withMessages([
+                    'items_json' => 'A készletkövetett tételeknél kötelező a raktár kiválasztása.',
+                ]);
+            }
+        }
     }
 
     private function stockTrackedProductIds(array $productIds): \Illuminate\Support\Collection
