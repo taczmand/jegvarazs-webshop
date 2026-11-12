@@ -178,7 +178,7 @@ class ContractController extends Controller
                     </button>';
                 }
 
-                if ($user && $user->can('edit-contract') && (int) ($contract->deposit_transfer_flag ?? 0) === 1) {
+                if ($user && $user->can('reset-contract-deposit-transfer-flag') && (int) ($contract->deposit_transfer_flag ?? 0) === 1) {
                     $buttons .= '
                     <button class="btn btn-sm btn-info reset-deposit-transfer-flag" data-id="' . $contract->id . '" title="Foglaló összege átutalásra került">
                         <i class="fa-solid fa-circle-dollar-to-slot"></i>
@@ -212,8 +212,8 @@ class ContractController extends Controller
     public function resetDepositTransferFlag(Request $request, $id)
     {
         $user = auth('admin')->user();
-        if (!$user || !$user->can('edit-contract')) {
-            return response()->json(['message' => 'Nincs jogosultságod a szerződés módosításához.'], 403);
+        if (!$user || !$user->can('reset-contract-deposit-transfer-flag')) {
+            return response()->json(['message' => 'Nincs jogosultságod a jelölés visszaállításához.'], 403);
         }
 
         $contract = Contract::findOrFail($id);

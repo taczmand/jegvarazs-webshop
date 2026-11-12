@@ -225,6 +225,7 @@ Route::get('/automatizacio/jogosultsagok/szinkron', function (Request $request, 
             Route::get('/termekek/meta', [AdminProductController::class, 'meta'])->name('products.meta');
             Route::get('/termekek/{id}', [AdminProductController::class, 'show'])->name('products.get');
             Route::post('/termekek', [AdminProductController::class, 'store'])->name('products.store');
+            Route::post('/termekek/quick', [AdminProductController::class, 'quickStore'])->name('products.quick-store');
             Route::put('/termekek/{id}', [AdminProductController::class, 'update'])->name('products.update');
             Route::get('/termekek/{id}/tortenet/data', [AdminProductController::class, 'historyData'])->name('products.history.data');
             Route::get('/termekek/{id}/stocks/data', [AdminProductController::class, 'stocksData'])->name('products.stocks.data');

@@ -13,9 +13,11 @@ use App\Models\ProductQuantityDiscount;
 use App\Models\ProductPhoto;
 use App\Models\Warehouse;
 use App\Services\Admin\ProductService;
+use App\Services\Search\ProductSearchIndexer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Yajra\DataTables\Facades\DataTables;
 
 class ProductController extends Controller
@@ -644,6 +646,94 @@ class ProductController extends Controller
                 'errors' => $e->getMessage(),
             ], 500);
         }
+    }
+
+    public function quickStore(Request $request)
+    {
+        $validated = $request->validate([
+            'title' => ['required', 'string', 'max:255'],
+            'gross_price' => ['required', 'numeric', 'min:0'],
+            'tax_id' => ['required', 'integer', 'exists:tax_categories,id'],
+            'barcode' => ['nullable', 'string', 'max:255', 'unique:products,barcode'],
+            'unit_id' => ['nullable', 'integer', 'exists:units,id'],
+            'partner_gross_price' => ['nullable', 'numeric', 'min:0'],
+            'stock_tracking' => ['nullable', 'boolean'],
+        ], [
+            'title.required' => 'A megnevezés megadása kötelező.',
+            'gross_price.required' => 'A bruttó ár megadása kötelező.',
+            'gross_price.numeric' => 'A bruttó ár szám kell legyen.',
+            'tax_id.required' => 'Az áfa kulcs kiválasztása kötelező.',
+            'tax_id.exists' => 'A kiválasztott áfa kulcs nem létezik.',
+            'barcode.unique' => 'Ez a vonalkód már foglalt.',
+            'unit_id.exists' => 'A kiválasztott mértékegység nem létezik.',
+        ]);
+
+        $title = trim((string) $validated['title']);
+        $grossPrice = (float) $validated['gross_price'];
+        $partnerPrice = isset($validated['partner_gross_price']) && $validated['partner_gross_price'] !== ''
+            ? (float) $validated['partner_gross_price']
+            : $grossPrice;
+
+        $slug = Str::slug($title);
+        if ($slug === '' || Product::query()->where('slug', $slug)->exists()) {
+            $slug = ($slug !== '' ? $slug . '-' : 'termek-') . Str::lower(Str::random(6));
+        }
+
+        $product = Product::create([
+            'title' => $title,
+            'slug' => $slug,
+            'barcode' => ($validated['barcode'] ?? '') !== '' ? trim((string) $validated['barcode']) : null,
+            'description' => null,
+            'stock' => 0,
+            'stock_tracking' => $request->boolean('stock_tracking'),
+            'in_stock' => true,
+            'favorite' => false,
+            'unit_qty' => 1,
+            'unit_id' => $validated['unit_id'] ?? null,
+            'gross_price' => $grossPrice,
+            'partner_gross_price' => $partnerPrice,
+            'tax_id' => (int) $validated['tax_id'],
+            'cat_id' => null,
+            'brand_id' => null,
+            'status' => 'active',
+        ]);
+
+        $product->load(['taxCategory', 'unit']);
+
+        try {
+            app(ProductSearchIndexer::class)->rebuild($product);
+        } catch (\Throwable $e) {
+            \Log::warning('Quick termék search index hiba: ' . $e->getMessage());
+        }
+
+        $warehouses = Warehouse::query()
+            ->select(['id', 'name'])
+            ->orderBy('name')
+            ->get();
+
+        return response()->json([
+            'message' => 'Termék létrehozva.',
+            'product' => [
+                'id' => $product->id,
+                'title' => $product->title,
+                'barcode' => $product->barcode,
+                'gross_price' => $product->gross_price,
+                'partner_gross_price' => $product->partner_gross_price,
+                'effective_gross_price' => $partnerPrice,
+                'image_url' => null,
+                'available_quantity' => null,
+                'warehouses' => $warehouses->map(fn ($w) => [
+                    'id' => $w->id,
+                    'name' => $w->name,
+                    'quantity' => 0,
+                ])->values(),
+                'tax_value' => $product->taxCategory?->tax_value,
+                'stock_tracking' => (bool) $product->stock_tracking,
+                'unit_qty' => $product->unit_qty,
+                'unit_name' => $product->unit?->name,
+                'unit_abbreviation' => $product->unit?->abbreviation,
+            ],
+        ], 201);
     }
 
     public function update(ProductRequest $request)

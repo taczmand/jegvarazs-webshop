@@ -220,7 +220,10 @@
 
                 <div class="mb-2">
                     <label class="form-label" for="product_search">Termék keresés</label>
-                    <input type="text" class="form-control" id="product_search" autocomplete="off" placeholder="Kezdj el gépelni...">
+                    <div class="d-flex gap-2">
+                        <input type="text" class="form-control form-control-sm" id="product_search" autocomplete="off" placeholder="Kezdj el gépelni..." style="flex: 1;">
+                        <button type="button" class="btn btn-outline-primary btn-sm text-nowrap" id="openQuickProductModal" title="Új termék rögzítése">+ Új termék</button>
+                    </div>
                     <div id="product_search_results" class="list-group w-100" style="z-index: 1100; display:block; max-height: 260px; overflow-y: auto;"></div>
                 </div>
 
@@ -268,6 +271,57 @@
         </x-slot:footer>
     </x-admin.document-modal>
 
+
+    <!-- Gyors termék létrehozás -->
+    <div class="modal fade" id="quickProductModal" tabindex="-1" aria-hidden="true" style="z-index: 2200;">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Új termék rögzítése</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Bezárás"></button>
+                </div>
+                <form id="quickProductForm" novalidate>
+                    <div class="modal-body">
+                        <div class="alert alert-danger d-none" id="quickProductErrors"></div>
+                        <div class="mb-2">
+                            <label class="form-label">Megnevezés *</label>
+                            <input type="text" class="form-control form-control-sm" name="title" required maxlength="255">
+                        </div>
+                        <div class="row g-2 mb-2">
+                            <div class="col-6">
+                                <label class="form-label">Bruttó ár (Ft) *</label>
+                                <input type="number" step="0.01" min="0" class="form-control form-control-sm" name="gross_price" required>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label">ÁFA *</label>
+                                <select class="form-select form-select-sm" name="tax_id" id="quickProductTax" required></select>
+                            </div>
+                        </div>
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <label class="form-label">Partneri bruttó ár (Ft)</label>
+                                <input type="number" step="0.01" min="0" class="form-control form-control-sm" name="partner_gross_price" placeholder="">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label">Mértékegység</label>
+                                <select class="form-select form-select-sm" name="unit_id" id="quickProductUnit">
+                                    <option value="">—</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-check mt-2">
+                            <input class="form-check-input" type="checkbox" name="stock_tracking" value="1" id="quickProductStockTracking" checked>
+                            <label class="form-check-label" for="quickProductStockTracking">Készletkövetés</label>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Mégse</button>
+                        <button type="submit" class="btn btn-primary btn-sm" id="quickProductSubmit">Létrehozás és hozzáadás</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 
     <div class="modal fade" id="goodsReceiptPreviewModal" tabindex="-1" aria-hidden="true" style="z-index: 2000;">
         <div class="modal-dialog modal-fullscreen m-0 p-0">
@@ -517,6 +571,100 @@
                 $('#items_json').val(JSON.stringify(items));
             }
 
+            function addQuickProductAsItem(p) {
+                const vatPercent = Number(p.tax_value ?? 0);
+                const gross = Number(p.effective_gross_price ?? p.gross_price ?? 0);
+                const unitNet = vatPercent > 0 ? gross / (1 + vatPercent / 100) : gross;
+                const packQty = Number(p.unit_qty || 0);
+                const defaultQty = Number.isFinite(packQty) && packQty > 0 ? packQty : 1;
+
+                items.push({
+                    product_id: p.id,
+                    image_url: p.image_url || null,
+                    name: p.title,
+                    unit: p.unit_abbreviation || p.unit_name || 'db',
+                    unit_qty: packQty,
+                    quantity: defaultQty,
+                    unit_net_price: Number.isFinite(unitNet) ? Math.round(unitNet) : 0,
+                    vat_percent: vatPercent,
+                });
+                renderItems();
+                syncItemsJson();
+                scheduleDraftAutoSave();
+            }
+
+            let quickProductMetaLoaded = false;
+
+            function populateQuickProductMeta() {
+                if (quickProductMetaLoaded) return;
+                $.ajax({
+                    url: `${window.appConfig.APP_URL}admin/termekek/meta`,
+                    method: 'GET',
+                    success: function (resp) {
+                        quickProductMetaLoaded = true;
+                        const meta = resp.original ?? resp;
+
+                        const taxSelect = $('#quickProductTax');
+                        taxSelect.empty();
+                        (meta.taxes ?? []).forEach(t => {
+                            taxSelect.append(`<option value="${t.id}" data-tax-value="${t.tax_value}">${escapeHtml(t.tax_name)} (${Number(t.tax_value)}%)</option>`);
+                        });
+                        const defaultTax = (meta.taxes ?? []).find(t => Number(t.tax_value) === 27);
+                        if (defaultTax) taxSelect.val(String(defaultTax.id));
+
+                        const unitSelect = $('#quickProductUnit');
+                        unitSelect.find('option:not(:first)').remove();
+                        (meta.units ?? []).forEach(u => {
+                            if (u.active === false || u.active === 0 || u.active === '0') return;
+                            unitSelect.append(`<option value="${u.id}">${escapeHtml(u.name)} (${escapeHtml(u.abbreviation)})</option>`);
+                        });
+                    }
+                });
+            }
+
+            $('#openQuickProductModal').on('click', function () {
+                $('#quickProductForm')[0].reset();
+                $('#quickProductErrors').addClass('d-none').empty();
+                populateQuickProductMeta();
+                bootstrap.Modal.getOrCreateInstance(document.getElementById('quickProductModal')).show();
+            });
+
+            $('#quickProductForm').on('submit', function (e) {
+                e.preventDefault();
+                const form = this;
+                if (!form.reportValidity()) return;
+
+                const fd = new FormData(form);
+                fd.append('_token', csrfToken);
+
+                $('#quickProductSubmit').prop('disabled', true);
+                $.ajax({
+                    url: `${window.appConfig.APP_URL}admin/termekek/quick`,
+                    method: 'POST',
+                    data: fd,
+                    processData: false,
+                    contentType: false,
+                    success: function (resp) {
+                        const modalInstance = bootstrap.Modal.getInstance(document.getElementById('quickProductModal'));
+                        if (modalInstance) modalInstance.hide();
+                        if (resp?.product) addQuickProductAsItem(resp.product);
+                        form.reset();
+                    },
+                    error: function (xhr) {
+                        const errs = xhr.responseJSON?.errors;
+                        let msg = xhr.responseJSON?.message || 'Hiba történt a mentés során.';
+                        if (errs) {
+                            const list = Object.values(errs).flat().join(' ');
+                            if (list) msg = list;
+                        }
+                        $('#quickProductErrors').removeClass('d-none').text(msg);
+                    },
+                    complete: function () {
+                        $('#quickProductSubmit').prop('disabled', false);
+                    }
+                });
+            });
+
             function resetForm(title = null) {
                 $('#goodsReceiptForm')[0].reset();
                 $('#goodsReceiptModalLabel').text(title);
@@ -580,6 +728,7 @@
                 $tr.find('.item-net-cell').text(fmtMoney(net));
                 $tr.find('.item-gross-cell').text(fmtMoney(gross));
                 syncItemsJson();
+                scheduleDraftAutoSave();
             });
 
             $('#items_table').on('click', '.item-remove', function () {
@@ -588,6 +737,7 @@
                 if (!Number.isFinite(idx)) return;
                 items.splice(idx, 1);
                 renderItems();
+                scheduleDraftAutoSave();
             });
 
             let searchTimeout = null;
@@ -662,6 +812,7 @@
                 renderItems();
                 $('#product_search').val('');
                 $('#product_search_results').empty();
+                scheduleDraftAutoSave();
             });
 
             async function loadGoodsReceiptPdfPreview() {
@@ -908,6 +1059,8 @@
                 $('#partner_zip_code').val(zip || '');
                 $('#partner_city').val(city || '');
                 $('#partner_address_line').val(line || '');
+
+                scheduleDraftAutoSave();
             }
 
             // Ha a felhasználó kézzel módosítja a nevet, a korábban kiválasztott partner
@@ -1442,6 +1595,71 @@
                 e.preventDefault();
                 $('#goods_receipt_status').val('draft');
                 $('#goodsReceiptForm').trigger('submit');
+            });
+
+            // Automatikus piszkozat mentés: a létrehozó modalban történő
+            // módosításkor debounce-olva ment piszkozatként, modal bezárása nélkül.
+            let autoSaveTimer = null;
+            let autoSaveInFlight = false;
+            let autoSavePending = false;
+
+            function canAutoSaveDraft() {
+                if (!modal || !modal._isShown) return false;
+                const st = String($('#goods_receipt_status').val() || '');
+                if (st !== '' && st !== 'draft') return false;
+                return String($('#partner_name').val() || '').trim() !== '';
+            }
+
+            function scheduleDraftAutoSave() {
+                if (!canAutoSaveDraft()) return;
+                clearTimeout(autoSaveTimer);
+                autoSaveTimer = setTimeout(autoSaveDraft, 1500);
+            }
+
+            function autoSaveDraft() {
+                if (!canAutoSaveDraft()) return;
+
+                if (autoSaveInFlight) {
+                    autoSavePending = true;
+                    return;
+                }
+
+                syncItemsJson();
+                $('#goods_receipt_status').val('draft');
+
+                const id = String($('#goods_receipt_id').val() || '').trim();
+                const url = id
+                    ? `{{ url('/admin/bizonylatok/bevetelezesek') }}/${id}`
+                    : `{{ url('/admin/bizonylatok/bevetelezesek') }}`;
+                const method = id ? 'PUT' : 'POST';
+
+                autoSaveInFlight = true;
+                $.ajax({
+                    url,
+                    type: method,
+                    headers: {
+                        'X-CSRF-TOKEN': csrfToken,
+                    },
+                    data: $('#goodsReceiptForm').serialize(),
+                    success: function (resp) {
+                        const rid = resp?.goods_receipt?.id;
+                        if (rid && !$('#goods_receipt_id').val()) {
+                            $('#goods_receipt_id').val(rid);
+                        }
+                        table.ajax.reload(null, false);
+                    },
+                    complete: function () {
+                        autoSaveInFlight = false;
+                        if (autoSavePending) {
+                            autoSavePending = false;
+                            scheduleDraftAutoSave();
+                        }
+                    }
+                });
+            }
+
+            $('#goodsReceiptForm').on('input change', 'input, select, textarea', function () {
+                scheduleDraftAutoSave();
             });
 
             $('#goodsReceiptForm').on('submit', function (e) {

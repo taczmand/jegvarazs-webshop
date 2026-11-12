@@ -178,6 +178,8 @@ class PermissionSeeder extends Seeder
             ['id' => 166, 'name' => 'edit-documents', 'label' => 'Dokumentum szerkesztése', 'group' => 'Ügyviteli folyamatok'],
             ['id' => 167, 'name' => 'delete-documents', 'label' => 'Dokumentum törlése', 'group' => 'Ügyviteli folyamatok'],
             ['id' => 168, 'name' => 'view-contract-products', 'label' => 'Szerződések termék db', 'group' => 'Jelentések - Ügyviteli'],
+
+            ['id' => 181, 'name' => 'reset-contract-deposit-transfer-flag', 'label' => 'Foglaló összeg átutalásra került jelölés visszaállítása', 'group' => 'Ügyviteli folyamatok'],
         ];
 
         foreach ($permissions as $perm) {

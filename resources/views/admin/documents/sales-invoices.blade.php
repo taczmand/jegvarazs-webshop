@@ -886,6 +886,8 @@
                 $('#partner_zip_code').val(zip || '');
                 $('#partner_city').val(city || '');
                 $('#partner_address_line').val(line || '');
+
+                scheduleDraftAutoSave();
             }
 
             // Ha a felhasználó kézzel módosítja a nevet, a korábban kiválasztott vevő
@@ -2100,6 +2102,74 @@
                 });
             }
 
+            // Automatikus piszkozat mentés: a létrehozó modalban történő
+            // módosításkor debounce-olva ment piszkozatként, modal bezárása nélkül.
+            let autoSaveTimer = null;
+            let autoSaveInFlight = false;
+            let autoSavePending = false;
+
+            function canAutoSaveDraft() {
+                if (!modal || !modal._isShown) return false;
+                if (String($('#status').val() || 'draft') !== 'draft') return false;
+                return String($('#partner_name').val() || '').trim() !== '';
+            }
+
+            function scheduleDraftAutoSave() {
+                if (!canAutoSaveDraft()) return;
+                clearTimeout(autoSaveTimer);
+                autoSaveTimer = setTimeout(autoSaveDraft, 1500);
+            }
+
+            function autoSaveDraft() {
+                if (!canAutoSaveDraft()) return;
+
+                if (autoSaveInFlight) {
+                    autoSavePending = true;
+                    return;
+                }
+
+                syncItemsJson();
+
+                const formData = new FormData(document.getElementById('salesInvoiceForm'));
+                formData.append('_token', csrfToken);
+
+                const invoiceId = $('#invoice_id').val();
+                let url = '{{ route('admin.documents.sales-invoices.store') }}';
+                let method = 'POST';
+
+                if (invoiceId) {
+                    url = `${window.appConfig.APP_URL}admin/bizonylatok/kimeno-szamlak/${invoiceId}`;
+                    formData.append('_method', 'PUT');
+                }
+
+                autoSaveInFlight = true;
+                $.ajax({
+                    url: url,
+                    method: method,
+                    data: formData,
+                    contentType: false,
+                    processData: false,
+                    success(response) {
+                        const savedId = response?.invoice?.id;
+                        if (savedId && !$('#invoice_id').val()) {
+                            $('#invoice_id').val(savedId);
+                        }
+                        table.ajax.reload(null, false);
+                    },
+                    complete() {
+                        autoSaveInFlight = false;
+                        if (autoSavePending) {
+                            autoSavePending = false;
+                            scheduleDraftAutoSave();
+                        }
+                    }
+                });
+            }
+
+            $('#salesInvoiceForm').on('input change', 'input, select, textarea', function () {
+                scheduleDraftAutoSave();
+            });
+
             const items = [];
 
             function formatMoney(value) {
@@ -2304,6 +2374,7 @@
                 items.push(item);
                 renderItems();
                 syncItemsJson();
+                scheduleDraftAutoSave();
             }
 
             let searchTimeout = null;
@@ -2541,6 +2612,7 @@
                 tr.find('.item-vat').text(`${formatGroupedMoney(item.vat_total)} Ft`);
                 tr.find('.item-gross').text(`${formatGroupedMoney(item.gross_total)} Ft`);
                 syncItemsJson();
+                scheduleDraftAutoSave();
             });
 
             $('#invoice_items_table').on('click', '.item-installation-add', function () {
@@ -2567,6 +2639,7 @@
                 items.splice(idx, 1);
                 renderItems();
                 syncItemsJson();
+                scheduleDraftAutoSave();
             });
 
             $('#invoice_items_table').on('change', '.item-warehouse', function () {
@@ -2580,6 +2653,7 @@
                 item.warehouse_id = val === '' ? null : (wh ? wh.id : val);
                 item.warehouse_name = wh ? String(wh.name ?? '') : '';
                 syncItemsJson();
+                scheduleDraftAutoSave();
             });
 
             (function initSalesInvoiceSplitResize() {

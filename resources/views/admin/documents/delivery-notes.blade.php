@@ -264,7 +264,7 @@
                 <div class="list-group mb-3" id="product_search_results" style="max-height: 240px; overflow:auto; font-size: 0.85rem;"></div>
 
                 <div class="table-responsive" style="overflow-x:auto;">
-                    <table class="table table-sm table-bordered align-middle" id="delivery_note_items_table" style="font-size: 0.85rem; min-width: 1150px;">
+                    <table class="table table-sm align-middle" id="delivery_note_items_table" style="font-size: 0.85rem; min-width: 1000px;">
                         <thead>
                         <tr>
                             <th>Megnevezés</th>
@@ -273,7 +273,6 @@
                             <th class="text-end">Nettó ár</th>
                             <th class="text-center">ÁFA %</th>
                             <th class="text-end">Bruttó ár</th>
-                            <th>Megjegyzés</th>
                             <th></th>
                         </tr>
                         </thead>
@@ -1323,7 +1322,9 @@
                 tbody.empty();
 
                 items.forEach((item, idx) => {
-                    const maxQty = Number(item.available_quantity);
+                    const maxQty = (item.available_quantity === null || item.available_quantity === undefined)
+                        ? null
+                        : Number(item.available_quantity);
                     const maxAttr = Number.isFinite(maxQty) ? `max="${escapeHtml(maxQty)}"` : '';
 
                     const grossNum = Number(item.gross_price);
@@ -1343,31 +1344,31 @@
 
                     const row = $(
                         `<tr data-idx="${idx}">
-                            <td>
-                                <div class="d-flex align-items-center gap-2">
+                            <td style="min-width: 320px;">
+                                <div class="d-flex align-items-start gap-2">
                                     ${item.image_url
                                         ? `<img src="${escapeHtml(item.image_url)}" class="item-thumb" alt="">`
                                         : `<span class="item-thumb-placeholder"><i class="fas fa-image"></i></span>`}
-                                    <div class="fw-semibold">${escapeHtml(item.name)}</div>
+                                    <div class="flex-grow-1" style="min-width: 0;">
+                                        <input type="text" class="form-control form-control-sm item-name" value="${escapeHtml(item.name)}">
+                                        <input type="text" class="form-control form-control-sm item-note mt-1" placeholder="Megjegyzés" value="${escapeHtml(item.note || '')}" style="font-size: 0.78rem;">
+                                    </div>
                                 </div>
                             </td>
-                            <td style="width: 130px;">
+                            <td style="width: 90px;">
                                 <input type="number" min="0" step="any" ${maxAttr} class="form-control form-control-sm text-end item-qty" value="${escapeHtml(item.quantity)}">
                             </td>
-                            <td class="text-center" style="width: 70px;">
+                            <td class="text-center" style="width: 60px;">
                                 <input type="text" class="form-control form-control-sm text-center item-unit" value="${escapeHtml(item.unit || 'db')}">
                             </td>
-                            <td style="width: 120px;">
-                                <div class="text-end nowrap item-net-price-display" style="padding: 0.375rem 0.5rem;">${escapeHtml(netText)}</div>
+                            <td class="text-end" style="width: 95px;">
+                                <span class="item-net-price-display" style="padding: 0.375rem 0.5rem; display: inline-block;">${escapeHtml(netText)}</span>
                             </td>
                             <td style="width: 90px;">
                                 <input type="number" step="0.01" class="form-control form-control-sm text-center item-vat-percent" value="${escapeHtml(item.vat_percent ?? '')}">
                             </td>
                             <td style="width: 120px;">
                                 <input type="number" step="0.01" class="form-control form-control-sm text-end item-gross-price" value="${escapeHtml(item.gross_price ?? '')}">
-                            </td>
-                            <td>
-                                <input type="text" class="form-control form-control-sm item-note" value="${escapeHtml(item.note || '')}">
                             </td>
                             <td class="text-center" style="width: 44px;">
                                 <button type="button" class="btn btn-sm btn-outline-danger item-remove" title="Tétel törlése">&times;</button>
@@ -1381,6 +1382,12 @@
 
             function syncItemsJson() {
                 $('#items_json').val(JSON.stringify(items));
+            }
+
+            function formatMoney(value) {
+                const n = Number(value);
+                if (!Number.isFinite(n)) return '0';
+                return String(Math.round(n));
             }
 
             function addProductAsItem(product) {
@@ -1403,7 +1410,9 @@
                     gross_price: Number.isFinite(gross) ? Math.round(gross * 100) / 100 : null,
                     note: '',
                     unit_qty: Number(product.unit_qty || 0),
-                    available_quantity: Number(product.available_quantity ?? 0),
+                    available_quantity: (product.available_quantity === null || product.available_quantity === undefined)
+                        ? null
+                        : Number(product.available_quantity),
                 };
 
                 items.push(item);
@@ -1434,35 +1443,102 @@
                             const results = resp?.products ?? [];
                             const container = $('#product_search_results');
                             container.empty();
+
+                            const docWarehouseId = Number(warehouseId);
+
                             results.forEach(p => {
-                                const unitText = (p.unit_abbreviation || p.unit_name) ? `${escapeHtml(p.unit_abbreviation || p.unit_name)}` : '';
-                                const qty = Number(p.available_quantity ?? 0);
-                                const qtyText = Number.isFinite(qty) ? String(qty) : '0';
-                                const isOut = !Number.isFinite(qty) || qty <= 0;
-                                const btn = $(
-                                    `<button type="button" class="list-group-item list-group-item-action" ${isOut ? 'disabled aria-disabled="true"' : ''}>
+                                const unitQty = Number(p.unit_qty);
+                                const unitText = (p.unit_abbreviation || p.unit_name)
+                                    ? escapeHtml(p.unit_abbreviation || p.unit_name)
+                                    : '';
+                                const packagingLabel = Number.isFinite(unitQty) && unitQty > 1
+                                    ? ` (kiszerelés: ${escapeHtml(unitQty)}${unitText ? ' ' + unitText : ''})`
+                                    : '';
+
+                                const warehouses = (Array.isArray(p.warehouses) ? p.warehouses : [])
+                                    .filter(w => Number(w.id) === docWarehouseId);
+
+                                const productItem = $(
+                                    `<div class="list-group-item">
                                         <div class="d-flex justify-content-between align-items-center">
                                             <div class="d-flex align-items-center gap-2">
                                                 ${p.image_url ? `<img src="${escapeHtml(p.image_url)}" class="item-thumb" alt="">` : ''}
-                                                <div><strong>${escapeHtml(p.title)}</strong></div>
+                                                <div>
+                                                    <strong>${escapeHtml(p.title)}</strong>
+                                                    ${packagingLabel}
+                                                </div>
                                             </div>
-                                            <div class="text-muted">${unitText}</div>
+                                            <div class="text-muted">
+                                                ${formatMoney(p.effective_gross_price ?? p.gross_price ?? 0)} HUF
+                                            </div>
                                         </div>
-                                        <div class="d-flex justify-content-between align-items-center mt-1">
-                                            <div class="small text-muted">Készlet: ${escapeHtml(qtyText)}</div>
-                                            ${isOut ? '<span class="badge text-bg-secondary">nincs készleten</span>' : ''}
-                                        </div>
-                                     </button>`
+                                        <div class="d-flex flex-wrap gap-1 mt-1 product-warehouses"></div>
+                                    </div>`
                                 );
-                                if (!isOut) {
-                                    btn.on('click', function () {
-                                        addProductAsItem(p);
+
+                                const warehousesContainer = productItem.find('.product-warehouses');
+                                const isStockTracked = p.stock_tracking !== false && p.stock_tracking !== 0 && p.stock_tracking !== '0';
+
+                                if (!isStockTracked) {
+                                    const addButton = $(
+                                        `<button type="button" class="btn btn-outline-secondary text-dark" style="font-size: 0.7rem; padding: 0.05rem 0.45rem; line-height: 1.4;">Hozzáadás</button>`
+                                    );
+
+                                    addButton.on('click', function (e) {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+
+                                        addProductAsItem({
+                                            ...p,
+                                            available_quantity: null,
+                                        });
+
                                         $('#product_search').val('');
                                         $('#product_search_results').empty();
                                         $('#product_search').trigger('focus');
                                     });
+
+                                    warehousesContainer.append(addButton);
+                                } else {
+                                    if (warehouses.length === 0) {
+                                        warehousesContainer.append(
+                                            `<span class="badge text-bg-secondary">nincs készletinformáció</span>`
+                                        );
+                                    }
+
+                                    warehouses.forEach(warehouse => {
+                                        const quantity = Number(warehouse.quantity ?? 0);
+                                        const isAvailable = Number.isFinite(quantity) && quantity > 0;
+                                        const quantityText = Number.isFinite(quantity) ? String(quantity) : '0';
+
+                                        const warehouseButton = $(
+                                            `<button type="button" class="btn btn-outline-secondary ${isAvailable ? 'text-dark' : ''}" style="font-size: 0.7rem; padding: 0.05rem 0.45rem; line-height: 1.4;" ${!isAvailable ? 'disabled aria-disabled="true"' : ''}>
+                                                ${escapeHtml(warehouse.name)}
+                                                <span class="ms-1 text-muted">(${escapeHtml(quantityText)})</span>
+                                            </button>`
+                                        );
+
+                                        if (isAvailable) {
+                                            warehouseButton.on('click', function (e) {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+
+                                                addProductAsItem({
+                                                    ...p,
+                                                    available_quantity: quantity,
+                                                });
+
+                                                $('#product_search').val('');
+                                                $('#product_search_results').empty();
+                                                $('#product_search').trigger('focus');
+                                            });
+                                        }
+
+                                        warehousesContainer.append(warehouseButton);
+                                    });
                                 }
-                                container.append(btn);
+
+                                container.append(productItem);
                             });
                         },
                         error: function () {
@@ -1472,7 +1548,7 @@
                 }, 250);
             });
 
-            $('#delivery_note_items_table').on('input', '.item-qty, .item-unit, .item-vat-percent, .item-gross-price, .item-note', function () {
+            $('#delivery_note_items_table').on('input', '.item-name, .item-qty, .item-unit, .item-vat-percent, .item-gross-price, .item-note', function () {
                 const tr = $(this).closest('tr');
                 const idx = Number(tr.data('idx'));
                 const item = items[idx];
@@ -1481,13 +1557,16 @@
                 const $qty = tr.find('.item-qty');
                 let qty = Number($qty.val()) || 0;
 
-                const maxQty = Number(item.available_quantity);
+                const maxQty = (item.available_quantity === null || item.available_quantity === undefined)
+                    ? null
+                    : Number(item.available_quantity);
                 if (Number.isFinite(maxQty) && qty > maxQty) {
                     qty = maxQty;
                     $qty.val(String(qty));
                 }
 
                 item.quantity = qty;
+                item.name = String(tr.find('.item-name').val() ?? '').trim() || item.name;
                 item.unit = String(tr.find('.item-unit').val() || '').trim();
 
                 const vatRaw = String(tr.find('.item-vat-percent').val() || '').trim();
