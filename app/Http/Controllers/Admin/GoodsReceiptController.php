@@ -109,7 +109,7 @@ class GoodsReceiptController extends Controller
                     ';
                 }
 
-                if (($receipt->status ?? null) === 'draft' && $user && $user->can('edit-goods-receipt')) {
+                if ($user && $user->can('edit-goods-receipt')) {
                     $buttons .= '
                         <button class="btn btn-sm btn-primary edit" data-id="' . $receipt->id . '" title="Szerkesztés">
                             <i class="fas fa-edit"></i>
@@ -293,10 +293,24 @@ class GoodsReceiptController extends Controller
                 unset($validated['document_number']);
             }
 
+            // Kész (könyvelt) bevételezés nem degradálható piszkozattá.
+            if (in_array($receipt->status, ['posted', 'issued'], true)) {
+                $validated['status'] = $receipt->status;
+            }
+
+            $oldWarehouseId = (int) ($receipt->warehouse_id ?? 0);
+            $oldItems = GoodsReceiptItem::query()
+                ->where('goods_receipt_id', $receipt->id)
+                ->get(['product_id', 'quantity']);
+
             $validated['warehouse_id'] = $warehouseId;
 
             $receipt->update($validated);
             $this->syncItemsFromJson($receipt->id, (string) $request->input('items_json', '[]'));
+
+            if ($receipt->stock_added_at !== null) {
+                $this->adjustStockForReissuedGoodsReceipt($receipt->fresh(), $warehouseId, $oldItems, $oldWarehouseId);
+            }
 
             return $receipt;
         });
@@ -496,6 +510,11 @@ class GoodsReceiptController extends Controller
         $pdfBytes = DB::transaction(function () use ($receipt, $validated, $itemsForPdf, $warehouseId) {
             $receipt->refresh();
 
+            $oldWarehouseId = (int) ($receipt->warehouse_id ?? 0);
+            $oldItems = GoodsReceiptItem::query()
+                ->where('goods_receipt_id', $receipt->id)
+                ->get(['product_id', 'quantity']);
+
             $warehouse = Warehouse::query()->find($warehouseId);
             if (!$warehouse) {
                 throw new \RuntimeException('Kérlek válassz egy raktárat.');
@@ -552,6 +571,8 @@ class GoodsReceiptController extends Controller
 
             if ($receipt->stock_added_at === null) {
                 $this->addStockForIssuedGoodsReceipt($receipt->fresh(), $warehouseId);
+            } else {
+                $this->adjustStockForReissuedGoodsReceipt($receipt->fresh(), $warehouseId, $oldItems, $oldWarehouseId);
             }
 
             $receipt->update([
@@ -599,6 +620,8 @@ class GoodsReceiptController extends Controller
                 $productIds = $items->pluck('product_id')->filter()->unique()->values()->all();
 
                 if (count($productIds) > 0) {
+                    $trackedIds = $this->stockTrackedProductIds($productIds);
+
                     $stocks = DB::table('product_stocks')
                         ->where('warehouse_id', '=', $warehouseId)
                         ->whereIn('product_id', $productIds)
@@ -608,7 +631,7 @@ class GoodsReceiptController extends Controller
                     $byProductId = $stocks->keyBy('product_id');
 
                     foreach ($items as $item) {
-                        if (!$item->product_id) {
+                        if (!$item->product_id || !$trackedIds->has((int) $item->product_id)) {
                             continue;
                         }
 
@@ -756,6 +779,8 @@ class GoodsReceiptController extends Controller
             return;
         }
 
+        $trackedIds = $this->stockTrackedProductIds($productIds);
+
         $stocks = DB::table('product_stocks')
             ->where('warehouse_id', '=', $warehouseId)
             ->whereIn('product_id', $productIds)
@@ -765,7 +790,7 @@ class GoodsReceiptController extends Controller
         $byProductId = $stocks->keyBy('product_id');
 
         foreach ($items as $item) {
-            if (!$item->product_id) {
+            if (!$item->product_id || !$trackedIds->has((int) $item->product_id)) {
                 continue;
             }
 
@@ -789,6 +814,105 @@ class GoodsReceiptController extends Controller
         $receipt->update([
             'stock_added_at' => now(),
         ]);
+    }
+
+    private function adjustStockForReissuedGoodsReceipt(GoodsReceipt $receipt, int $warehouseId, $oldItems, int $oldWarehouseId): void
+    {
+        $newItems = GoodsReceiptItem::query()
+            ->where('goods_receipt_id', $receipt->id)
+            ->get(['product_id', 'quantity']);
+
+        $toQtyMap = function ($items) {
+            $map = [];
+            foreach ($items as $item) {
+                if (!$item->product_id) {
+                    continue;
+                }
+                $pid = (int) $item->product_id;
+                $map[$pid] = ($map[$pid] ?? 0) + (float) ($item->quantity ?? 0);
+            }
+            return $map;
+        };
+
+        $oldMap = $toQtyMap($oldItems);
+        $newMap = $toQtyMap($newItems);
+
+        if ($oldWarehouseId !== $warehouseId) {
+            // Raktárváltás: a régi mennyiséget visszavonjuk a régi raktárból,
+            // az újat pedig hozzáadjuk az új raktárhoz.
+            $this->applyGoodsReceiptStockDeltas(array_map(fn ($q) => -$q, $oldMap), $oldWarehouseId);
+            $this->applyGoodsReceiptStockDeltas($newMap, $warehouseId);
+            return;
+        }
+
+        $deltas = [];
+        foreach ($newMap as $pid => $qty) {
+            $delta = $qty - ($oldMap[$pid] ?? 0);
+            if (abs($delta) > 0.0001) {
+                $deltas[$pid] = $delta;
+            }
+        }
+        foreach ($oldMap as $pid => $qty) {
+            if (!isset($newMap[$pid]) && abs($qty) > 0.0001) {
+                $deltas[$pid] = -$qty;
+            }
+        }
+
+        $this->applyGoodsReceiptStockDeltas($deltas, $warehouseId);
+    }
+
+    private function applyGoodsReceiptStockDeltas(array $deltas, int $warehouseId): void
+    {
+        if ($warehouseId <= 0 || count($deltas) === 0) {
+            return;
+        }
+
+        $productIds = array_keys($deltas);
+
+        $trackedIds = $this->stockTrackedProductIds($productIds);
+        $deltas = array_intersect_key($deltas, $trackedIds->all());
+        if (count($deltas) === 0) {
+            return;
+        }
+        $productIds = array_keys($deltas);
+
+        $stocks = DB::table('product_stocks')
+            ->where('warehouse_id', '=', $warehouseId)
+            ->whereIn('product_id', $productIds)
+            ->lockForUpdate()
+            ->get(['product_id', 'quantity']);
+
+        $byProductId = $stocks->keyBy('product_id');
+
+        foreach ($deltas as $productId => $delta) {
+            $currentQty = (float) (($byProductId[$productId]->quantity ?? 0) ?? 0);
+
+            DB::table('product_stocks')->updateOrInsert(
+                [
+                    'warehouse_id' => $warehouseId,
+                    'product_id' => (int) $productId,
+                ],
+                [
+                    'quantity' => $currentQty + $delta,
+                    'updated_at' => now(),
+                ]
+            );
+        }
+    }
+
+    private function stockTrackedProductIds(array $productIds): \Illuminate\Support\Collection
+    {
+        $productIds = array_values(array_unique(array_filter(array_map('intval', $productIds))));
+
+        if (count($productIds) === 0) {
+            return collect();
+        }
+
+        return DB::table('products')
+            ->whereIn('id', $productIds)
+            ->where('stock_tracking', 1)
+            ->pluck('id')
+            ->flip();
     }
 
     private function generateAndStorePdf(GoodsReceipt $receipt, array $itemsForPdf): string

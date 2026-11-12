@@ -434,6 +434,17 @@
                 serverSide: true,
                 ajax: '{{ route('admin.orders.data') }}',
                 order: [[0, 'desc']],
+                autoWidth: false,
+                columnDefs: [
+                    { targets: 0, width: '60px' },    // ID
+                    { targets: 1, width: '130px' },   // Dátum
+                    { targets: 4, width: '80px' },    // Partner?
+                    { targets: 5, width: '110px' },   // Teljes összeg
+                    { targets: 6, width: '120px' },   // Fizetés módja
+                    { targets: 9, width: '90px' },    // Termékek száma
+                    { targets: 10, width: '90px' },   // Látta
+                    { targets: 11, width: '120px' },  // Műveletek
+                ],
                 columns: [
                     {data: 'id'},
                     {data: 'created_at'},

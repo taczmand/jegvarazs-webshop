@@ -107,7 +107,7 @@ class DeliveryNoteController extends Controller
                     ';
                 }
 
-                if (($note->status ?? null) === 'draft' && $user && $user->can('edit-delivery-note')) {
+                if ($user && $user->can('edit-delivery-note')) {
                     $buttons .= '
                         <button class="btn btn-sm btn-primary edit" data-id="' . $note->id . '" title="Szerkesztés">
                             <i class="fas fa-edit"></i>
@@ -318,10 +318,24 @@ class DeliveryNoteController extends Controller
                 unset($validated['document_number']);
             }
 
+            // Kész (kiállított) szállítólevél nem degradálható piszkozattá.
+            if (in_array($note->status, ['issued', 'posted'], true)) {
+                $validated['status'] = $note->status;
+            }
+
+            $oldWarehouseId = (int) ($note->warehouse_id ?? 0);
+            $oldItems = DeliveryNoteItem::query()
+                ->where('delivery_note_id', $note->id)
+                ->get(['product_id', 'quantity']);
+
             $validated['warehouse_id'] = $warehouseId;
 
             $note->update($validated);
             $this->syncItemsFromJson($note->id, (string) $request->input('items_json', '[]'));
+
+            if ($note->stock_deducted_at !== null) {
+                $this->adjustStockForReissuedDeliveryNote($note->fresh(), $warehouseId, $oldItems, $oldWarehouseId);
+            }
 
             return $note;
         });
@@ -506,6 +520,11 @@ class DeliveryNoteController extends Controller
         $pdfBytes = DB::transaction(function () use ($note, $validated, $itemsForPdf, $warehouseId) {
             $note->refresh();
 
+            $oldWarehouseId = (int) ($note->warehouse_id ?? 0);
+            $oldItems = DeliveryNoteItem::query()
+                ->where('delivery_note_id', $note->id)
+                ->get(['product_id', 'quantity']);
+
             $warehouse = Warehouse::query()->find($warehouseId);
             if (!$warehouse) {
                 throw new \RuntimeException('Kérlek válassz egy raktárat.');
@@ -562,6 +581,8 @@ class DeliveryNoteController extends Controller
 
             if ($note->stock_deducted_at === null) {
                 $this->deductStockForIssuedDeliveryNote($note->fresh(), $warehouseId);
+            } else {
+                $this->adjustStockForReissuedDeliveryNote($note->fresh(), $warehouseId, $oldItems, $oldWarehouseId);
             }
 
             $note->update([
@@ -614,6 +635,8 @@ class DeliveryNoteController extends Controller
                 $productIds = $items->pluck('product_id')->filter()->unique()->values()->all();
 
                 if (count($productIds) > 0) {
+                    $trackedIds = $this->stockTrackedProductIds($productIds);
+
                     $stocks = DB::table('product_stocks')
                         ->where('warehouse_id', '=', $warehouseId)
                         ->whereIn('product_id', $productIds)
@@ -623,7 +646,7 @@ class DeliveryNoteController extends Controller
                     $byProductId = $stocks->keyBy('product_id');
 
                     foreach ($items as $item) {
-                        if (!$item->product_id) {
+                        if (!$item->product_id || !$trackedIds->has((int) $item->product_id)) {
                             continue;
                         }
 
@@ -757,6 +780,8 @@ class DeliveryNoteController extends Controller
             return;
         }
 
+        $trackedIds = $this->stockTrackedProductIds($productIds);
+
         $stocks = DB::table('product_stocks')
             ->where('warehouse_id', '=', $warehouseId)
             ->whereIn('product_id', $productIds)
@@ -766,7 +791,7 @@ class DeliveryNoteController extends Controller
         $byProductId = $stocks->keyBy('product_id');
 
         foreach ($items as $item) {
-            if (!$item->product_id) {
+            if (!$item->product_id || !$trackedIds->has((int) $item->product_id)) {
                 continue;
             }
 
@@ -790,6 +815,105 @@ class DeliveryNoteController extends Controller
         $note->update([
             'stock_deducted_at' => now(),
         ]);
+    }
+
+    private function adjustStockForReissuedDeliveryNote(DeliveryNote $note, int $warehouseId, $oldItems, int $oldWarehouseId): void
+    {
+        $newItems = DeliveryNoteItem::query()
+            ->where('delivery_note_id', $note->id)
+            ->get(['product_id', 'quantity']);
+
+        $toQtyMap = function ($items) {
+            $map = [];
+            foreach ($items as $item) {
+                if (!$item->product_id) {
+                    continue;
+                }
+                $pid = (int) $item->product_id;
+                $map[$pid] = ($map[$pid] ?? 0) + (float) ($item->quantity ?? 0);
+            }
+            return $map;
+        };
+
+        $oldMap = $toQtyMap($oldItems);
+        $newMap = $toQtyMap($newItems);
+
+        if ($oldWarehouseId !== $warehouseId) {
+            // Raktárváltás: a régi mennyiséget visszaadjuk a régi raktárba,
+            // az újat pedig levonjuk az új raktárból.
+            $this->applyDeliveryNoteStockDeltas($oldMap, $oldWarehouseId);
+            $this->applyDeliveryNoteStockDeltas(array_map(fn ($q) => -$q, $newMap), $warehouseId);
+            return;
+        }
+
+        $deltas = [];
+        foreach ($newMap as $pid => $qty) {
+            $delta = ($oldMap[$pid] ?? 0) - $qty;
+            if (abs($delta) > 0.0001) {
+                $deltas[$pid] = $delta;
+            }
+        }
+        foreach ($oldMap as $pid => $qty) {
+            if (!isset($newMap[$pid]) && abs($qty) > 0.0001) {
+                $deltas[$pid] = $qty;
+            }
+        }
+
+        $this->applyDeliveryNoteStockDeltas($deltas, $warehouseId);
+    }
+
+    private function applyDeliveryNoteStockDeltas(array $deltas, int $warehouseId): void
+    {
+        if ($warehouseId <= 0 || count($deltas) === 0) {
+            return;
+        }
+
+        $productIds = array_keys($deltas);
+
+        $trackedIds = $this->stockTrackedProductIds($productIds);
+        $deltas = array_intersect_key($deltas, $trackedIds->all());
+        if (count($deltas) === 0) {
+            return;
+        }
+        $productIds = array_keys($deltas);
+
+        $stocks = DB::table('product_stocks')
+            ->where('warehouse_id', '=', $warehouseId)
+            ->whereIn('product_id', $productIds)
+            ->lockForUpdate()
+            ->get(['product_id', 'quantity']);
+
+        $byProductId = $stocks->keyBy('product_id');
+
+        foreach ($deltas as $productId => $delta) {
+            $currentQty = (float) (($byProductId[$productId]->quantity ?? 0) ?? 0);
+
+            DB::table('product_stocks')->updateOrInsert(
+                [
+                    'warehouse_id' => $warehouseId,
+                    'product_id' => (int) $productId,
+                ],
+                [
+                    'quantity' => $currentQty + $delta,
+                    'updated_at' => now(),
+                ]
+            );
+        }
+    }
+
+    private function stockTrackedProductIds(array $productIds): \Illuminate\Support\Collection
+    {
+        $productIds = array_values(array_unique(array_filter(array_map('intval', $productIds))));
+
+        if (count($productIds) === 0) {
+            return collect();
+        }
+
+        return DB::table('products')
+            ->whereIn('id', $productIds)
+            ->where('stock_tracking', 1)
+            ->pluck('id')
+            ->flip();
     }
 
     private function generateAndStorePdf(DeliveryNote $note, int $warehouseId, array $itemsForPdf): string

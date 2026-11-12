@@ -328,11 +328,9 @@ class OrderController extends Controller
                     'fas fa-question-circle',
                 ];
 
-                return '<span class="badge rounded-circle ' . $status[1] . ' p-2"'
-                    . ' title="' . e($status[0]) . '"'
-                    . ' data-bs-toggle="tooltip"'
-                    . ' aria-label="' . e($status[0]) . '">'
-                    . '<i class="' . $status[2] . '"></i>'
+                return '<span class="badge rounded-pill ' . $status[1] . ' px-2 py-1">'
+                    . '<i class="' . $status[2] . ' me-1"></i>'
+                    . e($status[0])
                     . '</span>';
             })
             ->addColumn('payment_status', function ($order) {
