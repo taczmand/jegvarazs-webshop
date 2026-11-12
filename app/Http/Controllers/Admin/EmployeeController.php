@@ -68,15 +68,7 @@ class EmployeeController extends Controller
             ]);
 
             if ($request->hasFile('file_upload')) {
-
-                $originalName = pathinfo($request->file_upload->getClientOriginalName(), PATHINFO_FILENAME);
-                $extension = $request->file_upload->getClientOriginalExtension();
-                $random = substr(Str::random(6), 0, 6); // 6 karakteres random string
-                $filename = $originalName . '_' . $random . '.' . $extension;
-
-                $path = $request->file_upload->storeAs('employees', $filename, 'public');
-
-                $employee->profile_photo_path = $path;
+                $employee->profile_photo_path = $this->storeEmployeePhoto($request->file_upload);
                 $employee->save();
             }
 
@@ -108,14 +100,7 @@ class EmployeeController extends Controller
 
 
             if ($request->hasFile('file_upload')) {
-
-                $originalName = pathinfo($request->file_upload->getClientOriginalName(), PATHINFO_FILENAME);
-                $extension = $request->file_upload->getClientOriginalExtension();
-                $random = substr(Str::random(6), 0, 6); // 6 karakteres random string
-                $filename = $originalName . '_' . $random . '.' . $extension;
-
-                $path = $request->file_upload->storeAs('employees', $filename, 'public');
-
+                $path = $this->storeEmployeePhoto($request->file_upload);
 
                 // Ha van új fájl, akkor frissítjük a logót
                 if ($employee->profile_photo_path) {
@@ -138,6 +123,51 @@ class EmployeeController extends Controller
                 'errors' => $e->getMessage(),
             ], 500);
         }
+    }
+
+    private function storeEmployeePhoto($file): string
+    {
+        $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+        $extension = strtolower($file->getClientOriginalExtension());
+        $random = substr(Str::random(6), 0, 6);
+        $filename = $originalName . '_' . $random . '.' . $extension;
+
+        $path = $file->storeAs('employees', $filename, 'public');
+        $fullPath = Storage::disk('public')->path($path);
+
+        // Csak JPG/PNG → WEBP, felbontás és minőség csökkentés
+        if (in_array($extension, ['jpg', 'jpeg', 'png'])) {
+            try {
+                $imagick = new \Imagick($fullPath);
+
+                // Max 1600px a hosszabb oldalon
+                $maxSide = 1600;
+                $w = (int) $imagick->getImageWidth();
+                $h = (int) $imagick->getImageHeight();
+                if ($w > 0 && $h > 0 && ($w > $maxSide || $h > $maxSide)) {
+                    $scale = $maxSide / max($w, $h);
+                    $newW = max(1, (int) round($w * $scale));
+                    $newH = max(1, (int) round($h * $scale));
+                    $imagick->resizeImage($newW, $newH, \Imagick::FILTER_LANCZOS, 1, true);
+                }
+
+                $imagick->setImageFormat('webp');
+                $imagick->setImageCompressionQuality(75);
+                $imagick->stripImage();
+
+                $webpPath = preg_replace('/\.(jpg|jpeg|png)$/i', '.webp', $fullPath);
+                $imagick->writeImage($webpPath);
+                $imagick->destroy();
+
+                unlink($fullPath);
+
+                $path = preg_replace('/\.(jpg|jpeg|png)$/i', '.webp', $path);
+            } catch (\Exception $e) {
+                \Log::error("Munkatárs kép optimalizálás sikertelen: {$fullPath} - {$e->getMessage()}");
+            }
+        }
+
+        return $path;
     }
 
     public function destroy(Request $request) {
