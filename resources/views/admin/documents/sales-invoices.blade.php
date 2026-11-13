@@ -2116,8 +2116,9 @@
 
             function scheduleDraftAutoSave() {
                 if (!canAutoSaveDraft()) return;
-                clearTimeout(autoSaveTimer);
-                autoSaveTimer = setTimeout(autoSaveDraft, 1500);
+                // Automatikus piszkozat mentés kikapcsolva
+                // clearTimeout(autoSaveTimer);
+                // autoSaveTimer = setTimeout(autoSaveDraft, 1500);
             }
 
             function autoSaveDraft() {
