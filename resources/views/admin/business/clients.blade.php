@@ -34,6 +34,15 @@
                     </div>
 
                     <div class="filter-group flex-grow-1 flex-md-shrink-0">
+                        <select class="form-select" id="filter_besorolas">
+                            <option value="">Besorolás (összes)</option>
+                            <option value="ugyfel">Ügyfél</option>
+                            <option value="vasarlo">Vásárló</option>
+                            <option value="partner">Partner</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group flex-grow-1 flex-md-shrink-0">
                         <input type="text" placeholder="Cím" class="form-control" id="filter_address">
                     </div>
                 </div>
@@ -44,6 +53,7 @@
                         <th>ID</th>
                         <th data-priority="1">Név</th>
                         <th data-priority="1">E-mail</th>
+                        <th>Besorolás</th>
                         <th>Telefonszám</th>
                         <th>Megjegyzés</th>
                         <th>Létrehozva</th>
@@ -367,6 +377,7 @@
                     url: '{{ route('admin.clients.data') }}',
                     data: function (d) {
                         d.filter_address = ($('#filter_address').val() || '').toString().trim();
+                        d.filter_besorolas = ($('#filter_besorolas').val() || '').toString();
                     }
                 },
                 order: [[0, 'desc']],
@@ -374,6 +385,7 @@
                     { data: 'id' },
                     { data: 'name' },
                     { data: 'email' },
+                    { data: 'besorolas' },
                     { data: 'phone' },
                     { data: 'comment' },
                     { data: 'created' },
@@ -479,6 +491,10 @@
             });
 
             $('#filter_address').on('change keyup', function () {
+                table.draw();
+            });
+
+            $('#filter_besorolas').on('change', function () {
                 table.draw();
             });
 

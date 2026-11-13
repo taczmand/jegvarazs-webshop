@@ -43,6 +43,15 @@
                             <option value="inactive">Inaktív</option>
                         </select>
                     </div>
+
+                    <div class="filter-group flex-grow-1 flex-md-shrink-0">
+                        <select class="form-select" id="filter_warehouse">
+                            <option value="">Raktár (összes)</option>
+                            @foreach($warehouses as $warehouse)
+                                <option value="{{ $warehouse->id }}">{{ $warehouse->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
                 </div>
 
                 <table class="table table-bordered display responsive nowrap" id="productsTable" style="width:100%">
@@ -52,7 +61,7 @@
                         <th data-priority="1">Kép</th>
                         <th data-priority="2">Terméknév</th>
                         <th data-priority="7">Vonalkód</th>
-                        <th data-priority="6">Készlet</th>
+                        <th data-priority="6">Raktárkészlet</th>
                         <th data-priority="3">Bruttó ár</th>
                         <th data-priority="4">Partner bruttó ár</th>
                         <th>ÁFA</th>
@@ -153,18 +162,22 @@
                                                 <input type="number" class="form-control" name="unit_qty" id="unit_qty" value="1" required>
                                             </div>
                                         </div>
-                                        <div class="mb-3 form-check">
-                                            <input type="hidden" name="in_stock" value="0">
-                                            <input type="checkbox" name="in_stock" id="in_stock" class="form-check-input" value="1" checked>
-                                            <label for="in_stock" class="form-check-label">Raktáron van?</label>
-
-                                            <input type="hidden" name="stock_tracking" value="0">
-                                            <input type="checkbox" name="stock_tracking" id="stock_tracking" class="form-check-input ml-3" value="1" checked>
-                                            <label for="stock_tracking" class="form-check-label ml-4">Készletkezelés?</label>
-
-                                            <input type="hidden" name="favorite" value="0">
-                                            <input type="checkbox" name="favorite" id="favorite" class="form-check-input ml-3" value="1">
-                                            <label for="favorite" class="form-check-label ml-4">Kedvenc</label>
+                                        <div class="mb-3 d-flex flex-wrap gap-3">
+                                            <div class="form-check">
+                                                <input type="hidden" name="in_stock" value="0">
+                                                <input type="checkbox" name="in_stock" id="in_stock" class="form-check-input" value="1" checked>
+                                                <label for="in_stock" class="form-check-label">Raktáron van?</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input type="hidden" name="stock_tracking" value="0">
+                                                <input type="checkbox" name="stock_tracking" id="stock_tracking" class="form-check-input" value="1" checked>
+                                                <label for="stock_tracking" class="form-check-label">Készletkezelés?</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input type="hidden" name="favorite" value="0">
+                                                <input type="checkbox" name="favorite" id="favorite" class="form-check-input" value="1">
+                                                <label for="favorite" class="form-check-label">Kedvenc</label>
+                                            </div>
                                         </div>
                                         <div class="mb-3">
                                             <label class="form-label">Mértékegység</label>
@@ -476,7 +489,12 @@
                 responsive: true,
                 processing: true,
                 serverSide: true,
-                ajax: '{{ route('admin.products.data') }}',
+                ajax: {
+                    url: '{{ route('admin.products.data') }}',
+                    data: function (d) {
+                        d.warehouse_id = ($('#filter_warehouse').val() || '').toString();
+                    }
+                },
                 order: [[0, 'desc']],
                 createdRow: function (row, data) {
                     if (data && data.in_cart) {
@@ -529,7 +547,23 @@
                         }
                     },
                     { data: 'barcode' },
-                    { data: 'stock', className: 'editable', name: 'stock' },
+                    {
+                        data: 'warehouse_quantity',
+                        defaultContent: '-',
+                        visible: false,
+                        orderable: false,
+                        searchable: false,
+                        render: function (data) {
+                            if (data === null || data === undefined || data === '') {
+                                return '-';
+                            }
+                            const num = Number(data);
+                            if (Number.isNaN(num)) {
+                                return '-';
+                            }
+                            return Math.round(num).toLocaleString('hu-HU');
+                        }
+                    },
                     { data: 'gross_price', className: 'editable', name: 'gross_price' },
                     { data: 'partner_gross_price', className: 'editable', name: 'partner_gross_price' },
                     { data: 'tax_value' },
@@ -546,6 +580,11 @@
                 var i =$(this).attr('data-column');
                 var v =$(this).val();
                 table.columns(i).search(v).draw();
+            });
+
+            $('#filter_warehouse').on('change', function () {
+                const warehouseId = $(this).val();
+                table.columns(4).visible(warehouseId !== '').draw();
             });
 
             // Új termék létrehozása modal megjelenítése

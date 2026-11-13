@@ -13,6 +13,7 @@ use App\Models\Offer;
 use App\Models\Worksheet;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Yajra\DataTables\Facades\DataTables;
 
@@ -56,6 +57,11 @@ class ClientController extends Controller
                 'id_number' => $client->id_number,
                 'email' => $client->email,
                 'phone' => $client->phone,
+                'mothers_name' => $client->mothers_name,
+                'place_of_birth' => $client->place_of_birth,
+                'date_of_birth' => $client->date_of_birth
+                    ? \Carbon\Carbon::parse($client->date_of_birth)->format('Y-m-d')
+                    : null,
                 'addresses' => $addresses->map(function ($address) {
                     return [
                         'id' => $address->id,
@@ -168,36 +174,91 @@ class ClientController extends Controller
     public function data()
     {
         $addressFilter = trim((string) request()->input('filter_address', ''));
+        $besorolasFilter = trim((string) request()->input('filter_besorolas', ''));
 
-        $clients = Client::select([
-            'id',
-            'name',
-            'mothers_name',
-            'place_of_birth',
-            'date_of_birth',
-            'id_number',
-            'email',
-            'phone',
-            'comment',
-            'created_at as created',
-            'updated_at as updated',
-        ])
+        $clientsQuery = DB::table('clients')
+            ->select([
+                'clients.id',
+                'clients.name',
+                'clients.email',
+                'clients.phone',
+                'clients.comment',
+                'clients.created_at as created',
+                'clients.updated_at as updated',
+            ])
+            ->selectRaw("'client' as source")
+            ->selectRaw('0 as is_partner')
             ->when($addressFilter !== '', function ($query) use ($addressFilter) {
-                $query->whereHas('addresses', function ($q) use ($addressFilter) {
-                    $q->where(function ($inner) use ($addressFilter) {
-                        $inner
-                            ->where('country', 'like', "%{$addressFilter}%")
-                            ->orWhere('zip_code', 'like', "%{$addressFilter}%")
-                            ->orWhere('city', 'like', "%{$addressFilter}%")
-                            ->orWhere('address_line', 'like', "%{$addressFilter}%")
-                            ->orWhere('comment', 'like', "%{$addressFilter}%");
-                    });
+                $query->whereExists(function ($sub) use ($addressFilter) {
+                    $sub->selectRaw('1')
+                        ->from('client_addresses')
+                        ->whereColumn('client_addresses.client_id', 'clients.id')
+                        ->where(function ($inner) use ($addressFilter) {
+                            $inner
+                                ->where('country', 'like', "%{$addressFilter}%")
+                                ->orWhere('zip_code', 'like', "%{$addressFilter}%")
+                                ->orWhere('city', 'like', "%{$addressFilter}%")
+                                ->orWhere('address_line', 'like', "%{$addressFilter}%")
+                                ->orWhere('comment', 'like', "%{$addressFilter}%");
+                        });
                 });
             });
 
-        return DataTables::of($clients)
-            ->addColumn('action', function ($client) {
+        $customersQuery = DB::table('customers')
+            ->selectRaw("customers.id")
+            ->selectRaw("TRIM(CONCAT(COALESCE(customers.last_name, ''), ' ', COALESCE(customers.first_name, ''))) as name")
+            ->selectRaw("customers.email")
+            ->selectRaw("customers.phone")
+            ->selectRaw("NULL as comment")
+            ->selectRaw("customers.created_at as created")
+            ->selectRaw("customers.updated_at as updated")
+            ->selectRaw("'customer' as source")
+            ->selectRaw("customers.is_partner as is_partner");
+
+        $union = $clientsQuery->unionAll($customersQuery);
+
+        $rows = DB::query()->fromSub($union, 'u');
+
+        if ($besorolasFilter !== '') {
+            $rows->where(function ($query) use ($besorolasFilter) {
+                switch ($besorolasFilter) {
+                    case 'ugyfel':
+                        $query->where('u.source', 'client');
+                        break;
+                    case 'vasarlo':
+                        $query->where('u.source', 'customer')->where('u.is_partner', 0);
+                        break;
+                    case 'partner':
+                        $query->where('u.source', 'customer')->where('u.is_partner', 1);
+                        break;
+                }
+            });
+        }
+
+        return DataTables::of($rows)
+            ->addColumn('besorolas', function ($row) {
+                if (($row->source ?? '') === 'customer') {
+                    return ((int) ($row->is_partner ?? 0)) === 1 ? 'Partner' : 'Vásárló';
+                }
+
+                return 'Ügyfél';
+            })
+            ->addColumn('action', function ($row) {
                 $user = auth('admin')->user();
+
+                if (($row->source ?? '') === 'customer') {
+                    if ($user && $user->can('view-customers')) {
+                        return '
+                            <a class="btn btn-sm btn-outline-secondary" href="' . route('admin.customers.index') . '" title="Megtekintés a vevők között">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                        ';
+                    }
+
+                    return '';
+                }
+
+                $client = (object) ['id' => $row->id];
                 $buttons = '';
 
                 if ($user && $user->can('edit-client')) {

@@ -31,7 +31,8 @@ class ProductController extends Controller
     public function index()
     {
         $categories = Category::orderBy('title')->get();
-        return view('admin.products.products', compact('categories'));
+        $warehouses = Warehouse::orderBy('name')->get(['id', 'name']);
+        return view('admin.products.products', compact('categories', 'warehouses'));
     }
 
     public function search(Request $request)
@@ -274,20 +275,38 @@ class ProductController extends Controller
 
     public function data()
     {
+        $warehouseIdRaw = request()->input('warehouse_id');
+        $warehouseId = (
+            $warehouseIdRaw !== null
+            && $warehouseIdRaw !== ''
+            && is_numeric($warehouseIdRaw)
+        )
+            ? (int) $warehouseIdRaw
+            : null;
+
         $products = Product::with(['category', 'taxCategory'])
             ->select([
-                'id',
-                'title',
-                'barcode',
-                'stock',
-                'in_stock',
-                'gross_price',
-                'partner_gross_price',
-                'status',
-                'created_at',
-                'cat_id',
-                'tax_id'
+                'products.id',
+                'products.title',
+                'products.barcode',
+                'products.stock',
+                'products.in_stock',
+                'products.gross_price',
+                'products.partner_gross_price',
+                'products.status',
+                'products.created_at',
+                'products.cat_id',
+                'products.tax_id'
             ])
+            ->when($warehouseId !== null, function ($query) use ($warehouseId) {
+                $query
+                    ->leftJoin('product_stocks', function ($join) use ($warehouseId) {
+                        $join
+                            ->on('product_stocks.product_id', '=', 'products.id')
+                            ->where('product_stocks.warehouse_id', '=', $warehouseId);
+                    })
+                    ->addSelect(DB::raw('COALESCE(product_stocks.quantity, 0) as warehouse_quantity'));
+            })
             ->addSelect([
                 'in_cart_count' => CartItem::query()
                     ->selectRaw('COUNT(*)')
@@ -332,6 +351,9 @@ class ProductController extends Controller
             })
             ->addColumn('tax_value', function ($product) {
                 return $product->taxCategory?->tax_value . '%' ?? '';
+            })
+            ->addColumn('warehouse_quantity', function ($product) {
+                return $product->warehouse_quantity ?? null;
             })
             ->editColumn('created_at', function ($product) {
                 return $product->created_at ? $product->created_at->format('Y-m-d H:i:s') : '';

@@ -1835,6 +1835,9 @@
                                     const email = c?.email || '';
                                     const idNumber = c?.id_number || '';
                                     const phone = c?.phone || '';
+                                    const mothersName = c?.mothers_name || '';
+                                    const placeOfBirth = c?.place_of_birth || '';
+                                    const dateOfBirth = c?.date_of_birth || '';
                                     const addresses = Array.isArray(c.addresses) ? c.addresses : [];
 
                                     const headerParts = [idNumber, email].filter(Boolean).join(', ');
@@ -1858,6 +1861,9 @@
                                                 data-city="${escapeHtml(a?.city || '')}"
                                                 data-line="${escapeHtml(a?.address_line || '')}"
                                                 data-id-number="${escapeHtml(idNumber)}"
+                                                data-mothers-name="${escapeHtml(mothersName)}"
+                                                data-place-of-birth="${escapeHtml(placeOfBirth)}"
+                                                data-date-of-birth="${escapeHtml(dateOfBirth)}"
                                             >
                                                 ${escapeHtml(addrText || 'Cím nélkül')}
                                             </button>
@@ -1871,6 +1877,9 @@
                                             data-email="${escapeHtml(email)}"
                                             data-phone="${escapeHtml(phone)}"
                                             data-id-number="${escapeHtml(idNumber)}"
+                                            data-mothers-name="${escapeHtml(mothersName)}"
+                                            data-place-of-birth="${escapeHtml(placeOfBirth)}"
+                                            data-date-of-birth="${escapeHtml(dateOfBirth)}"
                                         >
                                             + Új cím ehhez az ügyfélhez
                                         </button>
@@ -1915,6 +1924,9 @@
                 const city = ($btn.data('city') || '').toString();
                 const line = ($btn.data('line') || '').toString();
                 const idNumber = ($btn.data('id-number') || '').toString();
+                const mothersName = ($btn.data('mothers-name') || '').toString();
+                const placeOfBirth = ($btn.data('place-of-birth') || '').toString();
+                const dateOfBirth = ($btn.data('date-of-birth') || '').toString();
 
                 $('#client_id').val(clientId);
                 $('#client_address_id').val(addressId);
@@ -1930,6 +1942,10 @@
                 $('#contact_zip_code').val(zip);
                 $('#contact_city').val(city);
                 $('#contact_address_line').val(line);
+                $('#id_number').val(idNumber);
+                $('#mothers_name').val(mothersName);
+                $('#place_of_birth').val(placeOfBirth);
+                $('#date_of_birth').val(dateOfBirth);
 
                 setClientFieldsVisible(true);
                 setSnapshotMode(false);
@@ -1952,6 +1968,9 @@
                 const email = ($btn.data('email') || '').toString();
                 const phone = ($btn.data('phone') || '').toString();
                 const idNumber = ($btn.data('id-number') || '').toString();
+                const mothersName = ($btn.data('mothers-name') || '').toString();
+                const placeOfBirth = ($btn.data('place-of-birth') || '').toString();
+                const dateOfBirth = ($btn.data('date-of-birth') || '').toString();
 
                 $('#client_id').val(clientId);
                 $('#client_address_id').val('');
@@ -1967,6 +1986,10 @@
                 $('#contact_zip_code').val('');
                 $('#contact_city').val('');
                 $('#contact_address_line').val('');
+                $('#id_number').val(idNumber);
+                $('#mothers_name').val(mothersName);
+                $('#place_of_birth').val(placeOfBirth);
+                $('#date_of_birth').val(dateOfBirth);
 
                 setClientFieldsVisible(true);
                 setSnapshotMode(false);

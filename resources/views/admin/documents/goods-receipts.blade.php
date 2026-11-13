@@ -533,8 +533,18 @@
                     const { net, gross } = calcRow(row);
                     const qtyVal = (row.quantity ?? 1);
 
+                    const currentNetRaw = row.current_unit_net_price;
+                    const currentNet = (currentNetRaw === null || currentNetRaw === undefined || currentNetRaw === '')
+                        ? null
+                        : Number(currentNetRaw);
+                    const enteredNet = Number(row.unit_net_price || 0);
+                    const priceHigher = currentNet !== null
+                        && Number.isFinite(currentNet)
+                        && enteredNet > currentNet;
+                    const rowClass = priceHigher ? 'table-warning' : '';
+
                     $tbody.append(`
-                        <tr data-idx="${idx}">
+                        <tr data-idx="${idx}" class="${rowClass}">
                             <td>
                                 <div class="d-flex align-items-center gap-2">
                                     ${row.image_url
@@ -544,18 +554,19 @@
                                 </div>
                             </td>
                             <td class="text-end">
-                                <input type="number" step="any" min="0" class="form-control form-control-sm item-qty" value="${escapeHtml(qtyVal)}">
+                                <input type="number" step="any" min="1" class="form-control form-control-sm item-qty" value="${escapeHtml(qtyVal)}">
                             </td>
                             <td>
                                 <input type="text" class="form-control form-control-sm item-unit" value="${escapeHtml(row.unit || 'db')}">
                             </td>
                             <td class="text-end">
-                                <input type="number" step="1" class="form-control form-control-sm item-unit-net" value="${escapeHtml(row.unit_net_price ?? 0)}">
+                                <input type="number" step="1" class="form-control form-control-sm item-unit-net d-inline-block" style="width: 80px;" value="" min="0">
+                                <div class="item-price-warn text-danger fw-semibold" style="font-size: 0.65rem; line-height: 1.1;${priceHigher ? '' : ' display: none;'}">${priceHigher ? `Beállított: ${fmtMoney(currentNet)} Ft — túllépve` : ''}</div>
                             </td>
                             <td class="text-end">
                                 <input type="number" step="1" class="form-control form-control-sm item-vat" value="${escapeHtml(row.vat_percent ?? 0)}">
                             </td>
-                            <td class="text-end item-net-cell">${fmtMoney(net)}</td>
+                            <td class="text-end item-net-cell"></td>
                             <td class="text-end item-gross-cell">${fmtMoney(gross)}</td>
                             <td class="text-end">
                                 <button type="button" class="btn btn-sm btn-outline-danger item-remove">×</button>
@@ -586,6 +597,7 @@
                     unit_qty: packQty,
                     quantity: defaultQty,
                     unit_net_price: Number.isFinite(unitNet) ? Math.round(unitNet) : 0,
+                    current_unit_net_price: Number.isFinite(unitNet) ? Math.round(unitNet) : null,
                     vat_percent: vatPercent,
                 });
                 renderItems();
@@ -724,9 +736,22 @@
                 items[idx].unit_net_price = Number($tr.find('.item-unit-net').val() || 0);
                 items[idx].vat_percent = Number($tr.find('.item-vat').val() || 0);
 
-                const { net, gross } = calcRow(items[idx]);
-                $tr.find('.item-net-cell').text(fmtMoney(net));
+                const { gross } = calcRow(items[idx]);
                 $tr.find('.item-gross-cell').text(fmtMoney(gross));
+
+                const curRaw = items[idx].current_unit_net_price;
+                const curNum = (curRaw === null || curRaw === undefined || curRaw === '') ? null : Number(curRaw);
+                const enteredNum = Number(items[idx].unit_net_price || 0);
+                const exceeded = curNum !== null && Number.isFinite(curNum) && enteredNum > curNum;
+                $tr.toggleClass('table-warning', exceeded);
+
+                const $warn = $tr.find('.item-price-warn');
+                if (exceeded) {
+                    $warn.text(`Beállított: ${fmtMoney(curNum)} Ft — túllépve`).show();
+                } else {
+                    $warn.hide();
+                }
+
                 syncItemsJson();
                 scheduleDraftAutoSave();
             });
@@ -807,6 +832,7 @@
                     unit_qty: packQty,
                     quantity: defaultQty,
                     unit_net_price: Number.isFinite(unitNet) ? Math.round(unitNet) : 0,
+                    current_unit_net_price: Number.isFinite(unitNet) ? Math.round(unitNet) : null,
                     vat_percent: vatPercent,
                 });
                 renderItems();
