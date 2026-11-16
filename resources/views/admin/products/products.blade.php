@@ -1,7 +1,7 @@
 @extends('layouts.admin')
 
 @section('content')
-    <div class="container p-0">
+    <div class="container-fluid px-0">
 
         <div class="d-flex justify-content-between align-items-center mb-3 pb-2">
             <h2 class="color-dark-blue mb-0">Termékek / Összes termék</h2>
