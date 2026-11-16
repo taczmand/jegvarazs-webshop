@@ -380,6 +380,8 @@
                     </table>
                 </div>
 
+                <div class="text-end mt-2" id="invoice_totals" style="font-size: 0.9rem;"></div>
+
                 <input type="hidden" name="items_json" id="items_json" value="[]">
             </fieldset>
         </x-slot:middle>
@@ -2331,8 +2333,28 @@
                 });
             }
 
+            function hufRoundingAmount(gross, paymentMethod, currency) {
+                if (String(currency || 'HUF').toUpperCase() !== 'HUF') return 0;
+                if (String(paymentMethod) !== 'cash') return 0;
+                const g = Math.round(Number(gross) || 0);
+                return Math.sign(g) * Math.round(Math.abs(g) / 5) * 5 - g;
+            }
+
+            function renderTotals() {
+                const gross = items.reduce((sum, i) => sum + (Math.round(Number(i.gross_total)) || 0), 0);
+                const rounding = hufRoundingAmount(gross, $('#payment_method').val(), $('#currency').val());
+
+                let html = `<div>Bruttó összesen: <strong>${formatGroupedMoney(gross)} Ft</strong></div>`;
+                if (rounding !== 0) {
+                    html += `<div class="text-muted">Kerekítés: ${rounding > 0 ? '+' : ''}${rounding} Ft</div>`;
+                    html += `<div>Fizetendő: <strong>${formatGroupedMoney(gross + rounding)} Ft</strong></div>`;
+                }
+                $('#invoice_totals').html(html);
+            }
+
             function syncItemsJson() {
                 $('#items_json').val(JSON.stringify(items));
+                renderTotals();
             }
 
             function addProductAsItem(product) {
@@ -2762,6 +2784,7 @@
 
             $(document).on('change', '#payment_method', function () {
                 $('#due_at').val(dueDateForPaymentMethod($(this).val(), todayDate()));
+                renderTotals();
             });
 
             function setRelatedOrder(orderId) {

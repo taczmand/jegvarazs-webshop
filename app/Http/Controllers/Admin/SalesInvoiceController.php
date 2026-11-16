@@ -968,7 +968,12 @@ class SalesInvoiceController extends Controller
             ),
             items: $items,
             paymentMethod: (string) $validated['payment_method'],
-            noteForDocument: isset($validated['note_for_document']) ? (string) $validated['note_for_document'] : null,
+            noteForDocument: $this->appendRoundingNote(
+                isset($validated['note_for_document']) ? (string) $validated['note_for_document'] : null,
+                $items,
+                (string) $validated['payment_method'],
+                (string) ($validated['currency'] ?? 'HUF')
+            ),
             invoicePrefix: $prefix,
             currency: (string) ($validated['currency'] ?? 'HUF'),
             agentKey: $company->billing_provider_api_key ? (string) $company->billing_provider_api_key : null,
@@ -1150,7 +1155,12 @@ class SalesInvoiceController extends Controller
             ),
             items: $items,
             paymentMethod: (string) $validated['payment_method'],
-            noteForDocument: isset($validated['note_for_document']) ? (string) $validated['note_for_document'] : null,
+            noteForDocument: $this->appendRoundingNote(
+                isset($validated['note_for_document']) ? (string) $validated['note_for_document'] : null,
+                $items,
+                (string) $validated['payment_method'],
+                (string) ($validated['currency'] ?? 'HUF')
+            ),
             invoicePrefix: $invoicePrefix,
             currency: (string) ($validated['currency'] ?? 'HUF'),
             agentKey: $company->billing_provider_api_key ? (string) $company->billing_provider_api_key : null,
@@ -1267,6 +1277,13 @@ class SalesInvoiceController extends Controller
                 'stock_deducted_at' => $invoice->stock_deducted_at ?: now(),
             ];
 
+            $roundingAmount = $this->hufRoundingAmount(
+                (int) $invoice->gross_total,
+                (string) $validated['payment_method'],
+                (string) ($validated['currency'] ?? 'HUF')
+            );
+            $issueUpdate['rounding_amount'] = $roundingAmount;
+
             if ((string) $validated['payment_method'] === 'bank_transfer') {
                 $issueUpdate['outstanding_amount'] = max(
                     0,
@@ -1274,7 +1291,7 @@ class SalesInvoiceController extends Controller
                 );
             } elseif (in_array((string) $validated['payment_method'], ['cash', 'credit_card'], true)) {
                 $issueUpdate['payment_status'] = 'paid';
-                $issueUpdate['paid_amount'] = (int) $invoice->gross_total;
+                $issueUpdate['paid_amount'] = (int) $invoice->gross_total + $roundingAmount;
                 $issueUpdate['outstanding_amount'] = 0;
             }
 
@@ -1370,7 +1387,46 @@ class SalesInvoiceController extends Controller
 
         $invoice->update([
             'gross_total' => $gross,
+            'rounding_amount' => $this->hufRoundingAmount($gross, $invoice->payment_method, $invoice->currency),
         ]);
+    }
+
+    private function hufRoundingAmount(int $gross, ?string $paymentMethod, ?string $currency): int
+    {
+        if (strtoupper(trim((string) ($currency ?? 'HUF'))) !== 'HUF') {
+            return 0;
+        }
+
+        if ((string) $paymentMethod !== 'cash') {
+            return 0;
+        }
+
+        $rounded = ($gross <=> 0) * (int) round(abs($gross) / 5) * 5;
+
+        return $rounded - $gross;
+    }
+
+    private function appendRoundingNote(?string $note, array $items, string $paymentMethod, string $currency): ?string
+    {
+        $gross = 0;
+        foreach ($items as $item) {
+            if ($item instanceof ItemData) {
+                $gross += (int) round((float) ($item->grossTotal ?? 0));
+            }
+        }
+
+        $rounding = $this->hufRoundingAmount($gross, $paymentMethod, $currency);
+        if ($rounding === 0) {
+            return $note;
+        }
+
+        $roundingNote = 'Fizetendő végösszeg a 2008. évi III. törvény szerinti kerekítéssel: '
+            . number_format($gross + $rounding, 0, ',', ' ') . ' Ft'
+            . ' (kerekítés: ' . ($rounding > 0 ? '+' : '') . $rounding . ' Ft)';
+
+        $note = trim((string) $note);
+
+        return $note !== '' ? $note . "\n" . $roundingNote : $roundingNote;
     }
 
     private function deductStockForIssuedSalesInvoice(SalesInvoice $invoice): void
