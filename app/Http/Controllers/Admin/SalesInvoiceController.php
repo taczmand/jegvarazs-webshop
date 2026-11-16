@@ -934,11 +934,10 @@ class SalesInvoiceController extends Controller
 
             $discountedGrossUnit = $grossUnit * (1 - ($discount / 100));
             $div = 1 + (max(0, $vatPercent) / 100);
-            $exactNetUnit = $div > 0 ? ($discountedGrossUnit / $div) : $discountedGrossUnit;
-            $netUnit = round($exactNetUnit);
-
-            $netTotal = round($exactNetUnit * $qty);
+            $netUnit = round($discountedGrossUnit / $div, 2);
             $grossTotal = round($discountedGrossUnit * $qty);
+            $netTotal = round($grossTotal / $div);
+            $vatTotal = $grossTotal - $netTotal;
 
             $items[] = new ItemData(
                 name: $name,
@@ -1102,11 +1101,10 @@ class SalesInvoiceController extends Controller
 
             $discountedGrossUnit = $grossUnit * (1 - ($discount / 100));
             $div = 1 + (max(0, $vatPercent) / 100);
-            $exactNetUnit = $div > 0 ? ($discountedGrossUnit / $div) : $discountedGrossUnit;
-            $netUnit = round($exactNetUnit);
-
-            $netTotal = round($exactNetUnit * $qty);
+            $netUnit = round($discountedGrossUnit / $div, 2);
             $grossTotal = round($discountedGrossUnit * $qty);
+            $netTotal = round($grossTotal / $div);
+            $vatTotal = $grossTotal - $netTotal;
 
             $items[] = new ItemData(
                 name: $name,

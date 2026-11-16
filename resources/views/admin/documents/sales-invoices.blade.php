@@ -2264,10 +2264,13 @@
                 const unitNet = vat > 0 ? (discountedUnitGross / (1 + vat / 100)) : discountedUnitGross;
                 const unitVat = discountedUnitGross - unitNet;
 
+                const roundHalfAway = (v) => Math.sign(v) * Math.round(Math.abs(v));
+                const lineGross = roundHalfAway(discountedUnitGross * q);
+
                 item.unit_net_price = Math.round(unitNet);
-                item.net_total = Math.round(unitNet * q);
-                item.gross_total = Math.round(discountedUnitGross * q);
-                item.vat_total = item.gross_total - item.net_total;
+                item.net_total = roundHalfAway(vat > 0 ? (lineGross / (1 + vat / 100)) : lineGross);
+                item.vat_total = lineGross - item.net_total;
+                item.gross_total = lineGross;
             }
 
             const INSTALLATION_SUFFIX = 'BESZERELÉSSEL EGYÜTT';
