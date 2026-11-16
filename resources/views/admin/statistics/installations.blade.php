@@ -30,6 +30,14 @@
                         <input type="text" placeholder="Telefonszám" class="filter-input form-control" data-column="2">
                     </div>
 
+                    <div class="filter-group flex-grow-1 flex-md-shrink-0">
+                        <select class="form-select" id="work_type_filter">
+                            <option value="">Összes</option>
+                            <option value="Szerelés">Szerelés</option>
+                            <option value="Karbantartás">Karbantartás</option>
+                        </select>
+                    </div>
+
                 </div>
 
                 <table class="table table-bordered display responsive nowrap" id="adminTable" style="width:100%">
@@ -66,7 +74,12 @@
                 },
                 processing: true,
                 serverSide: true,
-                ajax: '{{ route('admin.stats.installations.data') }}',
+                ajax: {
+                    url: '{{ route('admin.stats.installations.data') }}',
+                    data: function (d) {
+                        d.work_type = $('#work_type_filter').val() || '';
+                    }
+                },
                 order: [[0, 'asc']],
                 columns: [
                     { data: 'name' },
@@ -97,6 +110,10 @@
                 var i = $(this).attr('data-column');
                 var v = $(this).val();
                 table.columns(i).search(v).draw();
+            });
+
+            $('#work_type_filter').on('change', function () {
+                table.draw();
             });
         });
 

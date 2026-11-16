@@ -307,6 +307,18 @@ class ProductController extends Controller
                     })
                     ->addSelect(DB::raw('COALESCE(product_stocks.quantity, 0) as warehouse_quantity'));
             })
+            ->when(request()->boolean('only_in_stock'), function ($query) use ($warehouseId) {
+                $query->whereExists(function ($sub) use ($warehouseId) {
+                    $sub->select(DB::raw(1))
+                        ->from('product_stocks as ps')
+                        ->whereColumn('ps.product_id', 'products.id')
+                        ->where('ps.quantity', '>', 0);
+
+                    if ($warehouseId !== null) {
+                        $sub->where('ps.warehouse_id', '=', $warehouseId);
+                    }
+                });
+            })
             ->addSelect([
                 'in_cart_count' => CartItem::query()
                     ->selectRaw('COUNT(*)')

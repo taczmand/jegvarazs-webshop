@@ -86,6 +86,15 @@
                     </div>
 
                     <div class="filter-group flex-grow-1 flex-md-shrink-0">
+                        <select class="form-select" id="prefix_filter">
+                            <option value="">Előtag (összes)</option>
+                            @foreach($companyInvoicePrefixes as $prefix)
+                                <option value="{{ $prefix->id }}">{{ $prefix->prefix }}@if($companies->count() > 1) ({{ optional($companies->firstWhere('id', $prefix->company_id))->name }})@endif</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="filter-group flex-grow-1 flex-md-shrink-0">
                         <input type="text" placeholder="Számlaszám" class="filter-input form-control" data-column="1">
                     </div>
 
@@ -1302,6 +1311,7 @@
                     url: '{{ route('admin.documents.sales-invoices.data') }}',
                     data: function (d) {
                         d.product_search = ($('#product_filter').val() || '').trim();
+                        d.prefix_id = $('#prefix_filter').val() || '';
                     }
                 },
                 order: [[0, 'desc']],
@@ -1350,6 +1360,10 @@
             $('#product_filter').on('input', function () {
                 clearTimeout(productFilterDebounce);
                 productFilterDebounce = setTimeout(() => table.draw(), 300);
+            });
+
+            $('#prefix_filter').on('change', function () {
+                table.draw();
             });
 
             $('#adminTable').on('click', '.delete', async function () {

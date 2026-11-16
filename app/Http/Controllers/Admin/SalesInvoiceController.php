@@ -117,6 +117,11 @@ class SalesInvoiceController extends Controller
             });
         }
 
+        $prefixId = request()->input('prefix_id');
+        if (is_numeric($prefixId)) {
+            $invoices->where('company_invoice_prefix_id', '=', (int) $prefixId);
+        }
+
         return DataTables::of($invoices)
             ->filterColumn('id', function ($query, $keyword) {
                 if (is_numeric($keyword)) {

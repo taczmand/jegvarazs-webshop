@@ -52,6 +52,13 @@
                             @endforeach
                         </select>
                     </div>
+
+                    <div class="filter-group" id="filter_only_in_stock_group" style="display: none;">
+                        <div class="form-check mb-0">
+                            <input class="form-check-input" type="checkbox" id="filter_only_in_stock">
+                            <label class="form-check-label" for="filter_only_in_stock">Raktárkészlet több mint 0</label>
+                        </div>
+                    </div>
                 </div>
 
                 <table class="table table-bordered display responsive nowrap" id="productsTable" style="width:100%">
@@ -493,6 +500,7 @@
                     url: '{{ route('admin.products.data') }}',
                     data: function (d) {
                         d.warehouse_id = ($('#filter_warehouse').val() || '').toString();
+                        d.only_in_stock = $('#filter_only_in_stock').is(':checked') ? 1 : 0;
                     }
                 },
                 order: [[0, 'desc']],
@@ -585,6 +593,18 @@
             $('#filter_warehouse').on('change', function () {
                 const warehouseId = $(this).val();
                 table.columns(4).visible(warehouseId !== '').draw();
+
+                const $group = $('#filter_only_in_stock_group');
+                if (warehouseId === '') {
+                    $('#filter_only_in_stock').prop('checked', false);
+                    $group.hide();
+                } else {
+                    $group.show();
+                }
+            });
+
+            $('#filter_only_in_stock').on('change', function () {
+                table.draw();
             });
 
             // Új termék létrehozása modal megjelenítése

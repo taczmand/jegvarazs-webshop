@@ -440,6 +440,9 @@ class StatController extends Controller
     }
     public function installationsData()
     {
+        $workType = trim((string) request()->input('work_type', ''));
+        $allowedTypes = ['Szerelés', 'Karbantartás'];
+
         $query = Worksheet::query()
             ->from('worksheets as w')
             ->leftJoin(
@@ -457,7 +460,11 @@ class StatController extends Controller
                 '=',
                 'w.email'
             )
-            ->where('w.work_type', 'Szerelés')
+            ->when(
+                in_array($workType, $allowedTypes, true),
+                fn ($q) => $q->where('w.work_type', $workType),
+                fn ($q) => $q->whereIn('w.work_type', $allowedTypes)
+            )
             ->where('w.work_status', 'Lezárva')
             ->select([
                 'w.id',
