@@ -33,6 +33,7 @@ use App\Http\Controllers\Admin\PaymentMethodController;
 use App\Http\Controllers\Admin\PartnerSearchController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Admin\ProductGroupController;
+use App\Http\Controllers\Admin\PromotionController;
 use App\Http\Controllers\Admin\PartnerOfferController as AdminPartnerOfferController;
 use App\Http\Controllers\Admin\RegulationController;
 use App\Http\Controllers\Admin\SalesInvoiceController;
@@ -698,6 +699,17 @@ Route::get('/automatizacio/jogosultsagok/szinkron', function (Request $request, 
             Route::put('/beallitasok/mertekegysegek/{unit}', [UnitController::class, 'update'])->name('units.update');
             Route::delete('/beallitasok/mertekegysegek/{unit}', [UnitController::class, 'destroy'])->name('units.destroy');
 
+            // Promóciók
+            Route::get('/beallitasok/promociok', [PromotionController::class, 'index'])->name('promotions.index');
+            Route::get('/beallitasok/promociok/data', [PromotionController::class, 'data'])->name('promotions.data');
+            Route::post('/beallitasok/promociok', [PromotionController::class, 'store'])->name('promotions.store');
+            Route::put('/beallitasok/promociok/{promotion}', [PromotionController::class, 'update'])->name('promotions.update');
+            Route::delete('/beallitasok/promociok/{promotion}', [PromotionController::class, 'destroy'])->name('promotions.destroy');
+            Route::get('/beallitasok/promociok/{promotion}/kuponok', [PromotionController::class, 'coupons'])->name('promotions.coupons');
+            Route::post('/beallitasok/promociok/{promotion}/kuponok-generalas', [PromotionController::class, 'generateCoupons'])->name('promotions.coupons.generate');
+            Route::post('/beallitasok/promociok/kupon/{coupon}/felhasznalas', [PromotionController::class, 'useCoupon'])->name('promotions.coupons.use');
+            Route::post('/beallitasok/promociok/kupon/{coupon}/hasznalat', [PromotionController::class, 'toggleCouponUsed'])->name('promotions.coupons.used');
+
             // A még meg nem tekintett rekordok lekérése
             Route::get('/beallitasok/uj-adatok', [BasicDataController::class, 'getNewRecords'])->name('settings.new_records');
             Route::post('/beallitasok/uj-adatok/megtekintes', [BasicDataController::class, 'markAsViewed'])->name('settings.mark_as_viewed');
@@ -794,6 +806,12 @@ Route::get('/automatizacio/jogosultsagok/szinkron', function (Request $request, 
     Route::get('/kapcsolat', [PagesController::class, 'contact'])->name('contact');
     Route::get('/ginop-plusz', [PagesController::class, 'ginopplusz'])->name('ginopplusz');
 
+
+    Route::get('/karacsonyi-klima-promocio', [PagesController::class, 'promotion'])
+        ->defaults('slug', 'karacsonyi-klima-promocio')
+        ->name('promotion.page');
+    Route::post('/karacsonyi-klima-promocio/jelentkezes', [PagesController::class, 'promotionApply'])->name('promotion.apply');
+    Route::get('/promocio/{slug}', [PagesController::class, 'promotion'])->name('promotion.show');
     Route::post('/idopontfoglalas', [PagesController::class, 'addAppointment'])->name('appointment.post');
     Route::post('/ajanlatkeres', [PagesController::class, 'addOffer'])->name('offer.post');
 

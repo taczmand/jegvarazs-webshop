@@ -63,8 +63,9 @@
 
         $canViewTaxes = (bool) ($adminUser && $adminUser->can('view-taxes'));
         $canViewUnits = (bool) ($adminUser && $adminUser->can('view-units'));
+        $canViewPromotions = (bool) ($adminUser && $adminUser->can('view-promotions'));
         $canViewUsers = (bool) ($adminUser && $adminUser->can('view-users'));
-        $canViewWebshopSettings = $canViewSettings || $canViewTaxes || $canViewUnits;
+        $canViewWebshopSettings = $canViewSettings || $canViewTaxes || $canViewUnits || $canViewPromotions;
         $canViewSystemSettings = $canViewSettings || $canViewUsers;
 
         $canViewAdminLogs = (bool) ($adminUser && $adminUser->can('view-admin-logs'));
@@ -317,6 +318,9 @@
                     @endif
                     @if($canViewUnits)
                         <a class="collapse-item" href="{{ route('admin.units.index') }}">Mértékegységek</a>
+                    @endif
+                    @if($canViewPromotions)
+                        <a class="collapse-item" href="{{ route('admin.promotions.index') }}">Promóciók</a>
                     @endif
                 </div>
             </div>

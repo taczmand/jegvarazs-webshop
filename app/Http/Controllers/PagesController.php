@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Mail\ContactMessage;
 use App\Mail\NewAppointment;
+use App\Mail\PromotionApplication;
 use App\Models\Appointment;
 use App\Models\BasicData;
 use App\Models\Blog;
@@ -17,6 +18,9 @@ use App\Models\Employee;
 use App\Models\Lead;
 use App\Models\NewsletterSubscription;
 use App\Models\Product;
+use App\Models\Promotion;
+use App\Models\PromotionCoupon;
+use App\Models\PromotionCouponUsage;
 use App\Models\Searched;
 use App\Models\Tag;
 use App\Models\WatchedProduct;
@@ -109,6 +113,122 @@ class PagesController extends Controller
     public function offer() {
 
         return view('pages.offer');
+    }
+
+    public function promotion($slug = 'karacsonyi-klima-promocio') {
+        $promotion = Promotion::where('slug', $slug)->firstOrFail();
+        $promotions = Promotion::where('active', true)->orderBy('name')->get();
+
+        return view('pages.promotion', compact('promotion', 'promotions'));
+    }
+
+    public function promotionApply(Request $request) {
+        $token = $request->input('g-recaptcha-response');
+
+        $response = Http::asForm()->post(
+            'https://www.google.com/recaptcha/api/siteverify',
+            [
+                'secret'   => '6Le1aA4sAAAAAPQCX01qczEUwunjqGc_tTx_SNKa',
+                'response' => $token,
+                'remoteip' => $request->ip(),
+            ]
+        );
+
+        $data = $response->json();
+
+        if (!($data['success'] ?? false) || ($data['score'] ?? 0) < 0.5) {
+            return redirect()->back()->withErrors([
+                'promotion' => "Nem sikerült az űrlap elküldése, kérem próbálja újra. (reCAPTCHA hiba vagy BOT)"
+            ])->withInput();
+        }
+
+        $request->validate([
+            'name' => ['required', 'string', 'max:255', 'regex:/^(?!.*\d).+$/u'],
+            'address' => ['required', 'string', 'max:500'],
+            'phone' => [
+                'required',
+                'string',
+                'max:20',
+                'regex:/^[0-9+\s().-]+$/',
+                function ($attribute, $value, $fail) {
+                    $digitsOnly = preg_replace('/\D+/', '', (string) $value);
+                    $length = strlen($digitsOnly);
+
+                    if ($length < 9 || $length > 15) {
+                        $fail('A telefonszám nem megfelelő.');
+                    }
+                },
+            ],
+            'email' => 'required|email|max:255',
+            'promotion_id' => 'required|exists:promotions,id',
+        ], [
+            'name.regex' => 'A név nem tartalmazhat számot.',
+            'phone.regex' => 'A telefonszám formátuma nem megfelelő.',
+        ]);
+
+        $promotion = Promotion::findOrFail($request->promotion_id);
+
+        $coupon = PromotionCoupon::where('promotion_id', $promotion->id)
+            ->whereDoesntHave('usages')
+            ->inRandomOrder()
+            ->first();
+
+        $couponCode = null;
+        $usage = null;
+        if ($coupon) {
+            $couponCode = $coupon->code;
+            $usage = PromotionCouponUsage::create([
+                'promotion_coupon_id' => $coupon->id,
+                'email' => $request->email,
+            ]);
+        }
+
+        try {
+            Lead::create([
+                'lead_id' => Str::uuid(),
+                'form_id' => '1',
+                'form_name' => 'Weboldalról promóció jelentkezés',
+                'full_name' => $request->name,
+                'email' => $request->email,
+                'phone' => $request->phone,
+                'status' => 'Új',
+                'comment' => 'Promóció: ' . $promotion->name
+                    . ($couponCode ? ' | Kuponkód: ' . $couponCode : '')
+                    . ' | Cím: ' . $request->address,
+                'data' => json_encode([
+                    'promotion_id' => $promotion->id,
+                    'promotion_name' => $promotion->name,
+                    'address' => $request->address,
+                    'coupon_code' => $couponCode,
+                ]),
+            ]);
+        } catch (\Exception $e) {
+            return redirect()->back()->withErrors(['promotion' => $e->getMessage()])->withInput();
+        }
+
+        try {
+            $mail = Mail::to($request->email);
+            if (!app()->environment('local')) {
+                $mail->bcc('jegvarazsiroda@gmail.com');
+            }
+            $mail->send(new PromotionApplication([
+                'name' => $request->name,
+                'email' => $request->email,
+                'phone' => $request->phone,
+                'address' => $request->address,
+                'promotion_name' => $promotion->name,
+                'coupon_code' => $couponCode,
+            ]));
+
+            if ($usage) {
+                $usage->sent_at = now();
+                $usage->save();
+            }
+        } catch (\Exception $e) {
+            \Log::warning('Promotion application email failed: ' . $e->getMessage());
+        }
+
+        return redirect()->back()->with('success', 'Köszönjük! Jelentkezésed rögzítettük, hamarosan felvesszük veled a kapcsolatot.');
     }
 
     public function product() {

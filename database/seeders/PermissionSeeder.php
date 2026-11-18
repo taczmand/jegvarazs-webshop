@@ -180,6 +180,11 @@ class PermissionSeeder extends Seeder
             ['id' => 168, 'name' => 'view-contract-products', 'label' => 'Szerződések termék db', 'group' => 'Jelentések - Ügyviteli'],
 
             ['id' => 181, 'name' => 'reset-contract-deposit-transfer-flag', 'label' => 'Foglaló összeg átutalásra került jelölés visszaállítása', 'group' => 'Ügyviteli folyamatok'],
+
+            ['id' => 182, 'name' => 'view-promotions', 'label' => 'Promóciók megtekintése', 'group' => 'Webshop'],
+            ['id' => 183, 'name' => 'create-promotion', 'label' => 'Promóció létrehozása', 'group' => 'Webshop'],
+            ['id' => 184, 'name' => 'edit-promotion', 'label' => 'Promóció szerkesztése', 'group' => 'Webshop'],
+            ['id' => 185, 'name' => 'delete-promotion', 'label' => 'Promóció törlése', 'group' => 'Webshop'],
         ];
 
         foreach ($permissions as $perm) {
