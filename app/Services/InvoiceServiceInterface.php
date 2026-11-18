@@ -16,4 +16,6 @@ interface InvoiceServiceInterface
 
     public function deletePayment(SalesInvoice $invoice, SalesInvoicePayment $payment, string $agentKey): void;
 
+    public function deleteProforma(string $invoiceNumber, string $agentKey): void;
+
 }

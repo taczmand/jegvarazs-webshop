@@ -14,8 +14,11 @@ use SzamlaAgent\Document\Document;
 use SzamlaAgent\Header\InvoiceHeader;
 use SzamlaAgent\SzamlaAgentAPI;
 use SzamlaAgent\Buyer;
+use SzamlaAgent\Document\Invoice\FinalInvoice;
 use SzamlaAgent\Document\Invoice\Invoice;
+use SzamlaAgent\Document\Invoice\PrePaymentInvoice;
 use SzamlaAgent\Document\Invoice\ReverseInvoice;
+use SzamlaAgent\Document\Proforma;
 use SzamlaAgent\Item\InvoiceItem;
 use SzamlaAgent\Log as SzamlazzLog;
 use SzamlaAgent\Seller;
@@ -173,7 +176,7 @@ class SzamlazzHuInvoiceService implements InvoiceServiceInterface
         if (class_exists($invoiceClass)) {
             $invoice = new $invoiceClass(Invoice::INVOICE_TYPE_P_INVOICE);
         } else {
-            $invoice = new Invoice(Invoice::INVOICE_TYPE_P_INVOICE);
+            $invoice = $this->newInvoiceDocument($data);
         }
 
         $invoice->setBuyer($buyer);
@@ -247,7 +250,6 @@ class SzamlazzHuInvoiceService implements InvoiceServiceInterface
                 ? (float) $itemData->grossTotal
                 : $netPrice * (1 + $vatPercent / 100);
             $vatAmount = $grossAmount - $netPrice;
-            $correctionToPay += $grossAmount;
 
             if (method_exists($item, 'setNetUnitPrice')) {
                 $item->setNetUnitPrice($netUnitPrice);
@@ -289,7 +291,7 @@ class SzamlazzHuInvoiceService implements InvoiceServiceInterface
         }
 
         if (!$result) {
-            $result = $agent->generateInvoice($invoice);
+            $result = $this->generateInvoiceDocument($agent, $invoice);
         }
 
         if (!$result->isSuccess()) {
@@ -436,7 +438,7 @@ class SzamlazzHuInvoiceService implements InvoiceServiceInterface
             );
         }
 
-        $invoice = new Invoice(Invoice::INVOICE_TYPE_P_INVOICE);
+        $invoice = $this->newInvoiceDocument($data);
         $invoice->setBuyer($buyer);
         //$invoice->getHeader()->setPrefix('JB');
         $this->applyInvoicePrefix($invoice, $data->invoicePrefix ?? null);
@@ -514,7 +516,7 @@ class SzamlazzHuInvoiceService implements InvoiceServiceInterface
         //$agent->setXmlFileSave(true);
         //$agent->setRequestXmlFileSave(true);
 
-        $result = $agent->generateInvoice($invoice);
+        $result = $this->generateInvoiceDocument($agent, $invoice);
 
         if (!$result->isSuccess()) {
             throw new \RuntimeException(
@@ -568,7 +570,7 @@ class SzamlazzHuInvoiceService implements InvoiceServiceInterface
             );
         }
 
-        $invoice = new Invoice(Invoice::INVOICE_TYPE_P_INVOICE);
+        $invoice = $this->newInvoiceDocument($data);
         $invoice->setBuyer($buyer);
 
         $this->applyInvoicePrefix($invoice, $data->invoicePrefix ?? null);
@@ -656,7 +658,7 @@ class SzamlazzHuInvoiceService implements InvoiceServiceInterface
         $agent->setXmlFileSave(true);
         $agent->setRequestXmlFileSave(true);*/
 
-        $result = $agent->generateInvoice($invoice);
+        $result = $this->generateInvoiceDocument($agent, $invoice);
 
         if (!$result->isSuccess()) {
             throw new \RuntimeException(
@@ -746,7 +748,7 @@ class SzamlazzHuInvoiceService implements InvoiceServiceInterface
             $buyer->setSendEmail(true);
         }
 
-        $invoice = new Invoice(Invoice::INVOICE_TYPE_P_INVOICE);
+        $invoice = $this->newInvoiceDocument($data);
         $invoice->setBuyer($buyer);
 
         $this->applyInvoicePrefix($invoice, $data->invoicePrefix ?? null);
@@ -835,7 +837,7 @@ class SzamlazzHuInvoiceService implements InvoiceServiceInterface
         $agent->setXmlFileSave(true);
         $agent->setRequestXmlFileSave(true);*/
 
-        $result = $agent->generateInvoice($invoice);
+        $result = $this->generateInvoiceDocument($agent, $invoice);
 
         if (!$result->isSuccess()) {
             throw new \RuntimeException(
@@ -1061,6 +1063,41 @@ class SzamlazzHuInvoiceService implements InvoiceServiceInterface
         }
     }
 
+    public function deleteProforma(string $invoiceNumber, string $agentKey): void
+    {
+        $apiKey = trim((string) $agentKey);
+        if ($apiKey === '') {
+            throw new \RuntimeException('Hiányzik a számlázó API kulcs (cég szinten).');
+        }
+
+        $invoiceNumber = trim($invoiceNumber);
+        if ($invoiceNumber === '') {
+            throw new \RuntimeException('Hiányzik a díjbekérő számlaszáma.');
+        }
+
+        if (method_exists(SzamlaAgentAPI::class, 'create')) {
+            try {
+                $agent = SzamlaAgentAPI::create($apiKey, false, SzamlazzLog::LOG_LEVEL_OFF);
+            } catch (\Throwable $e) {
+                $agent = SzamlaAgentAPI::create($apiKey);
+            }
+        } else {
+            $agent = new SzamlaAgentAPI($apiKey);
+        }
+
+        $this->prepareAgentDirs($agent);
+
+        if (!method_exists($agent, 'getDeleteProforma')) {
+            throw new \RuntimeException('A Számlázz.hu SDK nem támogatja a díjbekérő törlését.');
+        }
+
+        $result = $agent->getDeleteProforma($invoiceNumber);
+        if ($result && method_exists($result, 'isSuccess') && !$result->isSuccess()) {
+            $message = method_exists($result, 'getErrorMessage') ? (string) $result->getErrorMessage() : 'ismeretlen hiba';
+            throw new \RuntimeException('Számlázz.hu díjbekérő törlése sikertelen: ' . $message);
+        }
+    }
+
     /**
      * Fizetési mód és dátumok átadása a Számlázz.hu számla fejlécének.
      */
@@ -1090,9 +1127,56 @@ class SzamlazzHuInvoiceService implements InvoiceServiceInterface
             if ($dueAt !== null && method_exists($header, 'setPaymentDue')) {
                 $header->setPaymentDue($dueAt);
             }
+
+            $prepaymentInvoiceNumber = trim((string) ($data->prepaymentInvoiceNumber ?? ''));
+            if ($prepaymentInvoiceNumber !== '' && method_exists($header, 'setPrePaymentInvoiceNumber')) {
+                $header->setPrePaymentInvoiceNumber($prepaymentInvoiceNumber);
+            }
         } catch (\Throwable $e) {
             // ignore
         }
+    }
+
+    private function newInvoiceDocument(InvoiceData $data): Invoice
+    {
+        $documentType = (string) ($data->documentType ?? 'final');
+        $prepaymentNumber = trim((string) ($data->prepaymentInvoiceNumber ?? ''));
+
+        if ($documentType === 'prepayment') {
+            return new PrePaymentInvoice(Invoice::INVOICE_TYPE_P_INVOICE);
+        }
+
+        if ($documentType === 'proforma' && class_exists(Proforma::class)) {
+            return new Proforma();
+        }
+
+        // Végszámla: csak akkor jelöljük a Számlázz.hu felé, ha a számla
+        // ténylegesen egy előlegszámlát számol el (elolegSzamlaszam hivatkozás).
+        if ($documentType === 'final' && $prepaymentNumber !== '' && class_exists(FinalInvoice::class)) {
+            return new FinalInvoice(Invoice::INVOICE_TYPE_P_INVOICE);
+        }
+
+        return new Invoice(Invoice::INVOICE_TYPE_P_INVOICE);
+    }
+
+    /**
+     * A dokumentum típusának megfelelő Számlázz.hu generáló metódus hívása.
+     */
+    private function generateInvoiceDocument(SzamlaAgentAPI $agent, Invoice $invoice)
+    {
+        if ($invoice instanceof FinalInvoice && method_exists($agent, 'generateFinalInvoice')) {
+            return $agent->generateFinalInvoice($invoice);
+        }
+
+        if ($invoice instanceof PrePaymentInvoice && method_exists($agent, 'generatePrePaymentInvoice')) {
+            return $agent->generatePrePaymentInvoice($invoice);
+        }
+
+        if ($invoice instanceof Proforma && method_exists($agent, 'generateProforma')) {
+            return $agent->generateProforma($invoice);
+        }
+
+        return $agent->generateInvoice($invoice);
     }
 
     private function toDateString($value): ?string

@@ -15,5 +15,7 @@ readonly class InvoiceData
         public ?string $issuedAt = null,
         public ?string $fulfilledAt = null,
         public ?string $dueAt = null,
+        public string $documentType = 'final',
+        public ?string $prepaymentInvoiceNumber = null,
     ) {}
 }

@@ -91,6 +91,7 @@ class SalesInvoiceController extends Controller
             'company_id',
             'invoice_number',
             'invoice_type',
+            'document_type',
             'partner_name',
             'payment_method',
             'issued_at',
@@ -102,6 +103,10 @@ class SalesInvoiceController extends Controller
             'note',
             'pdf_path',
             'related_order_id',
+            'prepayment_of_sales_invoice_id',
+            'proforma_of_sales_invoice_id',
+            'storno_of_sales_invoice_id',
+            'correction_of_sales_invoice_id',
             'created_at as created',
             'updated_at as updated',
         ]);
@@ -120,6 +125,17 @@ class SalesInvoiceController extends Controller
         $prefixId = request()->input('prefix_id');
         if (is_numeric($prefixId)) {
             $invoices->where('company_invoice_prefix_id', '=', (int) $prefixId);
+        }
+
+        $documentTypeFilter = trim((string) request()->input('document_type', ''));
+        if ($documentTypeFilter === 'invoice') {
+            $invoices->where('document_type', '=', 'final')
+                ->whereNull('prepayment_of_sales_invoice_id');
+        } elseif ($documentTypeFilter === 'final_invoice') {
+            $invoices->where('document_type', '=', 'final')
+                ->whereNotNull('prepayment_of_sales_invoice_id');
+        } elseif (in_array($documentTypeFilter, ['final', 'prepayment', 'proforma', 'corrective', 'storno'], true)) {
+            $invoices->where('document_type', '=', $documentTypeFilter);
         }
 
         return DataTables::of($invoices)
@@ -152,6 +168,9 @@ class SalesInvoiceController extends Controller
                 ];
                 return $translations[$invoice->payment_method] ?? ucfirst($invoice->payment_method);
             })
+            ->addColumn('status_key', function ($invoice) {
+                return $invoice->status;
+            })
             ->addColumn('status', function ($invoice) {
                 $translations = [
                     'draft'   => 'Piszkozat',
@@ -176,7 +195,170 @@ class SalesInvoiceController extends Controller
                     'electronic' => 'E-számla',
                     'correction' => 'Helyesbítő',
                 ];
-                return $translations[$invoice->invoice_type] ?? ucfirst($invoice->invoice_type);
+                return $translations[$invoice->invoice_type] ?? ucfirst((string) $invoice->invoice_type);
+            })
+            ->addColumn('document_type_label', function ($invoice) {
+                $type = (string) $invoice->document_type;
+                if ($type === 'final') {
+                    return !empty($invoice->prepayment_of_sales_invoice_id) ? 'Végszámla' : 'Számla';
+                }
+                $translations = [
+                    'prepayment' => 'Előleg számla',
+                    'proforma'   => 'Díjbekérő',
+                    'corrective' => 'Helyesbítő',
+                    'storno'     => 'Sztornó',
+                ];
+                return $translations[$type] ?? ucfirst($type);
+            })
+            ->addColumn('prepayment_invoice', function ($invoice) {
+                $id = $invoice->prepayment_of_sales_invoice_id ?? null;
+                if (!is_numeric($id)) {
+                    return null;
+                }
+
+                $rel = SalesInvoice::query()
+                    ->whereKey((int) $id)
+                    ->first(['id', 'invoice_number', 'pdf_path']);
+
+                if (!$rel) {
+                    return null;
+                }
+
+                return [
+                    'id' => (int) $rel->id,
+                    'number' => (string) ($rel->invoice_number ?? ''),
+                    'has_pdf' => !empty($rel->pdf_path),
+                ];
+            })
+            ->addColumn('proforma_invoice', function ($invoice) {
+                $id = $invoice->proforma_of_sales_invoice_id ?? null;
+                if (!is_numeric($id)) {
+                    return null;
+                }
+
+                $rel = SalesInvoice::query()
+                    ->whereKey((int) $id)
+                    ->first(['id', 'invoice_number', 'pdf_path']);
+
+                if (!$rel) {
+                    return null;
+                }
+
+                return [
+                    'id' => (int) $rel->id,
+                    'number' => (string) ($rel->invoice_number ?? ''),
+                    'has_pdf' => !empty($rel->pdf_path),
+                ];
+            })
+            ->addColumn('final_invoice', function ($invoice) {
+                $docType = (string) $invoice->document_type;
+                if (!in_array($docType, ['prepayment', 'proforma'], true)) {
+                    return null;
+                }
+
+                $query = SalesInvoice::query()
+                    ->where('document_type', 'final')
+                    ->orderByDesc('id');
+
+                if ($docType === 'prepayment') {
+                    $query->where('prepayment_of_sales_invoice_id', (int) $invoice->id);
+                } else {
+                    $query->where('proforma_of_sales_invoice_id', (int) $invoice->id);
+                }
+
+                $rel = $query->first(['id', 'invoice_number', 'pdf_path', 'status']);
+
+                if (!$rel) {
+                    return null;
+                }
+
+                return [
+                    'id' => (int) $rel->id,
+                    'number' => (string) ($rel->invoice_number ?? ''),
+                    'has_pdf' => !empty($rel->pdf_path),
+                    'status' => (string) ($rel->status ?? ''),
+                    'kind' => $docType,
+                ];
+            })
+            ->addColumn('corrected_invoice', function ($invoice) {
+                $id = $invoice->correction_of_sales_invoice_id ?? null;
+                if (!is_numeric($id)) {
+                    return null;
+                }
+
+                $rel = SalesInvoice::query()
+                    ->whereKey((int) $id)
+                    ->first(['id', 'invoice_number', 'pdf_path']);
+
+                if (!$rel) {
+                    return null;
+                }
+
+                return [
+                    'id' => (int) $rel->id,
+                    'number' => (string) ($rel->invoice_number ?? ''),
+                    'has_pdf' => !empty($rel->pdf_path),
+                ];
+            })
+            ->addColumn('corrective_invoice', function ($invoice) {
+                if ((string) $invoice->document_type === 'corrective') {
+                    return null;
+                }
+
+                $rel = SalesInvoice::query()
+                    ->where('correction_of_sales_invoice_id', (int) $invoice->id)
+                    ->where('document_type', 'corrective')
+                    ->orderByDesc('id')
+                    ->first(['id', 'invoice_number', 'pdf_path']);
+
+                if (!$rel) {
+                    return null;
+                }
+
+                return [
+                    'id' => (int) $rel->id,
+                    'number' => (string) ($rel->invoice_number ?? ''),
+                    'has_pdf' => !empty($rel->pdf_path),
+                ];
+            })
+            ->addColumn('storno_invoice', function ($invoice) {
+                $docType = (string) $invoice->document_type;
+
+                if ($docType === 'storno') {
+                    $id = $invoice->storno_of_sales_invoice_id ?? null;
+                    if (!is_numeric($id)) {
+                        return null;
+                    }
+
+                    $rel = SalesInvoice::query()
+                        ->whereKey((int) $id)
+                        ->first(['id', 'invoice_number', 'pdf_path']);
+
+                    if (!$rel) {
+                        return null;
+                    }
+
+                    return [
+                        'id' => (int) $rel->id,
+                        'number' => (string) ($rel->invoice_number ?? ''),
+                        'has_pdf' => !empty($rel->pdf_path),
+                    ];
+                }
+
+                $rel = SalesInvoice::query()
+                    ->where('storno_of_sales_invoice_id', (int) $invoice->id)
+                    ->orderByDesc('id')
+                    ->first(['id', 'invoice_number', 'pdf_path']);
+
+                if (!$rel) {
+                    return null;
+                }
+
+                return [
+                    'id' => (int) $rel->id,
+                    'number' => (string) ($rel->invoice_number ?? ''),
+                    'has_pdf' => !empty($rel->pdf_path),
+                ];
             })
             ->editColumn('gross_total', function ($invoice) {
                 return number_format($invoice->gross_total, 0, ',', ' ') . ' Ft';
@@ -196,17 +378,47 @@ class SalesInvoiceController extends Controller
                     ';
 
                     if ($invoice->status === 'issued' && $user->can('edit-sales-invoice')) {
+                        if (!in_array((string) $invoice->document_type, ['proforma', 'corrective'], true)) {
                         $buttons .= '
                             <button class="btn btn-sm btn-outline-danger storno" data-id="' . $invoice->id . '" title="Érvénytelenítő számla készítése">
                                 <i class="fas fa-ban"></i>
                             </button>
                         ';
-                        if ($invoice->invoice_type === 'normal') {
+                        if (!in_array((string) $invoice->document_type, ['storno', 'corrective'], true)) {
                             $buttons .= '
                                 <button class="btn btn-sm btn-outline-primary correction" data-id="' . $invoice->id . '" title="Helyesbítő számla készítése">
                                     <i class="fas fa-file-invoice"></i>
                                 </button>
                             ';
+                        }
+                        }
+                        if ((string) $invoice->document_type === 'prepayment') {
+                            $hasFinalInvoice = SalesInvoice::query()
+                                ->where('prepayment_of_sales_invoice_id', (int) $invoice->id)
+                                ->where('document_type', 'final')
+                                ->exists();
+
+                            if (!$hasFinalInvoice) {
+                                $buttons .= '
+                                    <button class="btn btn-sm btn-outline-success finalize" data-id="' . $invoice->id . '" title="Végszámla készítése az előlegből">
+                                        <i class="fas fa-file-invoice-dollar"></i>
+                                    </button>
+                                ';
+                            }
+                        }
+                        if ((string) $invoice->document_type === 'proforma') {
+                            $hasFinalInvoice = SalesInvoice::query()
+                                ->where('proforma_of_sales_invoice_id', (int) $invoice->id)
+                                ->where('document_type', 'final')
+                                ->exists();
+
+                            if (!$hasFinalInvoice) {
+                                $buttons .= '
+                                    <button class="btn btn-sm btn-outline-primary finalize-proforma" data-id="' . $invoice->id . '" title="Számla készítése a díjbekérőből">
+                                        <i class="fas fa-file-invoice"></i>
+                                    </button>
+                                ';
+                            }
                         }
                         $buttons .= '
                             <button class="btn btn-sm btn-outline-secondary finances" data-id="' . $invoice->id . '" title="Pénzügyek">
@@ -221,6 +433,14 @@ class SalesInvoiceController extends Controller
                         <button class="btn btn-sm btn-primary edit" data-id="' . $invoice->id . '" title="Szerkesztés">
                             <i class="fas fa-edit"></i>
                         </button>
+                        <button class="btn btn-sm btn-danger delete" data-id="' . $invoice->id . '" title="Törlés">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    ';
+                }
+
+                if ((string) $invoice->document_type === 'proforma' && $invoice->status !== 'draft' && $user && $user->can('edit-sales-invoice')) {
+                    $buttons .= '
                         <button class="btn btn-sm btn-danger delete" data-id="' . $invoice->id . '" title="Törlés">
                             <i class="fas fa-trash"></i>
                         </button>
@@ -278,13 +498,16 @@ class SalesInvoiceController extends Controller
 
             $payload['status'] = 'draft';
             $payload['payment_status'] = 'unpaid';
-            $payload['invoice_type'] = 'correction';
+            $payload['document_type'] = 'corrective';
             $payload['issued_at'] = null;
             $payload['fulfilled_at'] = null;
             $payload['due_at'] = null;
             $payload['settled_at'] = null;
             $payload['correction_of_sales_invoice_id'] = $original->id;
             $payload['storno_of_sales_invoice_id'] = null;
+            $payload['paid_amount'] = 0;
+            $payload['outstanding_amount'] = 0;
+            $payload['rounding_amount'] = 0;
             $payload['note'] = 'Helyesbítő számla ehhez: ' . (string) ($original->invoice_number ?? '');
 
             $correction = SalesInvoice::create(array_merge([
@@ -331,6 +554,183 @@ class SalesInvoiceController extends Controller
         return response()->json([
             'message' => 'Helyesbítő számla létrehozva.',
             'invoice' => $correction,
+        ], 200);
+    }
+
+    public function createFinalFromPrepayment(int $id)
+    {
+        $user = auth('admin')->user();
+        if (!$user || !$user->can('edit-sales-invoice')) {
+            return response()->json(['message' => 'Nincs jogosultságod.'], 403);
+        }
+
+        $original = SalesInvoice::query()->with(['items'])->findOrFail($id);
+        if ((string) $original->status !== 'issued') {
+            return response()->json(['message' => 'Csak kiállított előleg számlából készíthető végszámla.'], 422);
+        }
+        if ((string) $original->document_type !== 'prepayment') {
+            return response()->json(['message' => 'Csak előleg számlából készíthető végszámla.'], 422);
+        }
+
+        $existingFinal = SalesInvoice::query()
+            ->where('prepayment_of_sales_invoice_id', (int) $original->id)
+            ->where('document_type', 'final')
+            ->exists();
+
+        if ($existingFinal) {
+            return response()->json(['message' => 'Ehhez az előleg számlához már készült végszámla.'], 422);
+        }
+
+        $final = DB::transaction(function () use ($original) {
+            $payload = $original->getAttributes();
+
+            unset(
+                $payload['id'],
+                $payload['created_at'],
+                $payload['updated_at'],
+                $payload['items'],
+                $payload['pdf_path'],
+                $payload['external_id'],
+                $payload['invoice_number'],
+                $payload['stock_deducted_at']
+            );
+
+            $payload['status'] = 'draft';
+            $payload['payment_status'] = 'unpaid';
+            $payload['document_type'] = 'final';
+            $payload['issued_at'] = null;
+            $payload['fulfilled_at'] = null;
+            $payload['due_at'] = null;
+            $payload['settled_at'] = null;
+            $payload['correction_of_sales_invoice_id'] = null;
+            $payload['storno_of_sales_invoice_id'] = null;
+            $payload['prepayment_of_sales_invoice_id'] = $original->id;
+            $payload['note'] = 'Végszámla ehhez az előleghez: ' . (string) ($original->invoice_number ?? '');
+
+            $final = SalesInvoice::create(array_merge([
+                'invoice_number' => 'DRAFT-' . (string) ($original->invoice_number ?? ''),
+            ], $payload));
+
+            foreach ($original->items as $it) {
+                $qty = (float) ($it->quantity ?? 0);
+                $negQty = $qty === 0.0 ? 0.0 : (-1 * abs($qty));
+
+                SalesInvoiceItem::create([
+                    'sales_invoice_id' => $final->id,
+                    'product_id' => $it->product_id,
+                    'warehouse_id' => $it->warehouse_id,
+                    'sort_order' => (int) ($it->sort_order ?? 0),
+                    'name' => (string) ($it->name ?? ''),
+                    'sku' => $it->sku,
+                    'unit' => $it->unit,
+                    'quantity' => $negQty,
+                    'discount_percent' => $it->discount_percent,
+                    'discount_amount' => $it->discount_amount,
+                    'vat_percent' => $it->vat_percent,
+                    'vat_code' => $it->vat_code,
+                    'unit_net_price' => $it->unit_net_price,
+                    'unit_gross_price' => $it->unit_gross_price,
+                    'net_total' => $it->net_total !== null ? (int) (-1 * abs((int) $it->net_total)) : null,
+                    'vat_total' => $it->vat_total !== null ? (int) (-1 * abs((int) $it->vat_total)) : null,
+                    'gross_total' => $it->gross_total !== null ? (int) (-1 * abs((int) $it->gross_total)) : null,
+                    'note' => $it->note,
+                ]);
+            }
+
+            $this->recalculateTotals($final);
+
+            return $final;
+        });
+
+        return response()->json([
+            'message' => 'Végszámla létrehozva az előleg alapján.',
+            'invoice' => $final,
+        ], 200);
+    }
+
+    public function createFinalFromProforma(int $id)
+    {
+        $user = auth('admin')->user();
+        if (!$user || !$user->can('edit-sales-invoice')) {
+            return response()->json(['message' => 'Nincs jogosultságod.'], 403);
+        }
+
+        $original = SalesInvoice::query()->with(['items'])->findOrFail($id);
+        if ((string) $original->document_type !== 'proforma') {
+            return response()->json(['message' => 'Csak díjbekérőből készíthető számla.'], 422);
+        }
+
+        $existingFinal = SalesInvoice::query()
+            ->where('proforma_of_sales_invoice_id', (int) $original->id)
+            ->where('document_type', 'final')
+            ->exists();
+
+        if ($existingFinal) {
+            return response()->json(['message' => 'Ehhez a díjbekérőhöz már készült számla.'], 422);
+        }
+
+        $final = DB::transaction(function () use ($original) {
+            $payload = $original->getAttributes();
+
+            unset(
+                $payload['id'],
+                $payload['created_at'],
+                $payload['updated_at'],
+                $payload['items'],
+                $payload['pdf_path'],
+                $payload['external_id'],
+                $payload['invoice_number'],
+                $payload['stock_deducted_at']
+            );
+
+            $payload['status'] = 'draft';
+            $payload['payment_status'] = 'unpaid';
+            $payload['document_type'] = 'final';
+            $payload['issued_at'] = null;
+            $payload['fulfilled_at'] = null;
+            $payload['due_at'] = null;
+            $payload['settled_at'] = null;
+            $payload['correction_of_sales_invoice_id'] = null;
+            $payload['storno_of_sales_invoice_id'] = null;
+            $payload['prepayment_of_sales_invoice_id'] = null;
+            $payload['proforma_of_sales_invoice_id'] = $original->id;
+            $payload['note'] = 'Számla ehhez a díjbekérőhöz: ' . (string) ($original->invoice_number ?? '');
+
+            $final = SalesInvoice::create(array_merge([
+                'invoice_number' => 'DRAFT-' . (string) ($original->invoice_number ?? ''),
+            ], $payload));
+
+            foreach ($original->items as $it) {
+                SalesInvoiceItem::create([
+                    'sales_invoice_id' => $final->id,
+                    'product_id' => $it->product_id,
+                    'warehouse_id' => $it->warehouse_id,
+                    'sort_order' => (int) ($it->sort_order ?? 0),
+                    'name' => (string) ($it->name ?? ''),
+                    'sku' => $it->sku,
+                    'unit' => $it->unit,
+                    'quantity' => $it->quantity,
+                    'discount_percent' => $it->discount_percent,
+                    'discount_amount' => $it->discount_amount,
+                    'vat_percent' => $it->vat_percent,
+                    'vat_code' => $it->vat_code,
+                    'unit_net_price' => $it->unit_net_price,
+                    'unit_gross_price' => $it->unit_gross_price,
+                    'net_total' => $it->net_total,
+                    'vat_total' => $it->vat_total,
+                    'gross_total' => $it->gross_total,
+                    'note' => $it->note,
+                ]);
+            }
+
+            $this->recalculateTotals($final);
+
+            return $final;
+        });
+
+        return response()->json([
+            'message' => 'Számla létrehozva a díjbekérő alapján.',
+            'invoice' => $final,
         ], 200);
     }
 
@@ -404,7 +804,8 @@ class SalesInvoiceController extends Controller
                 SalesInvoice::create([
                     'company_id' => $invoice->company_id,
                     'invoice_number' => $stornoNumber,
-                    'invoice_type' => 'storno',
+                    'document_type' => 'storno',
+                    'invoice_type' => in_array((string) $invoice->invoice_type, ['normal', 'electronic'], true) ? $invoice->invoice_type : 'normal',
                     'status' => 'issued',
                     'payment_status' => $invoice->payment_status,
                     'partner_name' => $invoice->partner_name,
@@ -540,9 +941,12 @@ class SalesInvoiceController extends Controller
             'company_invoice_prefix_id' => 'nullable|integer|exists:company_invoice_prefixes,id',
             'invoice_number' => 'nullable|string|max:255',
             'invoice_type' => 'nullable|string|max:255',
+            'document_type' => 'nullable|string|in:final,prepayment,proforma,corrective,storno',
             'status' => 'nullable|string|max:50',
             'payment_status' => 'nullable|string|max:50',
             'correction_of_sales_invoice_id' => 'nullable|integer|exists:sales_invoices,id',
+            'prepayment_of_sales_invoice_id' => 'nullable|integer|exists:sales_invoices,id',
+            'proforma_of_sales_invoice_id' => 'nullable|integer|exists:sales_invoices,id',
             'related_order_id' => 'nullable|integer|exists:orders,id',
 
             'partner_name' => 'required|string|max:255',
@@ -615,6 +1019,10 @@ class SalesInvoiceController extends Controller
             'currency' => 'HUF',
             'prices_include_vat' => true,
         ], $validated);
+
+        if (!empty($payload['correction_of_sales_invoice_id'])) {
+            $payload['document_type'] = 'corrective';
+        }
 
         $payload['company_id'] = $company->id;
         $payload['company_name'] = $company->name;
@@ -701,9 +1109,12 @@ class SalesInvoiceController extends Controller
             'company_invoice_prefix_id' => 'nullable|integer|exists:company_invoice_prefixes,id',
             'invoice_number' => 'nullable|string|max:255|unique:sales_invoices,invoice_number,' . $invoice->id,
             'invoice_type' => 'nullable|string|max:255',
+            'document_type' => 'nullable|string|in:final,prepayment,proforma,corrective,storno',
             'status' => 'nullable|string|max:50',
             'payment_status' => 'nullable|string|max:50',
             'correction_of_sales_invoice_id' => 'nullable|integer|exists:sales_invoices,id',
+            'prepayment_of_sales_invoice_id' => 'nullable|integer|exists:sales_invoices,id',
+            'proforma_of_sales_invoice_id' => 'nullable|integer|exists:sales_invoices,id',
             'related_order_id' => 'nullable|integer|exists:orders,id',
 
             'partner_name' => 'required|string|max:255',
@@ -784,6 +1195,10 @@ class SalesInvoiceController extends Controller
         $validated['company_invoice_prefix_id'] = $prefixId;
         $validated['company_invoice_prefix'] = $prefix;
 
+        if (!empty($validated['correction_of_sales_invoice_id'])) {
+            $validated['document_type'] = 'corrective';
+        }
+
         $invoice = DB::transaction(function () use ($invoice, $validated, $request) {
             $invoiceNumber = trim((string) ($validated['invoice_number'] ?? ''));
             if ($invoiceNumber === '') {
@@ -805,23 +1220,60 @@ class SalesInvoiceController extends Controller
         ], 200);
     }
 
-    public function destroy(int $id)
+    public function destroy(int $id, InvoiceServiceInterface $invoiceService)
     {
         $user = auth('admin')->user();
         if (!$user || !$user->can('edit-sales-invoice')) {
             return response()->json(['message' => 'Nincs jogosultságod törölni.'], 403);
         }
 
-        try {
-            DB::transaction(function () use ($id) {
-                $invoice = SalesInvoice::query()->lockForUpdate()->findOrFail($id);
+        $invoice = SalesInvoice::query()->findOrFail($id);
+        $documentType = (string) $invoice->document_type;
+        $isDraft = (string) $invoice->status === 'draft';
 
-                if ((string) $invoice->status !== 'draft') {
+        if (!$isDraft && $documentType !== 'proforma') {
+            return response()->json(['message' => 'Csak piszkozat állapotú számla törölhető.'], 422);
+        }
+
+        if (!$isDraft && $documentType === 'proforma') {
+            $invoiceNumber = trim((string) $invoice->invoice_number);
+            if ($invoiceNumber !== '' && !str_starts_with($invoiceNumber, 'DRAFT-')) {
+                $company = null;
+                if (!empty($invoice->company_id)) {
+                    $company = Company::query()->where('status', 'active')->find((int) $invoice->company_id);
+                }
+
+                $apiKey = is_string($company->billing_provider_api_key ?? null)
+                    ? trim((string) $company->billing_provider_api_key)
+                    : '';
+
+                if ($apiKey === '') {
+                    return response()->json(['message' => 'A díjbekérőhöz tartozó céghez nincs beállítva API kulcs, a Számlázz.hu törlés nem lehetséges.'], 422);
+                }
+
+                try {
+                    $invoiceService->deleteProforma($invoiceNumber, $apiKey);
+                } catch (\Throwable $e) {
+                    return response()->json(['message' => 'Számlázz.hu díjbekérő törlése sikertelen: ' . $e->getMessage()], 422);
+                }
+            }
+        }
+
+        try {
+            DB::transaction(function () use ($id, $isDraft) {
+                $invoice = SalesInvoice::query()->lockForUpdate()->findOrFail($id);
+                $isProforma = (string) $invoice->document_type === 'proforma';
+
+                if (!$isDraft && !$isProforma) {
                     throw new \RuntimeException('Csak piszkozat állapotú számla törölhető.');
                 }
 
                 if ($invoice->stock_deducted_at !== null) {
-                    throw new \RuntimeException('A számlához már történt készletlevonás, ezért nem törölhető.');
+                    if (!$isProforma) {
+                        throw new \RuntimeException('A számlához már történt készletlevonás, ezért nem törölhető.');
+                    }
+
+                    $this->restoreStockForCancelledSalesInvoice($invoice);
                 }
 
                 $invoice->delete();
@@ -856,6 +1308,8 @@ class SalesInvoiceController extends Controller
             'currency' => 'nullable|string|size:3',
             'note_for_document' => 'nullable|string',
             'items_json' => 'required|string',
+            'corrected_invoice_id' => 'nullable|integer|exists:sales_invoices,id',
+            'corrected_invoice_number' => 'nullable|string|max:255',
         ], [
             'company_id.required' => 'A számlázó cég kiválasztása kötelező.',
             'company_id.integer' => 'A számlázó cég azonosítója hibás.',
@@ -980,6 +1434,8 @@ class SalesInvoiceController extends Controller
                 (string) ($validated['currency'] ?? 'HUF')
             ),
             invoicePrefix: $prefix,
+            documentType: (string) ($validated['document_type'] ?? 'final'),
+            prepaymentInvoiceNumber: $this->prepaymentInvoiceNumber($request->input('prepayment_of_sales_invoice_id')),
             currency: (string) ($validated['currency'] ?? 'HUF'),
             agentKey: $company->billing_provider_api_key ? (string) $company->billing_provider_api_key : null,
             issuedAt: isset($validated['issued_at']) ? (string) $validated['issued_at'] : null,
@@ -997,17 +1453,27 @@ class SalesInvoiceController extends Controller
             $isCorrection = false;
             $correctionOfId = null;
 
-            if ($invoice && (string) $invoice->invoice_type === 'correction') {
+            if ($invoice && ((string) $invoice->document_type === 'corrective' || (string) $invoice->invoice_type === 'correction')) {
                 $isCorrection = true;
                 $correctionOfId = $invoice->correction_of_sales_invoice_id;
             } else {
-                $isCorrection = trim((string) $request->input('invoice_type')) === 'correction';
+                $isCorrection = trim((string) $request->input('document_type')) === 'corrective'
+                    || trim((string) $request->input('invoice_type')) === 'correction';
                 $correctionOfId = $request->input('correction_of_sales_invoice_id');
             }
 
             if ($isCorrection) {
                 $originalNumber = null;
-                if (is_numeric($correctionOfId)) {
+
+                $correctedNumber = trim((string) ($validated['corrected_invoice_number'] ?? ''));
+                $correctedId = $validated['corrected_invoice_id'] ?? null;
+
+                if ($correctedNumber !== '') {
+                    $originalNumber = $correctedNumber;
+                } elseif (is_numeric($correctedId)) {
+                    $originalNumber = SalesInvoice::query()->whereKey((int) $correctedId)->value('invoice_number');
+                    $originalNumber = is_string($originalNumber) ? trim($originalNumber) : null;
+                } elseif (is_numeric($correctionOfId)) {
                     $originalNumber = SalesInvoice::query()->whereKey((int) $correctionOfId)->value('invoice_number');
                     $originalNumber = is_string($originalNumber) ? trim($originalNumber) : null;
                 }
@@ -1074,7 +1540,9 @@ class SalesInvoiceController extends Controller
             'currency' => 'nullable|string|size:3',
             'note_for_document' => 'nullable|string',
             'items_json' => 'required|string',
-            'send_email' => 'nullable|integer'
+            'send_email' => 'nullable|integer',
+            'corrected_invoice_id' => 'nullable|integer|exists:sales_invoices,id',
+            'corrected_invoice_number' => 'nullable|string|max:255'
         ]);
 
         $itemsRaw = json_decode((string) $validated['items_json'], true);
@@ -1167,6 +1635,8 @@ class SalesInvoiceController extends Controller
                 (string) ($validated['currency'] ?? 'HUF')
             ),
             invoicePrefix: $invoicePrefix,
+            documentType: (string) ($invoice->document_type ?? 'final'),
+            prepaymentInvoiceNumber: $this->prepaymentInvoiceNumber($invoice->prepayment_of_sales_invoice_id ?? null),
             currency: (string) ($validated['currency'] ?? 'HUF'),
             agentKey: $company->billing_provider_api_key ? (string) $company->billing_provider_api_key : null,
             issuedAt: isset($validated['issued_at']) ? (string) $validated['issued_at'] : ($invoice->issued_at ? $invoice->issued_at->format('Y-m-d') : null),
@@ -1177,11 +1647,23 @@ class SalesInvoiceController extends Controller
         try {
             $providerInvoiceNumber = null;
             $pdfBytes = null;
-            $isCorrection = (string) ($invoice->invoice_type ?? '') === 'correction';
+            $isCorrection = (string) ($invoice->document_type ?? '') === 'corrective'
+                || (string) ($invoice->invoice_type ?? '') === 'correction';
             $originalInvoiceNumber = null;
-            if ($isCorrection && !empty($invoice->correction_of_sales_invoice_id)) {
-                $originalInvoiceNumber = SalesInvoice::query()->whereKey((int) $invoice->correction_of_sales_invoice_id)->value('invoice_number');
-                $originalInvoiceNumber = is_string($originalInvoiceNumber) ? trim($originalInvoiceNumber) : null;
+
+            $correctedNumber = trim((string) ($validated['corrected_invoice_number'] ?? ''));
+            $correctedId = $validated['corrected_invoice_id'] ?? null;
+
+            if ($isCorrection) {
+                if ($correctedNumber !== '') {
+                    $originalInvoiceNumber = $correctedNumber;
+                } elseif (is_numeric($correctedId)) {
+                    $originalInvoiceNumber = SalesInvoice::query()->whereKey((int) $correctedId)->value('invoice_number');
+                    $originalInvoiceNumber = is_string($originalInvoiceNumber) ? trim($originalInvoiceNumber) : null;
+                } elseif (!empty($invoice->correction_of_sales_invoice_id)) {
+                    $originalInvoiceNumber = SalesInvoice::query()->whereKey((int) $invoice->correction_of_sales_invoice_id)->value('invoice_number');
+                    $originalInvoiceNumber = is_string($originalInvoiceNumber) ? trim($originalInvoiceNumber) : null;
+                }
                 if ($originalInvoiceNumber === '' || (is_string($originalInvoiceNumber) && str_starts_with($originalInvoiceNumber, 'DRAFT-'))) {
                     $originalInvoiceNumber = null;
                 }
@@ -1289,6 +1771,10 @@ class SalesInvoiceController extends Controller
             );
             $issueUpdate['rounding_amount'] = $roundingAmount;
 
+            if (is_numeric($correctedId) && (int) $correctedId !== (int) ($invoice->correction_of_sales_invoice_id ?? 0)) {
+                $issueUpdate['correction_of_sales_invoice_id'] = (int) $correctedId;
+            }
+
             if ((string) $validated['payment_method'] === 'bank_transfer') {
                 $issueUpdate['outstanding_amount'] = max(
                     0,
@@ -1298,6 +1784,11 @@ class SalesInvoiceController extends Controller
                 $issueUpdate['payment_status'] = 'paid';
                 $issueUpdate['paid_amount'] = (int) $invoice->gross_total + $roundingAmount;
                 $issueUpdate['outstanding_amount'] = 0;
+            }
+
+            if ($isCorrection) {
+                $issueUpdate['paid_amount'] = 0;
+                $issueUpdate['outstanding_amount'] = (int) $invoice->gross_total;
             }
 
             $invoice->update($issueUpdate);
@@ -1783,5 +2274,21 @@ class SalesInvoiceController extends Controller
         return response()->json([
             'message' => 'A befizetés sikeresen törölve.'
         ]);
+    }
+
+    private function prepaymentInvoiceNumber($prepaymentOfId): ?string
+    {
+        if (!is_numeric($prepaymentOfId)) {
+            return null;
+        }
+
+        $number = SalesInvoice::query()->whereKey((int) $prepaymentOfId)->value('invoice_number');
+        $number = is_string($number) ? trim($number) : null;
+
+        if ($number === null || $number === '' || str_starts_with($number, 'DRAFT-')) {
+            return null;
+        }
+
+        return $number;
     }
 }

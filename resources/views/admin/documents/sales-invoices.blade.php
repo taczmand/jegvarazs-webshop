@@ -61,6 +61,41 @@
             padding: .25rem .75rem;
             border-radius: .375rem;
         }
+        .invoice-pair-link {
+            cursor: pointer;
+            text-decoration: underline dotted;
+            text-underline-offset: 3px;
+        }
+        .invoice-pair-popup {
+            position: fixed;
+            z-index: 3000;
+            background: #fff;
+            border: 1px solid #dee2e6;
+            border-radius: .5rem;
+            box-shadow: 0 .5rem 1rem rgba(0,0,0,.18);
+            padding: .5rem .75rem;
+            font-size: .85rem;
+            min-width: 230px;
+        }
+        .invoice-pair-popup .pair-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            padding: .2rem 0;
+            white-space: nowrap;
+        }
+        .invoice-pair-popup .pair-label {
+            color: #6c757d;
+        }
+        .invoice-pair-popup .pair-open {
+            cursor: pointer;
+            color: #0d6efd;
+            font-weight: 600;
+        }
+        .invoice-pair-popup .pair-open:hover {
+            text-decoration: underline;
+        }
     </style>
 
     <div class="container-fluid px-0">
@@ -68,7 +103,11 @@
         <div class="d-flex justify-content-between align-items-center mb-3 pb-2">
             <h2 class="color-dark-blue mb-0">Ügyvitel / Bizonylatok / Kimenő számlák</h2>
             @if(auth('admin')->user()->can('create-sales-invoice'))
-                <button class="btn btn-success" id="addButton"><i class="fas fa-plus me-1"></i> Új számla</button>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-success" id="addButton"><i class="fas fa-plus me-1"></i> Új számla</button>
+                    <button class="btn btn-warning" id="addPrepaymentButton"><i class="fas fa-plus me-1"></i> Új előleg számla</button>
+                    <button class="btn btn-info" id="addProformaButton"><i class="fas fa-plus me-1"></i> Új díjbekérő</button>
+                </div>
             @endif
         </div>
 
@@ -128,10 +167,20 @@
                     <div class="filter-group flex-grow-1 flex-md-shrink-0">
                         <select class="form-select filter-input" data-column="11">
                             <option value="">Típus (összes)</option>
-                            <option value="storno">Sztornó</option>
                             <option value="normal">Papír</option>
                             <option value="electronic">E-számla</option>
-                            <option value="correction">Helyesbítő</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group flex-grow-1 flex-md-shrink-0">
+                        <select class="form-select" id="document_type_filter">
+                            <option value="">Bizonylat (összes)</option>
+                            <option value="invoice">Számla</option>
+                            <option value="final_invoice">Végszámla</option>
+                            <option value="prepayment">Előleg</option>
+                            <option value="proforma">Díjbekérő</option>
+                            <option value="corrective">Helyesbítő</option>
+                            <option value="storno">Sztornó</option>
                         </select>
                     </div>
 
@@ -140,20 +189,21 @@
                 <table class="table table-bordered display responsive nowrap" id="adminTable" style="width:100%">
                     <thead>
                     <tr>
-                        <th>ID</th>
-                        <th data-priority="1">Számlaszám</th>
-                        <th>Partner</th>
+                        <th data-priority="1">ID</th>
+                        <th data-priority="2">Számlaszám</th>
+                        <th data-priority="4">Partner</th>
                         <th>Fiz.mód</th>
-                        <th>Kelt</th>
-                        <th>Határidő</th>
-                        <th>Bruttó</th>
-                        <th>Kintlévőség</th>
-                        <th>Létrehozva</th>
+                        <th data-priority="5">Kelt</th>
+                        <th data-priority="6">Határidő</th>
+                        <th data-priority="7">Bruttó</th>
+                        <th data-priority="8">Kintlévőség</th>
                         <th>Állapot</th>
-                        <th>Fizetés</th>
+                        <th data-priority="9">Fizetés</th>
                         <th>Típus</th>
+                        <th data-priority="10">Bizonylat</th>
+                        <th>Létrehozva</th>
                         <th>Megj.</th>
-                        <th data-priority="2">Műveletek</th>
+                        <th data-priority="3">Műveletek</th>
                     </tr>
                     </thead>
                     <tfoot>
@@ -189,7 +239,11 @@
         <x-slot:left>
             <input type="hidden" id="invoice_id" name="id">
             <input type="hidden" id="correction_of_sales_invoice_id" name="correction_of_sales_invoice_id">
+            <input type="hidden" id="prepayment_of_sales_invoice_id" name="prepayment_of_sales_invoice_id">
+            <input type="hidden" id="proforma_of_sales_invoice_id" name="proforma_of_sales_invoice_id">
+            <input type="hidden" id="document_type" name="document_type" value="final">
             <input type="hidden" id="related_order_id" name="related_order_id">
+            <div class="alert alert-warning py-2 px-3 mb-3 small" id="document_type_info" style="display:none;"></div>
 
             <div class="alert alert-info py-2 px-3 mb-3 small" id="related_order_info" style="display:none;">
                 <i class="fas fa-link me-1"></i> Összekapcsolt rendelés: <strong id="related_order_label"></strong>
@@ -314,7 +368,6 @@
                             <select class="form-select" id="invoice_type" name="invoice_type" required>
                                 <option value="normal">Papír</option>
                                 <option value="electronic">Elektronikus számla</option>
-                                <option value="correction">Helyesbítő</option>
                             </select>
                         </div>
                     </div>
@@ -400,6 +453,8 @@
             <button type="button" class="btn btn-primary saveDraftSalesInvoice">Piszkozat mentése</button>
         </x-slot:footer>
     </x-admin.document-modal>
+
+    <div id="invoicePairPopup" class="invoice-pair-popup" style="display:none;"></div>
 
     <div class="modal fade" id="salesInvoicePreviewModal" tabindex="-1" aria-labelledby="salesInvoicePreviewModalLabel" aria-hidden="true" style="z-index: 2000;">
         <div class="modal-dialog modal-fullscreen m-0 p-0">
@@ -627,6 +682,8 @@
                     }
                     resetPreview();
                     setPreviewModalFooterVisible(true);
+                    $('#salesInvoicePreviewModalLabel').text('Kimenő számla előnézet');
+                    $('#createSalesInvoice').text('Számla létrehozása');
                 });
             }
 
@@ -642,6 +699,86 @@
                 setPreviewModalFooterVisible(false);
                 if (previewModal) previewModal.show();
             });
+
+            const invoicePairPopup = document.getElementById('invoicePairPopup');
+
+            function hideInvoicePairPopup() {
+                if (invoicePairPopup) invoicePairPopup.style.display = 'none';
+            }
+
+            function openRelatedInvoice(invoiceId, hasPdf) {
+                hideInvoicePairPopup();
+                invoiceId = String(invoiceId || '').trim();
+                if (!invoiceId) return;
+
+                if (hasPdf) {
+                    const src = `{{ route('admin.documents.sales-invoices.pdf', ['id' => '__ID__']) }}`.replace('__ID__', invoiceId);
+                    $('#sales_invoice_preview_iframe').attr('src', src);
+                    setPreviewModalFooterVisible(false);
+                    if (previewModal) previewModal.show();
+                    return;
+                }
+
+                openInvoiceEditor(invoiceId);
+            }
+
+            $('#adminTable').on('mouseenter', '.invoice-pair-link', function () {
+                if (!invoicePairPopup) return;
+
+                const $el = $(this);
+                const kind = String($el.data('kind') || 'prepayment');
+                const isProforma = kind === 'proforma';
+                const isStorno = kind === 'storno';
+                const isCorrective = kind === 'corrective';
+                const sourceLabel = isStorno ? 'Számla:' : (isProforma ? 'Díjbekérő:' : (isCorrective ? 'Eredeti számla:' : 'Előleg számla:'));
+                const finalLabel = isStorno ? 'Sztornó:' : (isProforma ? 'Számla:' : (isCorrective ? 'Helyesbítő:' : 'Végszámla:'));
+                const prepayNum = $el.data('prepay-num');
+                const prepayId = $el.data('prepay-id');
+                const prepayPdf = String($el.data('prepay-pdf')) === '1';
+                const finalNum = $el.data('final-num');
+                const finalId = $el.data('final-id');
+                const finalPdf = String($el.data('final-pdf')) === '1';
+
+                invoicePairPopup.innerHTML =
+                    '<div class="pair-row"><span class="pair-label">' + sourceLabel + '</span>'
+                    + '<span class="pair-open" data-id="' + prepayId + '" data-pdf="' + (prepayPdf ? 1 : 0) + '">' + escapeHtml(prepayNum) + '</span></div>'
+                    + '<div class="pair-row"><span class="pair-label">' + finalLabel + '</span>'
+                    + '<span class="pair-open" data-id="' + finalId + '" data-pdf="' + (finalPdf ? 1 : 0) + '">' + escapeHtml(finalNum) + '</span></div>';
+
+                const rect = this.getBoundingClientRect();
+                invoicePairPopup.style.display = 'block';
+
+                const pw = invoicePairPopup.offsetWidth;
+                const ph = invoicePairPopup.offsetHeight;
+                let left = rect.left + window.scrollX;
+                let top = rect.bottom + window.scrollY + 6;
+
+                if (left + pw > window.scrollX + window.innerWidth - 8) {
+                    left = window.scrollX + window.innerWidth - pw - 8;
+                }
+                if (top + ph > window.scrollY + window.innerHeight - 8) {
+                    top = rect.top + window.scrollY - ph - 6;
+                }
+
+                invoicePairPopup.style.left = Math.max(8, left) + 'px';
+                invoicePairPopup.style.top = Math.max(8, top) + 'px';
+            });
+
+            $('#adminTable').on('mouseleave', '.invoice-pair-link', function () {
+                setTimeout(() => {
+                    if (invoicePairPopup
+                        && !invoicePairPopup.matches(':hover')
+                        && !$('#adminTable .invoice-pair-link:hover').length) {
+                        hideInvoicePairPopup();
+                    }
+                }, 150);
+            });
+
+            $(document).on('click', '#invoicePairPopup .pair-open', function () {
+                openRelatedInvoice($(this).data('id'), String($(this).data('pdf')) === '1');
+            });
+
+            $(document).on('mouseleave', '#invoicePairPopup', hideInvoicePairPopup);
 
             $('#adminTable').on('click', '.storno', async function () {
                 const invoiceId = String($(this).data('id') || '').trim();
@@ -719,11 +856,13 @@
 
                     $('#invoice_id').val('');
                     $('#correction_of_sales_invoice_id').val(invoice.id || originalId);
+                    $('#prepayment_of_sales_invoice_id').val('');
+                    $('#proforma_of_sales_invoice_id').val('');
                     setRelatedOrder(invoice.related_order_id);
 
                     $('#company_id').val(invoice.company_id || defaultCompanyId);
                     populateCompanyPrefixes(invoice.company_id || defaultCompanyId, invoice.company_invoice_prefix_id || '');
-                    $('#invoice_number').val(invoice.invoice_number || '');
+                    $('#invoice_number').val('');
 
                     $('#partner_name').val(invoice.partner_name || '');
                     $('#partner_tax_number').val(invoice.partner_tax_number || '');
@@ -736,8 +875,11 @@
 
                     $('#payment_method').val(invoice.payment_method || 'bank_transfer');
                     if ($('#invoice_type').length) {
-                        $('#invoice_type').val('correction');
+                        const it = invoice.invoice_type || 'normal';
+                        $('#invoice_type').val(['normal', 'electronic'].includes(it) ? it : 'normal');
                     }
+                    $('#document_type').val('corrective');
+                    toggleDocumentTypeInfo();
 
                     $('#issued_at').val(todayDate());
                     $('#fulfilled_at').val(todayDate());
@@ -813,6 +955,12 @@
                 $('#sales_invoice_preview_iframe').attr('src', 'about:blank');
             }
 
+            function updatePreviewModalLabels() {
+                const isProforma = String($('#document_type').val() || '') === 'proforma';
+                $('#salesInvoicePreviewModalLabel').text(isProforma ? 'Díjbekérő előnézet' : 'Kimenő számla előnézet');
+                $('#createSalesInvoice').text(isProforma ? 'Díjbekérő létrehozása' : 'Számla létrehozása');
+            }
+
             async function loadInvoicePdfPreview() {
                 setPreviewModalFooterVisible(true);
                 const previewBtn = document.getElementById('previewSalesInvoice');
@@ -861,6 +1009,7 @@
                     const blob = await resp.blob();
                     const blobUrl = URL.createObjectURL(blob);
                     $('#sales_invoice_preview_iframe').attr('src', blobUrl);
+                    updatePreviewModalLabels();
                     if (previewModal) previewModal.show();
                 } catch (e) {
                     showToast(e?.message || 'Hiba!', 'danger');
@@ -1312,6 +1461,7 @@
                     data: function (d) {
                         d.product_search = ($('#product_filter').val() || '').trim();
                         d.prefix_id = $('#prefix_filter').val() || '';
+                        d.document_type = $('#document_type_filter').val() || '';
                     }
                 },
                 order: [[0, 'desc']],
@@ -1320,8 +1470,93 @@
                     {
                         data: 'invoice_number',
                         render: function (data, type, row) {
-                            if (type !== 'display' || !row.related_order_id) return data;
-                            return `${data} <span class="badge bg-info text-dark ms-1" title="Összekapcsolt rendelés"><i class="fas fa-link me-1"></i>#${escapeHtml(row.related_order_id)}</span>`;
+                            if (type !== 'display') return data;
+
+                            const docType = row.document_type || 'final';
+                            const isDraft = (row.status_key || row.status) === 'draft';
+                            const prepay = row.prepayment_invoice || null;
+                            const proforma = row.proforma_invoice || null;
+                            const fin = row.final_invoice || null;
+
+                            let icon;
+                            if (isDraft) {
+                                icon = '<i class="fas fa-file-alt text-secondary me-1" title="Piszkozat"></i>';
+                            } else if (docType === 'storno' || row.invoice_type === 'Sztornó') {
+                                icon = '<i class="fas fa-ban text-danger me-1" title="Sztornó számla"></i>';
+                            } else if (docType === 'corrective' || row.invoice_type === 'Helyesbítő') {
+                                icon = '<i class="fas fa-file-pen text-primary me-1" title="Helyesbítő számla"></i>';
+                            } else if (docType === 'prepayment') {
+                                icon = fin
+                                    ? '<i class="fas fa-check-circle text-success me-1" title="Előleg számla (végszámlázva)"></i>'
+                                    : '<i class="fas fa-hand-holding-usd text-warning me-1" title="Előleg számla"></i>';
+                            } else if (docType === 'proforma') {
+                                icon = fin
+                                    ? '<i class="fas fa-check-circle text-success me-1" title="Díjbekérő (számlázva)"></i>'
+                                    : '<i class="fas fa-file-invoice-dollar text-info me-1" title="Díjbekérő"></i>';
+                            } else {
+                                icon = prepay
+                                    ? '<i class="fas fa-file-invoice-dollar text-success me-1" title="Végszámla (előleg elszámolva)"></i>'
+                                    : (proforma
+                                        ? '<i class="fas fa-file-invoice text-primary me-1" title="Számla (díjbekérőből)"></i>'
+                                        : '<i class="fas fa-file-invoice text-success me-1" title="Végszámla"></i>');
+                            }
+
+                            const storno = row.storno_invoice || null;
+                            const corrected = row.corrected_invoice || null;
+                            const corrective = row.corrective_invoice || null;
+
+                            let pairKind = null;
+                            let pairSource = null;
+                            let pairFinal = null;
+                            if ((docType === 'prepayment' || docType === 'proforma') && fin) {
+                                pairKind = docType;
+                                pairSource = { id: row.id, number: data, has_pdf: !!row.pdf_path };
+                                pairFinal = fin;
+                            } else if (prepay) {
+                                pairKind = 'prepayment';
+                                pairSource = prepay;
+                                pairFinal = { id: row.id, number: data, has_pdf: !!row.pdf_path };
+                            } else if (proforma) {
+                                pairKind = 'proforma';
+                                pairSource = proforma;
+                                pairFinal = { id: row.id, number: data, has_pdf: !!row.pdf_path };
+                            } else if (docType === 'storno' && storno) {
+                                pairKind = 'storno';
+                                pairSource = storno;
+                                pairFinal = { id: row.id, number: data, has_pdf: !!row.pdf_path };
+                            } else if (storno) {
+                                pairKind = 'storno';
+                                pairSource = { id: row.id, number: data, has_pdf: !!row.pdf_path };
+                                pairFinal = storno;
+                            } else if (docType === 'corrective' && corrected) {
+                                pairKind = 'corrective';
+                                pairSource = corrected;
+                                pairFinal = { id: row.id, number: data, has_pdf: !!row.pdf_path };
+                            } else if (corrective) {
+                                pairKind = 'corrective';
+                                pairSource = { id: row.id, number: data, has_pdf: !!row.pdf_path };
+                                pairFinal = corrective;
+                            }
+
+                            let numberHtml = escapeHtml(data);
+                            if (pairKind) {
+                                numberHtml = '<span class="invoice-pair-link"'
+                                    + ' data-kind="' + pairKind + '"'
+                                    + ' data-prepay-id="' + pairSource.id + '"'
+                                    + ' data-prepay-num="' + escapeHtml(pairSource.number) + '"'
+                                    + ' data-prepay-pdf="' + (pairSource.has_pdf ? 1 : 0) + '"'
+                                    + ' data-final-id="' + pairFinal.id + '"'
+                                    + ' data-final-num="' + escapeHtml(pairFinal.number) + '"'
+                                    + ' data-final-pdf="' + (pairFinal.has_pdf ? 1 : 0) + '">'
+                                    + escapeHtml(data)
+                                    + '</span>';
+                            }
+
+                            let html = icon + numberHtml;
+                            if (row.related_order_id) {
+                                html += ` <span class="badge bg-info text-dark ms-1" title="Összekapcsolt rendelés"><i class="fas fa-link me-1"></i>#${escapeHtml(row.related_order_id)}</span>`;
+                            }
+                            return html;
                         }
                     },
                     { data: 'partner_name' },
@@ -1330,10 +1565,11 @@
                     { data: 'due_at' },
                     { data: 'gross_total' },
                     { data: 'outstanding_amount' },
-                    { data: 'created' },
                     { data: 'status' },
                     { data: 'payment_status' },
                     { data: 'invoice_type' },
+                    { data: 'document_type_label' },
+                    { data: 'created' },
                     { data: 'note' },
                     { data: 'action', orderable: false, searchable: false }
                 ],
@@ -1366,6 +1602,10 @@
                 table.draw();
             });
 
+            $('#document_type_filter').on('change', function () {
+                table.draw();
+            });
+
             $('#adminTable').on('click', '.delete', async function () {
                 const invoiceId = String($(this).data('id') || '').trim();
                 if (!invoiceId) {
@@ -1373,7 +1613,13 @@
                     return;
                 }
 
-                if (!confirm('Biztosan törlöd ezt a piszkozat számlát?')) {
+                const rowData = table.row($(this).closest('tr')).data() || {};
+                const isIssuedProforma = rowData.document_type === 'proforma' && (rowData.status_key || rowData.status) !== 'draft';
+                const confirmMsg = isIssuedProforma
+                    ? 'Biztosan törlöd ezt a díjbekérőt? A művelet a Számlázz.hu-n is törli a díjbekérőt, és a tételek mennyisége visszakerül a raktárakba.'
+                    : 'Biztosan törlöd ezt a piszkozat számlát?';
+
+                if (!confirm(confirmMsg)) {
                     return;
                 }
 
@@ -1414,6 +1660,20 @@
                 populateCompanyPrefixes($('#company_id').val(), '');
 
 
+                modal.show();
+            });
+
+            $('#addPrepaymentButton').on('click', function () {
+                resetForm('Új előleg számla');
+                $('#document_type').val('prepayment');
+                toggleDocumentTypeInfo();
+                modal.show();
+            });
+
+            $('#addProformaButton').on('click', function () {
+                resetForm('Új díjbekérő');
+                $('#document_type').val('proforma');
+                toggleDocumentTypeInfo();
                 modal.show();
             });
 
@@ -1498,24 +1758,97 @@
                 loadInvoicePdfPreview();
             });
 
-            $('#adminTable').on('click', '.edit', async function () {
+            $('#adminTable').on('click', '.finalize', async function () {
+                const originalId = String($(this).data('id') || '').trim();
+                if (!originalId) {
+                    showToast('Nem található a bizonylat azonosítója.', 'danger');
+                    return;
+                }
+
+                if (!confirm('Biztosan készítesz végszámlát ebből az előleg számlából?')) {
+                    return;
+                }
+
+                try {
+                    const url = `{{ route('admin.documents.sales-invoices.create-final', ['id' => '__ID__']) }}`.replace('__ID__', String(originalId));
+                    const resp = await fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': csrfToken,
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                        },
+                    });
+
+                    const json = await resp.json().catch(() => ({}));
+                    if (!resp.ok) {
+                        throw new Error(json?.message || 'Hiba történt a végszámla létrehozásakor.');
+                    }
+
+                    showToast(json?.message || 'Végszámla létrehozva.', 'success');
+
+                    const newId = json?.invoice?.id;
+                    const tableApi = $('#adminTable').DataTable();
+                    $('#adminTable').one('draw.dt', function () {
+                        const $btn = $('#adminTable').find('.edit[data-id="' + newId + '"]').first();
+                        if ($btn.length) {
+                            $btn.trigger('click');
+                        }
+                    });
+                    tableApi.ajax.reload(null, false);
+                } catch (e) {
+                    showToast(e?.message || 'Hiba!', 'danger');
+                }
+            });
+
+            $('#adminTable').on('click', '.finalize-proforma', async function () {
+                const originalId = String($(this).data('id') || '').trim();
+                if (!originalId) {
+                    showToast('Nem található a bizonylat azonosítója.', 'danger');
+                    return;
+                }
+
+                if (!confirm('Biztosan készítesz számlát ebből a díjbekérőből?')) {
+                    return;
+                }
+
+                try {
+                    const url = `{{ route('admin.documents.sales-invoices.create-final-from-proforma', ['id' => '__ID__']) }}`.replace('__ID__', String(originalId));
+                    const resp = await fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': csrfToken,
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                        },
+                    });
+
+                    const json = await resp.json().catch(() => ({}));
+                    if (!resp.ok) {
+                        throw new Error(json?.message || 'Hiba történt a számla létrehozásakor.');
+                    }
+
+                    showToast(json?.message || 'Számla létrehozva.', 'success');
+
+                    const newId = json?.invoice?.id;
+                    const tableApi = $('#adminTable').DataTable();
+                    $('#adminTable').one('draw.dt', function () {
+                        const $btn = $('#adminTable').find('.edit[data-id="' + newId + '"]').first();
+                        if ($btn.length) {
+                            $btn.trigger('click');
+                        }
+                    });
+                    tableApi.ajax.reload(null, false);
+                } catch (e) {
+                    showToast(e?.message || 'Hiba!', 'danger');
+                }
+            });
+
+            async function openInvoiceEditor(invoiceId) {
 
                 resetForm('Kimenő számla szerkesztése');
 
-                const btnInvoiceId = String($(this).data('id') || '').trim();
-                const tableApi = $('#adminTable').DataTable();
-                let rowData = null;
-                try {
-                    let $tr = $(this).closest('tr');
-                    if ($tr.hasClass('child')) {
-                        $tr = $tr.prev();
-                    }
-                    rowData = tableApi.row($tr).data() || null;
-                } catch (e) {
-                    rowData = null;
-                }
-
-                const invoiceId = btnInvoiceId !== '' ? btnInvoiceId : String(rowData?.id || '').trim();
+                invoiceId = String(invoiceId || '').trim();
                 if (!invoiceId) {
                     showToast('Nem található a bizonylat azonosítója.', 'danger');
                     return;
@@ -1545,6 +1878,8 @@
 
                     $('#invoice_id').val(invoice.id || invoiceId);
                     $('#correction_of_sales_invoice_id').val(invoice.correction_of_sales_invoice_id || '');
+                    $('#prepayment_of_sales_invoice_id').val(invoice.prepayment_of_sales_invoice_id || '');
+                    $('#proforma_of_sales_invoice_id').val(invoice.proforma_of_sales_invoice_id || '');
                     setRelatedOrder(invoice.related_order_id);
 
                     $('#company_id').val(invoice.company_id || defaultCompanyId);
@@ -1563,8 +1898,11 @@
                     $('#payment_method').val(invoice.payment_method || 'bank_transfer');
 
                     if ($('#invoice_type').length) {
-                        $('#invoice_type').val(invoice.invoice_type || 'normal');
+                        const it = invoice.invoice_type || 'normal';
+                        $('#invoice_type').val(['normal', 'electronic'].includes(it) ? it : 'normal');
                     }
+                    $('#document_type').val(invoice.document_type || 'final');
+                    toggleDocumentTypeInfo();
 
                     $('#issued_at').val(invoice.issued_at || todayDate());
                     $('#fulfilled_at').val(invoice.fulfilled_at || todayDate());
@@ -1626,6 +1964,23 @@
                 } catch (e) {
                     showToast(e?.message || 'Hiba!', 'danger');
                 }
+            }
+
+            $('#adminTable').on('click', '.edit', function () {
+                let invoiceId = String($(this).data('id') || '').trim();
+                if (!invoiceId) {
+                    try {
+                        let $tr = $(this).closest('tr');
+                        if ($tr.hasClass('child')) {
+                            $tr = $tr.prev();
+                        }
+                        const rowData = $('#adminTable').DataTable().row($tr).data() || null;
+                        invoiceId = String(rowData?.id || '').trim();
+                    } catch (e) {
+                        invoiceId = '';
+                    }
+                }
+                openInvoiceEditor(invoiceId);
             });
 
             modalDOM.addEventListener('hidden.bs.modal', function () {
@@ -1634,10 +1989,7 @@
                 clearPartnerClientResults();
             });
 
-            // Számla létrehozása
-            $('#createSalesInvoice').on('click', function (e) {
-                e.preventDefault();
-
+            function submitCreateSalesInvoice() {
                 syncItemsJson();
                 if (!validateItemsWarehouses()) return;
 
@@ -1711,7 +2063,8 @@
                             const blobUrl = URL.createObjectURL(blob);
                             $('#sales_invoice_preview_iframe').attr('src', blobUrl);
 
-                            showToast('Számla kiállítva.', 'success');
+                            const isProformaIssue = String($('#document_type').val() || '') === 'proforma';
+                            showToast(isProformaIssue ? 'Díjbekérő kiállítva.' : 'Számla kiállítva.', 'success');
                             table.ajax.reload(null, false);
                             modal.hide();
                             if (previewModal) previewModal.hide();
@@ -1742,6 +2095,13 @@
                     },
                     complete: () => {}
                 });
+            }
+
+            // Számla létrehozása
+            $('#createSalesInvoice').on('click', function (e) {
+                e.preventDefault();
+
+                submitCreateSalesInvoice();
             });
 
             // Piszkozat mentése gomb megnyomása
@@ -2372,7 +2732,17 @@
             }
 
             function addProductAsItem(product) {
-                const existing = items.find(i => i.product_id === product.id);
+                const isFinalFromPrepayment = String($('#prepayment_of_sales_invoice_id').val() || '').trim() !== '';
+
+                let existing = null;
+                if (isFinalFromPrepayment) {
+                    // Előlegből készülő végszámlánál a negatív (előleg-leíró) sor mellé
+                    // külön pozitív tétel is felvihető, de termékenként csak egy.
+                    existing = items.find(i => String(i.product_id) === String(product.id) && Number(i.quantity) > 0) || null;
+                } else {
+                    existing = items.find(i => String(i.product_id) === String(product.id)) || null;
+                }
+
                 if (existing) {
                     existing.quantity = Number(existing.quantity) + 1;
                     recalcRow(existing);
@@ -2801,6 +3171,10 @@
                 renderTotals();
             });
 
+            $(document).on('change', '#document_type', function () {
+                toggleDocumentTypeInfo();
+            });
+
             function setRelatedOrder(orderId) {
                 const id = String(orderId ?? '').trim();
                 $('#related_order_id').val(id);
@@ -2808,11 +3182,37 @@
                 $('#related_order_info').toggle(id !== '');
             }
 
+            function toggleDocumentTypeInfo() {
+                const type = $('#document_type').val();
+                const prepayId = String($('#prepayment_of_sales_invoice_id').val() || '').trim();
+                const $info = $('#document_type_info');
+                if (type === 'prepayment') {
+                    $info.html('<i class="fas fa-hand-holding-usd me-1"></i> <strong>Előleg számla</strong> – a Számlázz.hu felé előlegszámlaként kerül kiállításra.').show();
+                } else if (type === 'proforma') {
+                    $info.html('<i class="fas fa-file-invoice-dollar me-1"></i> <strong>Díjbekérő</strong> – a Számlázz.hu felé díjbekérőként kerül kiállításra.').show();
+                } else if (prepayId !== '') {
+                    $info.html('<i class="fas fa-file-invoice-dollar me-1"></i> <strong>Végszámla</strong> – előleg számlához készül, a Számlázz.hu felé végszámlaként, az előlegszámla hivatkozásával kerül kiállításra.').show();
+                } else if (String($('#proforma_of_sales_invoice_id').val() || '').trim() !== '') {
+                    $info.html('<i class="fas fa-file-invoice me-1"></i> <strong>Számla</strong> – díjbekérőhöz készül, a Számlázz.hu felé normál számlaként kerül kiállításra.').show();
+                } else {
+                    $info.hide();
+                }
+            }
+
             function resetForm(title = null) {
                 $('#salesInvoiceForm')[0].reset();
                 $('#salesInvoiceModalLabel').text(title);
+
+                const saveDraftBtns = document.getElementsByClassName('saveDraftSalesInvoice');
+                for (let i = 0; i < saveDraftBtns.length; i++) {
+                    saveDraftBtns[i].style.display = '';
+                }
                 $('#invoice_id').val('');
                 $('#correction_of_sales_invoice_id').val('');
+                $('#prepayment_of_sales_invoice_id').val('');
+                $('#proforma_of_sales_invoice_id').val('');
+                $('#document_type').val('final');
+                toggleDocumentTypeInfo();
                 setRelatedOrder('');
 
                 if (defaultCompanyId) {

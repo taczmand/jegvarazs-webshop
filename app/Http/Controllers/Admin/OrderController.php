@@ -253,6 +253,7 @@ class OrderController extends Controller
                         ->whereNotNull('pdf_path')
                         ->where('pdf_path', '!=', '')
                         ->whereNotIn('invoice_type', ['storno', 'correction'])
+                        ->whereNotIn('document_type', ['storno', 'corrective'])
                         ->orderByDesc('id');
                 },
             ]);
