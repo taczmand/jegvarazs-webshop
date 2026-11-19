@@ -20,6 +20,20 @@ class PromotionApplication extends Mailable
     public function __construct(array $data)
     {
         $this->data = $data;
+
+        $this->withSymfonyMessage(function ($message) {
+            $image = $this->data['coupon_image'] ?? null;
+            if (!$image) {
+                return;
+            }
+            $path = public_path('static_media/' . basename($image));
+            if (!file_exists($path)) {
+                return;
+            }
+            $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+            $mime = $ext === 'png' ? 'image/png' : 'image/webp';
+            $message->embedFromPath($path, 'coupon', $mime);
+        });
     }
 
     public function envelope(): Envelope
@@ -42,6 +56,11 @@ class PromotionApplication extends Mailable
                 'logo_url' => isset($basic_media['default_logo'])
                     ? asset('storage/' . $basic_media['default_logo'])
                     : null,
+                'header_image_url' => !empty($this->data['coupon_image'])
+                    ? 'cid:coupon'
+                    : (isset($basic_media['default_logo'])
+                        ? asset('storage/' . $basic_media['default_logo'])
+                        : null),
             ],
         );
     }

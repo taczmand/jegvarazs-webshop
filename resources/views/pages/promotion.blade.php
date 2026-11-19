@@ -12,79 +12,32 @@
             background: #f4f6f8;
             color: #333;
         }
-        .promo-hero-logo {
-            display: block;
-            max-height: 84px;
-            max-width: 260px;
-            width: auto;
-            height: auto;
-            margin: 0 auto 26px;
-            position: relative;
-            z-index: 1;
-        }
         .promo-hero {
             position: relative;
             width: 100%;
             overflow: hidden;
-            background: linear-gradient(135deg, #b3122e 0%, #e63946 45%, #1b7a3d 100%);
+            background: url('{{ asset('static_media/karacsonyi_promocio_2026_banner.webp') }}') center / cover no-repeat, linear-gradient(135deg, #b3122e 0%, #e63946 45%, #1b7a3d 100%);
             color: #fff;
-            padding: 110px 20px 130px;
+            min-height: 85vh;
+            padding: 120px 20px 110px;
             text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            box-sizing: border-box;
         }
-        .promo-hero::before {
-            content: "";
-            position: absolute;
-            inset: 0;
-            background:
-                radial-gradient(circle at 15% 20%, rgba(255,255,255,.18) 0 2px, transparent 3px),
-                radial-gradient(circle at 75% 15%, rgba(255,255,255,.15) 0 2px, transparent 3px),
-                radial-gradient(circle at 55% 75%, rgba(255,255,255,.12) 0 2px, transparent 3px),
-                radial-gradient(circle at 30% 85%, rgba(255,255,255,.15) 0 2px, transparent 3px),
-                radial-gradient(circle at 90% 60%, rgba(255,255,255,.12) 0 2px, transparent 3px);
-            background-size: 220px 220px;
-            animation: promo-snow 14s linear infinite;
-            pointer-events: none;
-        }
-        @keyframes promo-snow {
-            from { background-position: 0 0; }
-            to { background-position: 0 220px; }
-        }
-        .promo-hero .promo-badge {
-            display: inline-block;
-            background: #ffd166;
-            color: #7a1f1f;
-            font-weight: 800;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            padding: 8px 22px;
-            border-radius: 999px;
-            font-size: 14px;
-            margin-bottom: 22px;
-            box-shadow: 0 6px 18px rgba(0,0,0,.25);
-        }
-        .promo-hero h1 {
-            font-size: clamp(34px, 6vw, 64px);
-            font-weight: 900;
-            margin: 0 0 18px;
-            text-shadow: 0 4px 14px rgba(0,0,0,.35);
-        }
-        .promo-hero .promo-sub {
-            font-size: clamp(16px, 2.4vw, 22px);
-            opacity: .95;
-            max-width: 760px;
-            margin: 0 auto;
-        }
-        .promo-hero .promo-scroll {
-            margin-top: 42px;
-            font-size: 13px;
-            letter-spacing: 3px;
-            text-transform: uppercase;
-            opacity: .85;
-            animation: promo-bounce 1.6s ease-in-out infinite;
-        }
-        @keyframes promo-bounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(8px); }
+        .promo-hero-img-mobile { display: none; }
+        @media (max-width: 768px) {
+            .promo-hero {
+                background: linear-gradient(135deg, #b3122e 0%, #e63946 45%, #1b7a3d 100%);
+                min-height: 0;
+                padding: 0 0 50px;
+            }
+            .promo-hero-img-mobile {
+                display: block;
+                width: 100%;
+                height: auto;
+            }
         }
         .promo-content {
             max-width: 860px;
@@ -142,6 +95,25 @@
         }
         .promo-form select.promo-input {
             height: 50px;
+        }
+        .promo-form .promo-terms {
+            margin-bottom: 18px;
+            font-size: 14px;
+        }
+        .promo-form .promo-terms label {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            font-weight: 400;
+            margin-bottom: 0;
+            cursor: pointer;
+        }
+        .promo-form .promo-terms input {
+            margin-top: 3px;
+            flex-shrink: 0;
+        }
+        .promo-form .promo-terms a {
+            color: #b3122e;
         }
         .promo-form .promo-submit {
             display: block;
@@ -207,90 +179,89 @@
     </style>
 </head>
 <body>
-
     <section class="promo-hero">
-        <img src="{{ asset('storage/' . $basicmedia['default_logo']) }}" alt="" class="promo-hero-logo">
-        <div class="promo-badge">Különleges ajánlat</div>
-        <h1>{{ $promotion->name }}</h1>
+        <img src="{{ asset('static_media/karacsonyi_promocio_2026_banner.webp') }}" alt="Karácsonyi klímareklám" class="promo-hero-img-mobile">
         @if($promotion->discount_percent)
             <div class="promo-discount">-{{ rtrim(rtrim(number_format((float) $promotion->discount_percent, 2, ',', ''), '0'), ',') }}% kedvezmény</div>
         @endif
-        <p class="promo-sub">Ne hagyd ki a szezon legjobb klímalehetőségét — jelentkezz most!</p>
-        <div class="promo-scroll">▼ Görgess a jelentkezéshez ▼</div>
-    </section>
 
+    </section>
     <div class="promo-content">
         <h2 class="promo-title">{{ $promotion->name }}</h2>
-
         @if($promotion->description)
             <div class="promo-desc">{!! nl2br(e($promotion->description)) !!}</div>
         @endif
-
         @if($errors->any())
             <div class="promo-error">
                 {{ $errors->first() }}
             </div>
         @endif
-
         @if (session('success'))
             <div class="promo-success">
                 {{ session('success') }}
             </div>
         @endif
-
         <div class="promo-form-title">Ha szeretnél résztvenni a prómócióban töltsd ki az alábbi adatokat:</div>
-
         <script src="https://www.google.com/recaptcha/api.js"></script>
         <script>
+            function disablePromoSubmit() {
+                var btn = document.querySelector('#promotion-form .promo-submit');
+                if (btn) {
+                    btn.disabled = true;
+                    btn.style.opacity = '.6';
+                    btn.style.cursor = 'not-allowed';
+                }
+            }
             function onSubmit(token) {
+                disablePromoSubmit();
                 document.getElementById("promotion-form").submit();
             }
+            document.addEventListener('DOMContentLoaded', function () {
+                var form = document.getElementById('promotion-form');
+                if (form) {
+                    form.addEventListener('submit', disablePromoSubmit);
+                }
+            });
         </script>
-
         <form method="POST" id="promotion-form" action="{{ route('promotion.apply') }}" class="promo-form">
             @csrf
-
             <input type="hidden" name="recaptcha_token" id="recaptcha_token">
-
             <div>
                 <label for="name">Név*</label>
                 <input type="text" name="name" id="name" class="promo-input" placeholder="Teljes név" value="{{ old('name') }}" required>
             </div>
-
             <div>
                 <label for="address">Cím*</label>
                 <input type="text" name="address" id="address" class="promo-input" placeholder="Irányítószám, város, utca, házszám" value="{{ old('address') }}" required>
             </div>
-
             <div>
                 <label for="phone">Telefonszám*</label>
                 <input type="tel" name="phone" id="phone" class="promo-input" placeholder="+36..." value="{{ old('phone') }}" required>
             </div>
-
             <div>
                 <label for="email">Email*</label>
                 <input type="email" name="email" id="email" class="promo-input" placeholder="pelda@email.hu" value="{{ old('email') }}" required>
             </div>
-
             <div>
                 <label for="promotion_id">Melyik promócióban kíván részt venni?*</label>
                 <select name="promotion_id" id="promotion_id" class="promo-input" required>
-                    <option value="" disabled {{ old('promotion_id') ? '' : 'selected' }}>Válasszon promóciót</option>
-                    @foreach($promotions as $promo)
-                        <option value="{{ $promo->id }}" {{ old('promotion_id') == $promo->id ? 'selected' : '' }}>
-                            {{ $promo->name }}
-                        </option>
-                    @endforeach
+                    <option value="2 szett klímaberendezés mellé ajándék Dual Zone Air Fryer készülék" {{ old('promotion_id') == '2 szett klímaberendezés mellé ajándék Dual Zone Air Fryer készülék' ? 'selected' : '' }}>2 szett klímaberendezés mellé ajándék Dual Zone Air Fryer készülék</option>
+                    <option value="3 szett klímaberendezés mellé ajándék 40&quot; Smart LED TV" {{ old('promotion_id') == '3 szett klímaberendezés mellé ajándék 40" Smart LED TV' ? 'selected' : '' }}>3 szett klímaberendezés mellé ajándék 40" Smart LED TV</option>
                 </select>
             </div>
-
+            @if($regulation)
+            <div class="promo-terms">
+                <label for="terms">
+                    <input type="checkbox" name="terms" id="terms" value="1" {{ old('terms') ? 'checked' : '' }} required>
+                    Elfogadom a <a href="{{ asset('storage/' . $regulation->file_path) }}" target="_blank" rel="noopener">{{ $regulation->file_name }}</a> szabályzatot. *
+                </label>
+            </div>
+            @endif
             <button data-sitekey="6Le1aA4sAAAAAPRyuiMD79NOT2oYekHfOdhNC6Fr"
                     data-callback='onSubmit'
                     data-action='submit' type="submit" class="g-recaptcha promo-submit">JELENTKEZEM A PROMÓCIÓRA</button>
         </form>
     </div>
-
     <div class="promo-footer-note">© {{ date('Y') }} Jégvarázs — Minden jog fenntartva.</div>
-
 </body>
 </html>

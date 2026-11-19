@@ -21,6 +21,7 @@ use App\Models\Product;
 use App\Models\Promotion;
 use App\Models\PromotionCoupon;
 use App\Models\PromotionCouponUsage;
+use App\Models\Regulation;
 use App\Models\Searched;
 use App\Models\Tag;
 use App\Models\WatchedProduct;
@@ -117,9 +118,19 @@ class PagesController extends Controller
 
     public function promotion($slug = 'karacsonyi-klima-promocio') {
         $promotion = Promotion::where('slug', $slug)->firstOrFail();
-        $promotions = Promotion::where('active', true)->orderBy('name')->get();
 
-        return view('pages.promotion', compact('promotion', 'promotions'));
+        $today = now()->toDateString();
+        $startsAt = $promotion->starts_at?->toDateString();
+        $endsAt = $promotion->ends_at?->toDateString();
+
+        if (($startsAt && $today < $startsAt) || ($endsAt && $today > $endsAt)) {
+            return redirect()->route('index');
+        }
+
+        $promotions = Promotion::where('active', true)->orderBy('name')->get();
+        $regulation = Regulation::find(5);
+
+        return view('pages.promotion', compact('promotion', 'promotions', 'regulation'));
     }
 
     public function promotionApply(Request $request) {
@@ -160,13 +171,15 @@ class PagesController extends Controller
                 },
             ],
             'email' => 'required|email|max:255',
-            'promotion_id' => 'required|exists:promotions,id',
+            'promotion_id' => 'required|string|max:255',
+            'terms' => 'required|accepted',
         ], [
             'name.regex' => 'A név nem tartalmazhat számot.',
             'phone.regex' => 'A telefonszám formátuma nem megfelelő.',
         ]);
 
-        $promotion = Promotion::findOrFail($request->promotion_id);
+        $promotion = Promotion::where('name', $request->promotion_id)->first()
+            ?? Promotion::where('active', true)->orderBy('id')->firstOrFail();
 
         $coupon = PromotionCoupon::where('promotion_id', $promotion->id)
             ->whereDoesntHave('usages')
@@ -183,6 +196,19 @@ class PagesController extends Controller
             ]);
         }
 
+        $couponImage = null;
+        $giftName = null;
+        $giftSets = null;
+        if (stripos($request->promotion_id, 'Air Fryer') !== false) {
+            $couponImage = 'airfryer_kupon.png';
+            $giftName = 'DUAL ZONE AIR FRYER';
+            $giftSets = '2 szett klímaberendezés';
+        } elseif (stripos($request->promotion_id, 'TV') !== false) {
+            $couponImage = 'tv_kupon.png';
+            $giftName = '40" SMART LED TV';
+            $giftSets = '3 szett klímaberendezés';
+        }
+
         try {
             Lead::create([
                 'lead_id' => Str::uuid(),
@@ -192,7 +218,7 @@ class PagesController extends Controller
                 'email' => $request->email,
                 'phone' => $request->phone,
                 'status' => 'Új',
-                'comment' => 'Promóció: ' . $promotion->name
+                'comment' => 'Promóció: ' . $request->promotion_id
                     . ($couponCode ? ' | Kuponkód: ' . $couponCode : '')
                     . ' | Cím: ' . $request->address,
                 'data' => json_encode([
@@ -205,6 +231,7 @@ class PagesController extends Controller
         } catch (\Exception $e) {
             return redirect()->back()->withErrors(['promotion' => $e->getMessage()])->withInput();
         }
+        \Log::info($promotion->name);
 
         try {
             $mail = Mail::to($request->email);
@@ -218,6 +245,9 @@ class PagesController extends Controller
                 'address' => $request->address,
                 'promotion_name' => $promotion->name,
                 'coupon_code' => $couponCode,
+                'coupon_image' => $couponImage,
+                'gift_name' => $giftName,
+                'gift_sets' => $giftSets,
             ]));
 
             if ($usage) {
