@@ -807,10 +807,10 @@ Route::get('/automatizacio/jogosultsagok/szinkron', function (Request $request, 
     Route::get('/ginop-plusz', [PagesController::class, 'ginopplusz'])->name('ginopplusz');
 
 
-    Route::get('/karacsonyi-klima-promocio', [PagesController::class, 'promotion'])
-        ->defaults('slug', 'karacsonyi-klima-promocio')
+    Route::get('/karacsonyi-promocio', [PagesController::class, 'promotion'])
+        ->defaults('slug', 'karacsonyi-promocio')
         ->name('promotion.page');
-    Route::post('/karacsonyi-klima-promocio/jelentkezes', [PagesController::class, 'promotionApply'])->name('promotion.apply');
+    Route::post('/karacsonyi-promocio/jelentkezes', [PagesController::class, 'promotionApply'])->name('promotion.apply');
     Route::get('/promocio/{slug}', [PagesController::class, 'promotion'])->name('promotion.show');
     Route::post('/idopontfoglalas', [PagesController::class, 'addAppointment'])->name('appointment.post');
     Route::post('/ajanlatkeres', [PagesController::class, 'addOffer'])->name('offer.post');
