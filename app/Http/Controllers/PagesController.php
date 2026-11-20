@@ -231,13 +231,9 @@ class PagesController extends Controller
         } catch (\Exception $e) {
             return redirect()->back()->withErrors(['promotion' => $e->getMessage()])->withInput();
         }
-        \Log::info($promotion->name);
 
         try {
             $mail = Mail::to($request->email);
-            if (!app()->environment('local')) {
-                $mail->bcc('jegvarazsiroda@gmail.com');
-            }
             $mail->send(new PromotionApplication([
                 'name' => $request->name,
                 'email' => $request->email,
