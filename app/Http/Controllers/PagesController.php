@@ -246,6 +246,19 @@ class PagesController extends Controller
                 'gift_sets' => $giftSets,
             ]));
 
+            // For debug
+            /*return (new PromotionApplication([
+                'name' => $request->name,
+                'email' => $request->email,
+                'phone' => $request->phone,
+                'address' => $request->address,
+                'promotion_name' => $promotion->name,
+                'coupon_code' => $couponCode,
+                'coupon_image' => $couponImage,
+                'gift_name' => $giftName,
+                'gift_sets' => $giftSets,
+            ]))->render();*/
+
             if ($usage) {
                 $usage->sent_at = now();
                 $usage->save();

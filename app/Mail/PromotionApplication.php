@@ -56,7 +56,7 @@ class PromotionApplication extends Mailable
                 'logo_url' => isset($basic_media['default_logo'])
                     ? asset('storage/' . $basic_media['default_logo'])
                     : null,
-                'header_image_url' => 'storage/app/public/' . $this->data['coupon_image']
+                'header_image_url' => asset('storage/' . $this->data['coupon_image'])
             ],
         );
     }
