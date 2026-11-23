@@ -62,6 +62,13 @@ class WorksheetProductsByWorkerReportController extends Controller
 
         $years = $yearsQuery->pluck('year')->map(fn ($y) => (int) $y)->values()->all();
 
+        $maxYear = (int) now()->year + 1;
+        $years = array_values(array_filter($years, fn ($y) => $y <= $maxYear));
+        $years[] = (int) now()->year;
+        $years[] = $maxYear;
+        $years = array_values(array_unique($years));
+        rsort($years);
+
         if (count($years) > 0 && !in_array($currentYear, $years, true)) {
             $currentYear = (int) $years[0];
         }
