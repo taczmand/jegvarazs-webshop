@@ -3,24 +3,9 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    @php
-        $pdfFontDir = str_replace('\\', '/', base_path('vendor/dompdf/dompdf/lib/fonts'));
-    @endphp
     <style>
         @page { margin: 18mm 16mm; }
-        @font-face {
-            font-family: 'DocSans';
-            font-style: normal;
-            font-weight: normal;
-            src: url('file:///{{ ltrim($pdfFontDir, '/') }}/DejaVuSans.ttf') format('truetype');
-        }
-        @font-face {
-            font-family: 'DocSans';
-            font-style: normal;
-            font-weight: bold;
-            src: url('file:///{{ ltrim($pdfFontDir, '/') }}/DejaVuSans-Bold.ttf') format('truetype');
-        }
-        body { font-family: 'DocSans', DejaVu Sans, sans-serif; font-size: 11px; color: #111827; }
+        body { font-family: DejaVu Sans, sans-serif; font-size: 11px; color: #111827; }
         .row { width: 100%; }
         .muted { color: #6b7280; }
         .h1 { font-size: 18px; font-weight: 700; margin: 0 0 6px 0; }
