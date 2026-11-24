@@ -807,7 +807,7 @@ class SalesInvoiceController extends Controller
                     'document_type' => 'storno',
                     'invoice_type' => in_array((string) $invoice->invoice_type, ['normal', 'electronic'], true) ? $invoice->invoice_type : 'normal',
                     'status' => 'issued',
-                    'payment_status' => $invoice->payment_status,
+                    'payment_status' => 'paid',
                     'partner_name' => $invoice->partner_name,
                     'partner_tax_number' => $invoice->partner_tax_number,
                     'partner_vat_number' => $invoice->partner_vat_number,
@@ -831,7 +831,7 @@ class SalesInvoiceController extends Controller
                     'issued_at' => $invoice->issued_at,
                     'fulfilled_at' => $invoice->fulfilled_at,
                     'due_at' => $invoice->due_at,
-                    'settled_at' => $invoice->settled_at,
+                    'settled_at' => now(),
                     'currency' => $invoice->currency,
                     'exchange_rate' => $invoice->exchange_rate,
                     'prices_include_vat' => $invoice->prices_include_vat,
@@ -839,7 +839,7 @@ class SalesInvoiceController extends Controller
                     'vat_total' => $invoice->vat_total,
                     'gross_total' => $invoice->gross_total,
                     'paid_amount' => $invoice->paid_amount,
-                    'outstanding_amount' => $invoice->outstanding_amount,
+                    'outstanding_amount' => 0,
                     'rounding_amount' => $invoice->rounding_amount,
                     'related_order_id' => $invoice->related_order_id,
                     'related_contract_id' => $invoice->related_contract_id,
@@ -851,7 +851,10 @@ class SalesInvoiceController extends Controller
                 ]);
 
                 $invoice->update([
-                    'status' => 'cancelled'
+                    'status' => 'cancelled',
+                    'payment_status' => 'paid',
+                    'outstanding_amount' => 0,
+                    'settled_at' => now(),
                 ]);
             });
 
