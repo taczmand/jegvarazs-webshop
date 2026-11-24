@@ -146,7 +146,7 @@
                     </div>
 
                     <div class="filter-group flex-grow-1 flex-md-shrink-0">
-                        <select class="form-select filter-input" data-column="10">
+                        <select class="form-select filter-input" data-column="9">
                             <option value="">Fizetés (összes)</option>
                             <option value="unpaid">Nincs kifizetve</option>
                             <option value="partially_paid">Részben van kifizetve</option>
@@ -156,7 +156,7 @@
                     </div>
 
                     <div class="filter-group flex-grow-1 flex-md-shrink-0">
-                        <select class="form-select filter-input" data-column="9">
+                        <select class="form-select filter-input" data-column="8">
                             <option value="">Állapot (összes)</option>
                             <option value="draft">Piszkozat</option>
                             <option value="issued">Kiállítva</option>
@@ -165,7 +165,7 @@
                     </div>
 
                     <div class="filter-group flex-grow-1 flex-md-shrink-0">
-                        <select class="form-select filter-input" data-column="11">
+                        <select class="form-select filter-input" data-column="10">
                             <option value="">Típus (összes)</option>
                             <option value="normal">Papír</option>
                             <option value="electronic">E-számla</option>
