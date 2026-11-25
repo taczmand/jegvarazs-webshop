@@ -27,27 +27,27 @@
                     </div>
 
                     <div class="filter-group flex-grow-1 flex-md-shrink-0">
-                        <input type="text" placeholder="Email" class="filter-input form-control" data-column="2">
+                        <input type="text" placeholder="Email" class="filter-input form-control" data-column="3">
                     </div>
 
                     <div class="filter-group flex-grow-1 flex-md-shrink-0">
-                        <input type="text" placeholder="Telefonszám" class="filter-input form-control" data-column="3">
+                        <input type="text" placeholder="Telefonszám" class="filter-input form-control" data-column="4">
                     </div>
 
                     <div class="filter-group flex-grow-1 flex-md-shrink-0">
-                        <input type="text" placeholder="Város" class="filter-input form-control" data-column="4">
+                        <input type="text" placeholder="Város" class="filter-input form-control" data-column="5">
                     </div>
 
                     <div class="filter-group flex-grow-1 flex-md-shrink-0">
-                        <input type="text" placeholder="Form" class="filter-input form-control" data-column="5">
+                        <input type="text" placeholder="Form" class="filter-input form-control" data-column="6">
                     </div>
 
                     <div class="filter-group flex-grow-1 flex-md-shrink-0">
-                        <input type="text" placeholder="Kampány" class="filter-input form-control" data-column="6">
+                        <input type="text" placeholder="Kampány" class="filter-input form-control" data-column="7">
                     </div>
 
                     <div class="filter-group flex-grow-1 flex-md-shrink-0">
-                        <select class="form-select filter-input" data-column="7">
+                        <select class="form-select filter-input" data-column="8">
                             <option value="">Állapot (összes)</option>
                             <option value="Új">Új</option>
                             <option value="Szerződés">Szerződés</option>
@@ -83,6 +83,7 @@
                     <tr>
                         <th>ID</th>
                         <th data-priority="1">Név</th>
+                        <th data-priority="1">Szerződés generálása</th>
                         <th data-priority="4">Email</th>
                         <th data-priority="5">Telefon</th>
                         <th data-priority="6">Város</th>
@@ -216,6 +217,7 @@
                 columns: [
                     { data: 'id' },
                     { data: 'full_name', responsivePriority: 1 },
+                    { data: 'contract_button', orderable: false, searchable: false, responsivePriority: 1 },
                     { data: 'email' },
                     { data: 'phone' },
                     { data: 'city' },
@@ -229,9 +231,9 @@
                 ],
             });
 
-            const statusFilter = $('.filter-input[data-column="7"]');
+            const statusFilter = $('.filter-input[data-column="8"]');
             statusFilter.val('');
-            table.columns(7).search('').draw();
+            table.columns(8).search('').draw();
 
             // Szűrők beállítása
 

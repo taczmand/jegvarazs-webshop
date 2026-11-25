@@ -444,6 +444,11 @@
 
             if (makeContract) {
                 await showModalToCreate(installationDate);
+
+                const contractLeadId = urlParams.get('lead_id');
+                if (contractLeadId) {
+                    await prefillLeadForContract(contractLeadId);
+                }
             }
 
 
@@ -1682,6 +1687,43 @@
 
                 $('#create_lead').val('0');
                 $('#create_lead_toggle').prop('checked', false);
+            }
+
+            async function prefillLeadForContract(leadId) {
+                try {
+                    const resp = await fetch(`${window.appConfig.APP_URL}admin/leads/${leadId}`, {
+                        headers: {
+                            'Accept': 'application/json'
+                        }
+                    });
+                    if (!resp.ok) return;
+                    const lead = await resp.json();
+
+                    const resolvedLeadId = (lead?.id || leadId).toString();
+                    $('#lead_id').val(resolvedLeadId);
+
+                    // Új ügyfél mód az érdeklődő kapcsolati adataival,
+                    // így az "Érdeklődő hozzárendelése" sor is látszik.
+                    $('#create_client').val('1');
+                    $('#client_id').val('');
+                    $('#client_address_id').val('');
+                    $('#use_custom_address').val('0');
+
+                    $('#contact_name').val(lead?.full_name || '');
+                    $('#contact_email').val(lead?.email || '');
+                    $('#contact_phone').val(lead?.phone || '');
+                    $('#contact_city').val(lead?.city || '');
+
+                    const display = [lead?.full_name, lead?.email, lead?.phone].filter(Boolean).join(' | ');
+                    $('#lead_search').val(display ? `${display} (#${resolvedLeadId})` : `#${resolvedLeadId}`);
+                    $('#lead_selected_hint').html('Érdeklődő hozzárendelve. <a href="#" class="lead-clear-link">Törlés</a>').show();
+
+                    setClientFieldsVisible(true);
+                    setSnapshotMode(false);
+                    updateLeadAssignmentVisibility();
+                } catch (e) {
+                    // az érdeklődő előtöltése opcionális; a modal maradjon használható
+                }
             }
 
             $('#create_lead_toggle').on('change', function () {

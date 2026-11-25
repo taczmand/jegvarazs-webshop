@@ -84,6 +84,17 @@ class LeadController extends Controller
             ->editColumn('created_at', function ($item) {
                 return $item->created_at ? $item->created_at->format('Y-m-d H:i:s') : '';
             })
+            ->addColumn('contract_button', function ($item) {
+                $user = auth('admin')->user();
+                if (!$user || !$user->can('create-contract')) {
+                    return '';
+                }
+
+                return '
+                    <a class="btn btn-success" href="' . route('admin.contracts.index') . '?make_contract=1&lead_id=' . $item->id . '" title="Szerződés generálása">
+                        <i class="fas fa-file-contract me-1"></i> Szerződés
+                    </a>';
+            })
             ->addColumn('has_contract', function ($item) {
                 return ((int) ($item->contracts_count ?? 0)) > 0 ? 'Igen' : 'Nem';
             })
@@ -131,7 +142,7 @@ class LeadController extends Controller
             ->setRowClass(function ($item) {
                 return $item->viewed_by ? '' : 'fw-bold'; // ha nincs viewed_by → vastag
             })
-            ->rawColumns(['action', 'viewed_by'])
+            ->rawColumns(['action', 'viewed_by', 'contract_button'])
             ->make(true);
     }
 
