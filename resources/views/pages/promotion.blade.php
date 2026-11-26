@@ -264,7 +264,7 @@
             <p style="text-align: center">A regisztráció nem jár vásárlási kötelezettséggel!</p>
             <button data-sitekey="6Le1aA4sAAAAAPRyuiMD79NOT2oYekHfOdhNC6Fr"
                     data-callback='onSubmit'
-                    data-action='submit' type="submit" class="g-recaptcha promo-submit">JELENTKEZEM A PROMÓCIÓRA</button>
+                    data-action='submit' type="submit" class="g-recaptcha promo-submit">REGISZTRÁLOK</button>
         </form>
     </div>
     <div class="promo-footer-note">© {{ date('Y') }} Jégvarázs — Minden jog fenntartva.</div>
