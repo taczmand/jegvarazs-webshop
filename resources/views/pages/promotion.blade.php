@@ -177,7 +177,7 @@
             .promo-content { padding: 32px 20px; margin: -50px 12px 40px; }
         }
     </style>
-    
+
     <!-- Google Tag Manager -->
     <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
                 new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
@@ -195,10 +195,6 @@
 
     </section>
     <div class="promo-content">
-        <h2 class="promo-title">{{ $promotion->name }}</h2>
-        @if($promotion->description)
-            <div class="promo-desc">{!! nl2br(e($promotion->description)) !!}</div>
-        @endif
         @if($errors->any())
             <div class="promo-error">
                 {{ $errors->first() }}
@@ -209,7 +205,8 @@
                 {{ session('success') }}
             </div>
         @endif
-        <div class="promo-form-title">Ha szeretnél résztvenni a prómócióban töltsd ki az alábbi adatokat:</div>
+        <div class="promo-form-title">Töltsd ki az űrlapot, és küldjük az ajándékkuponod!</div>
+        <p style="text-align: center">A regisztráció nem jár vásárlási kötelezettséggel!</p>
         <script src="https://www.google.com/recaptcha/api.js"></script>
         <script>
             function disablePromoSubmit() {
