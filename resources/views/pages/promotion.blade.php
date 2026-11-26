@@ -206,7 +206,6 @@
             </div>
         @endif
         <div class="promo-form-title">Töltsd ki az űrlapot, és küldjük az ajándékkuponod!</div>
-        <p style="text-align: center">A regisztráció nem jár vásárlási kötelezettséggel!</p>
         <script src="https://www.google.com/recaptcha/api.js"></script>
         <script>
             function disablePromoSubmit() {
@@ -262,6 +261,7 @@
                 </label>
             </div>
             @endif
+            <p style="text-align: center">A regisztráció nem jár vásárlási kötelezettséggel!</p>
             <button data-sitekey="6Le1aA4sAAAAAPRyuiMD79NOT2oYekHfOdhNC6Fr"
                     data-callback='onSubmit'
                     data-action='submit' type="submit" class="g-recaptcha promo-submit">JELENTKEZEM A PROMÓCIÓRA</button>
