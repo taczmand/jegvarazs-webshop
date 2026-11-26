@@ -22,7 +22,7 @@
                 <div class="product-item">
                     <div class="product-image">
                         @php
-                            $fullSlug = $product->category->getFullSlug() . '/' . $product->slug;
+                            $fullSlug = $product->category ? $product->category->getFullSlug() . '/' . $product->slug : $product->slug;
                             $mainPhoto = $product->photos->firstWhere('is_main', true);
                         @endphp
                         <a href="{{ route('products.resolve', ['slugs' => $fullSlug]) }}">

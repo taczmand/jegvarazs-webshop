@@ -245,7 +245,7 @@
                         @endauth
 
                         @php
-                            $fullSlug = $product->category->getFullSlug() . '/' . $product->slug;
+                            $fullSlug = $product->category ? $product->category->getFullSlug() . '/' . $product->slug : $product->slug;
                             $email = $basicdata['support_email'];
 
                             $interesting_subject = rawurlencode('Érdeklődés: ' . $product->title);

@@ -167,7 +167,7 @@
                                                 @foreach($chunk as $product)
 
                                                     @php
-                                                        $fullSlug = $product->category->getFullSlug() . '/' . $product->slug;
+                                                        $fullSlug = $product->category ? $product->category->getFullSlug() . '/' . $product->slug : $product->slug;
                                                         $mainPhoto = $product->photos->firstWhere('is_main', true);
                                                     @endphp
 
@@ -254,7 +254,7 @@
                                             ?? ['name' => 'Nincs raktáron', 'slug' => 'out_of_stock', 'color' => 'danger']);
                                     $mainPhoto = $product->photos->firstWhere('is_main', true);
 
-                                    $fullSlug = $product->category->getFullSlug() . '/' . $product->slug;
+                                    $fullSlug = $product->category ? $product->category->getFullSlug() . '/' . $product->slug : $product->slug;
                                     $email = $basicdata['support_email'];
 
                                     $subject = rawurlencode('Érdeklődés: ' . $product->title);
