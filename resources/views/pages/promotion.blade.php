@@ -232,19 +232,19 @@
             <input type="hidden" name="recaptcha_token" id="recaptcha_token">
             <div>
                 <label for="name">Név*</label>
-                <input type="text" name="name" id="name" class="promo-input" placeholder="Teljes név" value="{{ old('name') }}" required>
+                <input type="text" name="name" id="name" class="promo-input" placeholder="" value="{{ old('name') }}" required>
             </div>
             <div>
-                <label for="address">Cím*</label>
-                <input type="text" name="address" id="address" class="promo-input" placeholder="Irányítószám, város, utca, házszám" value="{{ old('address') }}" required>
+                <label for="address">Település*</label>
+                <input type="text" name="address" id="address" class="promo-input" placeholder="" value="{{ old('address') }}" required>
             </div>
             <div>
                 <label for="phone">Telefonszám*</label>
-                <input type="tel" name="phone" id="phone" class="promo-input" placeholder="+36..." value="{{ old('phone') }}" required>
+                <input type="tel" name="phone" id="phone" class="promo-input" placeholder="" value="{{ old('phone') }}" required>
             </div>
             <div>
                 <label for="email">Email*</label>
-                <input type="email" name="email" id="email" class="promo-input" placeholder="pelda@email.hu" value="{{ old('email') }}" required>
+                <input type="email" name="email" id="email" class="promo-input" placeholder="" value="{{ old('email') }}" required>
             </div>
             <div>
                 <label for="promotion_id">Melyik promócióban kíván részt venni?*</label>
