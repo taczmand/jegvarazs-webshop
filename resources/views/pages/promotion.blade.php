@@ -257,7 +257,7 @@
             <div class="promo-terms">
                 <label for="terms">
                     <input type="checkbox" name="terms" id="terms" value="1" {{ old('terms') ? 'checked' : '' }} required>
-                    Elfogadom a <a href="{{ asset('storage/' . $regulation->file_path) }}" target="_blank" rel="noopener">{{ $regulation->file_name }}</a> szabályzatot. *
+                    <a href="{{ asset('storage/' . $regulation->file_path) }}" target="_blank" rel="noopener">{{ $regulation->file_name }}</a> elfogadása. *
                 </label>
             </div>
             @endif
